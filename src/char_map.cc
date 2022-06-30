@@ -4,7 +4,7 @@
 // from https://github.com/boostorg/beast/blob/develop/include/boost/beast/http/impl/field.ipp
 namespace cc {
   struct char_hash {
-	inline size_t operator()(const std::string& z) const {
+	size_t operator()(const std::string& z) const {
 	  size_t r = 0, n = z.size();
 	  unsigned char const* p = reinterpret_cast<unsigned char const*>(z.data());
 	  while (n >= 4) {
@@ -15,7 +15,7 @@ namespace cc {
 	}
   };
   struct char_key_eq {
-	inline bool operator()(const std::string& l, const std::string& r) const {
+	bool operator()(const std::string& l, const std::string& r) const {
 	  size_t n = l.size(); if (n != r.size()) return false;
 	  unsigned char const* x = reinterpret_cast<unsigned char const*>(l.data());
 	  unsigned char const* y = reinterpret_cast<unsigned char const*>(r.data());
@@ -29,5 +29,4 @@ namespace cc {
 	  for (; n; ++x, ++y, --n) if ((*x ^ *y) & 0xDF) return false; return true;
 	}
   };
-  static const char_key_eq KEY_EQUALS;
 }

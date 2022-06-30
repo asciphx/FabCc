@@ -1,4 +1,5 @@
 #include <lexical_cast.hh>
+#include <char_map.hh>
 #include <time.h>
 template<unsigned short I>
 struct Char {
@@ -20,7 +21,7 @@ Char<32> itoa(int32_t i, Char<32> p = "") {
   return p;
 }
 int main() {
-  clock_t start = clock();
+  clock_t start = clock(); cc::char_map map;
   std::string s;
   int l;
   for (int i = 0; i < 1000000; ++i) {
