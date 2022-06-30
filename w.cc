@@ -4,7 +4,7 @@ template<unsigned short I>
 struct Char {
   char _[I]; static inline unsigned short L = I - 1;
   Char(const char* c) {
-	for (unsigned short i = 0; i < L && c[i]; ++i) _[i] = c[i];
+	unsigned short i = 0; while (i < L && c[i]) _[++i] = c[i]; _[++i] = 0;
   }
   char& operator [](unsigned short i) {
 	return _[i];
