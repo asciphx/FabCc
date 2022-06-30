@@ -1,0 +1,6 @@
+CMakeSettings.json
+.idea/
+.vs/
+.vscode/
+lib/
+*.obj
