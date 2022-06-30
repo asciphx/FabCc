@@ -2,5 +2,6 @@ CMakeSettings.json
 .idea/
 .vs/
 .vscode/
+build/
 lib/
 *.obj
