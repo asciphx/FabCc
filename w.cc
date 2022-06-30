@@ -1,6 +1,8 @@
 #include <lexical_cast.hh>
 #include <char_map.hh>
+#include <text.hpp>
 #include <time.h>
+#include <iostream>
 template<unsigned short I>
 struct Char {
   char _[I]; static inline unsigned short L = I - 1;
@@ -32,5 +34,7 @@ int main() {
   //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
   printf("use %.6f seconds\n", (float)(clock() - start) / CLOCKS_PER_SEC);
   printf(itoa(-234).c_str());
+  text<15> t("你好世界！");
+  std::cout << t;
   return 0;
 }

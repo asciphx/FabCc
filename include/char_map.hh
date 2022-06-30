@@ -12,7 +12,6 @@ namespace cc {
 #endif
   struct char_hash {
 	_INLINE size_t operator()(const std::string& z);
-
   };
   struct char_key_eq {
 	_INLINE bool operator()(const std::string& l, const std::string& r);
