@@ -24,9 +24,9 @@ public:
   void clear(){ if (e != nullptr)delete e, e = nullptr; }
 };
 template <typename T>
-std::ostream& operator<<(std::ostream& s, box<T>& c) { return s << (c.b ? "null" : *c.e); }
+std::ostream& operator<<(std::ostream& s, box<T>& c) { return s << (c.e == nullptr ? "null" : *c.e); }
 template <typename T>
-std::ostream& operator<<(std::ostream& s, const box<T>& c) { return s << (c.b ? "null" : *c.e); }
+std::ostream& operator<<(std::ostream& s, const box<T>& c) { return s << (c.e == nullptr ? "null" : *c.e); }
 template <typename T>
 std::string& operator<<(std::string& s, box<T>* c) {
   c->e == nullptr ? s += "null" : s << c->e; return s;
