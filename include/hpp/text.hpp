@@ -6,6 +6,23 @@
 #include <sstream>
 #include <iomanip>
 #include <iosfwd>
+const static unsigned char UTF$[256] =
+{ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+  4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+  5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 2, 2 };
 template<unsigned short I = 0x64>//Max [65534(char),16383(utf8)], Min 1, default 100.
 class text {//It is similar to a dynamic std::string_view with a fixed maximum length
   unsigned short k = 0, l = 0, u = 0; char* _ = new char[I * 4 + 3];
@@ -28,23 +45,6 @@ class text {//It is similar to a dynamic std::string_view with a fixed maximum l
 	s.push_back('"'); s += c.c_str(); s.push_back('"'); return s;
   };
   friend std::ostream& operator<<(std::ostream& s, text<I>& c) { return s << c.c_str(); };
-  constexpr const static unsigned char UTF$[256] =
-  { 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-	5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 2, 2 };
 public:
   ~text() { delete[]_; _ = nullptr; };
   text() { static_assert(I != 0 && I < 0x4000); _[0] = 0; };
@@ -136,7 +136,7 @@ std::ostream& operator<<(std::ostream& s, text<I> c) { return s << c.c_str(); }
 template<unsigned short I>
 text<I> operator+(text<I>& t, const char* c) {
   unsigned short& l = *((unsigned short*)(&t)), & k = *((unsigned short*)(reinterpret_cast<char*>(&t)
-	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->*&text<I>::l)))); while (*c && l < I) {
+	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->* & text<I>::l)))); while (*c && l < I) {
 	unsigned char u = text<I>::UTF$[static_cast<unsigned char>(*c)];
 	while (--u) t(k) = *c++, ++k; ++l;
   } t(k) = 0; return t;
@@ -144,7 +144,7 @@ text<I> operator+(text<I>& t, const char* c) {
 template<unsigned short I>
 text<I> operator+(text<I>& t, const std::string& $) {
   unsigned short& l = *((unsigned short*)(&t)), & k = *((unsigned short*)(reinterpret_cast<char*>(&t)
-	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->*&text<I>::l))));
+	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->* & text<I>::l))));
   char* c = (char*)$.c_str(); while (*c && l < I) {
 	unsigned char u = text<I>::UTF$[static_cast<unsigned char>(*c)];
 	while (--u) t(k) = *c++, ++k; ++l;
@@ -153,7 +153,7 @@ text<I> operator+(text<I>& t, const std::string& $) {
 template<unsigned short I, unsigned short K>
 text<I> operator+(text<I>& t, const text<K>& $) {
   unsigned short& l = *((unsigned short*)(&t)), & k = *((unsigned short*)(reinterpret_cast<char*>(&t)
-	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->*&text<I>::l))));
+	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->* & text<I>::l))));
   char* c = (char*)$.c_str(); while (*c && l < I) {
 	unsigned char u = text<I>::UTF$[static_cast<unsigned char>(*c)];
 	while (--u) t(k) = *c++, ++k; ++l;
@@ -166,15 +166,15 @@ std::string operator+(std::string& t, const text<I>& $) {
 template<unsigned short I>
 text<I> operator+(const char* c, text<I>& t) {
   text<I> f; unsigned short& l = *((unsigned short*)(&f)), & k = *((unsigned short*)(reinterpret_cast<char*>(&f)
-	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->*&text<I>::l))));
-  while (*c && l < I) { unsigned char u = text<I>::UTF$[static_cast<unsigned char>(*c)];while (--u)f(k) = *c++, ++k; ++l; }
+	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->* & text<I>::l))));
+  while (*c && l < I) { unsigned char u = text<I>::UTF$[static_cast<unsigned char>(*c)]; while (--u)f(k) = *c++, ++k; ++l; }
   f += t; return f;
 }
 template<unsigned short I>
 text<I> operator+(const char c, text<I>& t) {
   unsigned short& l = *((unsigned short*)(&t)), & k = *((unsigned short*)(reinterpret_cast<char*>(&t)
-	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->*&text<I>::l)))), i = k;
-	while (i) { t(i) = t(i - 1); --i; } ++l; t(0) = c; t(++k) = 0; return t;
+	+ (char)(&reinterpret_cast<char const volatile&>(((text<I>*)0)->* & text<I>::l)))), i = k;
+  while (i) { t(i) = t(i - 1); --i; } ++l; t(0) = c; t(++k) = 0; return t;
 }
 template<class T>
 struct is_text: std::false_type {};

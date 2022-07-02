@@ -10,8 +10,6 @@ namespace std {
 #else
 #define _INLINE inline
 #endif
-  template <typename S> _INLINE S lexical_cast(std::string_view sv) { return std::lexical_cast<S>(sv.data()); };
-
   template <typename S, typename T> _INLINE S lexical_cast(T& i);
   template <> _INLINE std::string lexical_cast<std::string>(signed char& i);
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char& i);
