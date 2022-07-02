@@ -255,7 +255,8 @@ namespace std {
 		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (r < 0) throw std::out_of_range(""); return r;
+		if (*c > 0x37 || 0x30 > *c) throw std::range_error("");
+		r += *c - 0x30; return r;
 	  } throw std::out_of_range("");
 	} else {
 	  if (--l < 4) {
@@ -263,7 +264,8 @@ namespace std {
 		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		  r -= STD_POW[l] * (*c - 0x30);
 		}
-		if (r > 0) throw std::out_of_range(""); return r;
+		if (*c > 0x38 || 0x30 > *c) throw std::range_error("");
+		r -= *c - 0x30; return r;
 	  } throw std::out_of_range("");
 	}
   }
