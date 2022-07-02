@@ -3,7 +3,7 @@
 #include <string_view>
 #include <stdexcept>
 #include <string.h>
-#pragma warning(disable:4838)
+#pragma warning(disable:4244)
 namespace std {
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
 #if defined(_MSC_VER)
@@ -39,7 +39,7 @@ namespace std {
   template <> std::string lexical_cast<std::string>(unsigned long long&& i) { return std::to_string(std::forward<unsigned long long>(i)); }
   template <> std::string lexical_cast<std::string>(bool&& b) { return std::forward<bool>(b) ? STD_TURE : STD_FALSE; }
 #endif
-  static unsigned short STD_POW[] = {
+  static unsigned long STD_POW[] = {
 	1,
 	10,
 	100,
@@ -51,7 +51,7 @@ namespace std {
 	100000000,
 	1000000000
   };
-  static unsigned long STD_POWS[] = {
+  static unsigned long long STD_POWS[] = {
 	1,
 	10,
 	100,
