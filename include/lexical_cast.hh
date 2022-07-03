@@ -10,8 +10,6 @@ namespace std {
 #else
 #define _INLINE inline
 #endif
-  template <typename S> _INLINE S lexical_cast(std::string_view sv) { return std::lexical_cast<S>(sv.data()); };
-
   template <typename S, typename T> _INLINE S lexical_cast(T& i);
   template <> _INLINE std::string lexical_cast<std::string>(signed char& i);
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char& i);
@@ -48,20 +46,20 @@ namespace std {
   template <> [[nodiscard]] _INLINE double lexical_cast<double>(const char* c);
   template <> [[nodiscard]] _INLINE long double lexical_cast<long double>(const char* c);
   template <> _INLINE tm lexical_cast<tm>(const char* c);
-  template <typename T> _INLINE T lexical_cast(const std::string& s);
-  template <> [[nodiscard]] _INLINE bool lexical_cast<bool>(const std::string& s);
-  template <> [[nodiscard]] _INLINE signed char lexical_cast<signed char>(const std::string& s);
-  template <> [[nodiscard]] _INLINE unsigned char lexical_cast<unsigned char>(const std::string& s);
-  template <> [[nodiscard]] _INLINE short lexical_cast<short>(const std::string& s);
-  template <> [[nodiscard]] _INLINE unsigned short lexical_cast<unsigned short>(const std::string& s);
-  template <> [[nodiscard]] _INLINE int lexical_cast<int>(const std::string& s);
-  template <> [[nodiscard]] _INLINE unsigned int lexical_cast<unsigned int>(const std::string& s);
-  template <> [[nodiscard]] _INLINE long long lexical_cast<long long>(const std::string& s);
-  template <> [[nodiscard]] _INLINE unsigned long long lexical_cast<unsigned long long>(const std::string& s);
-  template <> [[nodiscard]] _INLINE float lexical_cast<float>(const std::string& s);
-  template <> [[nodiscard]] _INLINE double lexical_cast<double>(const std::string& s);
-  template <> [[nodiscard]] _INLINE long double lexical_cast<long double>(const std::string& s);
-  template <> _INLINE tm lexical_cast<tm>(const std::string& s);
+  template <typename T> _INLINE T lexical_cast(std::string& s);
+  template <> [[nodiscard]] _INLINE bool lexical_cast<bool>(std::string& s);
+  template <> [[nodiscard]] _INLINE signed char lexical_cast<signed char>(std::string& s);
+  template <> [[nodiscard]] _INLINE unsigned char lexical_cast<unsigned char>(std::string& s);
+  template <> [[nodiscard]] _INLINE short lexical_cast<short>(std::string& s);
+  template <> [[nodiscard]] _INLINE unsigned short lexical_cast<unsigned short>(std::string& s);
+  template <> [[nodiscard]] _INLINE int lexical_cast<int>(std::string& s);
+  template <> [[nodiscard]] _INLINE unsigned int lexical_cast<unsigned int>(std::string& s);
+  template <> [[nodiscard]] _INLINE long long lexical_cast<long long>(std::string& s);
+  template <> [[nodiscard]] _INLINE unsigned long long lexical_cast<unsigned long long>(std::string& s);
+  template <> [[nodiscard]] _INLINE float lexical_cast<float>(std::string& s);
+  template <> [[nodiscard]] _INLINE double lexical_cast<double>(std::string& s);
+  template <> [[nodiscard]] _INLINE long double lexical_cast<long double>(std::string& s);
+  template <> _INLINE tm lexical_cast<tm>(std::string& s);
 #undef _INLINE
 }
 #endif // LEXICAL_CAST_H

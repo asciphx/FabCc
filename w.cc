@@ -1,24 +1,5 @@
 #include <lexical_cast.hh>
 #include <time.h>
-template<unsigned short I>
-struct Char {
-  char _[I]; static inline unsigned short L = I - 1;
-  Char(const char* c) {
-	for (unsigned short i = 0; i < L && c[i]; ++i) _[i] = c[i];
-  }
-  char& operator [](unsigned short i) {
-	return _[i];
-  }
-  const char* c_str() {
-	return _;
-  }
-};
-Char<32> itoa(int32_t i, Char<32> p = "") {
-  if (i < 0) {
-	p[0] = '-';
-  } p[1] = 0;
-  return p;
-}
 int main() {
   clock_t start = clock();
   std::string s;
