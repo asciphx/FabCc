@@ -5,7 +5,8 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cstring>
-#ifdef __cplusplus
+
+// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/url_unescape.hh
 std::string_view DecodeURL(std::string& s) {
   char* o = (char*)s.data(), * c = (char*)s.data();
   const char* e = c + s.size();
@@ -75,6 +76,7 @@ bool operator<(tm& t, tm& m) { return mktime(&t) < mktime(&m); }
 bool operator>(tm& t, tm& m) { return mktime(&t) > mktime(&m); }
 bool operator<=(tm& t, tm& m) { return mktime(&t) <= mktime(&m); }
 bool operator>=(tm& t, tm& m) { return mktime(&t) >= mktime(&m); }
+#ifdef __cplusplus
 extern "C" {
 #endif
   char RES_ASCII[97] = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
