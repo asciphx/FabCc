@@ -18,6 +18,8 @@ int main() {
   }
   printf("use %.6f seconds\n", (float)(clock() - start) / CLOCKS_PER_SEC);
   l = std::lexical_cast<unsigned long long>(s);
+  //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
+  //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
   std::cout << l;
   text<8> t("你好世界！我好！世界"); std::cout << t;
   return 0;
