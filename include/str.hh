@@ -48,10 +48,10 @@ extern "C" {
   void strCpy(char* d, const char* s);
   char* strStr(char* d, const char* s);
   int strCmp(const char* c, const char* s);
-  //If not safe, it is agreed not to use static. Also means that delete or free is required
-  char* subStr(const char* c, int i, int e);
-  char* to8Str(unsigned long long i);
-  char* to4Str(int i);
+  //If not safe, _f
+  char* subStr_f(const char* c, int i, int e);
+  char* to8Str_f(unsigned long long i);
+  char* to4Str_f(int i);
   inline constexpr unsigned long long hack8Str(const char* s);
   inline constexpr int hack4Str(const char* s);
   inline constexpr unsigned long long hackStr(const char* s);
