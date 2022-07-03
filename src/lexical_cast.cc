@@ -6,7 +6,6 @@
 #pragma warning(disable:4244)
 namespace std {
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
-#if defined(_MSC_VER)
   template <typename S, typename T> S lexical_cast(T& i) { throw std::overflow_error(""); }
   template <> std::string lexical_cast<std::string>(signed char& i) { return std::to_string(i); }
   template <> std::string lexical_cast<std::string>(unsigned char& i) { return std::to_string(i); }
@@ -27,18 +26,6 @@ namespace std {
   template <> std::string lexical_cast<std::string>(long long&& i) { return std::to_string(i); }
   template <> std::string lexical_cast<std::string>(unsigned long long&& i) { return std::to_string(i); }
   template <> std::string lexical_cast<std::string>(bool&& b) { return b ? STD_TURE : STD_FALSE; }
-#else
-  template <typename S, typename T> S lexical_cast(T&& i) { throw std::overflow_error(""); }
-  template <> std::string lexical_cast<std::string>(signed char&& i) { return std::to_string(std::forward<signed char>(i)); }
-  template <> std::string lexical_cast<std::string>(unsigned char&& i) { return std::to_string(std::forward<unsigned char>(i)); }
-  template <> std::string lexical_cast<std::string>(short&& i) { return std::to_string(std::forward<short>(i)); }
-  template <> std::string lexical_cast<std::string>(unsigned short&& i) { return std::to_string(std::forward<unsigned short>(i)); }
-  template <> std::string lexical_cast<std::string>(int&& i) { return std::to_string(std::forward<int>(i)); }
-  template <> std::string lexical_cast<std::string>(unsigned int&& i) { return std::to_string(std::forward<unsigned int>(i)); }
-  template <> std::string lexical_cast<std::string>(long long&& i) { return std::to_string(std::forward<long long>(i)); }
-  template <> std::string lexical_cast<std::string>(unsigned long long&& i) { return std::to_string(std::forward<unsigned long long>(i)); }
-  template <> std::string lexical_cast<std::string>(bool&& b) { return std::forward<bool>(b) ? STD_TURE : STD_FALSE; }
-#endif
   static unsigned long STD_POW[] = {
 	1,
 	10,

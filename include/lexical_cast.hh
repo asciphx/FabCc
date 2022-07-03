@@ -7,6 +7,9 @@
 namespace std {
 #if defined(_MSC_VER)
 #define _INLINE __forceinline
+#else
+#define _INLINE inline
+#endif
   template <typename S, typename T> _INLINE S lexical_cast(T& i);
   template <> _INLINE std::string lexical_cast<std::string>(signed char& i);
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char& i);
@@ -17,9 +20,6 @@ namespace std {
   template <> _INLINE std::string lexical_cast<std::string>(long long& i);
   template <> _INLINE std::string lexical_cast<std::string>(unsigned long long& i);
   template <> _INLINE std::string lexical_cast<std::string>(bool& b);
-#else
-#define _INLINE inline
-#endif
   template <typename S, typename T> _INLINE S lexical_cast(T&& i);
   template <> _INLINE std::string lexical_cast<std::string>(signed char&& i);
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char&& i);

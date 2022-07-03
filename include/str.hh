@@ -30,7 +30,7 @@ template<typename T> inline const char* ObjName() {
   else { while (*s < 0x3a && *s++ != 0x24) {}; return s; }
 }
 template<typename T, typename U> inline uint64_t ObjLink() {//*s > 0x5e ? *s - 0x5f : 
-  const char* s = typeid(T).name(), * c = typeid(U).name(); unsigned long long r = 0; if constexpr (_IS_WIN) {
+  const char* s = typeid(T).name(), * c = typeid(U).name(); unsigned long long r = 0; if constexpr (_WIN32) {
     while (*++s != 0x20); while (*++c != 0x20); for (; *++s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12);
     for (; *++c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12);
   }

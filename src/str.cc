@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
+#include <cstring>
 #ifdef __cplusplus
 std::string_view DecodeURL(std::string& s) {
   char* o = (char*)s.data(), * c = (char*)s.data();

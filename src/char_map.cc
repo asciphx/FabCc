@@ -19,7 +19,7 @@ namespace cc {
 	  unsigned char const* x = reinterpret_cast<unsigned char const*>(l.data());
 	  unsigned char const* y = reinterpret_cast<unsigned char const*>(r.data());
 	  unsigned long long z = sizeof(unsigned int);
-	  unsigned int m = static_cast<unsigned int>(0xDFDFDFDFDFDFDFDF & ~unsigned int{ 0 });
+	  unsigned int m = static_cast<unsigned int>(0xDFDFDFDFDFDFDFDF & ~std::uint32_t{ 0 });
 	  for (; n >= z; x += z, y += z, n -= z) {
 		unsigned int const v = x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24);
 		unsigned int const w = y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24);
