@@ -5,27 +5,6 @@
 #include <string.h>
 #pragma warning(disable:4244)
 namespace std {
-  static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
-  template <typename S, typename T> inline S lexical_cast(T& i);
-  template <> std::string lexical_cast<std::string>(signed char& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned char& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(short& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned short& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(int& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned int& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(long long& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned long long& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(bool& b) { return b ? STD_TURE : STD_FALSE; }
-  template <typename S, typename T> inline S lexical_cast(T&& i);
-  template <> std::string lexical_cast<std::string>(signed char&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned char&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(short&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned short&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(int&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned int&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(long long&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(unsigned long long&& i) { return std::to_string(i); }
-  template <> std::string lexical_cast<std::string>(bool&& b) { return b ? STD_TURE : STD_FALSE; }
   static unsigned long STD_POW[] = {
 	1,
 	10,
