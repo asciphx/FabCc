@@ -6,19 +6,20 @@
 #include <cstdlib>
 #include <cstring>
 
+static char STD_HEX[0x7e] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0,
+0, 0, 0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/url_unescape.hh
 std::string_view DecodeURL(std::string& s) {
-  char* o = (char*)s.data(), * c = (char*)s.data();
+  char* o = (char*)s.c_str(), * c = (char*)s.c_str();
   const char* e = c + s.size();
   while (c < e) {
 	if (*c == '%' && c < e - 2) {
-	  char n[3];
-	  n[0] = c[1]; n[1] = c[2]; n[2] = 0;
-	  *o = char(strtol(n, nullptr, 16));
-	  c += 2;
+	  *o = (STD_HEX[c[1]] << 4) | STD_HEX[c[2]]; c += 2;
 	} else if (o != c) *o = *c; ++o; ++c;
   }
-  return std::string_view(s.data(), o - s.data());
+  return std::string_view(s.data(), o - s.data());// 0x67
 }
 std::string& toUpperCase(std::string& s) {
   char* c = (char*)s.c_str(); if (*c > 0x60 && *c < 0x7b) { *c &= ~0x20; }
@@ -90,19 +91,19 @@ extern "C" {
   int strCmp(const char* c, const char* s) {
 	while (*s == *c && *c && *s)++c, ++s; return *c == *s ? 0 : *c > *s ? 1 : -1;
   }
-  //If not safe, it is agreed not to use static. Also means that delete or free is required
-  char* subStr(const char* c, int i, int e) {
+  //If not safe, _f
+  char* subStr_f(const char* c, int i, int e) {
 	if (e < i || i < 0)return (char*)0;
 	char* w = (char*)malloc(sizeof(char) * (e - i + 1)); int p = 0; while (i < e)w[p++] = c[i++]; w[p] = 0; return w;
   }
-  char* to8Str(unsigned long long i) {
+  char* to8Str_f(unsigned long long i) {
 	int z = 2; for (unsigned long long a = i; a > 0x7f; a -= 0x7f, a /= 0x100, ++z);
 	unsigned long long b, t = i / 0x100; b = i - t * 0x100 - 32;
 	char* w = (char*)malloc(sizeof(char) * z); w[--z] = '\0';
 	while (t > 0x7f) { w[--z] = RES_ASCII[b]; i = t; t = i / 0x100; b = i - t * 0x100 - 32; }
 	w[--z] = RES_ASCII[b]; if (z > 0) { t -= 32; w[0] = RES_ASCII[t]; } return w;
   }
-  char* to4Str(int i) {
+  char* to4Str_f(int i) {
 	int t = i / 0x100, b = i - t * 0x100 - 32, z = i > 0x7f7f7f ? 5 : i > 0x7f7f ? 4 : i > 0x7f ? 3 : 2;
 	char* w = (char*)malloc(sizeof(char) * z);  w[--z] = '\0';
 	while (t > 0x7f) { w[--z] = RES_ASCII[b]; i = t; t = i / 0x100; b = i - t * 0x100 - 32; }
