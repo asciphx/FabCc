@@ -1,4 +1,4 @@
-#include <hpp/lexical_cast.hpp>
+#include <lexical_cast.hh>
 #include <hpp/text.hpp>
 #include <char_map.hh>
 #include <time.h>
