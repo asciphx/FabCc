@@ -22,7 +22,7 @@ const static unsigned char UTF$[256] =
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
   4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-  5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 2, 2 };
+  5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7 };
 template<unsigned short I = 0x64>//Max [65534(char),16383(utf8)], Min 1, default 100.
 class text {//It is similar to a dynamic std::string_view with a fixed maximum length
   unsigned short k = 0, l = 0, u = 0; char* _ = new char[I * 4 + 3];
