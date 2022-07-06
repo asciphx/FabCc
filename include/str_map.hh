@@ -10,14 +10,14 @@ namespace cc {
 #else
 #define _INLINE inline
 #endif
-  struct char_hash {
+  struct str_hash {
 	_INLINE size_t operator()(const std::string& z);
   };
-  struct char_key_eq {
+  struct str_key_eq {
 	_INLINE bool operator()(const std::string& l, const std::string& r);
   };
-  using char_map = std::unordered_multimap<std::string, std::string, char_hash, char_key_eq>;
-  static const char_key_eq KEY_EQUALS;
+  using str_map = std::unordered_multimap<std::string, std::string, str_hash, str_key_eq>;
+  static const str_key_eq KEY_EQUALS;
 #undef _INLINE
 }
 #endif // CHAR_MAP_H

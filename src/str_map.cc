@@ -2,7 +2,7 @@
 // from https://github.com/ipkn/crow/blob/master/include/crow/ci_map.h
 // from https://github.com/boostorg/beast/blob/develop/include/boost/beast/http/impl/field.ipp
 namespace cc {
-  struct char_hash {
+  struct str_hash {
 	inline size_t operator()(const std::string& z) const {
 	  size_t r = 0, n = z.size();
 	  unsigned char const* p = reinterpret_cast<unsigned char const*>(z.c_str());
@@ -13,7 +13,7 @@ namespace cc {
 	  while (n > 0) { r = r * 5 + (*p | 0x20); ++p; --n; } return r;
 	}
   };
-  struct char_key_eq {
+  struct str_key_eq {
 	inline bool operator()(const std::string& l, const std::string& r) const {
 	  unsigned long long n = l.length(); if (n != r.length()) return false;
 	  unsigned char const* x = reinterpret_cast<unsigned char const*>(l.data());
