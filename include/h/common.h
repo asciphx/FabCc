@@ -15,34 +15,34 @@ namespace fc {
 #endif
   _INLINE std::string m2s(HTTP m) {
 	switch (m) {
-	case fc::HTTP::DEL:return "DELETE";
-	case fc::HTTP::GET:return "GET";
-	case fc::HTTP::HEAD:return "HEAD";
-	case fc::HTTP::POST:return "POST";
-	case fc::HTTP::PUT:return "PUT";
-	case fc::HTTP::CONNECT:return "CONNECT";
-	case fc::HTTP::OPTIONS:return "OPTIONS";
-	case fc::HTTP::TRACE:return "TRACE";
-	case fc::HTTP::PATCH:return "PATCH";
-	case fc::HTTP::PURGE:return "PURGE";
+	case HTTP::DEL:return "DELETE";
+	case HTTP::GET:return "GET";
+	case HTTP::HEAD:return "HEAD";
+	case HTTP::POST:return "POST";
+	case HTTP::PUT:return "PUT";
+	case HTTP::CONNECT:return "CONNECT";
+	case HTTP::OPTIONS:return "OPTIONS";
+	case HTTP::TRACE:return "TRACE";
+	case HTTP::PATCH:return "PATCH";
+	case HTTP::PURGE:return "PURGE";
 	default:return "invalid";
 	}
 	return "invalid";
   }
   _INLINE HTTP c2m(const char* m) {
 	switch (hack8Str(m)) {
-	case "DELETE"_l:return fc::HTTP::DEL;
-	case 4670804:return fc::HTTP::GET;
-	case 1212498244:return fc::HTTP::HEAD;
-	case 1347375956:return fc::HTTP::POST;
-	case 5264724:return fc::HTTP::PUT;
-	case "CONNECT"_l:return fc::HTTP::CONNECT;
-	case "OPTIONS"_l:return fc::HTTP::OPTIONS;
-	case "TRACE"_l:return fc::HTTP::TRACE;
-	case "PATCH"_l:return fc::HTTP::PATCH;
-	case "PURGE"_l:return fc::HTTP::PURGE;
+	case "DELETE"_l:return HTTP::DEL;
+	case 4670804:return HTTP::GET;
+	case 1212498244:return HTTP::HEAD;
+	case 1347375956:return HTTP::POST;
+	case 5264724:return HTTP::PUT;
+	case "CONNECT"_l:return HTTP::CONNECT;
+	case "OPTIONS"_l:return HTTP::OPTIONS;
+	case "TRACE"_l:return HTTP::TRACE;
+	case "PATCH"_l:return HTTP::PATCH;
+	case "PURGE"_l:return HTTP::PURGE;
 	}
-	return fc::HTTP::InternalMethodCount;
+	return HTTP::InternalMethodCount;
   }
 
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,

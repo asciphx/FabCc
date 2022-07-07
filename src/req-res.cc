@@ -4,8 +4,7 @@ namespace fc {
 	headers.emplace(std::move(key), std::move(value));
   }
   const std::string& Req::get_header_value(const std::string& key) const {
-	if (headers.count(key)) { return headers.find(key)->second; }
-	static std::string empty; return empty;
+	if (headers.count(key)) { return headers.find(key)->second; } return empty;
   }
   /******************************** ************************************/
   void Res::set_header(const std::string& key, std::string value) {
@@ -15,7 +14,6 @@ namespace fc {
 	headers.emplace(key, std::move(value));
   }
   const std::string& Res::get_header_value(const std::string& key) {
-	if (headers.count(key)) { return headers.find(key)->second; }
-	static std::string empty; return empty;
+	if (headers.count(key)) { return headers.find(key)->second; } return empty;
   }
 }

@@ -51,6 +51,16 @@ namespace fc {
 	//$->url_params = query_string($->raw_url);
 	$->process_message(); $->ready = true; return 0;
   }
+  const llhttp_settings_s llParser::_ = {
+	  on_message_begin,
+	  on_url,
+	  nullptr,
+	  on_header_field,
+	  on_header_value,
+	  on_headers_complete,
+	  on_body,
+	  on_message_complete
+  };
   void llParser::process_header() {
 	//handler_->handle_header();
   }
@@ -65,14 +75,4 @@ namespace fc {
 	return http_major == major && http_minor == minor;
   }
   llParser::llParser() { llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_; }
-  const llhttp_settings_s llParser::_ = {
-	  on_message_begin,
-	  on_url,
-	  nullptr,
-	  on_header_field,
-	  on_header_value,
-	  on_headers_complete,
-	  on_body,
-	  on_message_complete
-  };
 }

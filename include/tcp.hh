@@ -11,7 +11,7 @@
 #    define DEBUG(...)
 #endif
 #define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
-static unsigned char RES_PASER = 0xff;
+static unsigned char RES_PASER_IDEX = 0xff;
 namespace fc {
   class Tcp {
 	friend Conn;
@@ -21,9 +21,9 @@ namespace fc {
 	bool opened;
 	bool init();
 	bool bind(const char* ip_addr, int port, bool is_ip4 = true);
-	bool listen(int backlog = SOMAXCONN);
+	bool listen(int backlog = 0xffff);//SOMAXCONN
 	fc::llParser* getParser() {
-	_: fc::llParser* l = &parser_[++RES_PASER];
+	_: fc::llParser* l = &parser_[++RES_PASER_IDEX];
 	  if (l->ready) { l->ready = false; return l; } std::this_thread::yield(); goto _;
 	}
   public:

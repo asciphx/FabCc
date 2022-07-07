@@ -1,7 +1,7 @@
 # FabCc
 Concise, fast, practical, reactive, functional.
 ## Description
-- The namespace uses the uppercase hump FC of fabcc.
+- The namespace uses the uppercase hump fc of FabCc.
 - For the time being, it only provides the server development of Windows version based on libuv, and plans to support Linux and MAC in the future.
 ## fast_lexical_cast
 - Template functions cannot be inlined on g++ if they are not '.hpp' files
