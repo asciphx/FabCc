@@ -41,6 +41,17 @@ template<typename T, typename U> inline uint64_t ObjLink() {//*s > 0x5e ? *s - 0
   }
   return r;
 }
+constexpr unsigned long long operator""_l(const char* s, size_t /*len*/) {
+  unsigned long long r = s[0];  for (unsigned long long i = 0; ++i < 8 && s[i]; r << 8, r += s[i]); return r;
+}
+constexpr int operator""_i(const char* s, size_t /*len*/) {
+  int r = s[0]; for (int i = 0; ++i < 4 && s[i]; r << 8, r += s[i]); return r;
+}
+//You can match more strings with hackstr method, but you need to match ""_a used together
+constexpr unsigned long long operator""_a(const char* s, size_t /*len*/) {
+  unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
+  for (unsigned long long i = 0; s[++i]; r *= 0x17, r += s[i] > 0x5c ? s[i] - 0x5d : s[i] - 0x12); return r;
+}
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -59,10 +70,6 @@ extern "C" {
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
-constexpr unsigned long long operator""_l(const char* s, size_t /*len*/);
-constexpr int operator""_i(const char* s, size_t /*len*/);
-//You can match more strings with hackstr method, but you need to match ""_a used together
-constexpr unsigned long long operator""_a(const char* s, size_t /*len*/);
 
 //Basic judgment type characters supported by ccORM (with switch(hack8Str(...)))
 #if _WIN32

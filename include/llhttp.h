@@ -387,44 +387,6 @@ struct llhttp_settings_s {
   llhttp_cb      on_header_value_complete;
 };
 
-/* Initialize the parser with specific type and user settings.
- *
- * NOTE: lifetime of `settings` has to be at least the same as the lifetime of
- * the `parser` here. In practice, `settings` has to be either a static
- * variable or be allocated with `malloc`, `new`, etc.
- */
-LLHTTP_EXPORT
-void llhttp_init(llhttp_t* parser, llhttp_type_t type,
-                 const llhttp_settings_t* settings);
-
-#if defined(__wasm__)
-
-LLHTTP_EXPORT
-llhttp_t* llhttp_alloc(llhttp_type_t type);
-
-LLHTTP_EXPORT
-void llhttp_free(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_type(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_http_major(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_http_minor(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_method(llhttp_t* parser);
-
-LLHTTP_EXPORT
-int llhttp_get_status_code(llhttp_t* parser);
-
-LLHTTP_EXPORT
-uint8_t llhttp_get_upgrade(llhttp_t* parser);
-
-#endif  // defined(__wasm__)
-
 /* Reset an already initialized parser back to the start state, preserving the
  * existing parser type, callback settings, user data, and lenient flags.
  */
