@@ -5,31 +5,30 @@
 #include <stdio.h>
 #include <conn.hh>
 #include <parser.hh>
-#if _DEBUG
-#    define DEBUG printf
-#else
-#    define DEBUG(...)
-#endif
-#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
+
 static unsigned char RES_PASER_IDEX = 0xff;
 namespace fc {
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
 	uv_loop_t* loop_;
+	sockaddr_storage addr_;
 	fc::llParser parser_[256];
+	int port_ = 8080;//默认端口
+	int addr_len;
 	bool opened;
+	bool is_ipv6;
 	bool init();
-	bool bind(const char* ip_addr, int port, bool is_ip4 = true);
+	bool bind(const char* ip_addr, int port, bool is_ipv4 = true);
 	bool listen(int backlog = 0xffff);//SOMAXCONN
-	fc::llParser* getParser() {
+	_INLINE fc::llParser* getParser() {
 	_: fc::llParser* l = &parser_[++RES_PASER_IDEX];
 	  if (l->ready) { l->ready = false; return l; } std::this_thread::yield(); goto _;
 	}
   public:
 	Tcp(uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
-	bool Start(const char* ip_addr, int port);//默认ipv4
+	bool Start(const char* ip_addr, int port = 0);//默认ipv4
 	bool setTcpNoDelay(bool enable);
 	void test(); void exit();
 	//待实现

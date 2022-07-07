@@ -10,7 +10,7 @@
 //It depends on your personal situation to balance the development speed and compilation speed.
 //Do not refer to another 'lexical_cast.hh' file repeatedly
 namespace std {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
 #else
 #define _INLINE inline

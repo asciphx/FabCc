@@ -5,14 +5,15 @@
 #include <algorithm>
 #include <llhttp.h>
 #include <h/common.h>
-// from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 
+// from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 namespace fc {
   struct llParser: public llhttp__internal_s {
 	llParser();
 	void process_header();
 	void process_message();
 	bool check_version(unsigned char major, unsigned char minor) const;
+	void set_type(llhttp_type t = llhttp_type::HTTP_REQUEST);
 	std::string raw_url;
 	std::string url;
 	char header_building_state;

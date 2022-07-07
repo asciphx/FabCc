@@ -1,5 +1,5 @@
-#ifndef REQRES_H
-#define REQRES_H
+#ifndef REQRES_HH
+#define REQRES_HH
 #include <functional>
 #include <h/common.h>
 
@@ -14,7 +14,7 @@ namespace fc {
 	std::string body;
 	std::string ip_addr;
 	void add_header(std::string key, std::string value);
-	const std::string& get_header_value(const std::string& key) const;
+	const std::string& get_header(const std::string& key) const;
   };// request
 
   class Res {
@@ -30,8 +30,8 @@ namespace fc {
 	std::string body;
 	void set_header(const std::string& key, std::string value);
 	void add_header(const std::string& key, std::string value);
-	const std::string& get_header_value(const std::string& key);
+	const std::string& get_header(const std::string& key);
   };// response
 }
 
-#endif // REQRES_H
+#endif // REQRES_HH

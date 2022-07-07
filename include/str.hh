@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STR_HH
+#define STR_HH
 #include <ctime>
 #include <string>
 #include <string_view>
@@ -121,3 +122,5 @@ namespace fc {
 #define T_STRING_ 'c'
 #define T_POINTER_ '*'
 #define T_VECTOR_ '_'
+
+#endif

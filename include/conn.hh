@@ -5,12 +5,13 @@
 #include <parser.hh>
 #include <req-res.hh>
 
-#define BUF_SIZE 128 * 1024
+#define BUF_SIZE 50 * 1024
 namespace fc {
   class Conn {
   public:
 	unsigned short id;
 	Req request_;
+	Res response_;
 	fc::llParser* parser_;
 	uv_write_t _;
 	uv_buf_t buf;

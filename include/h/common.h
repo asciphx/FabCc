@@ -3,16 +3,22 @@
 #include <string>
 #include <str_map.hh>
 #include <str.hh>
-namespace fc {
-  //static std::string_view expect_100_continue("HTTP/1.1 100 Continue\r\n\r\n", 25);
-  enum class HTTP {
-	DEL = 0, GET, HEAD, POST, PUT, CONNECT, OPTIONS, TRACE, PATCH = 28, PURGE, InternalMethodCount
-  };
 #if defined(_MSC_VER)
 #define _INLINE __forceinline
 #else
 #define _INLINE inline
 #endif
+#if _DEBUG
+#    define DEBUG printf
+#else
+#    define DEBUG(...)
+#endif
+#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
+namespace fc {
+  //static std::string_view expect_100_continue("HTTP/1.1 100 Continue\r\n\r\n", 25);
+  enum class HTTP {
+	DEL = 0, GET, HEAD, POST, PUT, CONNECT, OPTIONS, TRACE, PATCH = 28, PURGE, InternalMethodCount
+  };
   _INLINE std::string m2s(HTTP m) {
 	switch (m) {
 	case HTTP::DEL:return "DELETE";
@@ -48,6 +54,5 @@ namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,
 	RES_Loc("Location", 8), Res_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
 	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5);
-#undef _INLINE
 }
 #endif // COMMON_H
