@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <llhttp.h>
 #include <h/common.h>
-
 // from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 namespace fc {
   struct llParser: public llhttp__internal_s {
@@ -22,7 +21,7 @@ namespace fc {
 	str_map headers;
 	//fc::query_string url_params;
 	std::string body;
-	bool keep_alive;
+	bool keep_alive, close_conn;
 	bool ready = true;
 	const static llhttp_settings_s _;
   };

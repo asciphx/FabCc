@@ -14,11 +14,11 @@ namespace fc {
 	std::string body;
 	std::string ip_addr;
 	void add_header(std::string key, std::string value);
-	const std::string& get_header(const std::string& key) const;
   };// request
 
   class Res {
 	friend class fc::Conn;
+	friend class fc::Tcp;
 	str_map headers;
 	std::string path_;
 	int is_file{ 0 };

@@ -4,6 +4,8 @@
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。
 - 暫時只提供了基於libuv的windows版本的服務端開發，後續打算支持linux，mac。
+- 暫時由于buffer需要缓冲，所以得先刷新几次页面预热，才能测试，因此需要进行线程池改造，但会更加复杂。
+- ![单线程测试](./single_core_test.jpg)
 
 ## fast_lexical_cast
 - 模板函数若不是'.hpp'文件则无法在g++上无法内联

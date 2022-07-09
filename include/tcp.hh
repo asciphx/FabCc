@@ -3,17 +3,23 @@
 #include <map>
 #include <thread>
 #include <stdio.h>
+#include <atomic>
+#include <future>
+#include <chrono>
 #include <conn.hh>
 #include <parser.hh>
+#include <h/common.h>
+#include <h/config.h>
 
-static unsigned char RES_PASER_IDEX = 0xff;
 namespace fc {
+  static unsigned char RES_PASER_IDEX = 0xff;
+  static fc::llParser parser_[256];
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
 	uv_loop_t* loop_;
 	sockaddr_storage addr_;
-	fc::llParser parser_[256];
+	unsigned char num = 1;
 	int port_ = 8080;//默认端口
 	int addr_len;
 	bool opened;
@@ -25,11 +31,13 @@ namespace fc {
 	_: fc::llParser* l = &parser_[++RES_PASER_IDEX];
 	  if (l->ready) { l->ready = false; return l; } std::this_thread::yield(); goto _;
 	}
+	static void set_status(Conn* co, uint16_t status);
   public:
 	Tcp(uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
 	bool Start(const char* ip_addr, int port = 0);//默认ipv4
 	bool setTcpNoDelay(bool enable);
+	void thread(unsigned char n = std::thread::hardware_concurrency());
 	void test(); void exit();
 	//待实现
 	void close();

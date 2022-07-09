@@ -2,7 +2,6 @@
 #define LEXICAL_CAST_HPP
 #include <type_traits>
 #include <string>
-#include <string_view>
 #include <stdexcept>
 #include <string.h>
 #pragma warning(disable:4244)

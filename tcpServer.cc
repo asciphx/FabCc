@@ -1,4 +1,5 @@
 #include <tcp.hh>
+#include <iostream>
 void main() {
   fc::Tcp srv;
   //启动服务器
