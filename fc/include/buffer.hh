@@ -4,7 +4,7 @@
 #include <h/common.h>
 #include <lexical_cast.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
-namespace cc {
+namespace fc {
   struct Buffer {
 	Buffer();
 	Buffer(Buffer&& o);
@@ -19,8 +19,16 @@ namespace cc {
 	Buffer& operator<<(std::string_view s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
-	inline Buffer& append(const char c);
-	inline Buffer& assign(const char* s, const char* e);
+	_INLINE Buffer& Buffer::operator<<(std::string s) {
+	  return operator<<(std::string_view(s.data(), s.size()));
+	};
+	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
+	_INLINE Buffer& Buffer::assign(const char* s, const char* e) {
+	  size_t l = e - s;
+	  if (cursor_ + l >= end_) flush();
+	  for (unsigned short i = 0xffff; ++i < l; *cursor_ = s[i], ++cursor_);
+	  return *this;
+	}
 	Buffer& operator<<(std::size_t v);
 	// template <typename I>
 	// Buffer& operator<<(unsigned long s)

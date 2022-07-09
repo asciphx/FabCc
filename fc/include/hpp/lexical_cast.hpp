@@ -498,6 +498,5 @@ namespace std {
 	t.tm_mon = month - 1;
 	return t;
   }
-  #undef _INLINE
 }
 #endif // LEXICAL_CAST_HPP

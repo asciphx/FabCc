@@ -55,45 +55,56 @@ namespace fc {
 	if (nread > 0) {
 	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
-	 // if(co->parser_.keep_alive){
-		//printf("keep-alive!");
-	 // }
+	  // if(co->parser_.keep_alive){
+		 //printf("keep-alive!");
+	  // }
 	  Req* req = &co->req_; req->method = static_cast<HTTP>(co->parser_.method);
 	  req->url = std::move(co->parser_.url); req->raw_url = std::move(co->parser_.raw_url);
 	  req->body = std::move(co->parser_.body); req->headers = std::move(co->parser_.headers);
-	  co->buf_.reserve(0xff);
-	  //printf("[%s]", co->req_.raw_url.c_str());
+
+	  Buffer b; //printf("[%s]", co->req_.raw_url.c_str());
 	  if (co->parser_.http_major == 1 && co->parser_.http_minor == 1 &&
-		get_header(co->parser_.headers, RES_Ex) == "100-continue") co->buf_ += expect_100_continue;
+		get_header(co->parser_.headers, RES_Ex) == "100-continue") b << expect_100_continue;//co->buf_ += expect_100_continue;
 	  co->res_.body = "<html>hello world!</html>";
 	  set_status(co, 200);
+	  b << Res_http_status << co->status_;
 	  co->buf_ += Res_http_status; co->buf_ += co->status_;
 #ifdef AccessControlAllowCredentials
-	  co->buf_ += RES_AcC; co->buf_ += AccessControlAllowCredentials; co->buf_ += Res_crlf;
+	  b << RES_AcC << AccessControlAllowCredentials << Res_crlf;
+	  //co->buf_ += RES_AcC; co->buf_ += AccessControlAllowCredentials; co->buf_ += Res_crlf;
 #endif
 #ifdef AccessControlAllowHeaders
-	  co->buf_ += RES_AcH; co->buf_ += AccessControlAllowHeaders; co->buf_ += Res_crlf;
+	  b << RES_AcH << AccessControlAllowHeaders << Res_crlf;
+	  //co->buf_ += RES_AcH; co->buf_ += AccessControlAllowHeaders; co->buf_ += Res_crlf;
 #endif
 #ifdef AccessControlAllowMethods
-	  co->buf_ += RES_AcM; co->buf_ += AccessControlAllowMethods; co->buf_ += Res_crlf;
+	  b << RES_AcM << AccessControlAllowMethods << Res_crlf;
+	  //co->buf_ += RES_AcM; co->buf_ += AccessControlAllowMethods; co->buf_ += Res_crlf;
 #endif
 #ifdef AccessControlAllowOrigin
-	  co->buf_ += RES_AcO; co->buf_ += AccessControlAllowOrigin; co->buf_ += Res_crlf;
+	  b << RES_AcO << AccessControlAllowOrigin << Res_crlf;
+	  //co->buf_ += RES_AcO; co->buf_ += AccessControlAllowOrigin; co->buf_ += Res_crlf;
 #endif
 	  if (!co->res_.headers.count(RES_CT)) {
-		co->buf_ += RES_CT; co->buf_ += Res_seperator; co->buf_ += RES_Txt; co->buf_ += Res_crlf;
+		b << RES_CT << Res_seperator << RES_Txt << Res_crlf;
+		//co->buf_ += RES_CT; co->buf_ += Res_seperator; co->buf_ += RES_Txt; co->buf_ += Res_crlf;
 	  }
-	  co->buf_ += Res_content_length_tag;//这个长度必须与body对应，不然压缩后会出现延迟
-	  co->buf_ += std::to_string(co->res_.body.size()); co->buf_ += Res_crlf;
+	  b << Res_content_length_tag << co->res_.body.size() << Res_crlf;
+	  //co->buf_ += Res_content_length_tag;
+	  //co->buf_ += std::to_string(co->res_.body.size()); co->buf_ += Res_crlf;
 #if SHOW_SERVER_NAME
-	  co->buf_ += Res_server_tag; co->buf_ += SERVER_NAME; co->buf_ += Res_crlf;
+	  b << Res_server_tag << SERVER_NAME << Res_crlf;
+	  //co->buf_ += Res_server_tag; co->buf_ += SERVER_NAME; co->buf_ += Res_crlf;
 #endif
-	  co->buf_ += Res_crlf;
-	  co->buf_ += co->res_.body;
+	  b << Res_crlf;
+	  //co->buf_ += Res_crlf;
+	  co->buf_ = b.to_string_view();
+	  co->buf_ += std::move(co->res_.body);
 	  //DEBUG("客户端：%d %s \n", co->id, co->buf_.c_str());
 	  uv_buf_t wbuf = uv_buf_init(co->buf_.data(), co->buf_.size());
 	  int r = uv_write(&co->_, h, &wbuf, 1, NULL);
 	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+	  //co->buf_.clear();
 	} else if (nread < 0) {
 	  // if (nread == UV_EOF) {
 		 //DEBUG("客户id(%d)断开\n", co->id);
@@ -110,7 +121,7 @@ namespace fc {
 	Conn* co = (Conn*)wr; if (status) { uv_close((uv_handle_t*)co->ptr_, on_close); return; };
   }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested_size, uv_buf_t* b) {
-	Conn* c = (Conn*)h->data; if (c != nullptr) * b = c->rbuf;
+	Conn* c = (Conn*)h->data; if (c != nullptr) *b = c->rbuf;
   }
   void Tcp::on_exit(uv_handle_t* h) {}
   void Tcp::on_close(uv_handle_t* h) {

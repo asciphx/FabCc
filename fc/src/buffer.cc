@@ -1,6 +1,6 @@
 #include <buffer.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
-namespace cc {
+namespace fc {
   Buffer::Buffer(): buffer_(new char[999]), own_buffer_(true), cursor_(buffer_), end_(buffer_ + 999),
 	flush_([this](const char* d, int s) { *this << std::string_view(d, s); }), cap_(999) {}
   Buffer::Buffer(Buffer&& o)
@@ -50,13 +50,6 @@ namespace cc {
   Buffer& Buffer::operator<<(char v) {
 	cursor_[0] = v;
 	cursor_++;
-	return *this;
-  }
-  Buffer& Buffer::append(const char c) { return (*this) << c; }
-  Buffer& Buffer::assign(const char* s, const char* e) {
-	size_t l = e - s;
-	if (cursor_ + l >= end_) flush();
-	for (int i = -1; ++i < l; *cursor_ = s[i], ++cursor_);
 	return *this;
   }
   Buffer& Buffer::operator<<(std::size_t v) {

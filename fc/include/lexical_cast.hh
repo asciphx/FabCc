@@ -36,7 +36,7 @@ namespace std {
   template <> _INLINE std::string lexical_cast<std::string>(double&& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(float&& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(long double&& f) { return std::to_string(f); }
-#undef _INLINE
+//#undef _INLINE
   template <typename T> T lexical_cast(const char* c);
   template <> std::string lexical_cast<std::string>(const char* c);
   template <> [[nodiscard]] bool lexical_cast<bool>(const char* c);
