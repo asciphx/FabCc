@@ -7,11 +7,11 @@ if (MSVC)
 else ()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
 endif ()
-include_directories(${PROJECT_SOURCE_DIR}/include)#添加掃描的頭文件目錄
-aux_source_directory(${PROJECT_SOURCE_DIR}/src cc_files)#添加需要生成庫的源文件目錄
+include_directories(${PROJECT_SOURCE_DIR}/fc/include)#添加掃描的頭文件目錄
+aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src cc_files)#添加需要生成庫的源文件目錄
 
 if (MSVC)
-aux_source_directory(${PROJECT_SOURCE_DIR}/src/c c_files)
+aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src/c c_files)
 add_library(Fab STATIC ${cc_files} ${c_files})
 include_directories(${PROJECT_SOURCE_DIR}/hh)
 set( FabCc_LIBRARIES
@@ -36,7 +36,7 @@ set( FabCc_LIBRARIES
 Fab
 )
 add_executable(FabCc w.cc
-#${PROJECT_SOURCE_DIR}/src/lexical_cast.cc
+#${PROJECT_SOURCE_DIR}/fc/src/lexical_cast.cc
 )
 endif ()
 target_link_libraries( FabCc ${FabCc_LIBRARIES})

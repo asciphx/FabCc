@@ -19,7 +19,7 @@
  #define ALIGN(n) __attribute__((aligned(n)))
 #endif  /* _MSC_VER */
 
-#include "llhttp.h"
+#include "h/llhttp.h"
 
 typedef int (*llhttp__internal__span_cb)(
              llhttp__internal_t*, const char*, const char*);
@@ -7693,7 +7693,7 @@ int llhttp__internal_execute(llhttp__internal_t* state, const char* p, const cha
  #define ALIGN(n) __attribute__((aligned(n)))
 #endif  /* _MSC_VER */
 
-#include "llhttp.h"
+#include "h/llhttp.h"
 
 typedef int (*llhttp__internal__span_cb)(
              llhttp__internal_t*, const char*, const char*);

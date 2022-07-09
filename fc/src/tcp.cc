@@ -31,13 +31,11 @@ namespace fc {
 	case 202:co->status_ = "202 Accepted\r\n"; break;
 	case 203:co->status_ = "203 Non-Authoritative Information\r\n"; break;
 	case 204:co->status_ = "204 No Content\r\n"; break;
-
 	case 301:co->status_ = "301 Moved Permanently\r\n"; break;
 	case 302:co->status_ = "302 Found\r\n"; break;
 	case 303:co->status_ = "303 See Other\r\n"; break;
 	case 304:co->status_ = "304 Not Modified\r\n"; break;
 	case 307:co->status_ = "307 Temporary redirect\r\n"; break;
-
 	case 400:co->status_ = "400 Bad Request\r\n"; co->res_.body = co->status_; break;
 	case 401:co->status_ = "401 Unauthorized\r\n"; co->res_.body = co->status_; break;
 	case 402:co->status_ = "402 Payment Required\r\n"; co->res_.body = co->status_; break;
@@ -45,68 +43,50 @@ namespace fc {
 	case 405:co->status_ = "405 HTTP verb used to access this page is not allowed\r\n"; co->res_.body = co->status_; break;
 	case 406:co->status_ = "406 Browser does not accept the MIME type of the requested page\r\n"; co->res_.body = co->status_; break;
 	case 409:co->status_ = "409 Conflict\r\n"; co->res_.body = co->status_; break;
-
 	case 500:co->status_ = "500 Internal Server Error\r\n"; break;
 	case 501:co->status_ = "501 Not Implemented\r\n"; co->res_.body = co->status_; break;
 	case 502:co->status_ = "502 Bad Gateway\r\n"; co->res_.body = co->status_; break;
 	case 503:co->status_ = "503 Service Unavailable\r\n"; co->res_.body = co->status_; break;
-
-	default:co->status_ = "404 Not Found\r\n"; co->res_.body = co->status_; break;
+	default:co->status_ = "404 Not Found\r\n"; co->res_.body = co->status_; co->res_.code = 404; break;
 	}
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* co = (Conn*)h->data; if (co == nullptr) return;
 	if (nread > 0) {
-	  bool failed = llhttp__internal_execute(co->parser_, buf->base, buf->base + nread);
-	  if (failed) { uv_close((uv_handle_t*)co->ptr_, on_close); return; }
-	  //uv_read_stop(h);
-	  Req* req = &co->req_;
-	  req->method = static_cast<HTTP>(co->parser_->method);
-	  req->url = std::move(co->parser_->url);
-	  req->raw_url = std::move(co->parser_->raw_url);
-	  req->body = std::move(co->parser_->body);
-	  req->headers = std::move(co->parser_->headers);
+	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
+	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
+	 // if(co->parser_.keep_alive){
+		//printf("keep-alive!");
+	 // }
+	  Req* req = &co->req_; req->method = static_cast<HTTP>(co->parser_.method);
+	  req->url = std::move(co->parser_.url); req->raw_url = std::move(co->parser_.raw_url);
+	  req->body = std::move(co->parser_.body); req->headers = std::move(co->parser_.headers);
 	  co->buf_.reserve(0xff);
 	  //printf("[%s]", co->req_.raw_url.c_str());
-	  if (co->parser_->http_major == 1 && co->parser_->http_minor == 1 &&
-		get_header(co->parser_->headers, RES_Ex) == "100-continue") {
-		co->buf_ += expect_100_continue;
-	  }
+	  if (co->parser_.http_major == 1 && co->parser_.http_minor == 1 &&
+		get_header(co->parser_.headers, RES_Ex) == "100-continue") co->buf_ += expect_100_continue;
 	  co->res_.body = "<html>hello world!</html>";
 	  set_status(co, 200);
-	  co->buf_ += Res_http_status;
-	  co->buf_ += co->status_;
+	  co->buf_ += Res_http_status; co->buf_ += co->status_;
 #ifdef AccessControlAllowCredentials
-	  co->buf_ += RES_AcC;
-	  co->buf_ += AccessControlAllowCredentials;
-	  co->buf_ += Res_crlf;
+	  co->buf_ += RES_AcC; co->buf_ += AccessControlAllowCredentials; co->buf_ += Res_crlf;
 #endif
 #ifdef AccessControlAllowHeaders
-	  co->buf_ += RES_AcH;
-	  co->buf_ += AccessControlAllowHeaders;
-	  co->buf_ += Res_crlf;
+	  co->buf_ += RES_AcH; co->buf_ += AccessControlAllowHeaders; co->buf_ += Res_crlf;
 #endif
 #ifdef AccessControlAllowMethods
-	  co->buf_ += RES_AcM;
-	  co->buf_ += AccessControlAllowMethods;
-	  co->buf_ += Res_crlf;
+	  co->buf_ += RES_AcM; co->buf_ += AccessControlAllowMethods; co->buf_ += Res_crlf;
 #endif
 #ifdef AccessControlAllowOrigin
-	  co->buf_ += RES_AcO;
-	  co->buf_ += AccessControlAllowOrigin;
-	  co->buf_ += Res_crlf;
+	  co->buf_ += RES_AcO; co->buf_ += AccessControlAllowOrigin; co->buf_ += Res_crlf;
 #endif
 	  if (!co->res_.headers.count(RES_CT)) {
-		co->buf_ += RES_CT; co->buf_ += Res_seperator;
-		co->buf_ += RES_Txt; co->buf_ += Res_crlf;
+		co->buf_ += RES_CT; co->buf_ += Res_seperator; co->buf_ += RES_Txt; co->buf_ += Res_crlf;
 	  }
 	  co->buf_ += Res_content_length_tag;//这个长度必须与body对应，不然压缩后会出现延迟
-	  co->buf_ += std::to_string(co->res_.body.size());
-	  co->buf_ += Res_crlf;
+	  co->buf_ += std::to_string(co->res_.body.size()); co->buf_ += Res_crlf;
 #if SHOW_SERVER_NAME
-	  co->buf_ += Res_server_tag;
-	  co->buf_ += SERVER_NAME;
-	  co->buf_ += Res_crlf;
+	  co->buf_ += Res_server_tag; co->buf_ += SERVER_NAME; co->buf_ += Res_crlf;
 #endif
 	  co->buf_ += Res_crlf;
 	  co->buf_ += co->res_.body;
@@ -123,20 +103,21 @@ namespace fc {
 		 //DEBUG("name: %s err: %s\n", uv_err_name(nread), uv_strerror(nread));
 	  // }
 	  uv_close((uv_handle_t*)co->ptr_, on_close);
-	  //if(co->parser_->keep_alive){
-	  //}
 	  //if (!uv_is_active((uv_handle_t*)co->ptr_))// uv_read_stop((uv_stream_t*)co->ptr_);
 	}
   }
+  void Tcp::write_cb(uv_write_t* wr, int status) {
+	Conn* co = (Conn*)wr; if (status) { uv_close((uv_handle_t*)co->ptr_, on_close); return; };
+  }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested_size, uv_buf_t* b) {
-	Conn* c = (Conn*)h->data; if (c != nullptr) *b = c->rbuf; else c->rbuf.base = nullptr, c->rbuf.len = 0;
+	Conn* c = (Conn*)h->data; if (c != nullptr) * b = c->rbuf;
   }
   void Tcp::on_exit(uv_handle_t* h) {}
   void Tcp::on_close(uv_handle_t* h) {
 	Conn* c = (Conn*)h->data; DEBUG("客户端：%d 关闭！ \n", c->id); delete c;
   }
   void Tcp::on_connection(uv_stream_t* srv, int status) {
-	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn(tcp->getParser());
+	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn();
 	int $ = uv_tcp_init(tcp->loop_, co->ptr_); if ($) { delete co; return; }
 	$ = uv_accept((uv_stream_t*)&tcp->_, (uv_stream_t*)co->ptr_);
 	if ($) { uv_close((uv_handle_t*)co->ptr_, NULL); delete co; return; }

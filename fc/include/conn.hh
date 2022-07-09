@@ -13,12 +13,12 @@ namespace fc {
 	unsigned short id;
 	Req req_;
 	Res res_;
-	fc::llParser* parser_;
+	fc::llParser parser_;
 	uv_buf_t rbuf;
 	uv_tcp_t* ptr_;
 	std::string buf_;
 	const char* status_ = "404 Not Found\r\n";
-	Conn(fc::llParser* p);
+	Conn();
 	virtual ~Conn();
   };
 }

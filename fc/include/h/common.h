@@ -1,12 +1,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <string>
-#if _WIN32
 #if _HAS_CXX17==0 || !defined(_HAS_CXX17)
 #    define string_view string
 #else
 #include <string_view>
-#endif
 #endif
 #include <str_map.hh>
 #include <str.hh>

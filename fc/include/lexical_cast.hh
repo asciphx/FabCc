@@ -2,7 +2,6 @@
 #define LEXICAL_CAST_H
 #include <type_traits>
 #include <string>
-#include <string_view>
 #include <stdexcept>
 namespace std {
 #if defined(_MSC_VER)
