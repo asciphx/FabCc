@@ -22,14 +22,14 @@ namespace fc {
 	return std::string_view(s.data(), o - s.data());// 0x67
   }
   std::string DecodeURL(const char* d) {
-	std::string s(d); char* o = (char*)s.c_str(), * c = (char*)s.c_str();
-	const char* e = c + s.size();
+	std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
+	const char* e = c + s.length();
 	while (c < e) {
 	  if (*c == '%' && c < e - 2) {
 		*o = (STD_HEX[c[1]] << 4) | STD_HEX[c[2]]; c += 2;
 	  } else if (o != c) *o = *c; ++o; ++c;
 	}
-	return std::string(s.data(), o - s.data());// 0x67
+	return std::string(s.c_str(), o - s.c_str());// 0x67
   }
   std::string& toUpperCase(std::string& s) {
 	char* c = (char*)s.c_str(); if (*c > 0x60 && *c < 0x7b) { *c &= ~0x20; }

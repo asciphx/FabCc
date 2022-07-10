@@ -11,7 +11,7 @@
 #include <h/common.h>
 #include <h/config.h>
 #include <buffer.hh>
-
+static std::atomic<unsigned char> RES_IDEX = 0xff;
 namespace fc {
   class Tcp {
 	friend Conn;
@@ -27,12 +27,13 @@ namespace fc {
 	bool bind(const char* ip_addr, int port, bool is_ipv4 = true);
 	bool listen(int backlog = 0xffff);//SOMAXCONN
 	static void set_status(Conn* co, uint16_t status);
+	App* app_;
   public:
-	Tcp(uv_loop_t* loop = uv_default_loop());
+	Tcp(App* app, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
-	bool Start(const char* ip_addr, int port = 0);//默认ipv4
-	bool setTcpNoDelay(bool enable);
-	void thread(unsigned char n = std::thread::hardware_concurrency());
+	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);//默认ipv4
+	Tcp& setTcpNoDelay(bool enable);
+	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());
 	void exit();
 	void close();//待实现
   protected:

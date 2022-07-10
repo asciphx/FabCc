@@ -4,8 +4,9 @@
 #include <string>
 #include <parser.hh>
 #include <req-res.hh>
+#include <app.hh>
 
-#define BUF_SIZE 50 * 1024
+#define BUF_SIZE 500 * 1024
 namespace fc {
   class Conn {
   public:
@@ -13,13 +14,15 @@ namespace fc {
 	unsigned short id;
 	Req req_;
 	Res res_;
-	fc::llParser parser_;
-	uv_buf_t rbuf;
-	uv_tcp_t* ptr_;
-	std::string buf_;
-	const char* status_ = "404 Not Found\r\n";
+	App* app_;
 	Conn();
+	uv_buf_t rbuf;
+	uv_tcp_t ptr_;
+	std::string buf_;
+	fc::llParser parser_;
+	const char* status_ = "404 Not Found\r\n";
 	virtual ~Conn();
+	bool ready = true;
   };
 }
 #endif // CONN_HH

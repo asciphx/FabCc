@@ -37,7 +37,7 @@ namespace fc {
 	reset();
   }
   std::size_t Buffer::size() { return cursor_ - buffer_; }
-  void Buffer::resize(unsigned short i) { cap_ = i; }
+  void Buffer::reserve(unsigned short i) { cap_ = i; delete[] buffer_; buffer_ = new char[cap_]; cursor_ = buffer_; end_ = buffer_ + cap_; }
   Buffer& Buffer::operator<<(std::string_view s) {
 	if (cursor_ + s.size() >= end_) flush();
 	//assert(cursor_ + s.size() < end_);

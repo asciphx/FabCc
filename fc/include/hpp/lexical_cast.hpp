@@ -11,7 +11,7 @@
 namespace std {
 #if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
-#else
+#elif !defined(_INLINE)
 #define _INLINE inline
 #endif
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);

@@ -9,6 +9,7 @@ namespace fc {
 	friend class fc::Tcp;
 	HTTP method;
 	std::string raw_url;
+  public:
 	std::string url;
 	str_map headers;
 	std::string body;
@@ -31,6 +32,8 @@ namespace fc {
 	void set_header(const std::string& key, std::string value);
 	void add_header(const std::string& key, std::string value);
 	const std::string& get_header(const std::string& key);
+	void write(const std::string& body_part);
+	void end();
   };// response
 }
 

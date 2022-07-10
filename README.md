@@ -1,5 +1,5 @@
 # FabCc
-Concise, fast, practical, reactive, functional.
+Concise, fast, practical, reactive, functional. Inspired by other well-known c++ web frameworks.
 ## Description
 - The namespace uses the uppercase hump fc of FabCc.
 - For the time being, it only provides the server development of Windows version based on libuv, and plans to support Linux and MAC in the future.

@@ -30,7 +30,7 @@ void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 	memcpy(req->buf.base, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nhello world\n", 78);
 	uv_write((uv_write_t*)req, stream, &req->buf, 1, echo_write);
   }
-  if (buf->base != NULL) {
+  if (buf->base != nullptr) {
 	free(buf->base);
   }
 }

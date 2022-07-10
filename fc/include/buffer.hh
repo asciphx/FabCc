@@ -15,7 +15,7 @@ namespace fc {
 	Buffer& operator=(Buffer&& o);
 	void reset(); void clear(); void flush();
 	std::size_t size();
-	void resize(unsigned short i);
+	void reserve(unsigned short i);
 	Buffer& operator<<(std::string_view s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);

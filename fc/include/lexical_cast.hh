@@ -4,9 +4,9 @@
 #include <string>
 #include <stdexcept>
 namespace std {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
-#else
+#elif !defined(_INLINE)
 #define _INLINE inline
 #endif
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
@@ -36,7 +36,7 @@ namespace std {
   template <> _INLINE std::string lexical_cast<std::string>(double&& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(float&& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(long double&& f) { return std::to_string(f); }
-//#undef _INLINE
+
   template <typename T> T lexical_cast(const char* c);
   template <> std::string lexical_cast<std::string>(const char* c);
   template <> [[nodiscard]] bool lexical_cast<bool>(const char* c);
