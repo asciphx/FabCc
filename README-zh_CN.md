@@ -7,8 +7,19 @@
 - 暫時由于buffer需要缓冲，所以得先刷新几次页面预热，才能测试，因此需要进行线程池改造，但会更加复杂。
 - ![单线程测试](./single_core_test.jpg)
 
-## fast_lexical_cast
-- 模板函数若不是'.hpp'文件则无法在g++上无法内联
-- 坏处是牺牲性能来换取编译速度
-- 好处是开发速度得到巨幅的提升
-- ![快速词典转换](./fast_lexical_cast.jpg)
+## 例子
+```c++
+int main() {
+  fc::App app;
+  app.get() = [](Req&, Res& res) {
+	res.write("hello world!你好！世界！");
+  };
+  app.get("/api") = [](Req&, Res& res) {
+	res.write("lsdkagosjagojsdagklsdklgjsld");
+  };
+  fc::Tcp srv(&app);
+  //启动服务器
+  srv.setTcpNoDelay(true).Start("127.0.0.1", 8080);
+  return 0;
+}
+```
