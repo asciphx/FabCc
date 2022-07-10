@@ -3,7 +3,7 @@
 
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。
-- 暫時只提供了基於libuv的windows版本的服務端開發，後續打算支持linux，mac。
+- cmake方面後續打算支持linux，mac。(CMakeLists.txt还没集成)
 
 ## 例子
 ```c++
