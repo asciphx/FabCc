@@ -7,7 +7,7 @@
 namespace fc {
   struct App {
 	App() {}
-	std::function<void(Req&, Res&)>& operator[](std::string_view& r) {
+	std::function<void(Req&, Res&)>& operator[](std::string_view r) {
 	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::GET); h.url = r; return h.handler;
 	}
 	std::function<void(Req&, Res&)>& del(std::string_view r) {

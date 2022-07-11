@@ -31,9 +31,4 @@ namespace fc {
   private:
 	int status_; std::string what_;
   };
-#if DEFAULT_ENABLE_LOGGING
-#define LOG_GER(_) std::cout << _;
-#else
-#define LOG_GER(_)
-#endif
 } // namespace li

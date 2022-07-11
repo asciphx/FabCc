@@ -6,13 +6,15 @@
 #include <atomic>
 #include <future>
 #include <chrono>
+#include <timer.hh>
 #include <conn.hh>
 #include <parser.hh>
 #include <h/common.h>
 #include <h/config.h>
-#include <buffer.hh>
-static std::atomic<unsigned char> RES_IDEX = 0xff;
+
 namespace fc {
+  static struct timeval RES_RCV { 3, 0 };//max{5,0},read
+  static struct timeval RES_SED { 10, 0 };//write
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
@@ -26,7 +28,6 @@ namespace fc {
 	bool init();
 	bool bind(const char* ip_addr, int port, bool is_ipv4 = true);
 	bool listen(int backlog = 0xffff);//SOMAXCONN
-	static void set_status(Conn* co, uint16_t status);
 	App* app_;
   public:
 	Tcp(App* app, uv_loop_t* loop = uv_default_loop());
@@ -35,7 +36,7 @@ namespace fc {
 	Tcp& setTcpNoDelay(bool enable);
 	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());
 	void exit();
-	void close();//待实现
+	void set_rcv_sed(socket_type& fd);
   protected:
 	static void read_cb(uv_stream_t* client, ssize_t nread, const uv_buf_t* b);
 	static void write_cb(uv_write_t* req, int status);//

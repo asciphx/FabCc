@@ -13,11 +13,6 @@
 #else
 #define _INLINE inline
 #endif
-#if _DEBUG
-#    define DEBUG printf
-#else
-#    define DEBUG(...)
-#endif
 #define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
 namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,

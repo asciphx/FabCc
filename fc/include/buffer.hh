@@ -1,6 +1,5 @@
 #ifndef BUFFER_HH
 #define BUFFER_HH
-#include <functional>
 #include <h/common.h>
 #include <lexical_cast.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
@@ -8,24 +7,36 @@ namespace fc {
   struct Buffer {
 	Buffer();
 	Buffer(Buffer&& o);
-	Buffer(unsigned short capacity, std::function<void(const char*, int)> flush_ = [](const char*, int) {});
-	Buffer(void* buffer, unsigned short capacity,
-		std::function<void(const char*, int)> flush_ = [](const char*, int) {});
+	Buffer(unsigned short capacity);
 	~Buffer();
 	Buffer& operator=(Buffer&& o);
-	void reset(); void clear(); void flush();
+	void reset(); void clear();
 	std::size_t size();
-	void reserve(unsigned short i);
 	Buffer& operator<<(std::string_view s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
+	Buffer& operator=(std::string s);
+	_INLINE bool empty() { return cursor_ == buffer_; };
 	_INLINE Buffer& Buffer::operator<<(std::string s) {
 	  return operator<<(std::string_view(s.data(), s.size()));
 	};
 	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
+	_INLINE void reserve(unsigned short l) {
+	  if (l < cap_)return;
+	  char* c = (char*)malloc(cap_); int size = cursor_ - buffer_;
+	  memcpy(c, buffer_, size); cap_ = l * 2;
+	  delete[] buffer_; buffer_ = new char[cap_]; cursor_ = buffer_; end_ = buffer_ + cap_;
+	  memcpy(buffer_, c, size); cursor_ += size; delete[] c;
+	};
+	_INLINE Buffer& Buffer::insert(const char* s, const char* e, const char* f) {
+	  short l = f - s;
+	  if (cursor_ + l >= end_) reserve(cap_ + l);
+	  for (unsigned short i = 0xffff; ++i < l; *cursor_ = e[i], ++cursor_);
+	  return *this;
+	}
 	_INLINE Buffer& Buffer::assign(const char* s, const char* e) {
-	  size_t l = e - s;
-	  if (cursor_ + l >= end_) flush();
+	  short l = e - s;
+	  if (cursor_ + l >= end_) reserve(cap_ + l);
 	  for (unsigned short i = 0xffff; ++i < l; *cursor_ = s[i], ++cursor_);
 	  return *this;
 	}
@@ -39,12 +50,11 @@ namespace fc {
 	// }
 	template <typename I>
 	Buffer& operator<<(I v);
-	std::string_view to_string_view();
+	std::string_view data();
 	char* buffer_;
 	char* cursor_;
-	std::function<void(const char* s, int d)> flush_;
-  private:
 	char* end_;
+  private:
 	bool own_buffer_;
 	unsigned short cap_;
   };//Buffer(1000, [&](const char* d, int s) { *this << std::string_view(d, s); })

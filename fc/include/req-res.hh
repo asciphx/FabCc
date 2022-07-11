@@ -14,6 +14,7 @@ namespace fc {
 	str_map headers;
 	std::string body;
 	std::string ip_addr;
+	bool keep_alive = false;
 	void add_header(std::string key, std::string value);
   };// request
 
