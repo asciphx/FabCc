@@ -7,7 +7,7 @@ namespace fc {
 	if (uv_tcp_init(loop_, &_)) return false; _.data = this; return true;
   }
   void Tcp::exit() { if (!opened)return; opened = false; uv_stop(loop_); }// uv_loop_close(loop_);
-  Tcp::~Tcp() { uv_close((uv_handle_t*)&_, on_exit); exit(); }
+  Tcp::~Tcp() { exit(); }
   Tcp& Tcp::router(App& app) { app_ = &app; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
