@@ -13,7 +13,7 @@
 #else
 #define _INLINE inline
 #endif
-#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
+#define TYPE_GET(t, ptr, member) (ptr*)(t)-((size_t)&reinterpret_cast<char const volatile&>(((ptr*)0)->member))
 namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),

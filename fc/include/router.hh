@@ -33,7 +33,7 @@ namespace fc {
 		}
 		return v_;
 	  }
-	  template <typename F> void for_all_routes(F f, std::string prefix = "") const {
+	  void for_all_routes(std::function<void(std::string,const fc::VH)>& f, std::string prefix = "") const {
 		if (children_.size() == 0) f(prefix, v_);
 		else {
 		  if (prefix.size() && prefix.back() != '/') prefix += '/';
@@ -82,7 +82,7 @@ namespace fc {
 	}
 	// Find a route && return an iterator.
 	internal::drt_node::iterator find(const std::string_view& r) const { return root.find(r, 0); }
-	template <typename F> void for_all_routes(F f) const { root.for_all_routes(f); }
+	void for_all_routes(std::function<void(std::string,const fc::VH)>&& f) const { root.for_all_routes(f); }
 	internal::drt_node::iterator end() const { return root.end(); }
 	std::vector<std::shared_ptr<std::string>> strings;
 	internal::drt_node root;

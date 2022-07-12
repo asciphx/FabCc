@@ -62,5 +62,7 @@ namespace fc {
 	//handler_->handle();
   }
   void llParser::set_type(llhttp_type t) { this->type = t; }
-  llParser::llParser() { llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_; }
+  llParser::llParser():body(0x3ff), header_field(0x1f), header_value(0x7f) {
+	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
+  }
 }

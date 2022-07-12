@@ -41,20 +41,18 @@ namespace fc {
 	  return *this;
 	}
 	Buffer& operator<<(std::size_t v);
-	// template <typename I>
-	// Buffer& operator<<(unsigned long s)
-	// {
-	//   typedef std::array<char, 150> buf_t;
-	//   buf_t b = std::lexical_cast<buf_t>(v);
-	//   return operator<<(std::string_view(b.begin(), strlen(b.begin())));
-	// }
+	//template <typename I>
+	//Buffer& operator<<(unsigned long s) {
+	//  std::array<char, 150> b = std::lexical_cast<std::array<char, 150>>(s);
+	//  return operator<<(std::string_view(b.begin(), strlen(b.begin())));
+	//}
 	template <typename I>
 	Buffer& operator<<(I v);
 	std::string_view data();
 	char* buffer_;
-	char* cursor_;
 	char* end_;
   private:
+	char* cursor_;
 	bool own_buffer_;
 	unsigned short cap_;
   };//Buffer(1000, [&](const char* d, int s) { *this << std::string_view(d, s); })

@@ -2,22 +2,13 @@
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app) {}
   Tcp& Tcp::thread(unsigned char n) { num = n; return *this; }//?
-  void Tcp::set_rcv_sed(socket_type& fd) {
-#if _WIN32
-	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&RES_RCV, sizeof(RES_RCV));
-	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&RES_SED, sizeof(RES_SED));
-#else
-	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &RES_RCV, sizeof(RES_RCV));
-	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &RES_SED, sizeof(RES_SED));
-#endif
-  };
   bool Tcp::init() {
-	if (opened)return true; opened = true; if (!loop_)return false; set_rcv_sed(_.socket);
-	if (uv_tcp_init(loop_, &_)) return false; _.data = this; uv_tcp_keepalive(&_, 1, 6);
-	return true;
+	if (opened)return true; opened = true; if (!loop_)return false;
+	if (uv_tcp_init(loop_, &_)) return false; _.data = this; return true;
   }
-  void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, on_exit); }
-  Tcp::~Tcp() { exit(); }
+  void Tcp::exit() { if (!opened)return; opened = false; uv_stop(loop_); }// uv_loop_close(loop_);
+  Tcp::~Tcp() { uv_close((uv_handle_t*)&_, on_exit); exit(); }
+  Tcp& Tcp::router(App& app) { app_ = &app; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
 	int $; if (is_ipv4) {
@@ -31,11 +22,11 @@ namespace fc {
   bool Tcp::listen(int i) { return uv_listen((uv_stream_t*)&_, i, on_connection) ? true : false; }
   bool Tcp::Start(const char* ip_addr, int port, bool is_ipv4) {
 	exit(); if (!port)port = port_; if (!init())return false; if (bind(ip_addr, port, is_ipv4))return false;
-	if (listen())return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
+	if (listen())return false; uv_run(loop_, UV_RUN_DEFAULT); return false;
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* co = (Conn*)h->data; if (co == nullptr) return;
-	if (nread > 0xfffff) { uv_read_stop(h); co->_.u.io.queued_bytes = 0; delete co; return; }
+	//if (h->write_queue_size < co->_.u.io.queued_bytes) { uv_read_stop(h); co->_.u.io.queued_bytes = 0; delete co; return; }
 	if (nread > 0) {
 	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } std::string& s = co->buf_;
@@ -43,7 +34,7 @@ namespace fc {
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
 	  req.url = co->parser_.url.data(); req.raw_url = std::move(co->parser_.raw_url);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
-	  req.keep_alive = co->parser_.keep_alive;
+	  if (!co->req_.keep_alive)printf("<%d>", co->id); req.keep_alive = co->parser_.keep_alive;
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Con), "")) {
 	  //}
 	  try {
@@ -87,21 +78,23 @@ namespace fc {
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		uv_close((uv_handle_t*)&co->slot_, on_close);
-	  } else {
+	  } else {//UV_ENOBUFS
 		DEBUG("name: %s err: %s\n", uv_err_name(nread), uv_strerror(nread));
 		uv_read_stop(h);
 	  }//if (!uv_is_active((uv_handle_t*)&co->slot_))// uv_read_stop((uv_stream_t*)&co->slot_);
-	}
+	}//printf("%d\n", nread);
   }
   void Tcp::write_cb(uv_write_t* wr, int status) {
 	Conn* co = (Conn*)wr; if (status) { uv_close((uv_handle_t*)&co->slot_, on_close); return; };
   }
-  void Tcp::alloc_cb(uv_handle_t* h, size_t suggested_size, uv_buf_t* b) {
-	Conn* c = (Conn*)h->data; if (c != nullptr) *b = c->rbuf;
+  void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) {
+	Conn* c = (Conn*)h->data; if (c->rbuf.len < suggested) {
+	  if (c->rbuf.base != nullptr)free(c->rbuf.base);
+	  c->rbuf.base = (char*)malloc(suggested); c->rbuf.len = suggested;
+	} *b = c->rbuf;
   }
-  void Tcp::on_exit(uv_handle_t* h) {}
   void Tcp::on_close(uv_handle_t* h) {
-	Conn* c = (Conn*)h->data; DEBUG("客户端：%d 关闭！ \n", c->id); delete c;
+	Conn* c = (Conn*)h->data; printf("{%d} x！ \n", c->id); delete c;
   }
   void Tcp::on_connection(uv_stream_t* srv, int status) {
 	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn();
@@ -120,7 +113,7 @@ namespace fc {
 	  }
 	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
-	co->id = co->slot_.socket; co->set_keep_alive(co->id, 3, 2, 2);
-	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
+	co->id = co->slot_.socket; co->set_keep_alive(co->id, 5, 4, 3);
+	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);// uv_tcp_keepalive(&co->slot_, 1, 6);
   }
 }

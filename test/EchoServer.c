@@ -2,7 +2,7 @@
 #include <uv.h>
 #define DEFAULT_PORT 8080
 struct sockaddr_in toaddr, addr; uv_loop_t* loop;
-#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
+#define TYPE_GET(t, ptr, member) (ptr*)((char*)(t)-(size_t)&((ptr*)0)->member)
 struct socket { uv_tcp_t sender; uv_timer_t timer; uv_tcp_t receiver; };
 typedef struct { uv_write_t req; uv_buf_t buf; } write_req_t;
 void free_write_req(uv_write_t* req) {

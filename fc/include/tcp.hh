@@ -1,3 +1,5 @@
+#ifndef TCP_HH
+#define TCP_HH
 #include <uv.h>
 #include <string>
 #include <map>
@@ -13,8 +15,6 @@
 #include <h/config.h>
 
 namespace fc {
-  static struct timeval RES_RCV { 3, 0 };//max{5,0},read
-  static struct timeval RES_SED { 10, 0 };//write
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
@@ -30,13 +30,13 @@ namespace fc {
 	bool listen(int backlog = 0xffff);//SOMAXCONN
 	App* app_;
   public:
-	Tcp(App* app, uv_loop_t* loop = uv_default_loop());
+	Tcp(App* app = nullptr, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
 	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);//默认ipv4
 	Tcp& setTcpNoDelay(bool enable);
 	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());
+	Tcp& router(App& app);
 	void exit();
-	void set_rcv_sed(socket_type& fd);
   protected:
 	static void read_cb(uv_stream_t* client, ssize_t nread, const uv_buf_t* b);
 	static void write_cb(uv_write_t* req, int status);//
@@ -46,3 +46,4 @@ namespace fc {
 	static void on_connection(uv_stream_t* server, int status);
   };
 }
+#endif
