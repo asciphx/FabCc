@@ -6,7 +6,7 @@ namespace fc {
 	if (opened)return true; opened = true; if (!loop_)return false;
 	if (uv_tcp_init(loop_, &_)) return false; _.data = this; return true;
   }
-  void Tcp::exit() { if (!opened)return; opened = false; uv_stop(loop_); }// uv_loop_close(loop_);
+  void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
   Tcp::~Tcp() { exit(); }
   Tcp& Tcp::router(App& app) { app_ = &app; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
@@ -22,7 +22,7 @@ namespace fc {
   bool Tcp::listen(int i) { return uv_listen((uv_stream_t*)&_, i, on_connection) ? true : false; }
   bool Tcp::Start(const char* ip_addr, int port, bool is_ipv4) {
 	exit(); if (!port)port = port_; if (!init())return false; if (bind(ip_addr, port, is_ipv4))return false;
-	if (listen())return false; uv_run(loop_, UV_RUN_DEFAULT); return false;
+	if (listen())return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* co = (Conn*)h->data; if (co == nullptr) return;
@@ -34,7 +34,7 @@ namespace fc {
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
 	  req.url = co->parser_.url.data(); req.raw_url = std::move(co->parser_.raw_url);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
-	  if (!co->req_.keep_alive)printf("<%d>", co->id); req.keep_alive = co->parser_.keep_alive;
+	  req.keep_alive = co->parser_.keep_alive;
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Con), "")) {
 	  //}
 	  try {
@@ -91,10 +91,10 @@ namespace fc {
 	Conn* c = (Conn*)h->data; if (c->rbuf.len < suggested) {
 	  if (c->rbuf.base != nullptr)free(c->rbuf.base);
 	  c->rbuf.base = (char*)malloc(suggested); c->rbuf.len = suggested;
-	} *b = c->rbuf;
+	} *b = c->rbuf;// b->base = (char*)malloc(suggested); b->len= suggested;
   }
   void Tcp::on_close(uv_handle_t* h) {
-	Conn* c = (Conn*)h->data; printf("{%d} x！ \n", c->id); delete c;
+	Conn* c = (Conn*)h->data; DEBUG("{%d} x！ \n", c->id); delete c;
   }
   void Tcp::on_connection(uv_stream_t* srv, int status) {
 	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn();
