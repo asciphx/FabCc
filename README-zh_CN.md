@@ -14,9 +14,7 @@
 ## 例子
 ```c++
 int main() {
-  fc::Timer t;
-  fc::App app;
-  fc::Tcp srv;
+  fc::Timer t; fc::App app; fc::Tcp srv;
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };

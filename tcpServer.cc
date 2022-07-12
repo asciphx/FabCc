@@ -1,10 +1,7 @@
 #include <tcp.hh>
 using namespace fc;
 int main() {
-  int i = 0;
-  Timer t;
-  App app;
-  Tcp srv;
+  Timer t; App app; Tcp srv;
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };

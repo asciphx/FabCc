@@ -14,10 +14,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known c++
 ## example
 ```c++
 int main() {
-  int i = 0;
-  fc::Timer t;
-  fc::App app;
-  fc::Tcp srv;
+  fc::Timer t; fc::App app; fc::Tcp srv;
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };
