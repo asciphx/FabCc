@@ -11,6 +11,7 @@ namespace std {
 #endif
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
   template <typename S, typename T> _INLINE S lexical_cast(T& i);
+  template <> _INLINE std::string lexical_cast<std::string>(char& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(signed char& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(short& i) { return std::to_string(i); }
@@ -24,6 +25,7 @@ namespace std {
   template <> _INLINE std::string lexical_cast<std::string>(float& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(long double& f) { return std::to_string(f); }
   template <typename S, typename T> _INLINE S lexical_cast(T&& i);
+  template <> _INLINE std::string lexical_cast<std::string>(char&& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(signed char&& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char&& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(short&& i) { return std::to_string(i); }
@@ -40,6 +42,7 @@ namespace std {
   template <typename T> T lexical_cast(const char* c);
   template <> std::string lexical_cast<std::string>(const char* c);
   template <> [[nodiscard]] bool lexical_cast<bool>(const char* c);
+  template <> [[nodiscard]] char lexical_cast<char>(const char* c);
   template <> [[nodiscard]] signed char lexical_cast<signed char>(const char* c);
   template <> [[nodiscard]] unsigned char lexical_cast<unsigned char>(const char* c);
   template <> [[nodiscard]] short lexical_cast<short>(const char* c);
@@ -54,6 +57,7 @@ namespace std {
   template <> tm lexical_cast<tm>(const char* c);
   template <typename T> T lexical_cast(std::string& s);
   template <> [[nodiscard]] bool lexical_cast<bool>(std::string& s);
+  template <> [[nodiscard]] char lexical_cast<char>(std::string& s);
   template <> [[nodiscard]] signed char lexical_cast<signed char>(std::string& s);
   template <> [[nodiscard]] unsigned char lexical_cast<unsigned char>(std::string& s);
   template <> [[nodiscard]] short lexical_cast<short>(std::string& s);

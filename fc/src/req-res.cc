@@ -14,16 +14,4 @@ namespace fc {
 	if (headers.count(key)) { return headers.find(key)->second; } return empty;
   }
   void Res::write(const std::string& body_part) { body += body_part; };
-  void Res::end() {
-	if (!completed_) {
-	  completed_ = true;
-	  if (is_head_response) {
-		set_header(RES_CL, std::to_string(body.size()));
-		body = "";
-	  }
-	  if (complete_request_handler_) {
-		complete_request_handler_();
-	  }
-	}
-  }
 }

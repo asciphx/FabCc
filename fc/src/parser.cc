@@ -31,11 +31,8 @@ namespace fc {
 	if (!$->header_field.empty()) $->headers.emplace($->header_field.buffer_, $->header_value.buffer_);
 	$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
 	  (($->http_major == 1 && $->http_minor == 1) ? true : false);
-	$->close_conn = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :
-	  (($->http_major == 1 && $->http_minor == 1) ? (($->flags & F_CONNECTION_CLOSE) ? true : false) : false);
-	//if ($->http_major == 1 && $->http_minor == 1 && get_header($->headers, RES_Ex) == "100-continue") {
-	//  $->buf_ += expect_100_continue; do_write();
-	//}//process_header
+	//$->close_conn = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :
+	//  (($->http_major == 1 && $->http_minor == 1) ? (($->flags & F_CONNECTION_CLOSE) ? true : false) : false);
 	return 0;//llhttp_should_keep_alive(_);$->handler_->handle_header();
   }
   static int on_body(llhttp__internal_s* _, const char* c, size_t l) {
@@ -43,7 +40,7 @@ namespace fc {
   }
   static int on_message_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_); $->url = $->raw_url.substr(0, $->raw_url.find('?'));
-	$->ready = true; return 0;//$->url_params = query_string($->raw_url); $->process_message(); 
+	$->ready = true; return 0;//$->url_params = query_string($->raw_url); handler_->handle();
   }
   const llhttp_settings_s llParser::_ = {
 	  on_message_begin,
@@ -55,12 +52,6 @@ namespace fc {
 	  on_body,
 	  on_message_complete
   };
-  void llParser::process_header() {
-	//handler_->handle_header();
-  }
-  void llParser::process_message() {
-	//handler_->handle();
-  }
   void llParser::set_type(llhttp_type t) { this->type = t; }
   llParser::llParser():body(0x3ff), header_field(0x1f), header_value(0x7f) {
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;

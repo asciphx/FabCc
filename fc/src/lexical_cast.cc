@@ -56,6 +56,20 @@ namespace std {
 	  return false; throw std::invalid_argument("");
   }
   template <> [[nodiscard]]
+	char lexical_cast<char>(const char* c) {
+	char r; if (*c != 0x2D) {
+	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
+	  while (*++c) {
+		r = r * 10 + *c - 0x30; if (r <= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  }
+	} else {
+	  r = 0x30 - *++c; if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+	  while (*++c) {
+		r = r * 10 - *c + 0x30; if (r >= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  };
+	} return r;
+  }
+  template <> [[nodiscard]]
 	signed char lexical_cast<signed char>(const char* c) {
 	signed char r; if (*c != 0x2D) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
@@ -236,6 +250,20 @@ namespace std {
   template <> [[nodiscard]]
 	bool lexical_cast<bool>(std::string& s) {
 	if (s == "1" || s == "true")return true; if (s == "0" || s == "false")return false; throw std::invalid_argument("");
+  }
+  template <> [[nodiscard]]
+	char lexical_cast<char>(std::string& s) {
+	const char* c = s.c_str(); char r;
+	if (*c != 0x2D) {
+	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
+	  while (*++c) {
+		r = r * 10 + *c - 0x30; if (r <= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  } return r;
+	}
+	if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = 0x30 - *c;
+	while (*++c) {
+	  r = r * 10 - *c + 0x30; if (r >= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
+	}; return r;
   }
   template <> [[nodiscard]]
 	signed char lexical_cast<signed char>(std::string& s) {

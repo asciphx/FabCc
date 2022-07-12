@@ -13,6 +13,10 @@ namespace fc {
 	if (own_buffer_)
 	  delete[] buffer_;
   }
+  Buffer::Buffer(const char* c, unsigned short capacity)
+	: buffer_(new char[capacity]), own_buffer_(true), cursor_(buffer_), end_(buffer_ + capacity), cap_(capacity) {
+	memcpy(cursor_, c, capacity); cursor_ += capacity;
+  }
   Buffer& Buffer::operator=(Buffer&& o) {
 	buffer_ = o.buffer_;
 	own_buffer_ = o.own_buffer_;

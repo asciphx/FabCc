@@ -34,7 +34,8 @@ namespace fc {
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
 	  req.url = co->parser_.url.data(); req.raw_url = std::move(co->parser_.raw_url);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
-	  req.keep_alive = co->parser_.keep_alive;
+	  req.keep_alive = co->parser_.keep_alive; req.uuid = hackUrl(req.url.c_str());
+	  //printf("<%s,%lld> ", req.url.c_str(), req.uuid);
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Con), "")) {
 	  //}
 	  try {

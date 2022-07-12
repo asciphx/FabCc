@@ -8,6 +8,7 @@ namespace fc {
 	Buffer();
 	Buffer(Buffer&& o);
 	Buffer(unsigned short capacity);
+	Buffer(const char* c, unsigned short capacity);
 	~Buffer();
 	Buffer& operator=(Buffer&& o);
 	void reset(); void clear();
@@ -40,6 +41,7 @@ namespace fc {
 	  for (unsigned short i = 0xffff; ++i < l; *cursor_ = s[i], ++cursor_);
 	  return *this;
 	}
+	_INLINE std::string c_str() { return std::string(buffer_, cursor_ - buffer_); };
 	Buffer& operator<<(std::size_t v);
 	//template <typename I>
 	//Buffer& operator<<(unsigned long s) {

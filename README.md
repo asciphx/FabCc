@@ -13,27 +13,32 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known c++
 
 ## example
 ```c++
+using namespace fc;
+void funk(Req& req, Res& res) {
+  res.write("Homepage route is replicated by std::bind！");
+};
 int main() {
-  fc::Timer t; fc::App app; fc::Tcp srv;
+  Timer t; App app; Tcp srv;
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };
-  app["/del"] = [&app](Req&, Res& res) {
-	app.get() = nullptr;
-	res.write("Homepage route is deleted! Is now inaccessible！");
+  app["/api"] = [&app](Req&, Res& res) {
+	res.write(app._print_routes().c_str());
   };
-  app["/api"] = [](Req&, Res& res) {
-	res.write("lsdkagosjagojsdagklsdklgjsld");
+  app.post("/api") = [](Req&, Res& res) {
+	res.write("This is the post method！");
+  };
+  app["/del"] = [&app](Req&, Res& res) {
+	app.get() = [](Req&, Res& res) { res.code = 403; };
+	res.write("The routing of the home page is disabled！！");//Or bind the void method in the following std::bind way
   };
   app["/timer"] = [&](Req&, Res& res) {
-	t.setTimeout([&] {
+	t.setTimeout([&srv] {
 	  printf("The route has been idle for 1 minute, and the server will shut down automatically！！");
 	  srv.exit();
 	}, 60000);
-	res.write("hello world!你好！！！");
-	app.get() = [](Req&, Res& res) {
-	  res.write("Home page route has been replicated, added or changed！");
-	};
+	res.write("Timer countdown start！");
+	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
   srv.router(app).setTcpNoDelay(true).Start("127.0.0.1", 8080);

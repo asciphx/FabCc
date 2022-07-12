@@ -130,8 +130,8 @@ namespace fc {
 	}
 	unsigned long long hackUrl(const char* s) {
 	  unsigned long long r = s[0] - 0x23;
-	  for (unsigned char i = 0; s[++i] > 0x22; r << 5, r += s[i] > 0x5e ? s[i] - 0x5f : s[i] > 0x40 ? s[i] - 0x3f : s[i] - 3); return r;
-	}
+	  for (unsigned char i = 0; s[++i]; r *= 0x29, r += s[i] > 0x5e ? s[i] - 0x5f : s[i] > 0x40 ? s[i] - 0x3f : s[i] - 0x10); return r;
+	}//s[++i] > 0x22
 #ifdef __cplusplus
   }  /* extern "C" */
 #endif

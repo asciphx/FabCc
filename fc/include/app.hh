@@ -1,32 +1,42 @@
 #pragma once
 #include <functional>
 #include <iostream>
+#include <h/common.h>
 #include "router.hh"
 #include "http_error.hh"
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
   struct App {
 	App() {}
-	std::function<void(Req&, Res&)>& operator[](std::string_view r) {
-	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::GET); h.url = r; return h.handler;
+	std::function<void(Req&, Res&)>& operator[](const char* r) {
+	  VH& h = map_.add(r, HTTP::GET); h.verb = static_cast<char>(HTTP::GET); return h.handler;
 	}
-	std::function<void(Req&, Res&)>& del(std::string_view r) {
-	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::DEL); h.url = r; return h.handler;
+	std::function<void(Req&, Res&)>& del(const char* r) {
+	  VH& h = map_.add(r, HTTP::DEL);  h.verb = static_cast<char>(HTTP::DEL); return h.handler;
 	}
-	std::function<void(Req&, Res&)>& get(std::string_view r = "") {
-	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::GET); h.url = r; return h.handler;
+	std::function<void(Req&, Res&)>& get(const char* r = "/") {
+	  VH& h = map_.add(r, HTTP::GET);  h.verb = static_cast<char>(HTTP::GET); return h.handler;
+	  // drt_node::iterator& iter = map_.find(r);
+	  // if (iter.second.url == "") {
+		 //VH& h = map_.add(r, HTTP::GET); 
+		 //printf("%s<< ", iter.first);
+		 //h.verb = static_cast<char>(HTTP::GET); h.url = r; return h.handler;
+	  // } else {
+		 //printf("%s< ", iter.first);
+		 //VH& h = iter.second; return h.handler;
+	  // }
 	}
-	std::function<void(Req&, Res&)>& post(std::string_view r) {
-	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::POST); h.url = r; return h.handler;
+	std::function<void(Req&, Res&)>& post(const char* r) {
+	  VH& h = map_.add(r, HTTP::POST);  h.verb = static_cast<char>(HTTP::POST); return h.handler;
 	}
-	std::function<void(Req&, Res&)>& put(std::string_view r) {
-	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::PUT); h.url = r; return h.handler;
+	std::function<void(Req&, Res&)>& put(const char* r) {
+	  VH& h = map_.add(r, HTTP::PUT);  h.verb = static_cast<char>(HTTP::PUT); return h.handler;
 	}
-	std::function<void(Req&, Res&)>& patch(std::string_view r) {
-	  VH& h = map_[r]; h.verb = static_cast<char>(HTTP::PATCH); h.url = r; return h.handler;
+	std::function<void(Req&, Res&)>& patch(const char* r) {
+	  VH& h = map_.add(r, HTTP::PATCH);  h.verb = static_cast<char>(HTTP::PATCH); return h.handler;
 	}
-	char sv2c(std::string_view method) const {
-	  switch (hack8Str(method.data())) {
+	char sv2c(const char* method) const {
+	  switch (hack8Str(method)) {
 	  case "DELETE"_l:return static_cast<char>(HTTP::DEL);
 	  case 4670804:return static_cast<char>(HTTP::GET);
 	  case 1347375956:return static_cast<char>(HTTP::POST);
@@ -37,38 +47,33 @@ namespace fc {
 		//case "OPTIONS"_l:return static_cast<char>(HTTP::OPTIONS);
 		//case "TRACE"_l:return static_cast<char>(HTTP::TRACE);
 		//case "PURGE"_l:return static_cast<char>(HTTP::PURGE);
-	  } return static_cast<char>(HTTP::InternalMethodCount);
-	}
-	void _subapi(std::string prefix, const App& subapi) {
-	  subapi.map_.for_all_routes([this, prefix](std::string r, VH h) {
-		if (!r.empty() && r.back() == '/') h.url = prefix + r; else h.url = prefix + '/' + r;
-		this->map_[h.url] = h;
-	  });
+	  } return static_cast<char>(HTTP::INVALID);
 	}
 	//template <typename Adaptor> //websocket
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
-	void _print_routes() {
-	  map_.for_all_routes([this](std::string r, VH h) { std::cout << r << '\n'; });
-	  std::cout << std::endl;
+	Buffer _print_routes() {
+	  Buffer b(0xff);
+	  map_.for_all_routes([this, &b](std::string r, VH h) {
+		b << '/' << (h.verb < 10 ? r.substr(2) : r.substr(3)) << ',' << ' ';
+		}); return b;
 	}
-	void _call(HTTP method, std::string_view route, Req& request, Res& response) const {
+	void _call(HTTP method, std::string& route, Req& request, Res& response) const {
+	  // skip the last / of the url.
+	  if (route.size() != 1 && route[route.size() - 1] == '/') route = route.substr(0, route.size() - 1);
 	  if (route == last_called_) {
 		if (static_cast<char>(method) == last_handler_.verb) {
-		  request.url = last_handler_.url; last_handler_.handler(request, response); return;
+		  last_handler_.handler(request, response); return;
 		} else throw http_error::not_found("Method ", m2c(method), " not implemented on route ", route);
 	  }
-	  // skip the last / of the url.
-	  std::string_view route2(route);
-	  if (route2.size() != 0 && route2[route2.size() - 1] == '/') route2 = route2.substr(0, route2.size() - 1);
-	  fc::internal::drt_node::iterator it = map_.find(route2); if (it != map_.end()) {
+	  std::string route2(std::move(std::lexical_cast<std::string>(static_cast<char>(method))) + route);
+	  fc::drt_node::iterator it = map_.find(route2); if (it != map_.end()) {
 		if (static_cast<char>(method) == it->second.verb) {
 		  const_cast<App*>(this)->last_called_ = route;
 		  const_cast<App*>(this)->last_handler_ = it->second;
-		  request.url = it->second.url;
 		  it->second.handler(request, response);
 		} else throw http_error::not_found("Method ", m2c(method), " not implemented on route ", route2);
-	  } else throw http_error::not_found("Route ", route2, " does not exist.");
+	  } else throw http_error::not_found("Route ", route, " does not exist.");
 	}
 	DRT map_; std::string last_called_; VH last_handler_;
   };

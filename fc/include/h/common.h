@@ -13,7 +13,7 @@
 #else
 #define _INLINE inline
 #endif
-#define TYPE_GET(t, ptr, member) (ptr*)(t)-((size_t)&reinterpret_cast<char const volatile&>(((ptr*)0)->member))
+#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
 namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
@@ -23,7 +23,7 @@ namespace fc {
   }
   static const std::string_view expect_100_continue("HTTP/1.1 100 Continue\r\n\r\n", 25);
   enum class HTTP {
-	DEL = 0, GET, POST = 3, PUT, PATCH = 28, InternalMethodCount
+	DEL = 0, GET, POST = 3, PUT, PATCH = 28, INVALID
   };
   _INLINE const char* m2c(HTTP m) {
 	switch (m) {
