@@ -10,8 +10,6 @@
 namespace fc {
   struct llParser: public llhttp__internal_s {
 	llParser();
-	void process_header();
-	void process_message();
 	void set_type(llhttp_type t = llhttp_type::HTTP_REQUEST);
 	std::string raw_url;
 	fc::Buffer url;

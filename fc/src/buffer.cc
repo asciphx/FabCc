@@ -9,14 +9,11 @@ namespace fc {
   }
   Buffer::Buffer(unsigned short capacity)
 	: buffer_(new char[capacity]), own_buffer_(true), cursor_(buffer_), end_(buffer_ + capacity), cap_(capacity) {}
-  Buffer::~Buffer() {
-	if (own_buffer_)
-	  delete[] buffer_;
-  }
   Buffer::Buffer(const char* c, unsigned short capacity)
 	: buffer_(new char[capacity]), own_buffer_(true), cursor_(buffer_), end_(buffer_ + capacity), cap_(capacity) {
 	memcpy(cursor_, c, capacity); cursor_ += capacity;
   }
+  Buffer::~Buffer() { if (own_buffer_) delete[] buffer_; }
   Buffer& Buffer::operator=(Buffer&& o) {
 	buffer_ = o.buffer_;
 	own_buffer_ = o.own_buffer_;
@@ -37,12 +34,12 @@ namespace fc {
   }
   Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
   Buffer& Buffer::operator<<(char v) {
-	cursor_[0] = v; cursor_++; return *this;
+	cursor_[0] = v; ++cursor_; return *this;
   }
   Buffer& Buffer::operator<<(std::size_t v) {
 	if (v == 0) operator<<('0');
 	char buffer[10], * str_start = buffer;
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 10; ++i) {
 	  if (v > 0)
 		str_start = buffer + 9 - i;
 	  buffer[9 - i] = (v % 10) + '0';

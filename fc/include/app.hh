@@ -9,34 +9,25 @@ namespace fc {
   struct App {
 	App() {}
 	std::function<void(Req&, Res&)>& operator[](const char* r) {
-	  VH& h = map_.add(r, HTTP::GET); h.verb = static_cast<char>(HTTP::GET); return h.handler;
+	  VH& h = map_.add(r, static_cast<char>(HTTP::GET)); h.verb = static_cast<char>(HTTP::GET); return h.handler;
 	}
 	std::function<void(Req&, Res&)>& del(const char* r) {
-	  VH& h = map_.add(r, HTTP::DEL);  h.verb = static_cast<char>(HTTP::DEL); return h.handler;
+	  VH& h = map_.add(r, static_cast<char>(HTTP::DEL));  h.verb = static_cast<char>(HTTP::DEL); return h.handler;
 	}
 	std::function<void(Req&, Res&)>& get(const char* r = "/") {
-	  VH& h = map_.add(r, HTTP::GET);  h.verb = static_cast<char>(HTTP::GET); return h.handler;
-	  // drt_node::iterator& iter = map_.find(r);
-	  // if (iter.second.url == "") {
-		 //VH& h = map_.add(r, HTTP::GET); 
-		 //printf("%s<< ", iter.first);
-		 //h.verb = static_cast<char>(HTTP::GET); h.url = r; return h.handler;
-	  // } else {
-		 //printf("%s< ", iter.first);
-		 //VH& h = iter.second; return h.handler;
-	  // }
+	  VH& h = map_.add(r, static_cast<char>(HTTP::GET));  h.verb = static_cast<char>(HTTP::GET); return h.handler;
 	}
 	std::function<void(Req&, Res&)>& post(const char* r) {
-	  VH& h = map_.add(r, HTTP::POST);  h.verb = static_cast<char>(HTTP::POST); return h.handler;
+	  VH& h = map_.add(r, static_cast<char>(HTTP::POST));  h.verb = static_cast<char>(HTTP::POST); return h.handler;
 	}
 	std::function<void(Req&, Res&)>& put(const char* r) {
-	  VH& h = map_.add(r, HTTP::PUT);  h.verb = static_cast<char>(HTTP::PUT); return h.handler;
+	  VH& h = map_.add(r, static_cast<char>(HTTP::PUT));  h.verb = static_cast<char>(HTTP::PUT); return h.handler;
 	}
 	std::function<void(Req&, Res&)>& patch(const char* r) {
-	  VH& h = map_.add(r, HTTP::PATCH);  h.verb = static_cast<char>(HTTP::PATCH); return h.handler;
+	  VH& h = map_.add(r, static_cast<char>(HTTP::PATCH));  h.verb = static_cast<char>(HTTP::PATCH); return h.handler;
 	}
-	char sv2c(const char* method) const {
-	  switch (hack8Str(method)) {
+	char sv2c(const char* m) const {
+	  switch (hack8Str(m)) {
 	  case "DELETE"_l:return static_cast<char>(HTTP::DEL);
 	  case 4670804:return static_cast<char>(HTTP::GET);
 	  case 1347375956:return static_cast<char>(HTTP::POST);
@@ -58,24 +49,22 @@ namespace fc {
 		b << '/' << (h.verb < 10 ? r.substr(2) : r.substr(3)) << ',' << ' ';
 		}); return b;
 	}
-	void _call(HTTP method, std::string& route, Req& request, Res& response) const {
-	  // skip the last / of the url.
+	void _call(HTTP m, std::string& route, Req& request, Res& response) const {
 	  if (route.size() != 1 && route[route.size() - 1] == '/') route = route.substr(0, route.size() - 1);
-	  if (route == last_called_) {
-		if (static_cast<char>(method) == last_handler_.verb) {
+	  if (route == last_called_) {// skip the last / of the url.
+		if (static_cast<char>(m) == last_handler_.verb) {
 		  last_handler_.handler(request, response); return;
-		} else throw http_error::not_found("Method ", m2c(method), " not implemented on route ", route);
-	  }
-	  std::string route2(std::move(std::lexical_cast<std::string>(static_cast<char>(method))) + route);
+		} else throw http_error::not_found("Method ", m2c(m), " not implemented on route ", route);
+	  } std::string route2; static_cast<char>(m) > 9 ? route2.push_back(static_cast<char>(m) % 10 + 0x30),
+		route2.push_back(static_cast<char>(m) / 10 + 0x30) : route2.push_back(static_cast<char>(m) + 0x30); route2 += route;
 	  fc::drt_node::iterator it = map_.find(route2); if (it != map_.end()) {
-		if (static_cast<char>(method) == it->second.verb) {
+		if (static_cast<char>(m) == it->second.verb) {
 		  const_cast<App*>(this)->last_called_ = route;
 		  const_cast<App*>(this)->last_handler_ = it->second;
 		  it->second.handler(request, response);
-		} else throw http_error::not_found("Method ", m2c(method), " not implemented on route ", route2);
+		} else throw http_error::not_found("Method ", m2c(m), " not implemented on route ", route2);
 	  } else throw http_error::not_found("Route ", route, " does not exist.");
 	}
 	DRT map_; std::string last_called_; VH last_handler_;
   };
-
 } // namespace fc
