@@ -36,7 +36,7 @@ namespace fc {
 	Conn();
 	uv_buf_t rbuf, wbuf;
 	uv_tcp_t slot_;
-	std::string buf_;
+	fc::Buffer buf_;
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
 	virtual ~Conn();

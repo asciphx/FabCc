@@ -13,7 +13,7 @@
 #include <parser.hh>
 #include <h/common.h>
 #include <h/config.h>
-
+#include <app.hh>
 namespace fc {
   class Tcp {
 	friend Conn;

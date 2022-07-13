@@ -1,9 +1,8 @@
 #include <conn.hh>
 
 namespace fc {
-  Conn::Conn() {
-	slot_.data = this; buf_.reserve(0x1ff);
-	rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
+  Conn::Conn():buf_(0x3ff) {
+	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
   }
   Conn::~Conn() {
 	app_ = nullptr; free(rbuf.base); rbuf.base = nullptr; rbuf.len = 0;

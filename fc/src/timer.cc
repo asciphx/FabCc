@@ -8,7 +8,6 @@ namespace fc {
 	Timer* t = (Timer*)uv_handle_get_data((uv_handle_t*)h); if (t->cb_) t->cb_();
   }
   void Timer::setTimeout(std::function<void()>&& func, uint32_t milliseconds) {
-	if (alive) alive = false; if (!alive)
 	  cb_ = std::move(func), alive = uv_timer_start(t_, timer_cb, milliseconds, 0) == 0;
   };
   Timer::~Timer() {

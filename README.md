@@ -23,7 +23,7 @@ int main() {
 	res.write("hello world!你好！世界！这是主页！");
   };
   app["/api"] = [&app](Req&, Res& res) {
-	res.write(app._print_routes().c_str());
+	res.write(app._print_routes().c_str());//Return to routing list
   };
   app.post("/api") = [](Req&, Res& res) {
 	res.write("This is the post method！");

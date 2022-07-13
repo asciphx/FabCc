@@ -8,23 +8,23 @@
 namespace fc {
   struct App {
 	App() {}
-	std::function<void(Req&, Res&)>& operator[](const char* r) {
-	  VH& h = map_.add(r, static_cast<char>(HTTP::GET)); h.verb = static_cast<char>(HTTP::GET); return h.handler;
+	VH& operator[](const char* r) {
+	  VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h;
 	}
-	std::function<void(Req&, Res&)>& del(const char* r) {
-	  VH& h = map_.add(r, static_cast<char>(HTTP::DEL));  h.verb = static_cast<char>(HTTP::DEL); return h.handler;
+	VH& del(const char* r) {
+	  VH& h = map_.add(r, static_cast<char>(HTTP::DEL)); return h;
 	}
-	std::function<void(Req&, Res&)>& get(const char* r = "/") {
-	  VH& h = map_.add(r, static_cast<char>(HTTP::GET));  h.verb = static_cast<char>(HTTP::GET); return h.handler;
+	VH& get(const char* r = "/") {
+	  VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h;
 	}
-	std::function<void(Req&, Res&)>& post(const char* r) {
-	  VH& h = map_.add(r, static_cast<char>(HTTP::POST));  h.verb = static_cast<char>(HTTP::POST); return h.handler;
+	VH& post(const char* r) {
+	  VH& h = map_.add(r, static_cast<char>(HTTP::POST)); return h;
 	}
-	std::function<void(Req&, Res&)>& put(const char* r) {
-	  VH& h = map_.add(r, static_cast<char>(HTTP::PUT));  h.verb = static_cast<char>(HTTP::PUT); return h.handler;
+	VH& put(const char* r) {
+	  VH& h = map_.add(r, static_cast<char>(HTTP::PUT)); return h;
 	}
-	std::function<void(Req&, Res&)>& patch(const char* r) {
-	  VH& h = map_.add(r, static_cast<char>(HTTP::PATCH));  h.verb = static_cast<char>(HTTP::PATCH); return h.handler;
+	VH& patch(const char* r) {
+	  VH& h = map_.add(r, static_cast<char>(HTTP::PATCH)); return h;
 	}
 	char sv2c(const char* m) const {
 	  switch (hack8Str(m)) {
@@ -44,26 +44,23 @@ namespace fc {
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
 	Buffer _print_routes() {
-	  Buffer b(0x1ff); int i = 0; map_.for_all_routes([this, &b, &i](std::string r, VH h) {
-		b << '(' << ++i << ')' << '[' << m2c((HTTP)h.verb) << ']' <<
-		  '/' << (h.verb < 10 ? r.substr(2) : r.substr(3)) << ',' << (i % 6 == 0 ? "<br/>" : " ");
+	  Buffer b(0x1ff); int i = 0, m = 1; map_.for_all_routes([this, &b, &i, &m](std::string r, VH h) {
+		m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
+		b << '(' << ++i << ')' << '[' << m2c((HTTP)m) << ']' <<
+		  '/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << ',' << (i % 6 == 0 ? "<br/>" : " ");
 		}); return b;
 	}
-	void _call(HTTP m, std::string& route, Req& request, Res& response) const {
-	  if (route.size() != 1 && route[route.size() - 1] == '/') route = route.substr(0, route.size() - 1);
-	  if (route == last_called_) {// skip the last / of the url.
-		if (static_cast<char>(m) == last_handler_.verb) {
-		  last_handler_.handler(request, response); return;
-		} else throw http_error::not_found("Method ", m2c(m), " not implemented on route ", route);
-	  } std::string route2; static_cast<char>(m) > 9 ? route2.push_back(static_cast<char>(m) % 10 + 0x30),
-		route2.push_back(static_cast<char>(m) / 10 + 0x30) : route2.push_back(static_cast<char>(m) + 0x30); route2 += route;
-	  fc::drt_node::iterator it = map_.find(route2); if (it != map_.end()) {
-		if (static_cast<char>(m) == it->second.verb) {
-		  const_cast<App*>(this)->last_called_ = route;
-		  const_cast<App*>(this)->last_handler_ = it->second;
-		  it->second.handler(request, response);
-		} else throw http_error::not_found("Method ", m2c(m), " not implemented on route ", route2);
-	  } else throw http_error::not_found("Route ", route, " does not exist.");
+	void _call(HTTP& m, std::string& r, Req& request, Res& response) const {
+	  if (r.size() != 1 && r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);
+	  if (r == last_called_) {// skip the last / of the url.
+		last_handler_(request, response); return;
+	  } std::string g; static_cast<char>(m) > 9 ? g.push_back(static_cast<char>(m) % 10 + 0x30),
+		g.push_back(static_cast<char>(m) / 10 + 0x30) : g.push_back(static_cast<char>(m) + 0x30); g += r;
+	  fc::drt_node::iterator it = map_.find(g); if (it != map_.end()) {
+		const_cast<App*>(this)->last_called_ = r;
+		const_cast<App*>(this)->last_handler_ = it->second;
+		it->second(request, response);
+	  } else throw http_error::not_found("Route ", r, " does not exist.");
 	}
 	DRT map_; std::string last_called_; VH last_handler_;
   };

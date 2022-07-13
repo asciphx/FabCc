@@ -8,10 +8,10 @@
 #include <req-res.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/dynamic_routing_table.hh
 namespace fc {
-  struct VH { char verb = static_cast<char>(HTTP::GET); std::function<void(Req&, Res&)> handler; };
+  using VH = std::function<void(Req&, Res&)>;
   //class lambda [](std::string s, VH d)->void
   struct drt_node {
-	drt_node(): v_{ 0, nullptr } {}//*
+	drt_node(): v_{ nullptr } {}//*
 	struct iterator {
 	  const drt_node* ptr; std::string first; VH second;
 	  iterator* operator-> () { return this; }
@@ -42,9 +42,9 @@ namespace fc {
 	  }
 	}
 	iterator find(const std::string& r, unsigned short c) const {
-	  if ((c == r.size() && v_.handler != nullptr) || (children_.size() == 0))// We found the route r.
+	  if ((c == r.size() && v_ != nullptr) || (children_.size() == 0))// We found the route r.
 		return iterator{ this, r, v_ };
-	  if (c == r.size() && v_.handler == nullptr)// r does not match any route.
+	  if (c == r.size() && v_ == nullptr)// r does not match any route.
 		return iterator{ nullptr, r, v_ };
 	  if (r[c] == '/') ++c; // skip the first /
 	  unsigned short s = c; while (c < r.size() && r[c] != '/') ++c;// Find the next /.

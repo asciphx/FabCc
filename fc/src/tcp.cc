@@ -29,8 +29,8 @@ namespace fc {
 	//if (h->write_queue_size < co->_.u.io.queued_bytes) { uv_read_stop(h); co->_.u.io.queued_bytes = 0; delete co; return; }
 	if (nread > 0) {
 	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
-	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } std::string& s = co->buf_;
-	  if (co->req_.keep_alive) co->res_.add_header(RES_Con, "Keep-Alive");
+	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
+	  fc::Buffer& s = co->buf_; if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
 	  req.url = co->parser_.url.data(); req.raw_url = std::move(co->parser_.raw_url);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
@@ -39,42 +39,40 @@ namespace fc {
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Con), "")) {
 	  //}
 	  try {
-		co->app_->_call(req.method, req.url, req, co->res_);
-		co->set_status(co->res_, co->res_.code);
+		co->app_->_call(req.method, req.url, req, res);
+		co->set_status(res, res.code);
 	  } catch (const http_error& e) {
-		co->set_status(co->res_, e.status()); co->res_.body = e.what();
+		co->set_status(res, e.status()); res.body = e.what();
 		//uv_read_stop(h); delete co; return;
 	  } catch (const std::runtime_error& e) {
-		co->set_status(co->res_, 500); co->res_.body = e.what();
-	  }
-	  if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
-		co->parser_.http_major == 1 && co->parser_.http_minor == 1) s += expect_100_continue;
-	  s += RES_http_status; s += co->status_;
-	  for (auto& kv : co->res_.headers) s += kv.first, s += RES_seperator, s += kv.second, s += RES_crlf;
+		co->set_status(res, 500); res.body = e.what();
+	  } // if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
+		//co->parser_.http_major == 1 && co->parser_.http_minor == 1) s << expect_100_continue;
+	  s << expect_100_continue << RES_http_status << co->status_;
+	  for (auto& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
-	  s += RES_AcC; s += AccessControlAllowCredentials; s += RES_crlf;
+	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
 #endif
 #ifdef AccessControlAllowHeaders
-	  s += RES_AcH; s += AccessControlAllowHeaders; s += RES_crlf;
+	  s << RES_AcH << AccessControlAllowHeaders << RES_crlf;
 #endif
 #ifdef AccessControlAllowMethods
-	  s += RES_AcM; s += AccessControlAllowMethods; s += RES_crlf;
+	  s << RES_AcM << AccessControlAllowMethods << RES_crlf;
 #endif
 #ifdef AccessControlAllowOrigin
-	  s += RES_AcO; s += AccessControlAllowOrigin; s += RES_crlf;
+	  s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
 #endif
-	  if (!co->res_.headers.count(RES_CT)) {
-		s += RES_CT; s += RES_seperator; s += RES_Txt; s += RES_crlf;
+	  if (!res.headers.count(RES_CT)) {
+		s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
 	  }
-	  s += RES_content_length_tag; s += std::to_string(co->res_.body.size()); s += RES_crlf;
+	  s << RES_content_length_tag << std::to_string(res.body.size()) << RES_crlf;
 #if SHOW_SERVER_NAME
-	  s += RES_server_tag; s += SERVER_NAME; s += RES_crlf;
+	  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
-	  s += RES_crlf; s += co->res_.body;
-	  DEBUG("客户端：%d %s \n", co->id, s.c_str());
-	  co->wbuf.base = s.data(); co->wbuf.len = s.size();
-	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();//write_cb
-	  co->res_.body.clear(); co->res_.code = 200; co->res_.headers.clear();
+	  s << RES_crlf << res.body; res.headers.clear();
+	  DEBUG("客户端：%d %s \n", co->id, s.c_str()); res.body.clear();
+	  co->wbuf.base = s.buffer_; co->wbuf.len = s.size();
+	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
 	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
@@ -115,6 +113,6 @@ namespace fc {
 	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
 	co->id = co->slot_.socket; co->set_keep_alive(co->id, 5, 4, 3);
-	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);// uv_tcp_keepalive(&co->slot_, 1, 6);
+	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);//uv_tcp_keepalive(&co->slot_, 1, 6);
   }
 }
