@@ -43,11 +43,10 @@ namespace fc {
 	}
 	_INLINE std::string c_str() { return std::string(buffer_, cursor_ - buffer_); };
 	Buffer& operator<<(std::size_t v);
-	//template <typename I>
-	//Buffer& operator<<(unsigned long s) {
-	//  std::array<char, 150> b = std::lexical_cast<std::array<char, 150>>(s);
-	//  return operator<<(std::string_view(b.begin(), strlen(b.begin())));
-	//}
+	Buffer& operator<<(int s) {
+	  std::string b = std::lexical_cast<std::string>(s);
+	  return operator<<(std::string_view(b.data(), b.size()));
+	}
 	template <typename I>
 	Buffer& operator<<(I v);
 	std::string_view data();

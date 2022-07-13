@@ -44,9 +44,9 @@ namespace fc {
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
 	Buffer _print_routes() {
-	  Buffer b(0xff);
-	  map_.for_all_routes([this, &b](std::string r, VH h) {
-		b << '/' << (h.verb < 10 ? r.substr(2) : r.substr(3)) << ',' << ' ';
+	  Buffer b(0x1ff); int i = 0; map_.for_all_routes([this, &b, &i](std::string r, VH h) {
+		b << '(' << ++i << ')' << '[' << m2c((HTTP)h.verb) << ']' <<
+		  '/' << (h.verb < 10 ? r.substr(2) : r.substr(3)) << ',' << (i % 6 == 0 ? "<br/>" : " ");
 		}); return b;
 	}
 	void _call(HTTP m, std::string& route, Req& request, Res& response) const {
