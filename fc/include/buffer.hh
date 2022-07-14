@@ -16,45 +16,36 @@ namespace fc {
 	Buffer& operator<<(std::string_view s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
-	Buffer& operator=(std::string s);
-	_INLINE bool empty() { return cursor_ == buffer_; };
+	_INLINE bool empty() { return cur_ == data_; };
 	_INLINE Buffer& Buffer::operator<<(std::string s) {
 	  return operator<<(std::string_view(s.data(), s.size()));
 	};
 	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
-	_INLINE void reserve(unsigned short l) {
-	  if (l < cap_)return;
-	  char* c = (char*)malloc(cap_); int size = cursor_ - buffer_;
-	  memcpy(c, buffer_, size); cap_ = l * 2;
-	  delete[] buffer_; buffer_ = new char[cap_]; cursor_ = buffer_; end_ = buffer_ + cap_;
-	  memcpy(buffer_, c, size); cursor_ += size; delete[] c;
+	_INLINE bool reserve(unsigned short l) {
+	  if (l < cap_)return false; char* c = (char*)malloc(cap_); int size = cur_ - data_;
+	  memcpy(c, data_, size); cap_ = l * 2; delete[] data_; data_ = new char[cap_]; cur_ = data_; 
+	  end_ = data_ + cap_; memcpy(data_, c, size); cur_ += size; delete[] c; return true;
 	};
 	_INLINE Buffer& Buffer::insert(const char* s, const char* e, const char* f) {
-	  short l = f - s;
-	  if (cursor_ + l >= end_) reserve(cap_ + l);
-	  for (unsigned short i = 0xffff; ++i < l; *cursor_ = e[i], ++cursor_);
-	  return *this;
+	  short l = f - s; if (cur_ + l >= end_ && reserve(cap_ + l))
+		for (unsigned short i = 0xffff; ++i < l; *cur_ = e[i], ++cur_); return *this;
 	}
 	_INLINE Buffer& Buffer::assign(const char* s, const char* e) {
-	  short l = e - s;
-	  if (cursor_ + l >= end_) reserve(cap_ + l);
-	  for (unsigned short i = 0xffff; ++i < l; *cursor_ = s[i], ++cursor_);
-	  return *this;
+	  short l = e - s; if (cur_ + l >= end_ && reserve(cap_ + l))
+		for (unsigned short i = 0xffff; ++i < l; *cur_ = s[i], ++cur_); return *this;
 	}
-	_INLINE std::string c_str() { return std::string(buffer_, cursor_ - buffer_); };
+	_INLINE std::string c_str() { return std::string(data_, cur_ - data_); };
 	Buffer& operator<<(std::size_t v);
-	Buffer& operator<<(int s) {
-	  std::string b = std::lexical_cast<std::string>(s);
-	  return operator<<(std::string_view(b.data(), b.size()));
-	}
+	Buffer& operator<<(int s);
+	Buffer& operator=(std::string s);
 	template <typename I>
 	Buffer& operator<<(I v);
 	std::string_view data();
-	char* buffer_;
+	char* data_;
 	char* end_;
   private:
-	char* cursor_;
-	bool own_buffer_;
+	char* cur_;
+	bool not_null_;
 	unsigned short cap_;
   };//Buffer(1000, [&](const char* d, int s) { *this << std::string_view(d, s); })
 }

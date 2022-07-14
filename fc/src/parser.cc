@@ -15,7 +15,7 @@ namespace fc {
   }
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); switch ($->header_building_state) {
-	case 0: if (!$->header_value.empty()) $->headers.emplace($->header_field.buffer_, $->header_value.buffer_);
+	case 0: if (!$->header_value.empty()) $->headers.emplace($->header_field.data_, $->header_value.data_);
 	  $->header_field.assign(c, c + l), $->header_building_state = 1; break;
 	case 1: $->header_field.insert($->header_field.end_, c, c + l);  break;
 	} return 0;
@@ -28,7 +28,7 @@ namespace fc {
   }
   static int on_headers_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_);
-	if (!$->header_field.empty()) $->headers.emplace($->header_field.buffer_, $->header_value.buffer_);
+	if (!$->header_field.empty()) $->headers.emplace($->header_field.data_, $->header_value.data_);
 	$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
 	  (($->http_major == 1 && $->http_minor == 1) ? true : false);
 	//$->close_conn = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :

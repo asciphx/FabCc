@@ -25,19 +25,17 @@ namespace fc {
 	if (listen())return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
-	Conn* co = (Conn*)h->data; if (co == nullptr) return;
-	//if (h->write_queue_size < co->_.u.io.queued_bytes) { uv_read_stop(h); co->_.u.io.queued_bytes = 0; delete co; return; }
+	Conn* co = (Conn*)h->data; if (co == nullptr) return;//uv_shutdown(&shutdown_req, h, NULL);
 	if (nread > 0) {
 	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
-	  fc::Buffer& s = co->buf_; if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
+	  if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
 	  req.url = co->parser_.url.data(); req.raw_url = std::move(co->parser_.raw_url);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
 	  req.keep_alive = co->parser_.keep_alive; req.uuid = hackUrl(req.url.c_str());
 	  //printf("<%s,%lld> ", req.url.c_str(), req.uuid);
-	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Con), "")) {
-	  //}
+	  fc::Buffer& s = co->buf_; co->set_status(res, 200);
 	  try {
 		co->app_->_call(req.method, req.url, req, res);
 		co->set_status(res, res.code);
@@ -71,30 +69,23 @@ namespace fc {
 #endif
 	  s << RES_crlf << res.body; res.headers.clear();
 	  DEBUG("客户端：%d %s \n", co->id, s.c_str()); res.body.clear();
-	  co->wbuf.base = s.buffer_; co->wbuf.len = s.size();
+	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
 	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		uv_close((uv_handle_t*)&co->slot_, on_close);
+		DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		uv_read_stop(h); uv_close((uv_handle_t*)h, on_close);
 	  } else {//UV_ENOBUFS
-		DEBUG("name: %s err: %s\n", uv_err_name(nread), uv_strerror(nread));
-		uv_read_stop(h);
-	  }//if (!uv_is_active((uv_handle_t*)&co->slot_))// uv_read_stop((uv_stream_t*)&co->slot_);
+		DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		uv_read_stop(h); uv_close((uv_handle_t*)h, on_close);
+	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
 	}//printf("%d\n", nread);
   }
-  void Tcp::write_cb(uv_write_t* wr, int status) {
-	Conn* co = (Conn*)wr; if (status) { uv_close((uv_handle_t*)&co->slot_, on_close); return; };
-  }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) {
-	Conn* c = (Conn*)h->data; if (c->rbuf.len < suggested) {
-	  if (c->rbuf.base != nullptr)free(c->rbuf.base);
-	  c->rbuf.base = (char*)malloc(suggested); c->rbuf.len = suggested;
-	} *b = c->rbuf;// b->base = (char*)malloc(suggested); b->len= suggested;
+	Conn* c = (Conn*)h->data; *b = c->rbuf;// b->base = (char*)malloc(suggested); b->len= suggested;
   }
-  void Tcp::on_close(uv_handle_t* h) {
-	Conn* c = (Conn*)h->data; DEBUG("{%d} x！ \n", c->id); delete c;
-  }
+  void Tcp::on_close(uv_handle_t* h) { Conn* c = (Conn*)h->data; DEBUG("{%d}x！\n", c->id); delete c; }
   void Tcp::on_connection(uv_stream_t* srv, int status) {
 	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn();
 	int $ = uv_tcp_init(tcp->loop_, &co->slot_); if ($) { delete co; return; }

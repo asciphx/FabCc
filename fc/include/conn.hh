@@ -34,13 +34,14 @@ namespace fc {
 	Res res_;
 	App* app_;
 	Conn();
-	uv_buf_t rbuf, wbuf;
+	uv_buf_t rbuf;
+	uv_buf_t wbuf;
 	uv_tcp_t slot_;
 	fc::Buffer buf_;
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
 	virtual ~Conn();
-	int shut(socket_type fd, sd_type d);
+	//int shut(socket_type fd, sd_type d);
 	//int close_fd(socket_type fd);
 	// idle:   首次发送报文的等待时间
 	// intvl:  保持发送报文的间隔

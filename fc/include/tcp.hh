@@ -15,6 +15,7 @@
 #include <h/config.h>
 #include <app.hh>
 namespace fc {
+static uv_shutdown_t shutdown_req;
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
@@ -39,7 +40,6 @@ namespace fc {
 	void exit();
   protected:
 	static void read_cb(uv_stream_t* client, ssize_t nread, const uv_buf_t* b);
-	static void write_cb(uv_write_t* req, int status);//
 	static void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* b);
 	static void on_exit(uv_handle_t* handle);
 	static void on_close(uv_handle_t* handle);
