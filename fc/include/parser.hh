@@ -11,7 +11,7 @@ namespace fc {
   struct llParser: public llhttp__internal_s {
 	llParser();
 	void set_type(llhttp_type t = llhttp_type::HTTP_REQUEST);
-	std::string raw_url;
+	std::string url_params;
 	fc::Buffer url;
 	char header_building_state;
 	fc::Buffer header_field;
@@ -19,7 +19,6 @@ namespace fc {
 	str_map headers;
 	//fc::query_string url_params;
 	fc::Buffer body;
-	bool keep_alive, close_conn;
 	bool ready = true;
 	const static llhttp_settings_s _;
   };

@@ -29,13 +29,12 @@ namespace fc {
 	if (nread > 0) {
 	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
-	  if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
+	  //if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
-	  req.url = co->parser_.url.data(); req.raw_url = std::move(co->parser_.raw_url);
+	  req.url = co->parser_.url.data(); req.params = std::move(co->parser_.url_params);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
-	  req.keep_alive = co->parser_.keep_alive; req.uuid = hackUrl(req.url.c_str());
-	  //printf("<%s,%lld> ", req.url.c_str(), req.uuid);
-	  fc::Buffer& s = co->buf_; co->set_status(res, 200);
+	  req.uuid = hackUrl(req.url.c_str()); fc::Buffer& s = co->buf_;
+	  //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
 	  try {
 		co->app_->_call(req.method, req.url, req, res);
 		co->set_status(res, res.code);

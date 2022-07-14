@@ -8,9 +8,9 @@ namespace fc {
   class Req {
 	friend class fc::Tcp;
 	HTTP method;
-	std::string raw_url;
   public:
 	std::string url;
+	std::string params;
 	uint64_t uuid;
 	str_map headers;
 	std::string body;

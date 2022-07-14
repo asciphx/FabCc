@@ -15,7 +15,7 @@
 #include <h/config.h>
 #include <app.hh>
 namespace fc {
-static uv_shutdown_t shutdown_req;
+static uv_shutdown_t RES_SHUT_REQ;
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;

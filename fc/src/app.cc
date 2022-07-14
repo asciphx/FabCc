@@ -46,11 +46,10 @@ namespace fc {
   }
   void App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {
 	if (r.size() != 1 && r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);
-	if (r == last_called_) {// skip the last / of the url.
-	  last_handler_(request, response); return;
-	} std::string g; static_cast<char>(m) > 9 ? g.push_back(static_cast<char>(m) % 10 + 0x30),
+	if (r == last_called_) { last_handler_(request, response); return; }// skip the last / of the url.
+	std::string g; static_cast<char>(m) > 9 ? g.push_back(static_cast<char>(m) % 10 + 0x30),
 	  g.push_back(static_cast<char>(m) / 10 + 0x30) : g.push_back(static_cast<char>(m) + 0x30); g += r;
-	fc::drt_node::iterator it = map_.find(g); if (it != map_.end()) {
+	fc::drt_node::iterator it = map_.root.find(g, 0); if (it != map_.end()) {
 	  const_cast<App*>(this)->last_called_ = r;
 	  const_cast<App*>(this)->last_handler_ = it->second;
 	  it->second(request, response);

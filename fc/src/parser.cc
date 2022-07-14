@@ -5,13 +5,13 @@
 // from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 namespace fc {
   static int on_message_begin(llhttp__internal_s* _) {
-	llParser* $ = static_cast<llParser*>(_); $->url.clear(); $->raw_url.clear();// $->url_params.clear();
+	llParser* $ = static_cast<llParser*>(_); $->url.clear(); $->url_params.clear();// $->url_params.clear();
 	$->header_field.clear(); $->header_value.clear(); $->headers.clear(); $->body.clear();
 	$->header_building_state = $->http_major = $->http_minor = 0; return 0;
   }
   static int on_url(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->raw_url.insert($->raw_url.end(), c, c + l);
-	$->raw_url = DecodeURL($->raw_url); return 0;
+	llParser* $ = static_cast<llParser*>(_); $->url_params.insert($->url_params.end(), c, c + l);
+	$->url_params = DecodeURL($->url_params); return 0;
   }
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); switch ($->header_building_state) {
@@ -29,8 +29,8 @@ namespace fc {
   static int on_headers_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_);
 	if (!$->header_field.empty()) $->headers.emplace($->header_field.data_, $->header_value.data_);
-	$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
-	  (($->http_major == 1 && $->http_minor == 1) ? true : false);
+	//$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
+	//  (($->http_major == 1 && $->http_minor == 1) ? true : false);
 	//$->close_conn = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :
 	//  (($->http_major == 1 && $->http_minor == 1) ? (($->flags & F_CONNECTION_CLOSE) ? true : false) : false);
 	return 0;//llhttp_should_keep_alive(_);$->handler_->handle_header();
@@ -39,8 +39,11 @@ namespace fc {
 	llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end_, c, c + l); return 0;
   }
   static int on_message_complete(llhttp__internal_s* _) {
-	llParser* $ = static_cast<llParser*>(_); $->url = $->raw_url.substr(0, $->raw_url.find('?'));
-	$->ready = true; return 0;//$->url_params = query_string($->raw_url); handler_->handle();
+	llParser* $ = static_cast<llParser*>(_); size_t l = $->url_params.find('?');
+	if (l != std::string::npos) {
+	  $->url = $->url_params.substr(0, l); $->url_params = std::move($->url_params.substr(++l));
+	} else { $->url = std::move($->url_params); }
+	$->ready = true; return 0;//$->url_params = query_string($->url_params); handler_->handle();
   }
   const llhttp_settings_s llParser::_ = {
 	  on_message_begin,

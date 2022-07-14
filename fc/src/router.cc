@@ -11,8 +11,7 @@ namespace fc {
 	int s = c; while (c < r.size() && r[c] != '/') ++c;
 	std::string k = r.substr(s, c - s);
 	std::list<std::pair<const std::string, drt_node*>>::const_iterator it = children_.find(k);//auto
-	if (it != children_.end())
-	  return children_[k]->find_or_create(r, c);
+	if (it != children_.end()) return children_[k]->find_or_create(r, c);
 	else {
 	  drt_node* new_node = new drt_node(); children_.insert({ k, new_node });
 	  return new_node->find_or_create(r, c);
@@ -55,7 +54,6 @@ namespace fc {
 	std::string s; m > 9 ? s.push_back(m % 10 + 0x30), s.push_back(m / 10 + 0x30) :
 	  s.push_back(m + 0x30); s += r; return root.find_or_create(s, 0);
   }
-  drt_node::iterator DRT::find(const std::string& r) const { return root.find(r, 0); }
   void DRT::for_all_routes(std::function<void(std::string, const fc::VH)>&& f) const { root.for_all_routes(f); }
   drt_node::iterator DRT::end() const { return root.end(); }
 
