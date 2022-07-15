@@ -18,6 +18,25 @@ namespace fc {
   }
   void Buffer::reset() { cur_ = data_; }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; cur_ = data_; end_ = data_ + cap_; }
+  bool Buffer::empty() { return cur_ == data_; };
+  Buffer& Buffer::operator<<(std::string s) {
+	return operator<<(std::string_view(s.data(), s.size()));
+  };
+  Buffer& Buffer::append(const char c) { return (*this) << c; }
+  bool Buffer::reserve(unsigned short l) {
+	if (l < cap_)return false; char* c = (char*)malloc(cap_); int size = cur_ - data_;
+	memcpy(c, data_, size); cap_ = l * 2; delete[] data_; data_ = new char[cap_]; cur_ = data_;
+	end_ = data_ + cap_; memcpy(data_, c, size); cur_ += size; delete[] c; return true;
+  };
+  Buffer& Buffer::insert(const char* s, const char* e, const char* f) {
+	short l = f - s; if (cur_ + l >= end_ && reserve(cap_ + l))
+	  for (unsigned short i = 0xffff; ++i < l; *cur_ = e[i], ++cur_); return *this;
+  }
+  Buffer& Buffer::assign(const char* s, const char* e) {
+	short l = e - s; if (cur_ + l >= end_ && reserve(cap_ + l))
+	  for (unsigned short i = 0xffff; ++i < l; *cur_ = s[i], ++cur_); return *this;
+  }
+  std::string Buffer::c_str() { return std::string(data_, cur_ - data_); };
   std::size_t Buffer::size() { return cur_ - data_; }
   Buffer& Buffer::operator<<(std::string_view s) {
 	if (cur_ + s.size() >= end_) reserve((unsigned short)((cur_ - data_) + s.size()));

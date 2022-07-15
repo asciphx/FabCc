@@ -43,9 +43,9 @@ namespace fc {
 		//uv_read_stop(h); delete co; return;
 	  } catch (const std::runtime_error& e) {
 		co->set_status(res, 500); res.body = e.what();
-	  } // if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
-		//co->parser_.http_major == 1 && co->parser_.http_minor == 1) s << expect_100_continue;
-	  s << expect_100_continue << RES_http_status << co->status_;
+	  } if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
+		co->parser_.http_major == 1 && co->parser_.http_minor == 1) s << expect_100_continue;
+	  s << RES_http_status << co->status_;
 	  for (auto& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
 	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;

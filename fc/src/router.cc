@@ -55,6 +55,5 @@ namespace fc {
 	  s.push_back(m + 0x30); s += r; return root.find_or_create(s, 0);
   }
   void DRT::for_all_routes(std::function<void(std::string, const fc::VH)>&& f) const { root.for_all_routes(f); }
-  drt_node::iterator DRT::end() const { return root.end(); }
 
 } // namespace fc

@@ -27,7 +27,6 @@ namespace fc {
 	// Find a route && return reference to a procedure.
 	VH& add(const char* r, char m);
 	void for_all_routes(std::function<void(std::string, const fc::VH)>&& f) const;
-	drt_node::iterator end() const;
 	drt_node root;
   };
 

@@ -29,10 +29,6 @@ namespace fc {
   static int on_headers_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_);
 	if (!$->header_field.empty()) $->headers.emplace($->header_field.data_, $->header_value.data_);
-	//$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
-	//  (($->http_major == 1 && $->http_minor == 1) ? true : false);
-	//$->close_conn = ($->http_major == 1 && $->http_minor == 0) ? (($->flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :
-	//  (($->http_major == 1 && $->http_minor == 1) ? (($->flags & F_CONNECTION_CLOSE) ? true : false) : false);
 	return 0;//llhttp_should_keep_alive(_);$->handler_->handle_header();
   }
   static int on_body(llhttp__internal_s* _, const char* c, size_t l) {

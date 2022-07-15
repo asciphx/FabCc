@@ -17,7 +17,7 @@
 namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
-	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Con("Connection", 10), 
+	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Con("Connection", 10), RES_Ex("expect", 6),
 	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5);
   static const std::string& get_header(const str_map& headers, const std::string& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return empty;
@@ -43,7 +43,7 @@ namespace fc {
 	return "invalid";
   }
   static const std::string_view RES_server_tag("Server: ", 8), RES_content_length_tag("Content-Length: ", 16), RES_http_status("HTTP/1.1 ", 9),
-	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_Ex("expect", 6), RES_upgrade("upgrade", 7),
+	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7),
 	RES_AcC("Access-Control-Allow-Credentials: ", 34), RES_t("true", 4), RES_AcM("Access-Control-Allow-Methods: ", 30), RES_host("Host", 4),
 	RES_AcH("Access-Control-Allow-Headers: ", 30), RES_AcO("Access-Control-Allow-Origin: ", 29), RES_expect("HTTP/1.1 100 Continue\r\n\r\n", 25),
 	RES_date_tag("Date: ", 6), RES_content_length("content-length", 14), RES_seperator(": ", 2), RES_crlf("\r\n", 2), RES_loc("location", 8),
