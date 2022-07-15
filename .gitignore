@@ -3,4 +3,6 @@ CMakeSettings.json
 .vs/
 .vscode/
 lib/
+build/
+out/
 *.obj
