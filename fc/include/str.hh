@@ -10,6 +10,8 @@ namespace fc {
   //<Ctrl> + Left mouse button -> Jump to the specified location
   std::string_view DecodeURL(std::string& str);
   std::string DecodeURL(const char* d);
+  std::string EncodeURL(const std::string& s);
+  std::string EncodeURL(const char* c);
   std::string& toUpperCase(std::string& s);
   std::string toUpperCase(const char* s);
   std::string& toLowerCase(std::string& s);

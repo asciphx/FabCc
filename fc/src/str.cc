@@ -6,16 +6,16 @@
 #include <cstdlib>
 #include <cstring>
 namespace fc {
-  static char STD_HEX[0x7e] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0,
-  0, 0, 0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  static const char _X[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0,
+  0, 0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/url_unescape.hh
   std::string_view DecodeURL(std::string& s) {
 	char* o = (char*)s.c_str(), * c = (char*)s.c_str();
 	const char* e = c + s.size(); while (c < e) {
 	  if (*c == '%' && c < e - 2) {
-		*o = (STD_HEX[c[1]] << 4) | STD_HEX[c[2]]; c += 2;
+		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
 	  } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string_view(s.data(), o - s.data());// 0x67
   }
@@ -23,9 +23,41 @@ namespace fc {
 	std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
 	const char* e = c + s.length(); while (c < e) {
 	  if (*c == '%' && c < e - 2) {
-		*o = (STD_HEX[c[1]] << 4) | STD_HEX[c[2]]; c += 2;
+		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
 	  } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string(s.c_str(), o - s.c_str());// 0x67
+  }
+  std::string EncodeURL(const std::string& s) {
+	std::string r; for (char c : s) {
+	  if (c > '\377') {
+		switch (c) {
+		case 0xa: case 0xd: case 0x20: case 0x27:
+		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
+		  char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", c); r.append(h, l);
+		} break;
+		default: r += c;
+		}
+	  } else {
+		char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", static_cast<uint8_t>(c));
+		r.append(h, l);
+	  }
+	} return r;
+  }
+  std::string EncodeURL(const char* c) {
+	std::string r; while (*c) {
+	  if (*c > '\377') {
+		switch (*c) {
+		case 0xa: case 0xd: case 0x20: case 0x27:
+		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
+		  char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", *c); r.append(h, l);
+		}break;
+		default: r += *c;
+		}
+	  } else {
+		char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", static_cast<uint8_t>(*c));
+		r.append(h, l);
+	  } ++c;
+	} return r;
   }
   std::string& toUpperCase(std::string& s) {
 	char* c = (char*)s.c_str(); if (*c > 0x60 && *c < 0x7b) { *c &= ~0x20; }
@@ -131,4 +163,4 @@ namespace fc {
 #ifdef __cplusplus
   }  /* extern "C" */
 #endif
-  }
+}
