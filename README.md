@@ -6,6 +6,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known c++
 - Use the global timer task to control some things, such as shutting down the server when it expires
 - With an API similar to nodejs, it also looks like JS
 - Minimalist API, infinite possibilities
+- Fastest API, such as lexical_cast, EncodeURL, DecodeURL
 
 ## Description
 - The namespace uses the uppercase hump fc of FabCc.

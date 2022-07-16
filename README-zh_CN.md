@@ -6,6 +6,7 @@
 - 能够使用全局定时器任务，来控制一些事情，比如到期关闭服务器
 - 拥有类似nodejs的api，写起来也像js
 - 极简的api，无限的可能
+- 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
 
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。
