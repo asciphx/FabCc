@@ -5,9 +5,9 @@ namespace fc {
   Buffer::Buffer(Buffer&& o): data_(o.data_), not_null_(o.not_null_), cur_(o.cur_), end_(o.end_), cap_(o.cap_) {
 	o.data_ = nullptr; o.not_null_ = false;
   }
-  Buffer::Buffer(unsigned short capacity)
+  Buffer::Buffer(unsigned int capacity)
 	: data_(new char[capacity]), not_null_(true), cur_(data_), end_(data_ + capacity), cap_(capacity) {}
-  Buffer::Buffer(const char* c, unsigned short capacity)
+  Buffer::Buffer(const char* c, unsigned int capacity)
 	: data_(new char[capacity]), not_null_(true), cur_(data_), end_(data_ + capacity), cap_(capacity) {
 	memcpy(cur_, c, capacity); cur_ += capacity;
   }
@@ -23,23 +23,23 @@ namespace fc {
 	return operator<<(std::string_view(s.data(), s.size()));
   };
   Buffer& Buffer::append(const char c) { return (*this) << c; }
-  bool Buffer::reserve(unsigned short l) {
+  bool Buffer::reserve(unsigned int l) {
 	if (l < cap_)return false; char* c = (char*)malloc(cap_); int size = cur_ - data_;
 	memcpy(c, data_, size); cap_ = l * 2; delete[] data_; data_ = new char[cap_]; cur_ = data_;
 	end_ = data_ + cap_; memcpy(data_, c, size); cur_ += size; delete[] c; return true;
   };
   Buffer& Buffer::insert(const char* s, const char* e, const char* f) {
 	short l = f - s; if (cur_ + l >= end_ && reserve(cap_ + l))
-	  for (unsigned short i = 0xffff; ++i < l; *cur_ = e[i], ++cur_); return *this;
+	  for (unsigned int i = 0xffffffff; ++i < l; *cur_ = e[i], ++cur_); return *this;
   }
   Buffer& Buffer::assign(const char* s, const char* e) {
 	short l = e - s; if (cur_ + l >= end_ && reserve(cap_ + l))
-	  for (unsigned short i = 0xffff; ++i < l; *cur_ = s[i], ++cur_); return *this;
+	  for (unsigned int i = 0xffffffff; ++i < l; *cur_ = s[i], ++cur_); return *this;
   }
   std::string Buffer::c_str() { return std::string(data_, cur_ - data_); };
   std::size_t Buffer::size() { return cur_ - data_; }
   Buffer& Buffer::operator<<(std::string_view s) {
-	if (cur_ + s.size() >= end_) reserve((unsigned short)((cur_ - data_) + s.size()));
+	if (cur_ + s.size() >= end_) reserve((unsigned int)((cur_ - data_) + s.size()));
 	memcpy(cur_, s.data(), s.size()); cur_ += s.size(); return *this;
   }
   Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }

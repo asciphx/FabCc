@@ -25,9 +25,9 @@ namespace fc {
 	if (listen())return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
-	Conn* co = (Conn*)h->data; if (co == nullptr) return;//uv_shutdown(&shutdown_req, h, NULL);
+	Conn* co = (Conn*)h->data;//uv_shutdown(&shutdown_req, h, NULL);
 	if (nread > 0) {
-	  bool failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
+	  int failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
 	  //if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
@@ -36,11 +36,9 @@ namespace fc {
 	  req.uuid = hackUrl(req.url.c_str()); fc::Buffer& s = co->buf_;
 	  //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
 	  try {
-		co->app_->_call(req.method, req.url, req, res);
-		co->set_status(res, res.code);
+		co->app_->_call(req.method, req.url, req, res); co->set_status(res, res.code);
 	  } catch (const http_error& e) {
-		co->set_status(res, e.status()); res.body = e.what();
-		//uv_read_stop(h); delete co; return;
+		co->set_status(res, e.status()); res.body = e.what(); //uv_read_stop(h); delete co; return;
 	  } catch (const std::runtime_error& e) {
 		co->set_status(res, 500); res.body = e.what();
 	  } if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
@@ -66,7 +64,7 @@ namespace fc {
 #if SHOW_SERVER_NAME
 	  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
-	  s << RES_crlf << res.body; res.headers.clear();
+	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200;
 	  DEBUG("客户端：%d %s \n", co->id, s.c_str()); res.body.clear();
 	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
@@ -74,12 +72,12 @@ namespace fc {
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_read_stop(h); uv_close((uv_handle_t*)h, on_close);
+		uv_close((uv_handle_t*)h, on_close);
 	  } else {//UV_ENOBUFS
 		DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_read_stop(h); uv_close((uv_handle_t*)h, on_close);
+		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
 	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
-	}//printf("%d\n", nread);
+	}//printf("%d\n", nread);uv_read_stop(h);
   }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) {
 	Conn* c = (Conn*)h->data; *b = c->rbuf;// b->base = (char*)malloc(suggested); b->len= suggested;

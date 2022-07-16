@@ -7,15 +7,15 @@ namespace fc {
   struct Buffer {
 	Buffer();
 	Buffer(Buffer&& o);
-	Buffer(unsigned short capacity);
-	Buffer(const char* c, unsigned short capacity);
+	Buffer(unsigned int capacity);
+	Buffer(const char* c, unsigned int capacity);
 	~Buffer();
 	Buffer& operator=(Buffer&& o);
 	_INLINE void reset(); void clear();
 	bool empty();
 	Buffer& operator<<(std::string s);
 	Buffer& append(const char c);
-	_INLINE bool reserve(unsigned short l);
+	_INLINE bool reserve(unsigned int l);
 	Buffer& insert(const char* s, const char* e, const char* f);
 	Buffer& assign(const char* s, const char* e);
 	std::string c_str();
@@ -34,7 +34,7 @@ namespace fc {
   private:
 	char* cur_;
 	bool not_null_;
-	unsigned short cap_;
+	unsigned int cap_;
   };//Buffer(1000, [&](const char* d, int s) { *this << std::string_view(d, s); })
 }
 #endif
