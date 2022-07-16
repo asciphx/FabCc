@@ -35,7 +35,7 @@ namespace fc {
 		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
 		  char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", c); r.append(h, l);
 		} break;
-		default: r += c;
+		default: r.push_back(c);
 		}
 	  } else {
 		char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", static_cast<uint8_t>(c));
@@ -51,7 +51,7 @@ namespace fc {
 		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
 		  char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", *c); r.append(h, l);
 		}break;
-		default: r += *c;
+		default: r.push_back(*c);
 		}
 	  } else {
 		char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", static_cast<uint8_t>(*c));
