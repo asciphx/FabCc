@@ -73,7 +73,7 @@ namespace fc {
 	case 501:status_ = "501 Not Implemented\r\n"; res.body = status_; break;
 	case 502:status_ = "502 Bad Gateway\r\n"; res.body = status_; break;
 	case 503:status_ = "503 Service Unavailable\r\n"; res.body = status_; break;
-	default:status_ = "404 Not Found\r\n"; res.body = status_; res.code = 404;
+	default: status_ = "404 Not Found\r\n"; res.body = status_; res.code = 404;
 	}
   }
 }

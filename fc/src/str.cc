@@ -33,13 +33,17 @@ namespace fc {
 		switch (c) {
 		case 0xa: case 0xd: case 0x20: case 0x27:
 		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
-		  char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", c); r.append(h, l);
+		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
+		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  o = c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		} break;
-		default: r.push_back(c);
+		default: r += c;
 		}
 	  } else {
-		char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", static_cast<uint8_t>(c));
-		r.append(h, l);
+		r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(c) & 0x0F;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 	  }
 	} return r;
   }
@@ -49,13 +53,18 @@ namespace fc {
 		switch (*c) {
 		case 0xa: case 0xd: case 0x20: case 0x27:
 		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
-		  char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", *c); r.append(h, l);
+		  r.push_back(0x25); char o = (*c & 0xF0) >> 4;
+		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  o = *c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		}break;
-		default: r.push_back(*c);
+		default: r += *c;
 		}
 	  } else {
-		char h[4] = {}; int l = ::snprintf(h, 4, "%%%02X", static_cast<uint8_t>(*c));
-		r.append(h, l);
+		r.push_back(0x25);
+		char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(*c) & 0x0F;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 	  } ++c;
 	} return r;
   }

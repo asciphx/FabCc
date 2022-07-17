@@ -21,7 +21,9 @@ namespace fc {
   void drt_node::for_all_routes(std::function<void(std::string, const fc::VH)>& f, std::string prefix) const {
 	if (children_.size() == 0) f(prefix, v_);
 	else {
-	  if (prefix.size() && prefix.back() != '/') prefix += '/';
+	  if (prefix.size() && prefix.back() != '/') {
+		if (prefix.size() > 2) f(prefix, v_); prefix += '/';
+	  }
 	  for (std::pair<const std::string, drt_node*> pair : children_)
 		pair.second->for_all_routes(f, prefix + std::string(pair.first));
 	}
@@ -29,7 +31,7 @@ namespace fc {
   drt_node::iterator drt_node::find(const std::string& r, unsigned short c) const {
 	if ((c == r.size() && v_ != nullptr) || (children_.size() == 0))// We found the route r.
 	  return iterator{ this, r, v_ };
-	if (c == r.size() && v_ == nullptr)// r does not match any route.
+	if (c >= r.size() && v_ == nullptr)// r does not match any route.
 	  return iterator{ nullptr, r, v_ };
 	if (r[c] == '/') ++c; // skip the first /
 	unsigned short s = c; while (c < r.size() && r[c] != '/') ++c;// Find the next /.
@@ -37,7 +39,7 @@ namespace fc {
 	std::list<std::pair<const std::string, drt_node*>>::const_iterator it = children_.find(k);// look for k in the children.
 	if (it != children_.end()) {
 	  iterator it2 = it->second->find(r, c); // search in the corresponding child.
-	  if (it2 != it->second->end()) return it2;
+	  if (it2 != it->second->end()) { if (it2.first.back() != '/' || r.size() == 2) { return it2; } else { ++c; } }
 	}
 	{
 	  // if one child is a url param {{param_name}}, choose it

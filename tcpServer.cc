@@ -11,6 +11,9 @@ int main() {
   app["/api"] = [&app](Req&, Res& res) {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
+  app["/api/id"] = [&app](Req&, Res& res) {
+	res.write("这是另一个世界！");
+  };
   app.post("/api") = [&](Req& req, Res& res) {
 	res.write("这是post方法！");
   };
