@@ -15,7 +15,7 @@
 #include <h/config.h>
 #include <app.hh>
 namespace fc {
-static uv_shutdown_t RES_SHUT_REQ;
+  static uv_shutdown_t RES_SHUT_REQ;
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
@@ -24,6 +24,7 @@ static uv_shutdown_t RES_SHUT_REQ;
 	unsigned char num = 1;//待实现控制线程数量
 	int port_ = 8080;//默认端口
 	int addr_len;
+	unsigned short keep_milliseconds = 6000;//默认6秒，保持客户端存活
 	bool opened;
 	bool is_ipv6;
 	bool init();
@@ -35,6 +36,8 @@ static uv_shutdown_t RES_SHUT_REQ;
 	virtual ~Tcp();
 	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);//默认ipv4
 	Tcp& setTcpNoDelay(bool enable);
+	//If it is within 600, it is seconds; otherwise, it is milliseconds
+	Tcp& timeout(unsigned short milliseconds = 6000);
 	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());
 	Tcp& router(App& app);
 	void exit();

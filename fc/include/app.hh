@@ -21,6 +21,6 @@ namespace fc {
 	///Process the Req and generate a Res for it
 	Buffer _print_routes();
 	void _call(HTTP& m, std::string& r, Req& request, Res& response) const;
-	DRT map_;// VH last_handler_; std::string last_called_;
+	DRT map_; VH last_handler_; std::string last_called_;
   };
 } // namespace fc

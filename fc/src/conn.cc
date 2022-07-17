@@ -1,7 +1,7 @@
 #include <conn.hh>
 
 namespace fc {
-  Conn::Conn():buf_(0x3ff) {
+  Conn::Conn(unsigned short milliseconds):buf_(0x1ff), keep_milliseconds(milliseconds) {
 	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
   }
   Conn::~Conn() {

@@ -10,6 +10,7 @@ namespace fc {
   Tcp::~Tcp() { exit(); }
   Tcp& Tcp::router(App& app) { app_ = &app; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
+  Tcp& Tcp::timeout(unsigned short m) { keep_milliseconds = m < 601 ? m * 1000 : m; return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
 	int $; if (is_ipv4) {
 	  struct sockaddr_in addr; $ = uv_ip4_addr(ip_addr, port, &addr); if ($)return false;
@@ -29,7 +30,7 @@ namespace fc {
 	if (nread > 0) {
 	  int failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
-	  //if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
+	  if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
 	  req.url = co->parser_.url.data(); req.params = std::move(co->parser_.url_params);
 	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
@@ -37,6 +38,10 @@ namespace fc {
 	  //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
 	  try {
 		co->app_->_call(req.method, req.url, req, res); co->set_status(res, res.code);
+		co->req_.keep_alive = true;
+		res.timer_.setTimeout([h] {
+		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+		}, co->keep_milliseconds);
 	  } catch (const http_error& e) {
 		co->set_status(res, e.status()); res.body = e.what(); //uv_read_stop(h); delete co; return;
 	  } catch (const std::runtime_error& e) {
@@ -84,7 +89,7 @@ namespace fc {
   }
   void Tcp::on_close(uv_handle_t* h) { Conn* c = (Conn*)h->data; DEBUG("{%d}x！\n", c->id); delete c; }
   void Tcp::on_connection(uv_stream_t* srv, int status) {
-	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn();
+	Tcp* tcp = (Tcp*)srv->data; Conn* co = new Conn(tcp->keep_milliseconds);
 	int $ = uv_tcp_init(tcp->loop_, &co->slot_); if ($) { delete co; return; }
 	$ = uv_accept((uv_stream_t*)&tcp->_, (uv_stream_t*)&co->slot_);
 	if ($) { uv_close((uv_handle_t*)&co->slot_, NULL); delete co; return; }
@@ -100,7 +105,7 @@ namespace fc {
 	  }
 	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
-	co->id = co->slot_.socket; co->set_keep_alive(co->id, 5, 4, 3);
+	co->id = co->slot_.socket; co->set_keep_alive(co->id, 3, 3, 2);
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);//uv_tcp_keepalive(&co->slot_, 1, 6);
   }
 }

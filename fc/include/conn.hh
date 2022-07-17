@@ -33,7 +33,8 @@ namespace fc {
 	Req req_;
 	Res res_;
 	App* app_;
-	Conn();
+	unsigned short keep_milliseconds;
+	Conn(unsigned short milliseconds);
 	uv_buf_t rbuf;
 	uv_buf_t wbuf;
 	uv_tcp_t slot_;

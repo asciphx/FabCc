@@ -31,7 +31,7 @@ namespace fc {
   drt_node::iterator drt_node::find(const std::string& r, unsigned short c) const {
 	if ((c == r.size() && v_ != nullptr) || (children_.size() == 0))// We found the route r.
 	  return iterator{ this, r, v_ };
-	if (c >= r.size() && v_ == nullptr)// r does not match any route.
+	if (c == r.size() && v_ == nullptr)// r does not match any route.
 	  return iterator{ nullptr, r, v_ };
 	if (r[c] == '/') ++c; // skip the first /
 	unsigned short s = c; while (c < r.size() && r[c] != '/') ++c;// Find the next /.
@@ -39,18 +39,9 @@ namespace fc {
 	std::list<std::pair<const std::string, drt_node*>>::const_iterator it = children_.find(k);// look for k in the children.
 	if (it != children_.end()) {
 	  iterator it2 = it->second->find(r, c); // search in the corresponding child.
-	  if (it2 != it->second->end()) { if (it2.first.back() != '/' || r.size() == 2) { return it2; } else { ++c; } }
+	  if (it2 != it->second->end()) { if (it2.first.back() != '/' || r.size() == 2) { return it2; } }
 	}
-	{
-	  // if one child is a url param {{param_name}}, choose it
-	  for (std::pair<std::string, drt_node*> kv : children_) {
-		std::string& name = kv.first;
-		if (name.size() > 4 && name[0] == '{' && name[1] == '{' &&
-		  name[name.size() - 2] == '}' && name[name.size() - 1] == '}')
-		  return kv.second->find(r, c);
-	  }
-	  return end();
-	}
+	return end();
   }
   VH& DRT::add(const char* r, char m) {
 	std::string s; m > 9 ? s.push_back(m % 10 + 0x30), s.push_back(m / 10 + 0x30) :

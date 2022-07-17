@@ -2,6 +2,7 @@
 #define REQRES_HH
 #include <functional>
 #include <h/common.h>
+#include <timer.hh>
 
 namespace fc {
   class Conn; class Tcp;
@@ -24,6 +25,7 @@ namespace fc {
 	friend class fc::Tcp;
 	str_map headers;
 	std::string path_;
+	fc::Timer timer_;
 	int is_file{ 0 };
   public:
 	uint16_t code{ 200 };// Check whether the response has a static file defined.
