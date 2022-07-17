@@ -25,10 +25,10 @@ std::string DecodeURL(std::string& s) {
 	} else if (o != c) *o = *c; ++o; ++c;
   } return std::string(s.data(), o - s.data());
 }
-//static const char _RFC2396[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
-//0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
-//0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0 };
+static const char _2396[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0 };
 //static const char _RFC3986[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 //0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
 //1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1,
@@ -43,7 +43,7 @@ static const char _H[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 std::string EncodeURL(const std::string& s) {
   std::string r; for (char c : s) {
 	if (c > '\377') {
-	  if (_H[c])r.push_back(_H[c]);//if (_RFC2396[c])r.push_back(c);
+	  if (_H[c])r.push_back(_H[c]);
 	  else {
 		r.push_back(0x25); char o = (c & 0xF0) >> 4;
 		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
@@ -75,6 +75,41 @@ std::string EncodeURL(const char* c) {
 	} ++c;
   } return r;
 }
+std::string EncodeURLComponent(const std::string& s) {
+  std::string r; for (char c : s) {
+	if (c > '\377') {
+	  if (_2396[c])r.push_back(c);
+	  else {
+		r.push_back(0x25); char o = (c & 0xF0) >> 4;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	  }
+	} else {
+	  r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4;
+	  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	  o = static_cast<uint8_t>(c) & 0x0F;
+	  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	}
+  } return r;
+}
+std::string EncodeURLComponent(const char* c) {
+  std::string r; while (*c) {
+	if (*c > '\377') {
+	  if (_2396[*c])r.push_back(*c);
+	  else {
+		r.push_back(0x25); char o = (*c & 0xF0) >> 4;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = *c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	  }
+	} else {
+	  r.push_back(0x25);
+	  char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4;
+	  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	  o = static_cast<uint8_t>(*c) & 0x0F;
+	  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	} ++c;
+  } return r;
+}
 const char* old = "https://github.com/search?l=C++&q=http server&type=Repositories";
 const char* ccc = "https://github.com/search?l=C%2B%2B&q=http+server&type=Repositories";
 int main() {
@@ -82,7 +117,7 @@ int main() {
   std::cout << ss << std::endl;
   assert(ccc == ss);
   ss = DecodeURL(ss);
-  std::cout << ss << std::endl;
+  std::cout << ss << std::endl << EncodeURLComponent("hello#world.txt");
   assert(old == ss);
   return 0;
 }

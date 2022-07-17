@@ -73,6 +73,45 @@ namespace fc {
 	  } ++c;
 	} return r;
   }
+  static const char _2396[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
+  0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0 };
+  std::string EncodeURLComponent(const std::string& s) {
+	std::string r; for (char c : s) {
+	  if (c > '\377') {
+		if (_2396[c])r.push_back(c);
+		else {
+		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
+		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  o = c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		}
+	  } else {
+		r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(c) & 0x0F;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	  }
+	} return r;
+  }//RFC2396
+  std::string EncodeURLComponent(const char* c) {
+	std::string r; while (*c) {
+	  if (*c > '\377') {
+		if (_2396[*c])r.push_back(*c);
+		else {
+		  r.push_back(0x25); char o = (*c & 0xF0) >> 4;
+		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  o = *c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		}
+	  } else {
+		r.push_back(0x25);
+		char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(*c) & 0x0F;
+		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+	  } ++c;
+	} return r;
+  }
   std::string& toUpperCase(std::string& s) {
 	char* c = (char*)s.c_str(); if (*c > 0x60 && *c < 0x7b) { *c &= ~0x20; }
 	while (*++c) { if (*c > 0x60 && *c < 0x7b) *c &= ~0x20; } return s;

@@ -6,12 +6,20 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
+//<Ctrl> + Left mouse button -> Jump to the specified location
 namespace fc {
-  //<Ctrl> + Left mouse button -> Jump to the specified location
+  //RFC_ALL
   std::string_view DecodeURL(std::string& str);
+  //RFC_ALL
   std::string DecodeURL(const char* d);
+  //RFC3986
   std::string EncodeURL(const std::string& s);
+  //RFC3986
   std::string EncodeURL(const char* c);
+  //RFC2396
+  std::string EncodeURLComponent(const std::string& s);
+  //RFC2396
+  std::string EncodeURLComponent(const char* c);
   std::string& toUpperCase(std::string& s);
   std::string toUpperCase(const char* s);
   std::string& toLowerCase(std::string& s);

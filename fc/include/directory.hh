@@ -65,7 +65,7 @@ inline auto serve_file(const std::string& root, std::string_view path, Res& resp
   //response.write_file(full_path);
 };
 
-inline auto serve_directory(const std::string& root) {
+inline void serve_directory(const std::string& root) {
   // extract root realpath.
   char realpath_out[CROSSPLATFORM_MAX_PATH]{0};
   if (!crossplatform_realpath<CROSSPLATFORM_MAX_PATH>(root, realpath_out))
@@ -91,7 +91,6 @@ inline auto serve_directory(const std::string& root) {
   //api.get("/{{path...}}") = [real_root](Req& request, Res& response) {
   //  return serve_file(real_root, path, response);
   //};
-  return api;
     // subapi.routes_map_.for_all_routes([this, prefix](auto r, VH h) {
     //   if (!r.empty() && r.back() == '/') h.url_spec = prefix + r;
     //   else h.url_spec = prefix + '/' + r;
