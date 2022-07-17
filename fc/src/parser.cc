@@ -32,12 +32,12 @@ namespace fc {
 	return 0;//llhttp_should_keep_alive(_);$->handler_->handle_header();
   }
   static int on_body(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end_, c, c + l); return 0;
+	llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end(), c, c + l); return 0;
   }
   static int on_message_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_); size_t l = $->url_params.find('?');
 	if (l != std::string::npos) {
-	  $->url = $->url_params.substr(0, l); $->url_params = std::move($->url_params.substr(++l));
+	  $->url = $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
 	} else { $->url = std::move($->url_params); }
 	$->ready = true; return 0;//$->url_params = query_string($->url_params); handler_->handle();
   }
@@ -52,7 +52,8 @@ namespace fc {
 	  on_message_complete
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
-  llParser::llParser():body(0x3ff), header_field(0x1f), header_value(0x7f) {
+  llParser::llParser():header_field(0x1f), header_value(0x7f) {
+	body.reserve(0x1ff); url_params.reserve(0x3f); url.reserve(0x1f);
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }

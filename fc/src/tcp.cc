@@ -30,22 +30,22 @@ namespace fc {
 	if (nread > 0) {
 	  int failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
-	  if (co->req_.keep_alive) res.add_header(RES_Con, "Keep-Alive");
 	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
-	  req.url = co->parser_.url.data(); req.params = std::move(co->parser_.url_params);
-	  req.body = co->parser_.body.data(); req.headers = std::move(co->parser_.headers);
-	  req.uuid = hackUrl(req.url.c_str()); fc::Buffer& s = co->buf_;
+	  req.url = std::move(co->parser_.url); req.params = std::move(co->parser_.url_params);
+	  req.body = std::move(co->parser_.body); req.headers = std::move(co->parser_.headers);
+	  if (co->req_.keep_alive) {
+		res.add_header(RES_Con, "Keep-Alive"); res.timer_.setTimeout([h] {
+		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+		}, co->keep_milliseconds);
+	  } else { co->req_.keep_alive = true; req.uuid = hackUrl(req.url.c_str()); }
+	  fc::Buffer& s = co->buf_;
 	  //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
 	  try {
 		co->app_->_call(req.method, req.url, req, res); co->set_status(res, res.code);
-		co->req_.keep_alive = true;
-		res.timer_.setTimeout([h] {
-		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-		}, co->keep_milliseconds);
 	  } catch (const http_error& e) {
-		co->set_status(res, e.status()); res.body = e.what(); //uv_read_stop(h); delete co; return;
+		co->set_status(res, e.status()); res.body = e.what(); co->req_.keep_alive = false;
 	  } catch (const std::runtime_error& e) {
-		co->set_status(res, 500); res.body = e.what();
+		co->set_status(res, 500); res.body = e.what(); co->req_.keep_alive = false;
 	  } if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
 		co->parser_.http_major == 1 && co->parser_.http_minor == 1) s << expect_100_continue;
 	  s << RES_http_status << co->status_;

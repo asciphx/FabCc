@@ -10,11 +10,12 @@ namespace fc {
 	friend class fc::Tcp;
 	HTTP method;
   public:
+	Req();
 	std::string url;
 	std::string params;
+	std::string body;
 	uint64_t uuid;
 	str_map headers;
-	std::string body;
 	std::string ip_addr;
 	bool keep_alive = false;
 	void add_header(std::string key, std::string value);
@@ -27,6 +28,7 @@ namespace fc {
 	std::string path_;
 	fc::Timer timer_;
 	int is_file{ 0 };
+	Res();
   public:
 	uint16_t code{ 200 };// Check whether the response has a static file defined.
 	std::string body;

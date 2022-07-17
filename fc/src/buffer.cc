@@ -29,11 +29,11 @@ namespace fc {
 	end_ = data_ + cap_; memcpy(data_, c, size); cur_ += size; delete[] c; return true;
   };
   Buffer& Buffer::insert(const char* s, const char* e, const char* f) {
-	short l = f - s; if (cur_ + l >= end_ && reserve(cap_ + l))
+	unsigned int l = f - s; if (cur_ + l >= end_ && reserve(cap_ + l))
 	  for (unsigned int i = 0xffffffff; ++i < l; *cur_ = e[i], ++cur_); return *this;
   }
   Buffer& Buffer::assign(const char* s, const char* e) {
-	short l = e - s; if (cur_ + l >= end_ && reserve(cap_ + l))
+	unsigned int l = e - s; if (cur_ + l >= end_ && reserve(cap_ + l))
 	  for (unsigned int i = 0xffffffff; ++i < l; *cur_ = s[i], ++cur_); return *this;
   }
   std::string Buffer::c_str() { return std::string(data_, cur_ - data_); };
