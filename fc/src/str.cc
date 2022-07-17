@@ -41,7 +41,7 @@ namespace fc {
   std::string EncodeURL(const std::string& s) {
 	std::string r; for (char c : s) {
 	  if (c > '\377') {
-		if (_H[c])r.push_back(_H[c]);//if (_RFC2396[c])r.push_back(c);
+		if (_H[c])r.push_back(_H[c]);
 		else {
 		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
 		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);

@@ -62,7 +62,7 @@ inline auto serve_file(const std::string& root, std::string_view path, Res& resp
   if (!impl::starts_with(root.c_str(), realpath_out))
     throw http_error::not_found("Access denied.");
 
-  response.write_file(full_path);
+  //response.write_file(full_path);
 };
 
 inline auto serve_directory(const std::string& root) {
@@ -87,10 +87,10 @@ inline auto serve_directory(const std::string& root) {
     real_root.push_back('/');
   }
 #endif
-  App api;
-  api.get("/{{path...}}") = [real_root](Req& request, Res& response) {
-    return serve_file(real_root, path, response);
-  };
+  //App api;
+  //api.get("/{{path...}}") = [real_root](Req& request, Res& response) {
+  //  return serve_file(real_root, path, response);
+  //};
   return api;
     // subapi.routes_map_.for_all_routes([this, prefix](auto r, VH h) {
     //   if (!r.empty() && r.back() == '/') h.url_spec = prefix + r;
