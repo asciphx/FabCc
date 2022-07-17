@@ -31,7 +31,7 @@ namespace fc {
 	std::string r; for (char c : s) {
 	  if (c > '\377') {
 		switch (c) {
-		case 0xa: case 0xd: case 0x20: case 0x27:
+		case 0xa: case 0xd: case 0x20: case 0x27: case 0x2f:
 		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
 		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
 		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
@@ -51,7 +51,7 @@ namespace fc {
 	std::string r; while (*c) {
 	  if (*c > '\377') {
 		switch (*c) {
-		case 0xa: case 0xd: case 0x20: case 0x27:
+		case 0xa: case 0xd: case 0x20: case 0x27: case 0x2f:
 		case 0x2b: case 0x2c: case 0x3a: case 0x3b: {
 		  r.push_back(0x25); char o = (*c & 0xF0) >> 4;
 		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
