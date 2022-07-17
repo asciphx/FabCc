@@ -16,11 +16,12 @@ namespace fc {
 	VH& put(const char* r);
 	VH& patch(const char* r);
 	char sv2c(const char* m) const;
+	_INLINE const char* m2c(HTTP m);
 	//template <typename Adaptor> //websocket
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
 	Buffer _print_routes();
 	void _call(HTTP& m, std::string& r, Req& request, Res& response) const;
-	DRT map_; VH last_handler_; std::string last_called_;
+	DRT map_;// VH last_handler_; std::string last_called_;
   };
 } // namespace fc

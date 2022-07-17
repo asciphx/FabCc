@@ -26,22 +26,6 @@ namespace fc {
   enum class HTTP {
 	DEL = 0, GET, POST = 3, PUT, PATCH = 28, INVALID
   };
-  _INLINE const char* m2c(HTTP m) {
-	switch (m) {
-	case HTTP::DEL:return "DELETE";
-	case HTTP::GET:return "GET";
-	//case HTTP::HEAD:return "HEAD";
-	case HTTP::POST:return "POST";
-	case HTTP::PUT:return "PUT";
-	//case HTTP::CONNECT:return "CONNECT";
-	//case HTTP::OPTIONS:return "OPTIONS";
-	//case HTTP::TRACE:return "TRACE";
-	case HTTP::PATCH:return "PATCH";
-	//case HTTP::PURGE:return "PURGE";
-	default:return "invalid";
-	}
-	return "invalid";
-  }
   static const std::string_view RES_server_tag("Server: ", 8), RES_content_length_tag("Content-Length: ", 16), RES_http_status("HTTP/1.1 ", 9),
 	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7),
 	RES_AcC("Access-Control-Allow-Credentials: ", 34), RES_t("true", 4), RES_AcM("Access-Control-Allow-Methods: ", 30), RES_host("Host", 4),
