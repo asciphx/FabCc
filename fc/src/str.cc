@@ -27,7 +27,7 @@ namespace fc {
 	  } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string(s.c_str(), o - s.c_str());// 0x67
   }
-  static char _HEX_[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  static const char _H[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x2d , 0x2e, 0, 0x30 , 0x31, 0x32, 0x33, 0x34,
   0x35, 0x36, 0x37, 0x38, 0x39, 0, 0, 0, 0, 0, 0, 0, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
   0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a,
@@ -36,7 +36,7 @@ namespace fc {
   std::string EncodeURL(const std::string& s) {
 	std::string r; for (char c : s) {
 	  if (c > '\377') {
-		if (_HEX_[c])r.push_back(c);
+		if (_H[c])r.push_back(c);
 		else {
 		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
 		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
@@ -53,7 +53,7 @@ namespace fc {
   std::string EncodeURL(const char* c) {
 	std::string r; while (*c) {
 	  if (*c > '\377') {
-		if (_HEX_[*c])r.push_back(*c);
+		if (_H[*c])r.push_back(*c);
 		else {
 		  r.push_back(0x25); char o = (*c & 0xF0) >> 4;
 		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
