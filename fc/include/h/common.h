@@ -6,14 +6,15 @@
 #else
 #include <string_view>
 #endif
-#include <str_map.hh>
-#include <str.hh>
 #if defined(_MSC_VER)
 #define _INLINE __forceinline
 #else
 #define _INLINE inline
 #endif
 #define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
+#include <str_map.hh>
+#include <h/config.h>
+#include <str.hh>
 namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), empty,
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
@@ -32,5 +33,10 @@ namespace fc {
 	RES_AcH("Access-Control-Allow-Headers: ", 30), RES_AcO("Access-Control-Allow-Origin: ", 29), RES_expect("HTTP/1.1 100 Continue\r\n\r\n", 25),
 	RES_date_tag("Date: ", 6), RES_content_length("content-length", 14), RES_seperator(": ", 2), RES_crlf("\r\n", 2), RES_loc("location", 8),
 	RES_AE("Accept-Encoding", 15), RES_CE("Content-Encoding", 16), RES_gzip("gzip", 4), RES_deflate("deflate", 7);
+}
+namespace detail {
+  static std::string directory_ = STATIC_DIRECTORY;
+  static std::string upload_path_ = UPLOAD_DIRECTORY;
+
 }
 #endif // COMMON_H

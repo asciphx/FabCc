@@ -8,11 +8,11 @@
 #include <atomic>
 #include <future>
 #include <chrono>
+#include <filesystem>
 #include <timer.hh>
 #include <conn.hh>
 #include <parser.hh>
 #include <h/common.h>
-#include <h/config.h>
 #include <app.hh>
 namespace fc {
   static uv_shutdown_t RES_SHUT_REQ;
@@ -37,6 +37,9 @@ namespace fc {
 	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);//默认ipv4
 	Tcp& setTcpNoDelay(bool enable);
 	//If it is within 600, it is seconds; otherwise, it is milliseconds
+	// from https://man7.org/linux/man-pages/man7/tcp.7.html#TCP_USER_TIMEOUT
+	// from https://docs.microsoft.com/en-us/windows/win32/winsock/ipproto-tcp-socket-options#TCP_MAXRT
+	// from https://opensource.apple.com/source/xnu/xnu-4570.41.2/bsd/netinet/tcp.h.auto.html#TCP_RXT_CONNDROPTIME
 	Tcp& timeout(unsigned short milliseconds = 6000);
 	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());
 	Tcp& router(App& app);
@@ -44,9 +47,10 @@ namespace fc {
   protected:
 	static void read_cb(uv_stream_t* client, ssize_t nread, const uv_buf_t* b);
 	static void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* b);
-	static void on_exit(uv_handle_t* handle);
+	static void write_cb(uv_write_t* wr, int status);
 	static void on_close(uv_handle_t* handle);
 	static void on_connection(uv_stream_t* server, int status);
+	static void on_read(uv_fs_t* req);
   };
 }
 #endif

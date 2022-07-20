@@ -49,14 +49,14 @@ namespace fc {
 		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << ',' << (i % 6 == 0 ? "<br/>" : " ");
 	  }); return b;
   }
-  void App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {
+  char App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {
 	//if (r == last_called_) { last_handler_(request, response); return; }
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it != map_.root.end()) {
 	  //const_cast<App*>(this)->last_called_ = r; const_cast<App*>(this)->last_handler_ = it->second;
-	  it->second(request, response);
-	} else throw http_error::not_found("Route ", r, " does not exist.");
+	  it->second(request, response); return '\0';
+	}; return '\1';
   }
 } // namespace fc

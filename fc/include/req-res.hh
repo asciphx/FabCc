@@ -3,7 +3,8 @@
 #include <functional>
 #include <h/common.h>
 #include <timer.hh>
-
+#include <h/any_types.h>
+#define BUF_SIZE 0x40000
 namespace fc {
   class Conn; class Tcp;
   class Req {
@@ -36,6 +37,7 @@ namespace fc {
 	void add_header(const std::string& key, std::string value);
 	const std::string& get_header(const std::string& key);
 	void write(const std::string& body_part);
+	void set_static_file_info(std::string path);
   };// response
 }
 

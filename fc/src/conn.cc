@@ -1,11 +1,11 @@
 #include <conn.hh>
 
 namespace fc {
-  Conn::Conn(unsigned short milliseconds):buf_(0x1ff), keep_milliseconds(milliseconds) {
+  Conn::Conn(unsigned short milliseconds, uv_loop_t* l):loop_(l), buf_(0x1ff), keep_milliseconds(milliseconds) {
 	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
   }
   Conn::~Conn() {
-	app_ = nullptr; free(rbuf.base), rbuf.base = nullptr;
+	app_ = nullptr; free(rbuf.base), rbuf.base = nullptr; loop_ = nullptr;
   }
   //  int Conn::shut(socket_type fd, sd_type type) {
   //#if defined _WIN32

@@ -22,7 +22,6 @@ typedef SOCKET socket_type;
 static unsigned int RES_RCV = 3000;
 static unsigned int RES_SED = 10000;
 #endif
-#define BUF_SIZE 0x10000
 namespace fc {
   static int RES_KEEP_Alive = 1;//开启keepalive
   enum sd_type { _READ, _WRITE, _BOTH };
@@ -33,11 +32,16 @@ namespace fc {
 	Req req_;
 	Res res_;
 	App* app_;
+	uv_loop_t* loop_;
 	unsigned short keep_milliseconds;
-	Conn(unsigned short milliseconds);
+	Conn(unsigned short milliseconds, uv_loop_t* l);
 	uv_buf_t rbuf;
 	uv_buf_t wbuf;
 	uv_tcp_t slot_;
+	uv_fs_t fs_, ofs_;
+	uv_file fd_;
+	bool reading_ = false;
+	char readbuf[BUF_SIZE];
 	fc::Buffer buf_;
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
