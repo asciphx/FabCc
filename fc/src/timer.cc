@@ -1,5 +1,9 @@
 #include "timer.hh"
 namespace fc {
+  tm now() { return *RES_NOW; }
+  int64_t nowStamp(short& i) { return RES_TIME_T + i; }
+  int64_t nowStamp(short&& i) { return RES_TIME_T + i; }
+  int64_t nowStamp() { return RES_TIME_T; }
   Timer::Timer(uv_loop_t* loop) {
 	alive = false; t_ = (uv_timer_t*)calloc(sizeof(uv_timer_t), 1);
 	uv_handle_set_data((uv_handle_t*)t_, this); uv_timer_init(loop, t_);

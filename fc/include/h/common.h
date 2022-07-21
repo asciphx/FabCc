@@ -6,7 +6,9 @@
 #else
 #include <string_view>
 #endif
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(_WIN32)
+#include <locale.h>
+#define WIN32_LEAN_AND_MEAN
 #define _INLINE __forceinline
 #else
 #define _INLINE inline
@@ -28,15 +30,18 @@ namespace fc {
 	DEL = 0, GET, POST = 3, PUT, PATCH = 28, INVALID
   };
   static const std::string_view RES_server_tag("Server: ", 8), RES_content_length_tag("Content-Length: ", 16), RES_http_status("HTTP/1.1 ", 9),
-	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7),
+	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7), RES_oct("application/octet-stream", 24),
 	RES_AcC("Access-Control-Allow-Credentials: ", 34), RES_t("true", 4), RES_AcM("Access-Control-Allow-Methods: ", 30), RES_host("Host", 4),
 	RES_AcH("Access-Control-Allow-Headers: ", 30), RES_AcO("Access-Control-Allow-Origin: ", 29), RES_expect("HTTP/1.1 100 Continue\r\n\r\n", 25),
 	RES_date_tag("Date: ", 6), RES_content_length("content-length", 14), RES_seperator(": ", 2), RES_crlf("\r\n", 2), RES_loc("location", 8),
 	RES_AE("Accept-Encoding", 15), RES_CE("Content-Encoding", 16), RES_gzip("gzip", 4), RES_deflate("deflate", 7);
+  static const char RES_GMT[26] = "%a, %d %b %Y %H:%M:%S GMT";
+  static std::unordered_map<uint64_t, std::string> RES_CACHE_MENU = {};
+  static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
 }
+
 namespace detail {
   static std::string directory_ = STATIC_DIRECTORY;
   static std::string upload_path_ = UPLOAD_DIRECTORY;
-
 }
 #endif // COMMON_H

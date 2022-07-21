@@ -17,12 +17,12 @@ namespace fc {
 	  bool operator==(const iterator& b) const;
 	  bool operator!=(const iterator& b) const;
 	};
-	iterator end() const;
 	VH& find_or_create(std::string& r, unsigned short c);
 	void for_all_routes(std::function<void(std::string, const fc::VH)>& f, std::string prefix = "") const;
 	iterator find(const std::string& r, unsigned short c) const;
 	VH v_; std::unordered_map<std::string, drt_node*> children_;
   };
+  static const drt_node::iterator DRT_END = drt_node::iterator{ nullptr, std::string(), VH() };
   struct DRT {
 	// Find a route && return reference to a procedure.
 	VH& add(const char* r, char m);

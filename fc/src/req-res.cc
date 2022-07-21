@@ -23,25 +23,19 @@ namespace fc {
 	  //std::size_t last_dot = path.find_last_of('.');
 	  std::string ss = path.substr(path.find_last_of('.') + 1);
 	  std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", is_file, path_.c_str());
-	  if (content_any_types.find(extension) != content_any_types.end()) {
-		//if (ss[0] == 'h' && ss[1] == 't') {
-		//  is_file = 2; code = 200;
-		//  this->add_header(RES_CL, std::to_string(statbuf_.st_size));
-		//  ss = content_any_types[extension]; this->add_header(RES_CT, ss);
-		//} else
-		{
+	  if (content_types->find(extension) != content_types->end()) {
+		if (ss[0] == 'h' && ss[1] == 't') { is_file = 1; code = 200; } else {
 #ifdef ENABLE_COMPRESSION
 		  compressed = false;
 #endif
-		  is_file = 1; code = 200;
-		  this->add_header(RES_CL, std::to_string(statbuf_.st_size));
-		  ss = content_any_types[extension]; this->add_header(RES_CT, ss);
-		}
-	  } else {
-		code = 404; this->headers.clear(); body = ""; //this->add_header(RES_CT,"text/plain");
+		  is_file = 2; code = 200; this->add_header(RES_CL, std::to_string(statbuf_.st_size));
+		  ss = content_types->at(extension); this->add_header(RES_CT, ss);
 	  }
 	} else {
+		code = 404; this->headers.clear(); body = ""; //this->add_header(RES_CT,"text/plain");
+	  }
+  } else {
 	  code = 404;
 	}
-  }
+}
 }

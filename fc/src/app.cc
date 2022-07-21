@@ -54,7 +54,7 @@ namespace fc {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-	fc::drt_node::iterator it = map_.root.find(g, 0); if (it != map_.root.end()) {
+	fc::drt_node::iterator it = map_.root.find(g, 0); if (it != DRT_END) {
 	  //const_cast<App*>(this)->last_called_ = r; const_cast<App*>(this)->last_handler_ = it->second;
 	  it->second(request, response); return '\0';
 	}; return '\1';

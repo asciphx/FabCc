@@ -7,6 +7,18 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known c++
 - With an API similar to nodejs, it also looks like JS
 - Minimalist API, infinite possibilities
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL
+- Incredible compilation speed and development speed are also improved
+- The fewest third-party libraries, except libuv, are stored in the project in the form of source files
+- ![test](./test.jpg)
+
+## Still under development
+- Processing of routing brace
+- Gzip compression
+- Body parser
+- SSL certificate support
+- WebSocket
+- UDP server
+- TCP client
 
 ## Description
 - The namespace uses the uppercase hump fc of FabCc.

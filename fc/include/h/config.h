@@ -16,10 +16,10 @@
 //#define DISABLE_HOME
 //#define ENABLE_SSL
 #define DEFAULT_PORT 8080
-#define FILE_TIME "max-age=54000,immutable"//Static resource cache seconds(= 900 minute)
+#define FILE_TIME "max-age=66666,immutable"//Static resource cache seconds(= 0.77 days)
 #define STATIC_DIRECTORY "static/"//Make sure you bring '/' with you at the end
 #define UPLOAD_DIRECTORY "upload/"//Make sure you bring '/' with you at the end
-#define SERVER_NAME "FabCc/0.8"//the server name config
+#define SERVER_NAME "FabCc/0.9-alpha"//the server name config
 #define HOME_PAGE "index.html"//default home page(app.home(?))
 
 //Cors config

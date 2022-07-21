@@ -34,7 +34,7 @@ namespace fc {
 	App* app_;
 	uv_loop_t* loop_;
 	unsigned short keep_milliseconds;
-	Conn(unsigned short milliseconds, uv_loop_t* l);
+	Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c);
 	uv_buf_t rbuf;
 	uv_buf_t wbuf;
 	uv_tcp_t slot_;

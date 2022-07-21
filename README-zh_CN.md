@@ -7,6 +7,18 @@
 - 拥有类似nodejs的api，写起来也像js
 - 极简的api，无限的可能
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
+- 难以置信的编译速度，开发速度同时也得到提升
+- 最少的第三方库，除了libuv，其他均以源文件形式存放项目中
+- ![测试](./test.jpg)
+
+## 仍在开发中
+- 路由大括号表达式
+- gzip压缩
+- body-parser的支持
+- ssl证书
+- websocket
+- udp服务端
+- tcp客户端client
 
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。

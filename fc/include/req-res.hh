@@ -30,6 +30,7 @@ namespace fc {
 	fc::Timer timer_;
 	int is_file{ 0 };
 	Res();
+	std::unordered_map<std::string_view, std::string_view>* content_types;
   public:
 	uint16_t code{ 200 };// Check whether the response has a static file defined.
 	std::string body;
