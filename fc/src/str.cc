@@ -16,9 +16,7 @@ namespace fc {
 	const char* e = c + s.size(); while (c < e) {
 	  if (*c == '%' && c < e - 2) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
-	  } else if (*c == '+') {
-		*o = ' ';
-	  } else if (o != c) *o = *c; ++o; ++c;
+	  } else if (*c == '+') { *o = ' '; } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string_view(s.data(), o - s.data());
   }
   std::string DecodeURL(const char* d) {
@@ -26,9 +24,7 @@ namespace fc {
 	const char* e = c + s.length(); while (c < e) {
 	  if (*c == '%' && c < e - 2) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
-	  } else if (*c == '+') {
-		*o = ' ';
-	  } else if (o != c) *o = *c; ++o; ++c;
+	  } else if (*c == '+') { *o = ' '; } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string(s.c_str(), o - s.c_str());
   }
   static const char _H[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -43,15 +39,12 @@ namespace fc {
 	  if (c > '\377') {
 		if (_H[c])r.push_back(_H[c]);
 		else {
-		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
-		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  r.push_back(0x25); char o = (c & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		  o = c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		}
 	  } else {
-		r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
-		o = static_cast<uint8_t>(c) & 0x0F;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(c) & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 	  }
 	} return r;
   }
@@ -60,16 +53,12 @@ namespace fc {
 	  if (*c > '\377') {
 		if (_H[*c])r.push_back(_H[*c]);
 		else {
-		  r.push_back(0x25); char o = (*c & 0xF0) >> 4;
-		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  r.push_back(0x25); char o = (*c & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		  o = *c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		}
 	  } else {
-		r.push_back(0x25);
-		char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
-		o = static_cast<uint8_t>(*c) & 0x0F;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		r.push_back(0x25); char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(*c) & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 	  } ++c;
 	} return r;
   }
@@ -82,15 +71,12 @@ namespace fc {
 	  if (c > '\377') {
 		if (_2396[c])r.push_back(c);
 		else {
-		  r.push_back(0x25); char o = (c & 0xF0) >> 4;
-		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  r.push_back(0x25); char o = (c & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		  o = c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		}
 	  } else {
-		r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
-		o = static_cast<uint8_t>(c) & 0x0F;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		r.push_back(0x25); char o = (static_cast<uint8_t>(c) & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(c) & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 	  }
 	} return r;
   }//RFC2396
@@ -99,16 +85,12 @@ namespace fc {
 	  if (*c > '\377') {
 		if (_2396[*c])r.push_back(*c);
 		else {
-		  r.push_back(0x25); char o = (*c & 0xF0) >> 4;
-		  o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		  r.push_back(0x25); char o = (*c & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		  o = *c & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 		}
 	  } else {
-		r.push_back(0x25);
-		char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
-		o = static_cast<uint8_t>(*c) & 0x0F;
-		o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		r.push_back(0x25); char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
+		o = static_cast<uint8_t>(*c) & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
 	  } ++c;
 	} return r;
   }
@@ -161,7 +143,7 @@ namespace fc {
   tm operator-(tm& t, tm& m) {
 	tm time; memcpy(&time, &t, sizeof(tm)); time.tm_sec -= m.tm_sec; time.tm_min -= m.tm_min; time.tm_hour -= m.tm_hour;
 	time.tm_mday -= m.tm_mday; time.tm_mon -= m.tm_mon; time.tm_year -= m.tm_year; time.tm_isdst = 0; return time;
-  }
+}
   bool operator==(tm& t, tm& m) { return mktime(&t) == mktime(&m); }
   bool operator!=(tm& t, tm& m) { return mktime(&t) != mktime(&m); }
   bool operator<(tm& t, tm& m) { return mktime(&t) < mktime(&m); }

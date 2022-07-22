@@ -29,16 +29,14 @@ namespace fc {
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog; return *this; }
   Tcp& Tcp::thread(unsigned char n) { max_thread = n; return *this; }//?
   bool Tcp::init() {
-	if (opened)return true; opened = true; if (!loop_)return false;
-	if (uv_tcp_init(loop_, &_)) return false; _.data = this; return true;
+	if (opened)return true; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false; _.data = this; return true;
   }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
   Tcp::~Tcp() { uv_mutex_destroy(&RES_MUTEX); exit(); }
   Tcp& Tcp::router(App& app) { app_ = &app; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
-	printf("C++ web[服务] run on http://%s:%d", ip_addr, port);
-	int $; if (is_ipv4) {
+	printf("C++ web[服务] run on http://%s:%d", ip_addr, port); int $; if (is_ipv4) {
 	  struct sockaddr_in addr; $ = uv_ip4_addr(ip_addr, port, &addr); if ($)return false;
 	  $ = uv_tcp_bind(&_, (const struct sockaddr*)&addr, 0); is_ipv6 = false;
 	} else {
@@ -53,50 +51,47 @@ namespace fc {
 	if (not_set_types) file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
-  void Tcp::write_cb(uv_write_t* wr, int st) {
-	Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close);
-  }
+  void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
   void Tcp::on_read(uv_fs_t* req) {
-	Conn* co = (Conn*)req->data; co->rbuf.base[req->result] = 0;
-	//printf("!%d!", req->result);
+	Conn* co = (Conn*)req->data; co->rbuf.base[req->result] = 0; DEBUG("!%d!", req->result);
 	co->buf_ << std::string_view(co->rbuf.base, req->result);
 	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size();
 	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
 	int r = uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
 	  Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
-	   }); co->buf_.clear();
-	   if (r) { printf("uv_write error: %s\n", uv_strerror(r)); return; }
+	   }); co->buf_.clear(); if (r) { printf("uv_write error: %s\n", uv_strerror(r)); return; }
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* co = (Conn*)h->data;//uv_shutdown(&shutdown_req, h, NULL);
 	if (nread > 0) {
 	  char failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
-	  Req& req = co->req_; req.method = static_cast<HTTP>(co->parser_.method);
-	  req.url = std::move(co->parser_.url); req.params = std::move(co->parser_.url_params);
-	  req.body = std::move(co->parser_.body); req.headers = std::move(co->parser_.headers);
+	  Req& req = co->req_; req = std::move(co->parser_.to_request()); if (!req.url[0]) return;
+	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url.length());
 	  if (co->req_.keep_alive) {
 		res.timer_.setTimeout([h] {
 		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
 		}, co->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  } else { co->req_.keep_alive = true; }
-	  if (uv_now(co->loop_) - RES_last > 1000) {
-		uv_mutex_lock(&RES_MUTEX); time(&RES_TIME_T); RES_last = uv_now(co->loop_);
+	  if (uv_now(co->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
+		time(&RES_TIME_T); RES_last = uv_now(co->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
 		localtime_s(RES_NOW, &RES_TIME_T);
 #else
 		localtime_r(&RES_TIME_T, RES_NOW);
 #endif
-		RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW)); uv_mutex_unlock(&RES_MUTEX);
-	  }
-	  fc::Buffer& s = co->buf_; //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
+		RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
+	  } //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
+	  fc::Buffer& s = co->buf_;
 	  try {
 		failed = co->app_->_call(req.method, req.url, req, res); if (failed) res.set_static_file_info(req.url);
 		co->set_status(res, res.code);
 		if (res.is_file > 0) {
 		  s << RES_http_status << co->status_;
 		  for (auto& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
-		  res.headers.clear(); res.body.clear();
+#if SHOW_SERVER_NAME
+		  s << RES_server_tag << SERVER_NAME << RES_crlf;
+#endif
 		  if (res.is_file == 1) {
 			res.is_file = 0;
 			req.uuid = hackUrl(req.url.c_str());
@@ -104,16 +99,13 @@ namespace fc {
 			  res.body = RES_CACHE_MENU[req.uuid]; goto _;
 			}
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
-			RES_CACHE_TIME[req.uuid] = nowStamp(CACHE_MENU_TIME_SECOND);
+			RES_CACHE_TIME[req.uuid] = nowStamp(CACHE_HTML_TIME_SECOND);
 			std::string ss = { std::istreambuf_iterator<char>(inf), std::istreambuf_iterator<char>() };
 			res.body = std::move(ss); inf.close();
 			RES_CACHE_MENU[req.uuid] = res.body; goto _;
 		  }
-#if SHOW_SERVER_NAME
-		  s << RES_server_tag << SERVER_NAME << RES_crlf;
-#endif
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf;
-		  res.is_file = 0;
+		  res.is_file = 0; res.headers.clear(); res.body.clear();
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf; co->fs_.data = co; res.code = 200;
 		  co->fd_ = uv_fs_open(co->loop_, &co->ofs_, res.path_.c_str(), O_RDONLY | O_SEQUENTIAL, 0, nullptr);
@@ -124,8 +116,9 @@ namespace fc {
 		co->set_status(res, e.status()); res.body = e.what(); co->req_.keep_alive = false;
 	  } catch (const std::runtime_error& e) {
 		co->set_status(res, 500); res.body = e.what(); co->req_.keep_alive = false;
-	  } if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
-		co->parser_.http_major == 1 && co->parser_.http_minor == 1) s << expect_100_continue;
+	  }
+	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
+	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
 	  s << RES_http_status << co->status_;
 	  for (auto& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
@@ -140,10 +133,10 @@ namespace fc {
 #ifdef AccessControlAllowOrigin
 	  s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
 #endif
-	_:
 #if SHOW_SERVER_NAME
 	  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
+	_:
 	  if (!res.headers.count(RES_CT)) {
 		s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
 	  }
@@ -154,16 +147,16 @@ namespace fc {
 	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
 	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
-	} else if (nread < 0) {
-	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_close((uv_handle_t*)h, on_close);
-	  } else {//UV_ENOBUFS
-		DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
-	}//printf("%d\n", nread);uv_read_stop(h);
-  }
+	  } else if (nread < 0) {
+		if (nread == UV_EOF || nread == UV_ECONNRESET) {
+		  DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		  uv_close((uv_handle_t*)h, on_close);
+		} else {//UV_ENOBUFS
+		  DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+		}//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
+	  }//printf("%d\n", nread);uv_read_stop(h);
+	}
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) { Conn* c = (Conn*)h->data; *b = c->rbuf; }
   void Tcp::on_close(uv_handle_t* h) {
 	Conn* c = (Conn*)h->data; --((Tcp*)c->_.data)->connection_num; DEBUG("{x%d}\n", c->id); delete c;
@@ -188,4 +181,4 @@ namespace fc {
 	co->id = co->slot_.socket; co->set_keep_alive(co->id, 3, 3, 2); ++t->connection_num;
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);//uv_tcp_keepalive(&co->slot_, 1, 6);
   }
-}
+  }

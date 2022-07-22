@@ -1,4 +1,6 @@
 #include <tcp.hh>
+#include <hpp/body_parser.hpp>
+
 using namespace fc;
 void funk(Req& req, Res& res) {
   res.write("主页路由被std::bind复写！");
@@ -8,11 +10,14 @@ int main() {
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };
-  app["/api"] = [&app](Req&, Res& res) {
+  app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
   app.post("/api") = [&](Req& req, Res& res) {
-	res.write("这是post方法！");
+	BP<4096> bp(req);
+	for (auto p : bp.params) {
+	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+	}
   };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = [](Req&, Res& res) { res.code = 403; };

@@ -1,4 +1,4 @@
-# FabCc
+# FabCc(v0.9-alpha)
 简洁、迅速、实用、活跃、全面。灵感来自于其他c++知名web框架。
 
 ## 特征
@@ -12,13 +12,13 @@
 - ![测试](./test.jpg)
 
 ## 仍在开发中
-- 路由大括号表达式
-- gzip压缩
-- body-parser的支持
-- ssl证书
-- websocket
-- udp服务端
-- tcp客户端client
+- [ ] 路由大括号表达式
+- [ ] gzip压缩
+- [x] body-parser的支持
+- [ ] ssl证书
+- [ ] websocket
+- [ ] udp服务端
+- [ ] tcp客户端client
 
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。
@@ -38,8 +38,11 @@ int main() {
   app["/api"] = [&app](Req&, Res& res) {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
-  app.post("/api") = [](Req&, Res& res) {
-	res.write("这是post方法！");
+  app.post("/api") = [&](Req& req, Res& res) {
+	BP<4096> bp(req);
+	for (auto p : bp.params) {
+	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+	}
   };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = [](Req&, Res& res) { res.code = 403; };

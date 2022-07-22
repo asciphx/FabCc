@@ -1,4 +1,4 @@
-# FabCc
+# FabCc(v0.9-alpha)
 Concise, fast, practical, reactive, functional. Inspired by other well-known c++ web frameworks.
 
 ## Features
@@ -12,13 +12,13 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known c++
 - ![test](./test.jpg)
 
 ## Still under development
-- Processing of routing brace
-- Gzip compression
-- Body parser
-- SSL certificate support
-- WebSocket
-- UDP server
-- TCP client
+- [ ] Processing of routing brace
+- [ ] Gzip compression
+- [x] Body parser
+- [ ] SSL certificate support
+- [ ] WebSocket
+- [ ] UDP server
+- [ ] TCP client
 
 ## Description
 - The namespace uses the uppercase hump fc of FabCc.
@@ -38,8 +38,11 @@ int main() {
   app["/api"] = [&app](Req&, Res& res) {
 	res.write(app._print_routes().c_str());//Return to routing list
   };
-  app.post("/api") = [](Req&, Res& res) {
-	res.write("This is the post method！");
+  app.post("/api") = [&](Req& req, Res& res) {
+	BP<4096> bp(req);
+	for (auto p : bp.params) {
+	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+	}
   };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = [](Req&, Res& res) { res.code = 403; };

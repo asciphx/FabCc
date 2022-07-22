@@ -7,6 +7,8 @@
 #include <buffer.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
+  char sv2c(const char* m);
+  _INLINE const char* m2c(HTTP m);
   struct App {
 	App();
 	VH& operator[](const char* r);
@@ -15,8 +17,6 @@ namespace fc {
 	VH& post(const char* r);
 	VH& put(const char* r);
 	VH& patch(const char* r);
-	char sv2c(const char* m) const;
-	_INLINE const char* m2c(HTTP m);
 	//template <typename Adaptor> //websocket
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it

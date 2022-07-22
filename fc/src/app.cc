@@ -1,28 +1,21 @@
 #include <app.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
-  App::App() {}
-  VH& App::operator[](const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h; }
-  VH& App::del(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
-  VH& App::get(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h; }
-  VH& App::post(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
-  VH& App::put(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
-  VH& App::patch(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
-  char App::sv2c(const char* m) const {
+  char sv2c(const char* m) {
 	switch (hack8Str(m)) {
 	case "DELETE"_l:return static_cast<char>(HTTP::DEL);
 	case 4670804:return static_cast<char>(HTTP::GET);
+	  //case 1212498244:return static_cast<char>(HTTP::HEAD);
 	case 1347375956:return static_cast<char>(HTTP::POST);
 	case 5264724:return static_cast<char>(HTTP::PUT);
-	case "PATCH"_l:return static_cast<char>(HTTP::PATCH);
-	  //case 1212498244:return static_cast<char>(HTTP::HEAD);
-	  //case "CONNECT"_l:return static_cast<char>(HTTP::CONNECT);
 	  //case "OPTIONS"_l:return static_cast<char>(HTTP::OPTIONS);
+	case "PATCH"_l:return static_cast<char>(HTTP::PATCH);
+	  //case "CONNECT"_l:return static_cast<char>(HTTP::CONNECT);
 	  //case "TRACE"_l:return static_cast<char>(HTTP::TRACE);
 	  //case "PURGE"_l:return static_cast<char>(HTTP::PURGE);
 	} return static_cast<char>(HTTP::INVALID);
   }
-  const char* App::m2c(HTTP m) {
+  const char* m2c(HTTP m) {
 	switch (m) {
 	case HTTP::DEL:return "DELETE";
 	case HTTP::GET:return "GET";
@@ -38,6 +31,13 @@ namespace fc {
 	}
 	return "invalid";
   }
+  App::App() {}
+  VH& App::operator[](const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h; }
+  VH& App::del(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
+  VH& App::get(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h; }
+  VH& App::post(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
+  VH& App::put(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
+  VH& App::patch(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it

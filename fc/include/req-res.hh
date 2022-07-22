@@ -12,6 +12,7 @@ namespace fc {
 	HTTP method;
   public:
 	Req();
+	Req(HTTP method, std::string url, std::string params, str_map headers, std::string body/*, bool keep_alive*/);
 	std::string url;
 	std::string params;
 	std::string body;

@@ -1,11 +1,10 @@
-#include <string>
 #include <str_map.hh>
 // from https://github.com/ipkn/crow/blob/master/include/crow/ci_map.h
 // from https://github.com/boostorg/beast/blob/develop/include/boost/beast/http/impl/field.ipp
 namespace fc {
   size_t str_hash::operator()(const std::string& z) const {
 	size_t r = 0, n = z.size();
-	unsigned char const* p = reinterpret_cast<unsigned char const*>(z.c_str());
+	unsigned char const* p = reinterpret_cast<unsigned char const*>(z.data());
 	while (n >= 4) {
 	  const unsigned int v = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
 	  r = (r * 5 + (v & ~0x20202020)); p += 4; n -= 4;

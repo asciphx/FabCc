@@ -28,7 +28,7 @@
 #define AccessControlAllowHeaders "content-type,cache-control,x-requested-with"
 #define AccessControlAllowMethods "GET,POST,DELETE,PUT,PATCH"
 #define SHOW_SERVER_NAME 1
-#define CACHE_MENU_TIME_SECOND 5
+#define CACHE_HTML_TIME_SECOND 6
 
 
 #if defined(_MSC_VER)

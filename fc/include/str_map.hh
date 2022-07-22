@@ -1,5 +1,5 @@
-#ifndef CHAR_MAP_H
-#define CHAR_MAP_H
+#ifndef STR_MAP_H
+#define STR_MAP_H
 #include <unordered_map>
 #include <string>
 // from https://github.com/ipkn/crow/blob/master/include/crow/ci_map.h
@@ -14,4 +14,4 @@ namespace fc {
   using str_map = std::unordered_multimap<std::string, std::string, str_hash, str_key_eq>;
   static const str_key_eq KEY_EQUALS;
 }
-#endif // CHAR_MAP_H
+#endif // STR_MAP_H
