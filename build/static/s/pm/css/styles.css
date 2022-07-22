@@ -156,7 +156,7 @@ header {
 }
 
 #main {
-    background: oldlace;
+    background: round;
     float: left;
     padding-bottom: 20px;
     margin-left: 350px;
@@ -288,7 +288,7 @@ fieldset {
 }
 
 #response-data-container {
-    background-color: #fff;
+   /* background-color: #fff;*/
 }
 
 #response-editors {
