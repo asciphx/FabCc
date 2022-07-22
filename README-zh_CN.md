@@ -9,7 +9,6 @@
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
 - 难以置信的编译速度，开发速度同时也得到提升
 - 最少的第三方库，除了libuv，其他均以源文件形式存放项目中
-- ![测试](./test.jpg)
 
 ## 仍在开发中
 - [ ] 路由大括号表达式
@@ -23,6 +22,7 @@
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。
 - cmake方面後續打算支持linux，mac。(CMakeLists.txt还没集成)
+- ![测试](./test.jpg)
 
 ## 例子
 ```c++
