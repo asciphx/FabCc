@@ -82,12 +82,11 @@ namespace fc {
 		if (b == '\0') {
 		  p.key = value; ++b;
 		} else if (b == '\1') {
-		  p.filename = menu + value;
-		  ++b;
+		  p.filename = DecodeURL(menu + value);
 		}
 	  }
 	  p.value = s.substr(0, s.length() - 2);
-	  if (b == '\2') {
+	  if (b == '\1') {
 		f = lines.find("\r\n");
 		line = lines.substr(0, f);
 		lines.erase(0, f + 2);
@@ -97,7 +96,13 @@ namespace fc {
 		//f = h.find(':');
 		//p.type = h.substr(f + 2);
 		p.size = p.value.length();
-		std::ofstream of(detail::directory_ + p.filename, ios::out | ios::app | ios::binary);
+		h = detail::directory_ + p.filename;
+		struct stat ps; if (-1 != stat(h.c_str(), &ps) && ps.st_mode & S_IFREG) {
+		  if (ps.st_size == p.size) return p;
+		  std::ofstream of(h, std::ios::in | ios::out | ios::binary);
+		  of << p.value; of.close(); return p;
+		};
+		std::ofstream of(h, ios::out | ios::app | ios::binary);
 		of << p.value; of.close();
 	  }
 	  return p;

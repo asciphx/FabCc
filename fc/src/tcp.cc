@@ -3,12 +3,12 @@
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app) {
 #ifdef _WIN32
-	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); RES_DATE_STR.resize(0x30);
+	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
 #else
-	std::locale::global(std::locale("en_US.UTF8")); RES_DATE_STR.resize(0x30);
+	std::locale::global(std::locale("en_US.UTF8"));
 #endif
 	time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; RES_last = uv_now(loop);
-	RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
+	RES_DATE_STR.resize(0x30); RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
   }
   Tcp& Tcp::timeout(unsigned short m) {
 	keep_milliseconds = m < 301 ? m * 1000 : m < 0x640 ? m *= 6 : m; return *this;
@@ -147,16 +147,16 @@ namespace fc {
 	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
 	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
-	  } else if (nread < 0) {
-		if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		  DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		  uv_close((uv_handle_t*)h, on_close);
-		} else {//UV_ENOBUFS
-		  DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-		}//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
-	  }//printf("%d\n", nread);uv_read_stop(h);
-	}
+	} else if (nread < 0) {
+	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
+		DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		uv_close((uv_handle_t*)h, on_close);
+	  } else {//UV_ENOBUFS
+		DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
+	}//printf("%d\n", nread);uv_read_stop(h);
+  }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) { Conn* c = (Conn*)h->data; *b = c->rbuf; }
   void Tcp::on_close(uv_handle_t* h) {
 	Conn* c = (Conn*)h->data; --((Tcp*)c->_.data)->connection_num; DEBUG("{x%d}\n", c->id); delete c;
@@ -181,4 +181,4 @@ namespace fc {
 	co->id = co->slot_.socket; co->set_keep_alive(co->id, 3, 3, 2); ++t->connection_num;
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);//uv_tcp_keepalive(&co->slot_, 1, 6);
   }
-  }
+}

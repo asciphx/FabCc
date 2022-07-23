@@ -10,7 +10,6 @@
 #include <fstream>
 #include <timer.hh>
 #include <conn.hh>
-#include <parser.hh>
 #include <h/common.h>
 #include <app.hh>
 #include <directory.hh>
@@ -24,7 +23,7 @@ namespace fc {
 	sockaddr_storage addr_;
 	int max_conn = 0xffff;
 	unsigned char max_thread = 1;//not use
-	int port_ = 8080;
+	int port_ = DEFAULT_PORT;
 	int addr_len;
 	int connection_num = 0;
 	unsigned short keep_milliseconds = 6000;

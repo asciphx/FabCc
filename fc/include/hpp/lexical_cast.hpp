@@ -16,6 +16,7 @@ namespace std {
 #endif
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
   template <typename S, typename T> _INLINE S lexical_cast(T& i);
+  template <> _INLINE std::string lexical_cast<std::string>(char& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(signed char& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(short& i) { return std::to_string(i); }
@@ -29,6 +30,7 @@ namespace std {
   template <> _INLINE std::string lexical_cast<std::string>(float& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(long double& f) { return std::to_string(f); }
   template <typename S, typename T> _INLINE S lexical_cast(T&& i);
+  template <> _INLINE std::string lexical_cast<std::string>(char&& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(signed char&& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(unsigned char&& i) { return std::to_string(i); }
   template <> _INLINE std::string lexical_cast<std::string>(short&& i) { return std::to_string(i); }
