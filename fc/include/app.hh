@@ -8,7 +8,7 @@
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
   char sv2c(const char* m);
-  _INLINE const char* m2c(HTTP m);
+  const char* m2c(HTTP m);
   struct App {
 	App();
 	VH& operator[](const char* r);

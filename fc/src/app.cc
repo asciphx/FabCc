@@ -8,8 +8,8 @@ namespace fc {
 	  //case 1212498244:return static_cast<char>(HTTP::HEAD);
 	case 1347375956:return static_cast<char>(HTTP::POST);
 	case 5264724:return static_cast<char>(HTTP::PUT);
-	  //case "OPTIONS"_l:return static_cast<char>(HTTP::OPTIONS);
 	case "PATCH"_l:return static_cast<char>(HTTP::PATCH);
+	case "OPTIONS"_l:return static_cast<char>(HTTP::OPTIONS);
 	  //case "CONNECT"_l:return static_cast<char>(HTTP::CONNECT);
 	  //case "TRACE"_l:return static_cast<char>(HTTP::TRACE);
 	  //case "PURGE"_l:return static_cast<char>(HTTP::PURGE);
@@ -23,7 +23,7 @@ namespace fc {
 	case HTTP::POST:return "POST";
 	case HTTP::PUT:return "PUT";
 	  //case HTTP::CONNECT:return "CONNECT";
-	  //case HTTP::OPTIONS:return "OPTIONS";
+	case HTTP::OPTIONS:return "OPTIONS";
 	  //case HTTP::TRACE:return "TRACE";
 	case HTTP::PATCH:return "PATCH";
 	  //case HTTP::PURGE:return "PURGE";

@@ -10,11 +10,11 @@
 namespace fc {
   using namespace std;
   static std::set<const char*> RES_menu = {};
-  struct param { uint32_t size = 0; string key; string value; string filename; /*string type;*/ };
+  struct param { size_t size = 0; string key; string value; string filename; /*string type;*/ };
   ///The parsed multipart Req/Res (Length[ kb ]),(Bool is_file)//MD5?
   template<unsigned short L, bool B = false>
   struct BP {
-	const str_map* headers; string boundary, menu; vector<param> params; //string content_type = "multipart/form-data";
+	const str_map* headers; string_view boundary; string menu; vector<param> params; //string content_type = "multipart/form-data";
 	~BP() { headers = nullptr; }
 	BP(Req& req, const char* m): headers(&(req.headers)), menu(detail::upload_path_),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
@@ -82,12 +82,16 @@ namespace fc {
 		if (b == '\0') {
 		  p.key = value; ++b;
 		} else if (b == '\1') {
-		  std::string s = menu + value;
-		  p.filename = DecodeURL(s);
+		  string::iterator i = --value.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  throw std::runtime_error("Suffix does not exist or exceeds 8 digits!");
+		_:std::string s = menu + value;
+		  p.filename = DecodeURL(s); ++b;
 		}
 	  }
 	  p.value = s.substr(0, s.length() - 2);
-	  if (b == '\1') {
+	  if (b == '\2') {
 		f = lines.find("\r\n");
 		line = lines.substr(0, f);
 		lines.erase(0, f + 2);
@@ -98,10 +102,15 @@ namespace fc {
 		//p.type = h.substr(f + 2);
 		p.size = p.value.length();
 		h = detail::directory_ + p.filename;
-		struct stat ps; if (-1 != stat(h.c_str(), &ps) && ps.st_mode & S_IFREG) {
-		  if (ps.st_size == p.size) return p;
-		  std::ofstream of(h, std::ios::trunc | std::ios::in | ios::out | ios::binary);
-		  of << p.value; of.close(); return p;
+		struct stat ps;
+		int ret = stat(h.c_str(), &ps);
+		if (!ret) {
+		  if (ps.st_mode & S_IFREG) {
+			if (ps.st_size == p.size) return p;
+			std::ofstream of(h, ios::trunc | ios::out | ios::binary);
+			of << p.value; of.close(); return p;
+		  }
+		  //if (ps.st_mode & S_IFDIR) throw std::runtime_error("Folder already exists!");//87 line
 		};
 		std::ofstream of(h, ios::out | ios::app | ios::binary);
 		of << p.value; of.close();

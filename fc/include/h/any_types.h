@@ -10,7 +10,6 @@ namespace fc {
 	{"aac","audio/x-aac"},
 	{"ai","application/postscript"},
 	{"apk","application/vnd.android.package-archive"},
-	{"application","application/x-ms-application"},
 	{"asm","text/x-asm"},
 	{"au","audio/basic"},
 	{"avi","video/x-msvideo"},

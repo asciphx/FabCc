@@ -20,7 +20,7 @@ namespace fc {
 	if (p.back() != '\\' && p.back() != '/') p += '/'; detail::upload_path_ = p; return *this;
   }
   Tcp& Tcp::file_type(const std::vector<std::string_view>& line) {
-	for (auto iter = line.cbegin(); iter != line.cend(); ++iter) {
+	for (std::vector<std::string_view>::const_iterator iter = line.cbegin(); iter != line.cend(); ++iter) {
 	  std::string_view sv; sv = content_any_types[*iter];
 	  if (sv != "") { content_types.emplace(*iter, sv); } else { content_types.emplace(*iter, RES_oct); }
 	} not_set_types = false; return *this;
@@ -66,7 +66,8 @@ namespace fc {
 	if (nread > 0) {
 	  char failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
-	  Req& req = co->req_; req = std::move(co->parser_.to_request()); if (!req.url[0]) return;
+	  Req& req = co->req_; req = std::move(co->parser_.to_request());
+	  if (req.method == HTTP::OPTIONS || !req.url[0]) return;
 	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url.length());
 	  if (co->req_.keep_alive) {
 		res.timer_.setTimeout([h] {
@@ -88,7 +89,7 @@ namespace fc {
 		co->set_status(res, res.code);
 		if (res.is_file > 0) {
 		  s << RES_http_status << co->status_;
-		  for (auto& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
+		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #if SHOW_SERVER_NAME
 		  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
@@ -120,7 +121,7 @@ namespace fc {
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
 	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
 	  s << RES_http_status << co->status_;
-	  for (auto& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
+	  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
 	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
 #endif

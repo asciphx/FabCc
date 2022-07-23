@@ -12,14 +12,16 @@ namespace fc {
   }
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); switch ($->header_building_state) {
-	case 0: if (!$->header_value.empty()) $->headers.emplace($->header_field.data(), $->header_value.data());
-	  $->header_field.assign(c, c + l), $->header_building_state = 1; break;
-	case 1: $->header_field.insert($->header_field.end(), c, c + l);  break;
+	case 0: if (!$->header_value.empty()) {
+	  $->headers.emplace($->header_field.data(), $->header_value.data());
+	  $->header_field.reset(); $->header_value.reset();
+	} $->header_field.assign(c, c + l), $->header_building_state = 1; break;
+	case 1: $->header_field.insert($->header_field.end_, c, c + l);  break;
 	} return 0;
   }
   static int on_header_value(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); switch ($->header_building_state) {
-	case 0: $->header_value.insert($->header_value.end(), c, c + l); break;
+	case 0: $->header_value.insert($->header_value.end_, c, c + l); break;
 	case 1: $->header_building_state = 0; $->header_value.assign(c, c + l); break;
 	} return 0;
   }
@@ -54,8 +56,8 @@ namespace fc {
 	  on_message_complete
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
-  llParser::llParser() {
-	header_field.reserve(0x1f), header_value.reserve(0x7f); body.reserve(0x1ff); url_params.reserve(0x3f); url.reserve(0x1f);
+  llParser::llParser(): header_field(0x1f), header_value(0x7f) {//header_field.reserve(0x1f), header_value.reserve(0x7f); 
+	body.reserve(0x1ff); url_params.reserve(0x3f); url.reserve(0x1f);
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }
