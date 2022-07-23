@@ -20,7 +20,7 @@ namespace fc {
 	Buffer& assign(const char* s, const char* e);
 	std::string c_str();
 	std::size_t size();
-	_INLINE Buffer& operator<<(std::string_view s);
+	Buffer& operator<<(std::string_view s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
 	Buffer& operator<<(std::size_t v);

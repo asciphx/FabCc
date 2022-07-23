@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(FabCc)
-set(CMAKE_BUILD_TYPE "Release")#如果是Debug，那么_DEBUG宏才會生效
+set(CMAKE_BUILD_TYPE "Release")#如果是Debug，那么_DEBUG宏才會生效(可能在某些版本该指令失效)
+#cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 if (MSVC)
-	add_compile_options( /GA /O2 /Ob2 /utf-8 /std:c++17 )#只有是Release才会是O2優化，否則會被覆写
+	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++17 )#只有是Release才会是O2優化，否則會被覆写
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else ()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
@@ -14,6 +15,8 @@ if (MSVC)
 aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src/c c_files)
 add_library(Fab STATIC ${cc_files} ${c_files})
 include_directories(${PROJECT_SOURCE_DIR}/hh)
+include_directories(${PROJECT_SOURCE_DIR}/hh)
+#find_package(unofficial-libuv CONFIG REQUIRED) #unofficial::libuv::libuv
 set( FabCc_LIBRARIES
 Fab
 ${PROJECT_SOURCE_DIR}/lib/AdvAPI32.lib
@@ -23,9 +26,9 @@ ${PROJECT_SOURCE_DIR}/lib/Psapi.lib
 ${PROJECT_SOURCE_DIR}/lib/Secur32.lib
 ${PROJECT_SOURCE_DIR}/lib/User32.lib
 ${PROJECT_SOURCE_DIR}/lib/UserEnv.lib
-${PROJECT_SOURCE_DIR}/lib/uv.lib
 ${PROJECT_SOURCE_DIR}/lib/WS2_32.lib
 ${PROJECT_SOURCE_DIR}/lib/WSock32.lib
+${PROJECT_SOURCE_DIR}/lib/uv_a.lib
 )
 add_executable(FabCc tcpServer.cc
 )#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來

@@ -53,7 +53,7 @@ namespace fc {
   }
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
   void Tcp::on_read(uv_fs_t* req) {
-	Conn* co = (Conn*)req->data; co->rbuf.base[req->result] = 0; DEBUG("!%d!", req->result);
+	Conn* co = (Conn*)req->data; co->rbuf.base[req->result] = 0; DEBUG("!%Id!", req->result);
 	co->buf_ << std::string_view(co->rbuf.base, req->result);
 	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size();
 	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
@@ -143,23 +143,23 @@ namespace fc {
 	  s << RES_content_length_tag << std::to_string(res.body.size()) << RES_crlf;
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200;
-	  DEBUG("客户端：%d %s \n", co->id, s.c_str()); res.body.clear();
+	  DEBUG("客户端：%lld %s \n", co->id, s.c_str()); res.body.clear();
 	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
 	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		DEBUG("1->%ld: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
 		uv_close((uv_handle_t*)h, on_close);
 	  } else {//UV_ENOBUFS
-		DEBUG("2->%ld: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
 		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
 	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
 	}//printf("%d\n", nread);uv_read_stop(h);
   }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) { Conn* c = (Conn*)h->data; *b = c->rbuf; }
   void Tcp::on_close(uv_handle_t* h) {
-	Conn* c = (Conn*)h->data; --((Tcp*)c->_.data)->connection_num; DEBUG("{x%d}\n", c->id); delete c;
+	Conn* c = (Conn*)h->data; --((Tcp*)c->_.data)->connection_num; DEBUG("{x%Id}\n", c->id); delete c;
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
 	Tcp* t = (Tcp*)srv->data; if (t->connection_num > t->max_conn) return;
