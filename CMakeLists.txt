@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(FabCc)
-set(CMAKE_BUILD_TYPE "Release")#如果是Debug，那么_DEBUG宏才會生效(可能在某些版本该指令失效)
+#set(CMAKE_BUILD_TYPE "Release")如果是Debug，那么_DEBUG宏才會生效
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 if (MSVC)
 	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++17 )#只有是Release才会是O2優化，否則會被覆写
@@ -32,6 +32,9 @@ ${PROJECT_SOURCE_DIR}/lib/uv_a.lib
 )
 add_executable(FabCc tcpServer.cc
 )#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
+add_custom_command(TARGET FabCc
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/FabCc.exe ${PROJECT_SOURCE_DIR}/FabCc.exe
+)#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
 else ()
 #Linux后续即将支持网络库
 add_library(Fab STATIC ${cc_files})#如果是動態庫那么SHARED
