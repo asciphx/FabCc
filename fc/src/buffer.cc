@@ -27,11 +27,11 @@ namespace fc {
   };
   Buffer& Buffer::append(const char c) { return (*this) << c; }
   Buffer& Buffer::insert(char* s, const char* e, const char* f) {
-	unsigned int l = f - e; if (s + l >= back_)reserve(cap_ + l);
+	unsigned int l = f - e; if (s + l >= back_ && !reserve(cap_ + l)) return *this;
 	for (unsigned int i = 0xffffffff; ++i < l; *s = e[i], ++s); return *this;
   }
   Buffer& Buffer::assign(const char* s, const char* e) {
-	unsigned int l = e - s; if (end_ + l >= back_)reserve(cap_ + l);
+	unsigned int l = e - s; if (end_ + l >= back_ && !reserve(cap_ + l)) return *this;
 	for (unsigned int i = 0xffffffff; ++i < l; *end_ = s[i], ++end_); return *this;
   }
   Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }

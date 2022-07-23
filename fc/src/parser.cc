@@ -56,8 +56,8 @@ namespace fc {
 	  on_message_complete
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
-  llParser::llParser(): header_field(0x1f), header_value(0x7f) {//header_field.reserve(0x1f), header_value.reserve(0x7f); 
-	body.reserve(0x1ff); url_params.reserve(0x3f); url.reserve(0x1f);
+  llParser::llParser(): header_field(0x1f), header_value(0x7f) {
+	body.reserve(0x256); url_params.reserve(0x3f); url.reserve(0x1f);
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }
