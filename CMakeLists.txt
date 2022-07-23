@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(FabCc)
-#set(CMAKE_BUILD_TYPE "Release")如果是Debug，那么_DEBUG宏才會生效
+if(NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE "Release")#如果是Debug，那么_DEBUG宏才會生效
+endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 if (MSVC)
 	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++17 )#只有是Release才会是O2優化，否則會被覆写
@@ -14,7 +16,6 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src cc_files)#添加需要生成�
 if (MSVC)
 aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src/c c_files)
 add_library(Fab STATIC ${cc_files} ${c_files})
-include_directories(${PROJECT_SOURCE_DIR}/hh)
 include_directories(${PROJECT_SOURCE_DIR}/hh)
 #find_package(unofficial-libuv CONFIG REQUIRED) #unofficial::libuv::libuv
 set( FabCc_LIBRARIES
