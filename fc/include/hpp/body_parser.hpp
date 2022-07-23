@@ -99,7 +99,7 @@ namespace fc {
 		h = detail::directory_ + p.filename;
 		struct stat ps; if (-1 != stat(h.c_str(), &ps) && ps.st_mode & S_IFREG) {
 		  if (ps.st_size == p.size) return p;
-		  std::ofstream of(h, std::ios::in | ios::out | ios::binary);
+		  std::ofstream of(h, std::ios::trunc | std::ios::in | ios::out | ios::binary);
 		  of << p.value; of.close(); return p;
 		};
 		std::ofstream of(h, ios::out | ios::app | ios::binary);
