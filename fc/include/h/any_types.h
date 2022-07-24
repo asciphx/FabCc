@@ -48,7 +48,7 @@ namespace fc {
 	{"jpeg","image/jpeg"},
 	{"jpg","image/jpeg"},
 	{"jpgv","video/jpeg"},
-	{"js","application/javascript"},
+	{"js","text/javascript"},
 	{"json","application/json"},
 	{"jsonml","application/jsonml+json"},
 	{"kar","audio/midi"},

@@ -66,7 +66,7 @@ namespace fc {
 #ifdef __cplusplus
   extern "C" {
 #endif
-	int strLen(const char* s);
+	long long strLen(const char* s);
 	void strCpy(char* d, const char* s);
 	char* strStr(char* d, const char* s);
 	int strCmp(const char* c, const char* s);

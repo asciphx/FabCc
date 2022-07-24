@@ -14,7 +14,7 @@ namespace fc {
   std::string_view DecodeURL(std::string& s) {
 	char* o = (char*)s.c_str(), * c = (char*)s.c_str();
 	const char* e = c + s.size(); while (c < e) {
-	  if (*c == '%' && c < e - 2) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] && _X[c[2]]) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
 	  } else if (*c == '+') { *o = ' '; } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string_view(s.data(), o - s.data());
@@ -22,7 +22,7 @@ namespace fc {
   std::string DecodeURL(const char* d) {
 	std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
 	const char* e = c + s.length(); while (c < e) {
-	  if (*c == '%' && c < e - 2) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] && _X[c[2]]) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
 	  } else if (*c == '+') { *o = ' '; } else if (o != c) *o = *c; ++o; ++c;
 	} return std::string(s.c_str(), o - s.c_str());
@@ -143,7 +143,7 @@ namespace fc {
   tm operator-(tm& t, tm& m) {
 	tm time; memcpy(&time, &t, sizeof(tm)); time.tm_sec -= m.tm_sec; time.tm_min -= m.tm_min; time.tm_hour -= m.tm_hour;
 	time.tm_mday -= m.tm_mday; time.tm_mon -= m.tm_mon; time.tm_year -= m.tm_year; time.tm_isdst = 0; return time;
-}
+  }
   bool operator==(tm& t, tm& m) { return mktime(&t) == mktime(&m); }
   bool operator!=(tm& t, tm& m) { return mktime(&t) != mktime(&m); }
   bool operator<(tm& t, tm& m) { return mktime(&t) < mktime(&m); }
@@ -154,10 +154,10 @@ namespace fc {
   extern "C" {
 #endif
 	char RES_ASCII[97] = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-	int strLen(const char* s) { const char* e = s; while (*++e); return e - s; }
+	long long strLen(const char* s) { const char* e = s; while (*++e); return e - s; }
 	void strCpy(char* d, const char* s) { while (*s) { *d++ = *s++; }*d = 0; }
 	char* strStr(char* d, const char* s) {
-	  int i = 0, j = 0, l = strLen(d), k = strLen(s);
+	  long long i = 0, j = 0, l = strLen(d), k = strLen(s);
 	  while (i < l && j < k) if (d[i] == s[j])++i, ++j; else i = i - j + 1, j = 0;
 	  if (j == k) { return d + i - k; } return (char*)0;
 	}

@@ -3,27 +3,19 @@
 namespace fc {
   static int on_message_begin(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_); $->url.clear(); $->url_params.clear();// $->url_params.clear();
-	$->header_field.clear(); $->header_value.clear(); $->headers.clear(); $->body.clear();
-	$->header_building_state = $->http_major = $->http_minor = 0; return 0;
+	$->headers.clear(); $->body.clear(); $->http_major = $->http_minor = 0; return 0;
   }
   static int on_url(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); $->url_params.insert($->url_params.end(), c, c + l);
 	$->url_params = DecodeURL($->url_params); return 0;
   }
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); switch ($->header_building_state) {
-	case 0: if (!$->header_value.empty()) {
-	  $->headers.emplace($->header_field.data(), $->header_value.data());
-	  $->header_field.reset(); $->header_value.reset();
-	} $->header_field.assign(c, c + l), $->header_building_state = 1; break;
-	case 1: $->header_field.insert($->header_field.end_, c, c + l);  break;
-	} return 0;
+	llParser* $ = static_cast<llParser*>(_); $->header_field.assign(c, c + l); return 0;
   }
   static int on_header_value(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); switch ($->header_building_state) {
-	case 0: $->header_value.insert($->header_value.end_, c, c + l); break;
-	case 1: $->header_building_state = 0; $->header_value.assign(c, c + l); break;
-	} return 0;
+	llParser* $ = static_cast<llParser*>(_); $->header_value.assign(c, c + l);
+	$->headers.emplace($->header_field.data(), $->header_value.data());
+	$->header_field.reset(); $->header_value.reset(); return 0;
   }
   static int on_headers_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_);
@@ -43,7 +35,7 @@ namespace fc {
 	$->ready = true; return 0;//$->url_params = query_string($->url_params); handler_->handle();
   }
   Req llParser::to_request() const {
-	return Req{ static_cast<HTTP>(method), std::move(url), std::move(url_params), std::move(headers), std::move(body) };
+	return Req{ static_cast<HTTP>(method), url, url_params, headers, body };
   }
   const llhttp_settings_s llParser::_ = {
 	  on_message_begin,
@@ -57,7 +49,7 @@ namespace fc {
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
   llParser::llParser(): header_field(0x1f), header_value(0x7f) {
-	body.reserve(0x256); url_params.reserve(0x3f); url.reserve(0x1f);
+	url_params.reserve(0x3f); url.reserve(0x1f); body.reserve(0x256);
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }

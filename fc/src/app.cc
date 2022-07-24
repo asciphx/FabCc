@@ -46,7 +46,7 @@ namespace fc {
 	map_.for_all_routes([this, &b, &i, &m](std::string r, VH h) {
 	  m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
 	  b << '(' << ++i << ')' << '[' << m2c((HTTP)m) << ']' <<
-		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << ',' << (i % 6 == 0 ? "<br/>" : " ");
+		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << ',' << (i % 6 == 0 ? '\n' : ' ');
 	  }); return b;
   }
   char App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {

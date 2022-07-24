@@ -68,7 +68,7 @@ namespace fc {
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Res& res = co->res_;
 	  Req& req = co->req_; req = std::move(co->parser_.to_request());
 	  if (req.method == HTTP::OPTIONS || !req.url[0]) return;
-	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url.length());
+	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);
 	  if (co->req_.keep_alive) {
 		res.timer_.setTimeout([h] {
 		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);

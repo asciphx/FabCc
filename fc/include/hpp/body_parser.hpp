@@ -104,13 +104,10 @@ namespace fc {
 		h = detail::directory_ + p.filename;
 		struct stat ps;
 		int ret = stat(h.c_str(), &ps);
-		if (!ret) {
-		  if (ps.st_mode & S_IFREG) {
-			if (ps.st_size == p.size) return p;
-			std::ofstream of(h, ios::trunc | ios::out | ios::binary);
-			of << p.value; of.close(); return p;
-		  }
-		  //if (ps.st_mode & S_IFDIR) throw std::runtime_error("Folder already exists!");//87 line
+		if (!ret && ps.st_mode & S_IFREG) {
+		  if (ps.st_size == p.size) return p;
+		  std::ofstream of(h, ios::trunc | ios::out | ios::binary);
+		  of << p.value; of.close(); return p;
 		};
 		std::ofstream of(h, ios::out | ios::app | ios::binary);
 		of << p.value; of.close();
