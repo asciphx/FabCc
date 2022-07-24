@@ -19,21 +19,16 @@ namespace fc {
 	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
 	_INLINE std::string_view Buffer::data() { return std::string_view(data_, end_ - data_); }
 	_INLINE std::string Buffer::c_str() { return std::string(data_, end_ - data_); };
-	_INLINE std::string Buffer::substr(unsigned int a, unsigned int b) {
-	  return std::string(data_ + a, b < end_ - data_ ? b : end_ - data_);
-	}
-	Buffer& operator<<(std::string s);
-	size_t find(std::string_view c);
+	std::string substr(unsigned int a, unsigned int b);
+	size_t find(const std::string& c);
+	size_t find(const char c);
 	void erase(unsigned int a, unsigned int b);
 	bool reserve(unsigned int l);
 	Buffer& insert(char*& s, const char* e, const char* f);
 	Buffer& assign(const char* s, const char* e);
-	//Buffer& operator<<(std::string_view s);
 
-	_INLINE Buffer& Buffer::operator<<(std::string_view s) {
-	  if (end_ + s.size() >= back_) reserve((unsigned int)((end_ - data_) + s.size()));
-	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
-	}
+	Buffer& operator<<(std::string_view s);
+	Buffer& operator<<(std::string s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
 	Buffer& operator<<(std::size_t v);

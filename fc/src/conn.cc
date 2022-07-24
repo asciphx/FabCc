@@ -6,7 +6,7 @@ namespace fc {
 	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE); res_.content_types = c;
   }
   Conn::~Conn() {
-	free(rbuf.base);// rbuf.base = nullptr; app_ = nullptr;  loop_ = nullptr; res_.content_types = nullptr;
+	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr; res_.content_types = nullptr;
   }
   //  int Conn::shut(socket_type fd, sd_type type) {
   //#if defined _WIN32

@@ -17,11 +17,16 @@ namespace fc {
 	o.data_ = nullptr; o.not_null_ = false; return *this;
   }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
-  Buffer& Buffer::operator<<(std::string s) { return operator<<(std::string_view(s.data(), s.size())); };
-  size_t Buffer::find(std::string_view c) {
+  std::string Buffer::substr(unsigned int a, unsigned int b) {
+	return std::string(data_ + a, b < end_ - data_ ? b : end_ - data_);
+  }
+  size_t Buffer::find(const std::string& c) {
 	size_t l = 0, L = c.size(), a = 0; while (data_[l]) {
 	  if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
 	} return -1;
+  }
+  size_t Buffer::find(const char c) {
+	size_t l = 0; while (data_[l]) { if (data_[l] == c) { return l; } ++l; } return -1;
   }
   void Buffer::erase(unsigned int a, unsigned int b) {
 	char* c = (char*)malloc(cap_); memcpy(c, data_, a); memcpy(c, data_ + b, cap_ - b);
@@ -41,6 +46,11 @@ namespace fc {
 	unsigned int l = e - s; if (end_ + l >= back_ && !reserve(cap_ + l)) return *this;
 	for (unsigned int i = 0xffffffff; ++i < l; *end_ = s[i], ++end_); return *this;
   }
+  Buffer& Buffer::operator<<(std::string_view s) {
+	if (end_ + s.size() >= back_) reserve((unsigned int)((end_ - data_) + s.size()));
+	memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
+  }
+  Buffer& Buffer::operator<<(std::string s) { return operator<<(std::string_view(s.data(), s.size())); };
   Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
   Buffer& Buffer::operator<<(char v) { end_[0] = v; ++end_; return *this; }
   Buffer& Buffer::operator<<(std::size_t v) {
