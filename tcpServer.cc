@@ -20,8 +20,8 @@ int main() {
 	}
   };
   app["/del"] = [&app](Req&, Res& res) {
-	app.get() = [](Req&, Res& res) { res.code = 403; };
-	res.write("主页的路由被禁止！！");//或者像下面std::bind的方式把void方法绑定都行
+	app.get() = nullptr;
+	res.write("主页的路由被删除！！");//或者像下面std::bind的方式把void方法绑定都行
   };
   app["/timer"] = [&](Req&, Res& res) {
 	t.setTimeout([&srv] {

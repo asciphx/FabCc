@@ -2,7 +2,7 @@
 Concise, fast, practical, reactive, functional. Inspired by other well-known c++ web frameworks.
 
 ## Features
-- Can add, delete, modify and check the route
+- Can add, delete, modify and query the route
 - Use the global timer task to control some things, such as shutting down the server when it expires
 - With an API similar to nodejs, it also looks like JS
 - Minimalist API, infinite possibilities
@@ -45,8 +45,8 @@ int main() {
 	}
   };
   app["/del"] = [&app](Req&, Res& res) {
-	app.get() = [](Req&, Res& res) { res.code = 403; };
-	res.write("The routing of the home page is disabled！！");//Or bind the void method in the following std::bind way
+	app.get() = nullptr;
+	res.write("The routing of the home page is delete！！");//Or bind the void method in the following std::bind way
   };
   app["/timer"] = [&](Req&, Res& res) {
 	t.setTimeout([&srv] {
