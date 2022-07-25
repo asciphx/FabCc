@@ -19,7 +19,7 @@ namespace fc {
   void drt_node::for_all_routes(std::function<void(std::string, const fc::VH)>& father, std::string js) const {
 	if (children_.size() == 0) father(js, v_);
 	else {
-	  if (js.size() && js.back() != '/') { if (js.size() > 2) father(js, v_); js += '/'; }
+	  if (js.size() && js.back() != '/') { if (js.size() > 2) father(js, v_); js.push_back('/'); }
 	  for (std::pair<const std::string, drt_node*> party : children_)
 		party.second->for_all_routes(father, js + std::string(party.first));
 	}
