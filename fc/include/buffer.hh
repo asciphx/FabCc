@@ -19,10 +19,10 @@ namespace fc {
 	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
 	_INLINE std::string_view Buffer::data() { return std::string_view(data_, end_ - data_); }
 	_INLINE std::string Buffer::c_str() { return std::string(data_, end_ - data_); };
-	std::string substr(unsigned int a, unsigned int b);
+	std::string substr(unsigned int a, unsigned int b = -1);
 	size_t find(const std::string& c);
 	size_t find(const char c);
-	void erase(unsigned int a, unsigned int b);
+	void erase(unsigned int a, unsigned int b = -1);
 	bool reserve(unsigned int l);
 	Buffer& insert(char*& s, const char* e, const char* f);
 	Buffer& assign(const char* s, const char* e);

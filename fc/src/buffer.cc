@@ -29,8 +29,9 @@ namespace fc {
 	size_t l = 0; while (data_[l]) { if (data_[l] == c) { return l; } ++l; } return -1;
   }
   void Buffer::erase(unsigned int a, unsigned int b) {
-	char* c = (char*)malloc(cap_); memcpy(c, data_, a); memcpy(c, data_ + b, cap_ - b);
-	delete[] data_; data_ = new char[cap_]; end_ = data_; b = a + cap_ - b;
+	unsigned int l = end_ - data_; if (a > l)a = l; if (b > l)b = l;
+	char* c = (char*)malloc(cap_); memcpy(c, data_, a); memcpy(c, data_ + b, l - b);
+	delete[] data_; data_ = new char[cap_]; end_ = data_; b = a + l - b;
 	back_ = data_ + cap_; memcpy(data_, c, b); end_ += b; delete[] c;
   }
   bool Buffer::reserve(unsigned int l) {
