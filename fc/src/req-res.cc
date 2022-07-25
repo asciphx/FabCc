@@ -1,4 +1,5 @@
 #include <req-res.hh>
+#include <hpp/http_error.hpp>
 namespace fc {
   Req::Req() { body.reserve(0x1ff); params.reserve(0x3f); url.reserve(0x1f); };
   Req::Req(HTTP method, std::string url, std::string params, str_map headers, std::string body/*, bool k*/):/* keep_alive(k),*/
@@ -33,11 +34,11 @@ namespace fc {
 		  is_file = 2; code = 200; this->add_header(RES_CL, std::to_string(statbuf_.st_size));
 		  ss = content_types->at(extension); this->add_header(RES_CT, ss);
 		}
-	  } else {
-		code = 404; this->headers.clear(); body = ""; //this->add_header(RES_CT,"text/plain");
+	  } else { //this->add_header(RES_CT,"text/plain");
+		throw err::not_found(Buffer() << "not found [" << extension << "] content type");
 	  }
 	} else {
-	  code = 404;
+	  throw err::not_found();
 	}
   }
 }

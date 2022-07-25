@@ -5,6 +5,9 @@ namespace fc {
   Buffer::Buffer(Buffer&& o): data_(o.data_), not_null_(o.not_null_), end_(o.end_), back_(o.back_), cap_(o.cap_) {
 	o.data_ = nullptr; o.not_null_ = false;
   }
+  Buffer::Buffer(const Buffer& o): data_(new char[o.cap_]), not_null_(true), end_(data_), back_(data_ + o.cap_), cap_(o.cap_) {
+	memcpy(end_, o.data_, o.end_ - o.data_); end_ +=  o.end_ - o.data_;
+  }
   Buffer::Buffer(unsigned int capacity)
 	: data_(new char[capacity]), not_null_(true), end_(data_), back_(data_ + capacity), cap_(capacity) {}
   Buffer::Buffer(const char* c, unsigned int capacity)
@@ -51,7 +54,6 @@ namespace fc {
 	if (end_ + s.size() >= back_) reserve((unsigned int)((end_ - data_) + s.size()));
 	memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
   }
-  Buffer& Buffer::operator<<(std::string s) { return operator<<(std::string_view(s.data(), s.size())); };
   Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
   Buffer& Buffer::operator<<(char v) { end_[0] = v; ++end_; return *this; }
   Buffer& Buffer::operator<<(std::size_t v) {

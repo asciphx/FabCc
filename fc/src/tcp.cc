@@ -114,9 +114,9 @@ namespace fc {
 		  return;
 		}
 	  } catch (const http_error& e) {
-		co->set_status(res, e.status()); res.body = e.what(); co->req_.keep_alive = false;
+		co->set_status(res, e.i()); res.body += e.what(); s << RES_http_status << co->status_; goto _;
 	  } catch (const std::runtime_error& e) {
-		co->set_status(res, 500); res.body = e.what(); co->req_.keep_alive = false;
+		co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
 	  }
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
 	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;

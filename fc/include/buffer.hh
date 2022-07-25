@@ -8,6 +8,7 @@ namespace fc {
   struct Buffer {
 	Buffer();
 	Buffer(Buffer&& o);
+	Buffer(const Buffer& o);
 	Buffer(unsigned int capacity);
 	Buffer(const char* c, unsigned int capacity);
 	~Buffer();
@@ -17,7 +18,7 @@ namespace fc {
 	_INLINE bool Buffer::empty() { return end_ == data_; };
 	_INLINE unsigned int Buffer::size() { return end_ - data_; }
 	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
-	_INLINE std::string_view Buffer::data() { return std::string_view(data_, end_ - data_); }
+	_INLINE std::string_view Buffer::data() const { return std::string_view(data_, end_ - data_); }
 	_INLINE std::string Buffer::c_str() { return std::string(data_, end_ - data_); };
 	std::string substr(unsigned int a, unsigned int b = -1);
 	size_t find(const std::string& c);
@@ -28,7 +29,6 @@ namespace fc {
 	Buffer& assign(const char* s, const char* e);
 
 	Buffer& operator<<(std::string_view s);
-	Buffer& operator<<(std::string s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
 	Buffer& operator<<(std::size_t v);
