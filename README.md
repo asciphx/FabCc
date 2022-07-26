@@ -38,7 +38,7 @@ int main() {
   app["/api"] = [&app](Req&, Res& res) {
 	res.write(app._print_routes().c_str());//Return to routing list
   };
-  app.post("/api") = [&](Req& req, Res& res) {
+  app.post("/api") = [](Req& req, Res& res) {
 	BP<4096> bp(req);
 	for (auto p : bp.params) {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
@@ -57,9 +57,7 @@ int main() {
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
-  srv.router(app).timeout(4000).setTcpNoDelay(true)
-	.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt"})
-	.Start("127.0.0.1", 8080);
+  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("127.0.0.1", 8080);
   return 0;
 }
 ```

@@ -48,7 +48,7 @@ namespace fc {
 	exit(); if (!port)port = port_; if (!init())return false; if (bind(ip_addr, port, is_ipv4))return false;
 	if (!fc::is_directory(detail::directory_)) fc::create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!fc::is_directory(s)) fc::create_directory(s);
-	if (not_set_types) file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
+	if (not_set_types) content_types = content_any_types, not_set_types = false;
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
@@ -127,7 +127,6 @@ namespace fc {
 		  res.is_file = 0; res.headers.clear(); res.body.clear();
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf; if (!co->write(s.data_, s.size())) return; s.clear();
-		  if (!co->write(s.data_, s.size())) return; s.clear();
 		  std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
 		  int l = 0, i; __:l = inf.read(co->readbuf, BUF_SIZE).gcount();
 		  if (l) { i = ::send(co->id, co->readbuf, l, 0); if (i > 0) goto __; } inf.close(); return;
@@ -162,9 +161,9 @@ namespace fc {
 	  }
 	  s << RES_content_length_tag << std::to_string(res.body.size()) << RES_crlf;
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
-	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200;
+	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.clear();
 	  DEBUG("客户端：%lld %s \n", co->id, s.c_str());
-	  co->write(s.data_, s.size()); res.body.clear(); s.clear();
+	  co->write(s.data_, s.size()); s.clear();
 	  //co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  //int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
 	  //if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }

@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 typedef int socket_type;
-static struct timeval RES_RCV { 3, 0 };//max{5,0},read
+static struct timeval RES_RCV { 4, 0 };//max{5,0},read
 static struct timeval RES_SED { 10, 0 };//write
 #endif
 #if defined _WIN32
@@ -19,7 +19,7 @@ static struct timeval RES_SED { 10, 0 };//write
 #include <WinSock2.h>
 #include <mstcpip.h>
 typedef SOCKET socket_type;
-static unsigned int RES_RCV = 3000;
+static unsigned int RES_RCV = 4000;
 static unsigned int RES_SED = 10000;
 #endif
 namespace fc {
