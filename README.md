@@ -57,7 +57,18 @@ int main() {
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
-  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("127.0.0.1", 8080);
+  srv.router(app).timeout(4000).setTcpNoDelay(true)
+	.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt"})
+	.Start("127.0.0.1", 8080);
   return 0;
 }
+```
+
+### Building (Tests, Examples)
+Out-of-source build with CMake is recommended.
+```
+mkdir build
+cd build
+cmake ..
+cmake --build ./ --config Release
 ```
