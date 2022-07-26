@@ -6,7 +6,7 @@ namespace fc {
 	o.data_ = nullptr; o.not_null_ = false;
   }
   Buffer::Buffer(const Buffer& o): data_(new char[o.cap_]), not_null_(true), end_(data_), back_(data_ + o.cap_), cap_(o.cap_) {
-	memcpy(end_, o.data_, o.end_ - o.data_); end_ +=  o.end_ - o.data_;
+	memcpy(end_, o.data_, o.end_ - o.data_); end_ += o.end_ - o.data_;
   }
   Buffer::Buffer(unsigned int capacity)
 	: data_(new char[capacity]), not_null_(true), end_(data_), back_(data_ + capacity), cap_(capacity) {}
@@ -21,7 +21,7 @@ namespace fc {
   }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
   std::string Buffer::substr(unsigned int a, unsigned int b) {
-	return std::string(data_ + a, b < end_ - data_ ? b : end_ - data_);
+	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, b < l ? b : l);
   }
   size_t Buffer::find(const std::string& c) {
 	size_t l = 0, L = c.size(), a = 0; while (data_[l]) {
@@ -56,7 +56,7 @@ namespace fc {
   }
   Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
   Buffer& Buffer::operator<<(char v) { end_[0] = v; ++end_; return *this; }
-  Buffer& Buffer::operator<<(std::size_t v) {
+  Buffer& Buffer::operator<<(size_t v) {
 	if (v == 0) operator<<('0'); char mega_buffer[10], * str_start = mega_buffer;
 	for (char i = 0; i < 10; ++i) {
 	  if (v > 0) str_start = mega_buffer + 9 - i; mega_buffer[9 - i] = (v % 10) + '0'; v /= 10;

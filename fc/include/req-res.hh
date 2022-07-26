@@ -4,7 +4,7 @@
 #include <h/common.h>
 #include <timer.hh>
 #include <h/any_types.h>
-#define BUF_SIZE 0x40000
+#define BUF_SIZE 0x10000
 namespace fc {
   class Conn; class Tcp;
   class Req {
@@ -30,6 +30,7 @@ namespace fc {
 	std::string path_;
 	fc::Timer timer_;
 	int is_file{ 0 };
+	long file_size = 0;
 	Res();
 	std::unordered_map<std::string_view, std::string_view>* content_types;
   public:

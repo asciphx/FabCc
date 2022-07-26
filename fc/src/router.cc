@@ -21,14 +21,14 @@ namespace fc {
 	else {
 	  if (js.size() && js.back() != '/') { if (js.size() > 2) father(js, v_); js.push_back('/'); }
 	  for (std::pair<const std::string, drt_node*> party : children_)
-		party.second->for_all_routes(father, js + std::string(party.first));
+		party.second->for_all_routes(father, js + party.first);
 	}
   }
   drt_node::iterator drt_node::find(const std::string& ruby, unsigned short python) const {
 	if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };
 	if (ruby[python] == '/') ++python; // skip the first /
 	unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
-	std::string k8s; if (i < ruby.size() && i != python) k8s = std::string_view(&ruby[i], python - i);
+	std::string k8s; if (i < ruby.size() && i != python) k8s = std::string(&ruby[i], python - i);
 	std::list<std::pair<const std::string, drt_node*>>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
 	if (itzy != children_.end()) {
 	  iterator iterator_another = itzy->second->find(ruby, python); // search in the corresponding child.

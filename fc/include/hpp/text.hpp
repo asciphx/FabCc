@@ -79,19 +79,19 @@ namespace fc {
 	inline const unsigned short length() const { return l; }//Same as std::string
 	inline const unsigned short u8size() const { return k; }//utf8Size
 	inline char& operator()(unsigned short i) { return i < l ? _[i] : _[l]; }//Same as std::string
-	inline text<1> operator[](unsigned short i) {
+	text<1> operator[](unsigned short i) {
 	  text<1> txt; if (i > k)return txt; unsigned short h = 0, g = 0;
 	  const unsigned char* f = reinterpret_cast<unsigned char*>(_);
 	  while (h < i) u = UTF$[*f] - 1, ++h, f += u; u = UTF$[*f];
 	  while (++g < u) { txt += *f++; } txt += (char)0; return txt;
 	}
-	inline void operator +=(const char* c) {
+	void operator +=(const char* c) {
 	  while (*c && k < I) { u = UTF$[static_cast<unsigned char>(*c)]; while (--u) { _[l++] = *c++; } ++k; } _[l] = 0;
 	}//Safe, like std::string
 	inline void operator +=(char c) { _[l++] = c; ++k; }//Incomplete safety, but it's generally safe and fast(maybe need .end())
 	inline void operator <<(char c) { _[l++] = c; _[l] = 0; ++k; }//Safety
-	inline void operator <<(const char* c) { while (*c && k < ___) { _[l++] = *c++; k = l; } _[l] = 0; }//NOT SAFE,BUT ONLY NOT UTF8
-	inline void operator <<(const std::string s) {
+	void operator <<(const char* c) { while (*c && k < ___) { _[l++] = *c++; k = l; } _[l] = 0; }//NOT SAFE,BUT ONLY NOT UTF8
+	void operator <<(const std::string s) {
 	  const char* c = s.c_str(); while (*c && k < ___) { _[l++] = *c++; k = l; } _[l] = 0;
 	}//NOT SAFE,BUT ONLY NOT UTF8
 	void operator += (const text& t) {
@@ -118,10 +118,10 @@ namespace fc {
 	  } _[l] = 0;
 	}
 	inline void push_back(const char c) { if (k < I) _[l++] = c, ++k; }
-	inline void push_begin(const char c) { unsigned short i = l; while (i) { _[i] = _[i - 1]; --i; } _[++l] = 0; _[0] = c, ++k; }
 	inline void end() { _[l] = 0; }
 	inline void clear() { _[0] = l = k = 0; }
-	inline unsigned short find(const char* b) {
+	void push_begin(const char c) { unsigned short i = l; while (i) { _[i] = _[i - 1]; --i; } _[++l] = 0; _[0] = c, ++k; }
+	unsigned short find(const char* b) {
 	  u = 0; unsigned short L = 0, i = 0; while (b[++L]);
 	  while (_[++u]) {
 		if (_[u] != b[i++])i = 0;

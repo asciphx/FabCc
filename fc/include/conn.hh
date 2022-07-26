@@ -35,17 +35,19 @@ namespace fc {
 	uv_loop_t* loop_;
 	unsigned short keep_milliseconds;
 	Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c);
-	uv_buf_t rbuf;
-	uv_buf_t wbuf;
-	uv_tcp_t slot_;
+	uv_buf_t rbuf, wbuf;
 	uv_fs_t fs_, ofs_;
 	uv_file fd_;
+	uv_tcp_t slot_;
 	bool reading_ = false;
 	char readbuf[BUF_SIZE];
 	fc::Buffer buf_;
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
+	void* tcp_;
+	int64_t file_pos = 0;
 	virtual ~Conn();
+	bool write(const char* buf, int size);
 	//int shut(socket_type fd, sd_type d);
 	//int close_fd(socket_type fd);
 	// idle:   首次发送报文的等待时间

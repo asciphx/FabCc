@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(FabCc)
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_DEFAULT_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE "Release")#如果是Debug，那么_DEBUG宏才會生效
 endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release

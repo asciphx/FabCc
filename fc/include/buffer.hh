@@ -14,12 +14,14 @@ namespace fc {
 	~Buffer();
 	Buffer& operator=(Buffer&& o);
 	void clear();
+
 	_INLINE void Buffer::reset() { end_ = data_; }
 	_INLINE bool Buffer::empty() { return end_ == data_; };
 	_INLINE unsigned int Buffer::size() { return end_ - data_; }
 	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
 	_INLINE std::string_view Buffer::data() const { return std::string_view(data_, end_ - data_); }
 	_INLINE std::string Buffer::c_str() { return std::string(data_, end_ - data_); };
+
 	std::string substr(unsigned int a, unsigned int b = -1);
 	size_t find(const std::string& c);
 	size_t find(const char c);
@@ -31,7 +33,7 @@ namespace fc {
 	Buffer& operator<<(std::string_view s);
 	Buffer& operator<<(const char* s);
 	Buffer& operator<<(char v);
-	Buffer& operator<<(std::size_t v);
+	Buffer& operator<<(size_t v);
 	Buffer& operator<<(int s);
 	Buffer& operator=(std::string s);
 	//template <typename I>
@@ -42,6 +44,6 @@ namespace fc {
 	char* back_;
 	bool not_null_;
 	unsigned int cap_;
-  };//Buffer(1000, [&](const char* d, int s) { *this << std::string_view(d, s); })
+  };
 }
 #endif
