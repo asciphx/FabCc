@@ -23,6 +23,11 @@ namespace fc {
   std::string Buffer::substr(unsigned int a, unsigned int b) {
 	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, b < l ? b : l);
   }
+  size_t Buffer::find(const char* c) {
+	size_t l = 0, L = strlen(c), a = 0; while (data_[l]) {
+	  if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
+	} return -1;
+  }
   size_t Buffer::find(const std::string& c) {
 	size_t l = 0, L = c.size(), a = 0; while (data_[l]) {
 	  if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }

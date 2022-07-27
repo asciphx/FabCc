@@ -49,6 +49,7 @@ namespace fc {
 	if (!fc::is_directory(detail::directory_)) fc::create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!fc::is_directory(s)) fc::create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
+	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
@@ -116,20 +117,25 @@ namespace fc {
 			s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
 			s << RES_date_tag << RES_DATE_STR << RES_crlf;
 			s << RES_crlf;
-			if (!co->write(s.data_, s.size())) return; s.clear();
+			if (!co->write(s.data_, s.size())) { return; }; s.clear();
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
-			char buf[0x800]; int l = 0, i; $:l = inf.read(buf, 0x800).gcount();
-			if (l) { i = ::send(co->id, buf, l, 0); res.body += std::string_view(buf, l); if (i > 0) goto $; }
-			RES_CACHE_MENU[req.uuid] = std::move(res.body); inf.close();
+			int l = 0, i; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
+			if (l) {
+			  i = ::send(co->id, co->readbuf, l, 0);
+			  res.body += std::string_view(co->readbuf, l); if (i > 0) goto $;
+			}
+			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
 			return;
 		  }
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 		  res.is_file = 0; res.headers.clear(); res.body.clear();
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
-		  s << RES_crlf; if (!co->write(s.data_, s.size())) return; s.clear();
+		  s << RES_crlf; if (!co->write(s.data_, s.size())) { return; } s.clear();
 		  std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
 		  int l = 0, i; __:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-		  if (l) { i = ::send(co->id, co->readbuf, l, 0); if (i > 0) goto __; } inf.close(); return;
+		  if (l) { i = ::send(co->id, co->readbuf, l, 0); if (i > 0) goto __; }
+		  inf.close(); std::this_thread::yield();
+		  return;
 		}
 	  } catch (const http_error& e) {
 		co->set_status(res, e.i()); res.body += e.what(); s << RES_http_status << co->status_; goto _;

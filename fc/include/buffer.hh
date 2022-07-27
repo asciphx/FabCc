@@ -23,6 +23,7 @@ namespace fc {
 	_INLINE std::string Buffer::c_str() { return std::string(data_, end_ - data_); };
 
 	std::string substr(unsigned int a, unsigned int b = -1);
+	size_t find(const char* c);
 	size_t find(const std::string& c);
 	size_t find(const char c);
 	void erase(unsigned int a, unsigned int b = -1);

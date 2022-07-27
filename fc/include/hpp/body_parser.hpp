@@ -69,19 +69,20 @@ namespace fc {
 	  s.erase(0, f + 4);
 	  f = lines.find(';');
 	  if (f != string::npos) lines.erase(0, f + 2);
-	  f = lines.find("\r\n");
+	  f = lines.rfind("\r\n");
 	  string line = lines.substr(0, f);
 	  lines.erase(0, f + 2);
 	  char b = 0;
 	  while (!line.empty()) {
-		f = line.find(';');
-		string value = line.substr(0, f);
+		f = line.rfind('"');
+		string value = line.substr(0, f + 1); LOG_GER(f << ':' << value << std::endl);
 		if (f != string::npos) line.erase(0, f + 2); else line.clear();
 		f = value.find('=');
 		value = value.substr(f + 2); value.pop_back();
 		if (b == '\0') {
-		  p.key = value; ++b;
+		  p.key = value; ++b; LOG_GER("k:" << value << std::endl);
 		} else if (b == '\1') {
+		  LOG_GER("v:" << value << std::endl);
 		  string::iterator i = --value.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;

@@ -14,7 +14,7 @@ namespace fc {
   }
   static int on_header_value(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); $->header_value.assign(c, c + l);
-	$->headers.emplace(std::move($->header_field.c_str()), std::move($->header_value.c_str()));
+	$->headers.emplace($->header_field.c_str(), $->header_value.c_str());
 	$->header_field.reset(); $->header_value.reset(); return 0;
   }
   static int on_headers_complete(llhttp__internal_s* _) {
