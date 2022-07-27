@@ -74,15 +74,17 @@ namespace fc {
 	  lines.erase(0, f + 2);
 	  char b = 0;
 	  while (!line.empty()) {
-		const char* c = line.c_str() + 7; f = 9; while (*++c != '"' && ++f); if (*++c == ';')f += 2;
-		string value = line.substr(0, f); LOG_GER(f << ':' << value << std::endl);
-		if (f != string::npos) line.erase(0, f + 2); else line.clear();
-		f = value.find('=');
-		value = value.substr(f + 2); value.pop_back();
+		const char* c = line.c_str() + 7; f = 9; while (*++c != '"' && ++f);
+		string value = line.substr(0, f);
 		if (b == '\0') {
-		  p.key = value; ++b; LOG_GER("k:" << value << std::endl);
+		  if (*++c == ';') { f += 2; }
+		  line.erase(0, f + 2); f = value.find('=');
+		  value = value.substr(f + 2); value.pop_back();
+		  p.key = value; ++b;
 		} else if (b == '\1') {
-		  LOG_GER("v:" << value << std::endl);
+		  if (f != string::npos) line.erase(0, f + 2); else line.clear();
+		  f = value.find('=');
+		  value = value.substr(f + 2); value.pop_back();
 		  string::iterator i = --value.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
