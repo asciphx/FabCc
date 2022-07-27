@@ -2,6 +2,7 @@
 #define LEXICAL_CAST_HPP
 #include <type_traits>
 #include <string>
+#include <string_view>
 #include <stdexcept>
 #include <string.h>
 #pragma warning(disable:4244)
@@ -286,6 +287,7 @@ namespace std {
 	t.tm_mon = month - 1;
 	return t;
   }
+  template <typename S> _INLINE S lexical_cast(std::string_view sv) { return std::lexical_cast<S>(sv.data()); };
   //std::string
   template <typename T> inline T lexical_cast(std::string& s);
 

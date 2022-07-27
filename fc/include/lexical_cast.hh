@@ -2,6 +2,7 @@
 #define LEXICAL_CAST_H
 #include <type_traits>
 #include <string>
+#include <string_view>
 #include <stdexcept>
 namespace std {
 #if defined(_MSC_VER) && !defined(_INLINE)
@@ -57,6 +58,7 @@ namespace std {
   template <> [[nodiscard]] double lexical_cast<double>(const char* c);
   template <> [[nodiscard]] long double lexical_cast<long double>(const char* c);
   template <> tm lexical_cast<tm>(const char* c);
+  template <typename S> _INLINE S lexical_cast(std::string_view sv) { return std::lexical_cast<S>(sv.data()); };
   template <typename T> T lexical_cast(std::string& s);
   template <> [[nodiscard]] bool lexical_cast<bool>(std::string& s);
   template <> [[nodiscard]] char lexical_cast<char>(std::string& s);
