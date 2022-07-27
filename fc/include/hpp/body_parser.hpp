@@ -69,13 +69,13 @@ namespace fc {
 	  s.erase(0, f + 4);
 	  f = lines.find(';');
 	  if (f != string::npos) lines.erase(0, f + 2);
-	  f = lines.rfind("\r\n");
+	  f = lines.find("\r\n");
 	  string line = lines.substr(0, f);
 	  lines.erase(0, f + 2);
 	  char b = 0;
 	  while (!line.empty()) {
-		f = line.rfind('"');
-		string value = line.substr(0, f + 1); LOG_GER(f << ':' << value << std::endl);
+		const char* c = line.c_str() + 7; f = 9; while (*++c != '"' && ++f); if (*++c == ';')f += 2;
+		string value = line.substr(0, f); LOG_GER(f << ':' << value << std::endl);
 		if (f != string::npos) line.erase(0, f + 2); else line.clear();
 		f = value.find('=');
 		value = value.substr(f + 2); value.pop_back();

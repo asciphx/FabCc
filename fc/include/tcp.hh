@@ -48,8 +48,8 @@ namespace fc {
 	Tcp& directory(std::string path);
 	//Set upload path
 	Tcp& upload_path(std::string path);
-	//Set mime types default { "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }
-	Tcp& file_type(const std::vector<std::string_view>& line);
+	//Set mime types
+	Tcp& file_type(const std::vector<std::string_view>& line = { "html","ico","css","js","json","svg","png","jpg","gif","txt","wasm" });
 	//Set max connection num
 	Tcp& maxConnection(int backlog = SOMAXCONN);
 	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());//not use
