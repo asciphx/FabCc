@@ -5,6 +5,7 @@
 #include <timer.hh>
 #include <h/any_types.h>
 #define BUF_SIZE 0x28000
+#define BUF_MAXSIZE 256000000
 namespace fc {
   class Conn; class Tcp;
   class Req {

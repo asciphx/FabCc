@@ -16,7 +16,7 @@ namespace fc {
   void Res::set_static_file_info(std::string path) {
 	struct stat statbuf_; path_ = detail::directory_; path_ += path.c_str() + 1;
 	is_file = stat(path_.c_str(), &statbuf_);
-	if (is_file == 0 /*&& statbuf_.st_size < BUF_SIZE*/) {
+	if (is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
 	  std::string::iterator i = --path.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 	  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 	  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
