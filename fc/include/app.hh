@@ -18,10 +18,8 @@ namespace fc {
 	uv_fs_t fs_;
 	uv_file fd_;
 	int64_t file_pos = 0, file_size = 0;
-	uv_buf_t rbuf;
+	uv_buf_t rbuf, wbuf;
 	bool rd_ = true;
-	uv_loop_t* loop_;
-	uv_tcp_t* slot_;
 	//uv_idle_t idler;
 	Ctx() { rbuf = uv_buf_init((char*)malloc(CTX_BUF_SIZE), CTX_BUF_SIZE); this->fs_.data = this; }
 	std::function<void(void*)> func;//uv_idle_init(co->loop_, &this->idler); this->idler.data = this;
@@ -30,6 +28,9 @@ namespace fc {
 	}
 	~Ctx() { free(rbuf.base); }
   };
+  //uv_idle_start(&this->idler, [](uv_idle_t* h) {
+  //  uv_idle_stop(h);
+  //  }); uv_idle_t idler; uv_idle_init(uv_default_loop(), &this->idler); this->idler.data = this;
   struct App {
 	App();
 	VH& operator[](const char* r);
@@ -46,10 +47,10 @@ namespace fc {
 	DRT map_;// VH last_handler_; std::string last_called_;
 	Ctx context_[6];
 	std::atomic<unsigned char> ctx_idex = 0xff;
-	_INLINE Ctx* context(Conn* co) {
-	_:Ctx* l = &context_[++ctx_idex]; if (ctx_idex > 4) ctx_idex = 0xff;
+	_INLINE Ctx* context() {
+	_:Ctx* l = &context_[++ctx_idex]; if (ctx_idex == 5) ctx_idex = 0xff;
 	  if (l->rd_) {
-		l->rd_ = false; l->loop_ = co->loop_; l->slot_ = &co->slot_;
+		l->rd_ = false;
 		return l;
 	  } std::this_thread::yield(); goto _;
 	}
