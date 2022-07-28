@@ -4,9 +4,7 @@
 #include <uv.h>
 #include <string>
 #include <map>
-#include <thread>
 #include <stdio.h>
-#include <atomic>
 #include <future>
 #include <fstream>
 #include <timer.hh>
@@ -14,7 +12,7 @@
 #include <h/common.h>
 #include <app.hh>
 #include <directory.hh>
-
+//#include <detail.h>
 namespace fc {
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
   class Tcp {
@@ -63,6 +61,7 @@ namespace fc {
 	static void on_close(uv_handle_t* handle);
 	static void on_conn(uv_stream_t* server, int status);
 	static void on_read(uv_fs_t* req);
+	static void fs_cb(uv_fs_t* req);
   };
 }
 #endif

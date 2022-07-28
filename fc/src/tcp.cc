@@ -1,5 +1,5 @@
 #include "tcp.hh"
-
+#include <functional>
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app) {
 #ifdef _WIN32
@@ -53,27 +53,34 @@ namespace fc {
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
-  void Tcp::on_read(uv_fs_t* f) {
-	Conn* co = (Conn*)f->data; co->file_pos += f->result;
+  void Tcp::fs_cb(uv_fs_t* f) {
+	Ctx* cx = (Ctx*)f->data;
 	if (f->result > 0) {
-	  //co->body = std::string_view(co->wbuf.base, f->result);
-	  //co->buf.base = co->body.data(); co->buf.len = f->result;
-	  //printf("Read (%zu): %.*s\n", f->result, (int)f->result, co->wbuf.base);
-	  int r = uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
-		Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
+	  cx->file_pos += f->result; cx->rbuf.base[f->result] = 0;
+	  int r = uv_write(&cx->_, (uv_stream_t*)cx->slot_, &cx->rbuf, 1, [](uv_write_t* wr, int st) {
+		Ctx* ct = (Ctx*)wr; if (st) { ct->reset(); printf("uv_write error: %s\n", uv_strerror(st)); return; }
+		DEBUG("!");
 		 });
-	  if (r) { printf("uv_write error: %s\n", uv_strerror(r)); return; }
-	  // if (co->file_pos == co->res_.file_size) {
-		 //free(co->wbuf.base);
-		 //uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* f) { uv_fs_req_cleanup(f); });
-		 //return;
-	  // }
-	  uv_fs_req_cleanup(f);
-	  uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->wbuf, 1, co->file_pos, on_read);
-	} else {
-	  uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
+	  if (r) { cx->reset(); printf("uv_write error: %s\n", uv_strerror(r)); return; }
+	  if (cx->file_size > cx->file_pos) {
+		uv_fs_req_cleanup(f);
+		uv_fs_read(cx->loop_, (uv_fs_t*)&cx->fs_, cx->fd_, &cx->rbuf, 1, cx->file_pos, fs_cb);
+	  } else {
+		uv_fs_close(cx->loop_, (uv_fs_t*)&cx->fs_, cx->fd_, [](uv_fs_t* f) {
+		  Ctx* cx = (Ctx*)f->data; uv_fs_req_cleanup(f); cx->reset();
+		  });
+	  }
 	}
+
   }
+  void Tcp::on_read(uv_fs_t* f) {
+	Conn* co = (Conn*)f->data; co->rbuf.base[f->result] = 0; co->buf_ << std::string_view(co->rbuf.base, f->result);
+	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size(); DEBUG("!%Id!", f->result);
+	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
+	int r = uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
+	  Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
+  }); co->buf_.reset(); if (r) { printf("uv_write error: %s\n", uv_strerror(r)); return; }
+}
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* co = (Conn*)h->data;
 	if (nread > 0) {
@@ -81,7 +88,7 @@ namespace fc {
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
 	  Req& req = co->req_; req = std::move(co->parser_.to_request());
 	  if (!req.url[0] || req.method == HTTP::OPTIONS) return; Res& res = co->res_;
-	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url); co->_.data = &res;
+	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// co->_.data = &res;
 	  if (co->req_.keep_alive) {
 		res.timer_.setTimeout([h] {
 		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
@@ -98,7 +105,7 @@ namespace fc {
 	  } //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
 	  fc::Buffer& s = co->buf_;
 	  try {
-		failed = co->app_->_call(req.method, req.url, req, res); if (failed) res.set_static_file_info(req.url);
+		failed = ((App*)co->app_)->_call(req.method, req.url, req, res); if (failed) res.set_static_file_info(req.url);
 		co->set_status(res, res.code);
 		if (res.is_file > 0) {
 		  s << RES_http_status << co->status_;
@@ -117,7 +124,7 @@ namespace fc {
 			s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
 			s << RES_date_tag << RES_DATE_STR << RES_crlf;
 			s << RES_crlf;
-			if (!co->write(s.data_, s.size())) { return; }; s.clear();
+			if (!co->write(s.data_, s.size())) { return; }; s.reset();
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
 			int l = 0, i; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
 			if (l) {
@@ -128,13 +135,32 @@ namespace fc {
 			return;
 		  }
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf;
-		  res.is_file = 0; res.headers.clear(); res.body.clear();
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
-		  s << RES_crlf; if (!co->write(s.data_, s.size())) { return; } s.clear();
-		  std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
-		  int l = 0, i; __:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-		  if (l) { i = ::send(co->id, co->readbuf, l, 0); if (i > 0) goto __; }
-		  inf.close(); std::this_thread::yield();
+		  s << RES_crlf;
+		  if (res.is_file == 2) {
+			if (!co->write(s.data_, s.size())) { return; } s.reset();
+			res.is_file = 0; res.headers.clear(); res.body.clear(); co->fs_.data = co;
+			//char realpath_out[CROSSPLATFORM_MAX_PATH]{ 0 };
+			//if (!crossplatform_realpath(res.path_, realpath_out)) throw err::not_found("file not found.");
+			co->ofs_.data = co;
+			co->fd_ = uv_fs_open(co->loop_, &co->ofs_, res.path_.c_str(), O_RDONLY | O_SEQUENTIAL, 0, NULL);
+			DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
+			uv_fs_req_cleanup(&co->ofs_); uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->rbuf, 1, 0, on_read);
+			return;
+		  }
+		  res.is_file = 0; res.headers.clear();
+		  Ctx* cx = ((App*)co->app_)->context(co); cx->file_size = res.file_size;
+		  co->wbuf.base = s.data_; co->wbuf.len = s.size();
+		  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
+		  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+		  cx->fd_ = uv_fs_open(co->loop_, &cx->fs_, res.path_.c_str(), O_RDONLY, 0, NULL);
+		  uv_fs_req_cleanup(&cx->fs_);
+		  DEBUG("{%d}: %s\n", cx->fd_, res.path_.c_str());
+		  uv_fs_read(co->loop_, (uv_fs_t*)&cx->fs_, cx->fd_, &cx->rbuf, 1, 0, fs_cb);
+		  //std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
+		  //int l = 0, i; __:l = inf.read(co->readbuf, BUF_SIZE).gcount();
+		  //if (l) { i = ::send(co->id, co->readbuf, l, 0); if (i > 0) goto __; }
+		  //inf.close(); std::this_thread::yield();
 		  return;
 		}
 	  } catch (const http_error& e) {
@@ -169,9 +195,9 @@ namespace fc {
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.clear();
 	  DEBUG("客户端：%lld %s \n", co->id, s.c_str());
-	  co->write(s.data_, s.size()); s.clear();
+	  co->write(s.data_, s.size()); s.reset();
 	  //co->wbuf.base = s.data_; co->wbuf.len = s.size();
-	  //int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.clear();
+	  //int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 	  //if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
@@ -179,7 +205,7 @@ namespace fc {
 		uv_close((uv_handle_t*)h, on_close);
 	  } else {//UV_ENOBUFS
 		DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+		uv_close((uv_handle_t*)h, on_close);
 	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
 	}//printf("%d\n", nread);uv_read_stop(h);
   }

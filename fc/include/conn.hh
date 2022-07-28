@@ -4,7 +4,6 @@
 #include <string>
 #include <parser.hh>
 #include <req-res.hh>
-#include <app.hh>
 #include <h/config.h>
 #if defined __linux__ || defined __APPLE__
 #include <sys/socket.h>
@@ -31,11 +30,11 @@ namespace fc {
 	socket_type id;
 	Req req_;
 	Res res_;
-	App* app_;
-	uv_loop_t* loop_;
+	void* app_;
 	unsigned short keep_milliseconds;
-	Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c);
+	Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c);//
 	uv_buf_t rbuf, wbuf;
+	uv_loop_t* loop_;
 	uv_fs_t fs_, ofs_;
 	uv_file fd_;
 	uv_tcp_t slot_;
@@ -45,7 +44,6 @@ namespace fc {
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
 	void* tcp_;
-	int64_t file_pos = 0;
 	virtual ~Conn();
 	bool write(const char* buf, int size);
 	//int shut(socket_type fd, sd_type d);

@@ -1,14 +1,35 @@
 #pragma once
 #include <functional>
 #include <iostream>
+#include <thread>
+#include <atomic>
 #include <h/common.h>
 #include "router.hh"
 #include "hpp/http_error.hpp"
 #include <buffer.hh>
+#include <conn.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
+#define CTX_BUF_SIZE 0x10000
 namespace fc {
   char sv2c(const char* m);
   const char* m2c(HTTP m);
+  struct Ctx {
+	uv_write_t _;
+	uv_fs_t fs_;
+	uv_file fd_;
+	int64_t file_pos = 0, file_size = 0;
+	uv_buf_t rbuf;
+	bool rd_ = true;
+	uv_loop_t* loop_;
+	uv_tcp_t* slot_;
+	//uv_idle_t idler;
+	Ctx() { rbuf = uv_buf_init((char*)malloc(CTX_BUF_SIZE), CTX_BUF_SIZE); this->fs_.data = this; }
+	std::function<void(void*)> func;//uv_idle_init(co->loop_, &this->idler); this->idler.data = this;
+	void reset() {
+	  file_pos = file_size = 0; rd_ = true;
+	}
+	~Ctx() { free(rbuf.base); }
+  };
   struct App {
 	App();
 	VH& operator[](const char* r);
@@ -23,5 +44,14 @@ namespace fc {
 	Buffer _print_routes();
 	char _call(HTTP& m, std::string& r, Req& request, Res& response) const;
 	DRT map_;// VH last_handler_; std::string last_called_;
+	Ctx context_[6];
+	std::atomic<unsigned char> ctx_idex = 0xff;
+	_INLINE Ctx* context(Conn* co) {
+	_:Ctx* l = &context_[++ctx_idex]; if (ctx_idex > 4) ctx_idex = 0xff;
+	  if (l->rd_) {
+		l->rd_ = false; l->loop_ = co->loop_; l->slot_ = &co->slot_;
+		return l;
+	  } std::this_thread::yield(); goto _;
+	}
   };
 } // namespace fc

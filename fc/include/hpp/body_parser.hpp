@@ -12,11 +12,10 @@ namespace fc {
   static std::set<const char*> RES_menu = {};
   struct param { size_t size = 0; string key; string value; string filename; /*string type;*/ };
   ///The parsed multipart Req/Res (Length[ kb ]),(Bool is_file)//MD5?
-  template<unsigned short L, bool B = false>
   struct BP {
-	const str_map* headers; string boundary, menu; vector<param> params; //string content_type = "multipart/form-data";
+	const str_map* headers; string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
 	~BP() { headers = nullptr; }
-	BP(Req& req, const char* m): headers(&(req.headers)), menu(detail::upload_path_),
+	BP(Req& req, const char* m, unsigned short l = 256): headers(&(req.headers)), menu(detail::upload_path_), L(l),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
 	  menu += m; if (RES_menu.find(m) == RES_menu.end()) {
 		if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(detail::directory_); ss += menu;
@@ -24,7 +23,7 @@ namespace fc {
 	  }
 	  p_b(req.body);
 	}
-	BP(Req& req): headers(&(req.headers)), menu(detail::upload_path_),
+	BP(Req& req, unsigned short l = 256): headers(&(req.headers)), menu(detail::upload_path_), L(l),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
 	  p_b(req.body);
 	}

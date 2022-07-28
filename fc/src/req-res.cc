@@ -33,7 +33,7 @@ namespace fc {
 			is_file = 2; this->add_header(RES_CL, std::to_string(statbuf_.st_size));
 			ss = content_types->at(extension); this->add_header(RES_CT, ss);
 		  }
-		  file_size = statbuf_.st_size; code = 200;
+		  file_size = statbuf_.st_size; code = 200; if (file_size > BUF_SIZE)is_file = 3;
 		  return;
 		}
 		throw err::not_found(Buffer() << "Content-type of [" << extension << "] is not allowed!");
