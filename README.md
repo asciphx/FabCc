@@ -1,4 +1,4 @@
-# FabCc(v0.9-alpha)
+# FabCc(v1.0-beta)
 Concise, fast, practical, reactive, functional. Inspired by other well-known c++ web frameworks.
 
 ## Features
