@@ -53,14 +53,14 @@ namespace fc {
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
-  void Tcp::fs_cb(uv_fs_t* f) { reinterpret_cast<Ctx*>(f->data)->func(f); }
+  void Tcp::fs_cb(uv_fs_t* f) { /*reinterpret_cast<Ctx*>(f->data)->func(f);*/ }
   void Tcp::on_read(uv_fs_t* f) {
 	Conn* co = (Conn*)f->data; co->rbuf.base[f->result] = 0; co->buf_ << std::string_view(co->rbuf.base, f->result);
 	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size(); DEBUG("!%Id!", f->result);
 	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
-	int r = uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
+	uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
 	  Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
-	   }); co->buf_.reset(); if (r) { printf("uv_write error: %s\n", uv_strerror(r)); return; }
+	   }); co->buf_.reset();
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* co = (Conn*)h->data;
@@ -129,38 +129,8 @@ namespace fc {
 			uv_fs_req_cleanup(&co->ofs_); uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->rbuf, 1, 0, on_read);
 			return;
 		  }
-		  res.is_file = 0; res.headers.clear();
-		  Ctx* cx = ((App*)co->app_)->context(); cx->file_size = res.file_size;
-		  cx->func = [co](void* v) -> void {
-			uv_fs_t* f = reinterpret_cast<uv_fs_t*>(v); Ctx* cx = (Ctx*)f->data;
-			if (f->result > 0) {
-			  cx->file_pos += f->result; cx->rbuf.base[f->result] = 0;
-			  int r = uv_write(&cx->_, (uv_stream_t*)&co->slot_, &cx->rbuf, 1, [](uv_write_t* wr, int st) {
-				Ctx* ct = (Ctx*)wr; if (st) { ct->reset(); printf("uv_write error: %s\n", uv_strerror(st)); return; }
-				DEBUG("!");
-				 });
-			  if (r) { cx->reset(); printf("uv_write error: %s\n", uv_strerror(r)); return; }
-			  if (cx->file_size > cx->file_pos) {
-				uv_fs_req_cleanup(f);
-				uv_fs_read(co->loop_, (uv_fs_t*)&cx->fs_, cx->fd_, &cx->rbuf, 1, cx->file_pos, fs_cb);
-			  } else {
-				uv_fs_close(co->loop_, (uv_fs_t*)&cx->fs_, cx->fd_, [](uv_fs_t* f) {
-				  Ctx* cx = (Ctx*)f->data; uv_fs_req_cleanup(f); cx->reset();
-				  });
-			  }
-			}
-		  };
-		  co->wbuf.base = s.data_; co->wbuf.len = s.size();
-		  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-		  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
-		  cx->fd_ = uv_fs_open(co->loop_, &cx->fs_, res.path_.c_str(), O_RDONLY, 0, NULL);
-		  uv_fs_req_cleanup(&cx->fs_);
-		  DEBUG("{%d}: %s\n", cx->fd_, res.path_.c_str());
-		  uv_fs_read(co->loop_, (uv_fs_t*)&cx->fs_, cx->fd_, &cx->rbuf, 1, 0, fs_cb);
-		  //std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
-		  //int l = 0, i; __:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-		  //if (l) { i = ::send(co->id, co->readbuf, l, 0); if (i > 0) goto __; }
-		  //inf.close(); std::this_thread::yield();
+		  err::forbidden("file too big!");
+		  res.is_file = 0; res.headers.clear();//((App*)co->app_);
 		  return;
 		}
 	  } catch (const http_error& e) {
@@ -188,9 +158,7 @@ namespace fc {
 	  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
 	_:
-	  if (!res.headers.count(RES_CT)) {
-		s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
-	  }
+	  if (!res.headers.count(RES_CT)) { s << RES_CT << RES_seperator << RES_Txt << RES_crlf; }
 	  s << RES_content_length_tag << std::to_string(res.body.size()) << RES_crlf;
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.clear();
@@ -230,7 +198,8 @@ namespace fc {
 	  }
 	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
-	co->id = co->slot_.socket; co->set_keep_alive(co->id, 3, 3, 2); ++t->connection_num;
-	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);//uv_tcp_keepalive(&co->slot_, 1, 6);
+	co->id = co->slot_.socket; ++t->connection_num;
+	uv_tcp_keepalive(&co->slot_, 1, t->keep_milliseconds / 1001);
+	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }
 }

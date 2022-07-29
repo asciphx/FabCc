@@ -10,6 +10,7 @@
 #include <timer.hh>
 #include <conn.hh>
 #include <h/common.h>
+#include <hpp/http_error.hpp>
 #include <app.hh>
 #include <directory.hh>
 //#include <detail.h>
