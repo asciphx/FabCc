@@ -15,7 +15,7 @@ namespace fc {
   struct BP {
 	const str_map* headers; string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
 	~BP() { headers = nullptr; }
-	BP(Req& req, const char* m, unsigned short l = 256): headers(&(req.headers)), menu(detail::upload_path_), L(l),
+	BP(Req& req, const char* m, unsigned short kb = 256): headers(&(req.headers)), menu(detail::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
 	  menu += m; if (RES_menu.find(m) == RES_menu.end()) {
 		if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(detail::directory_); ss += menu;
@@ -79,7 +79,7 @@ namespace fc {
 		  if (*++c == ';') { f += 2; }
 		  line.erase(0, f + 2); f = value.find('=');
 		  value = value.substr(f + 2); value.pop_back();
-		  p.key = value; ++b;
+		  p.key = DecodeURL(value); ++b;
 		} else if (b == '\1') {
 		  if (f != string::npos) line.erase(0, f + 2); else line.clear();
 		  f = value.find('=');

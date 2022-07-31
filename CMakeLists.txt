@@ -38,36 +38,36 @@ if(WIN32)
 	  message(STATUS "lib: ${PROJECT_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}/Uv.lib")
   else()
     list(APPEND uv_defines WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0602)
-  list(APPEND uv_sources
-         ${SRC}/win/async.c
-         ${SRC}/win/core.c
-         ${SRC}/win/detect-wakeup.c
-         ${SRC}/win/dl.c
-         ${SRC}/win/error.c
-         ${SRC}/win/fs.c
-         ${SRC}/win/fs-event.c
-         ${SRC}/win/getaddrinfo.c
-         ${SRC}/win/getnameinfo.c
-         ${SRC}/win/handle.c
-         ${SRC}/win/loop-watcher.c
-         ${SRC}/win/pipe.c
-         ${SRC}/win/thread.c
-         ${SRC}/win/poll.c
-         ${SRC}/win/process.c
-         ${SRC}/win/process-stdio.c
-         ${SRC}/win/signal.c
-         ${SRC}/win/snprintf.c
-         ${SRC}/win/stream.c
-         ${SRC}/win/tcp.c
-         ${SRC}/win/tty.c
-         ${SRC}/win/udp.c
-         ${SRC}/win/util.c
-         ${SRC}/win/winapi.c
-         ${SRC}/win/winsock.c)
-  add_library(Uv STATIC ${uv_sources} ${uv_c_files})
-  target_compile_definitions(Uv PRIVATE ${uv_defines})
-  target_compile_options(Uv PRIVATE ${uv_cflags})
-  #find_package(unofficial-libuv CONFIG REQUIRED) #unofficial::libuv::libuv
+    list(APPEND uv_sources
+           ${SRC}/win/async.c
+           ${SRC}/win/core.c
+           ${SRC}/win/detect-wakeup.c
+           ${SRC}/win/dl.c
+           ${SRC}/win/error.c
+           ${SRC}/win/fs.c
+           ${SRC}/win/fs-event.c
+           ${SRC}/win/getaddrinfo.c
+           ${SRC}/win/getnameinfo.c
+           ${SRC}/win/handle.c
+           ${SRC}/win/loop-watcher.c
+           ${SRC}/win/pipe.c
+           ${SRC}/win/thread.c
+           ${SRC}/win/poll.c
+           ${SRC}/win/process.c
+           ${SRC}/win/process-stdio.c
+           ${SRC}/win/signal.c
+           ${SRC}/win/snprintf.c
+           ${SRC}/win/stream.c
+           ${SRC}/win/tcp.c
+           ${SRC}/win/tty.c
+           ${SRC}/win/udp.c
+           ${SRC}/win/util.c
+           ${SRC}/win/winapi.c
+           ${SRC}/win/winsock.c)
+    add_library(Uv STATIC ${uv_sources} ${uv_c_files})
+    target_compile_definitions(Uv PRIVATE ${uv_defines})
+    target_compile_options(Uv PRIVATE ${uv_cflags})
+    #find_package(unofficial-libuv CONFIG REQUIRED) #unofficial::libuv::libuv
   endif()
   list(APPEND uv_libraries
         psapi

@@ -26,7 +26,7 @@ namespace fc {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
   enum class HTTP {
-	DEL = 0, GET, /*HEAD,*/ POST = 3, PUT, OPTIONS = 6, PATCH = 28, INVALID
+	DEL = 0, GET, /*HEAD,*/ POST = 3, PUT, OPTIONS = 6, /*PATCH = 28,*/ INVALID
   };
   static const std::string_view RES_server_tag("Server: ", 8), RES_content_length_tag("Content-Length: ", 16), RES_http_status("HTTP/1.1 ", 9),
 	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7), RES_oct("application/octet-stream", 24),

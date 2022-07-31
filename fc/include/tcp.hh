@@ -10,7 +10,7 @@
 #include <timer.hh>
 #include <conn.hh>
 #include <h/common.h>
-#include <hpp/http_error.hpp>
+#include <http_error.hh>
 #include <app.hh>
 #include <directory.hh>
 //#include <detail.h>
@@ -43,8 +43,6 @@ namespace fc {
 	// from https://docs.microsoft.com/en-us/windows/win32/winsock/ipproto-tcp-socket-options#TCP_MAXRT
 	// from https://opensource.apple.com/source/xnu/xnu-4570.41.2/bsd/netinet/tcp.h.auto.html#TCP_RXT_CONNDROPTIME
 	Tcp& timeout(unsigned short milliseconds = 6000);
-	//Set static directory
-	Tcp& directory(std::string path);
 	//Set upload path
 	Tcp& upload_path(std::string path);
 	//Set mime types

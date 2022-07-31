@@ -1,13 +1,15 @@
-#pragma once
+#ifndef HTTP_ERROR_HH
+#define HTTP_ERROR_HH
+#include <h/common.h>
 #include <string>
 #include <buffer.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/error.hh
 namespace fc {
   struct http_error {
-  public:
-	http_error(int status, const Buffer& what): status_(status), what_(what) {}
-	http_error(int status, const char* what): status_(status), what_(what, (unsigned int)strlen(what)) {}
-	int i() const { return status_; } const std::string_view what() const { return what_.data(); }
+	http_error(int status, const Buffer& what);
+	http_error(int status, const char* what);
+	int i() const;
+	const std::string_view what() const;
   private:
 	int status_; Buffer what_;
   };
@@ -23,3 +25,4 @@ namespace fc {
 #undef FC_HTTP_ERROR
   } // namespace err
 } // namespace fc
+#endif

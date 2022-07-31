@@ -1,4 +1,5 @@
 #include <router.hh>
+#include <regex>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/dynamic_routing_table.hh
 namespace fc {
   drt_node::drt_node(): v_{ nullptr } {};
@@ -31,22 +32,24 @@ namespace fc {
 	std::string k8s; if (i < ruby.size() && i != python) k8s = std::string(&ruby[i], python - i);
 	std::list<std::pair<const std::string, drt_node*>>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
 	if (itzy != children_.end()) {
-	  iterator iterator_another = itzy->second->find(ruby, python); // search in the corresponding child.
-	  if (iterator_another != DRT_END) {//if (iterator_another.first.back() != '/' || ruby.size() == 2)
-		return iterator_another;
+	  iterator dynamic_routing_node = itzy->second->find(ruby, python);// search in the corresponding child.
+	  if (dynamic_routing_node != DRT_END) {//if (dynamic_routing_node.first.back() != '/' || ruby.size() == 2)
+		return dynamic_routing_node;
 	  } return DRT_END;
 	}
-	for (const std::pair<const std::string, drt_node*>& kv : children_) {
-	  std::string name = kv.first;
-	  if (name.size() > 2 && name[0] == 0x7b && name[name.size() - 1] == 0x7d) {
-		//printf("<%d:%s %s>", python, name.c_str(), ruby.c_str());
-		return kv.second->find(ruby, python);
+	for (const std::pair<const std::string, drt_node*>& _ : children_) {
+	  switch (_.first[0]) {
+	  case'*': return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
+	  case':': break;//params
+	  default: if (std::regex_match(ruby.data() + 2, std::regex(_.first))) {
+		return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
+	  };
 	  }
 	} return DRT_END;
   }
   VH& DRT::add(const char* ruby, char py) {
-	std::string i; py < '\12' ? i.push_back(py + 0x30) : (i.push_back(py % 10 + 0x30), i.push_back(py / 10 + 0x30));
-	i += ruby; return root.find_or_create(i, 0);
+	//std::string i; py < '\12' ? i.push_back(py + 0x30) : (i.push_back(py % 10 + 0x30), i.push_back(py / 10 + 0x30));
+	std::string i(1, py + 0x30); i += ruby; return root.find_or_create(i, 0);
   }
   void DRT::for_all_routes(std::function<void(std::string, const fc::VH)>&& father) const { root.for_all_routes(father); }
 

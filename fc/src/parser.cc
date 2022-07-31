@@ -49,7 +49,7 @@ namespace fc {
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
   llParser::llParser(): header_field(0x1f), header_value(0x7f) {
-	url_params.reserve(0x3f); url.reserve(0x1f); body.reserve(0x256);
+	url_params.reserve(0x3f); url.reserve(0x1f); body.reserve(0x1ff);
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }

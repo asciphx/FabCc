@@ -40,7 +40,7 @@ namespace fc {
 	Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c);//
 	uv_buf_t rbuf, wbuf;
 	uv_loop_t* loop_;
-	uv_fs_t fs_, ofs_;
+	uv_fs_t fs_;
 	uv_file fd_;
 	uv_tcp_t slot_;
 	bool reading_ = false;

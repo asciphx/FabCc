@@ -13,9 +13,6 @@ namespace fc {
   Tcp& Tcp::timeout(unsigned short m) {
 	keep_milliseconds = m < 301 ? m * 1000 : m < 0x640 ? m *= 6 : m; return *this;
   }
-  Tcp& Tcp::directory(std::string p) {
-	if (p.back() != '\\' && p.back() != '/') p += '/'; detail::directory_ = p; return *this;
-  }
   Tcp& Tcp::upload_path(std::string p) {
 	if (p.back() != '\\' && p.back() != '/') p += '/'; detail::upload_path_ = p; return *this;
   }
@@ -55,7 +52,7 @@ namespace fc {
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
   void Tcp::fs_cb(uv_fs_t* f) { /*reinterpret_cast<Ctx*>(f->data)->func(f);*/ }
   void Tcp::on_read(uv_fs_t* f) {
-	Conn* co = (Conn*)f->data; co->rbuf.base[f->result] = 0; co->buf_ << std::string_view(co->rbuf.base, f->result);
+	Conn* co = (Conn*)f->data; co->buf_ << std::string_view(co->rbuf.base, f->result);
 	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size(); DEBUG("!%Id!", f->result);
 	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
 	uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
@@ -118,25 +115,29 @@ namespace fc {
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
-		  if (res.is_file == 2) {
-			if (!co->write(s.data_, s.size())) { return; } s.reset();
-			res.is_file = 0; res.headers.clear(); res.body.clear(); co->fs_.data = co;
-			//char realpath_out[CROSSPLATFORM_MAX_PATH]{ 0 };
-			//if (!crossplatform_realpath(res.path_, realpath_out)) throw err::not_found("file not found.");
-			co->ofs_.data = co;
-			co->fd_ = uv_fs_open(co->loop_, &co->ofs_, res.path_.c_str(), O_RDONLY | O_SEQUENTIAL, 0, NULL);
-			DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
-			uv_fs_req_cleanup(&co->ofs_); uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->rbuf, 1, 0, on_read);
-			return;
+		  if (co->write(s.data_, s.size())) { s.reset(); }
+		  res.is_file = 0; res.headers.clear();
+		  //char realpath_out[CROSSPLATFORM_MAX_PATH]{ 0 };
+		  //if (!crossplatform_realpath(res.path_, realpath_out)) throw err::not_found("file not found.");
+		  if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
+			res.body = ((App*)co->app_)->file_map_[req.uuid];
 		  }
-		  err::forbidden("file too big!");
-		  res.is_file = 0; res.headers.clear();//((App*)co->app_);
+		  co->fd_ = uv_fs_open(co->loop_, &co->fs_, res.path_.c_str(), O_RDONLY, 0, NULL);
+		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
+		  ((App*)co->app_)->file_map_[co->fd_] = nowStamp(CACHE_HTML_TIME_SECOND);
+		  uv_fs_req_cleanup(&co->fs_); uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->rbuf, 1, 0, on_read);
+		  return;
+
+		  res.is_file = 0; res.headers.clear();
+		  throw err::forbidden("file too big!");//((App*)co->app_);
 		  return;
 		}
 	  } catch (const http_error& e) {
-		co->set_status(res, e.i()); res.body += e.what(); s << RES_http_status << co->status_; goto _;
+		s.reset(); co->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << co->status_; goto _;
 	  } catch (const std::runtime_error& e) {
-		co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
+		s.reset(); co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
+	  } catch (std::exception& e) {
+		s.reset(); co->set_status(res, 501); res.body = e.what(); s << RES_http_status << co->status_; goto _;
 	  }
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
 	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
@@ -199,7 +200,7 @@ namespace fc {
 	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
 	co->id = co->slot_.socket; ++t->connection_num;
-	uv_tcp_keepalive(&co->slot_, 1, t->keep_milliseconds / 1001);
+	//uv_tcp_keepalive(&co->slot_, 1, t->keep_milliseconds / 1000);
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }
 }

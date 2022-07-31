@@ -1,5 +1,5 @@
 #include <req-res.hh>
-#include <hpp/http_error.hpp>
+#include <http_error.hh>
 namespace fc {
   Req::Req() { body.reserve(0x1ff); params.reserve(0x3f); url.reserve(0x1f); };
   Req::Req(HTTP method, std::string url, std::string params, str_map headers, std::string body/*, bool k*/):/* keep_alive(k),*/
@@ -33,7 +33,7 @@ namespace fc {
 			is_file = 2; this->add_header(RES_CL, std::to_string(statbuf_.st_size));
 			ss = content_types->at(extension); this->add_header(RES_CT, ss);
 		  }
-		  file_size = statbuf_.st_size; code = 200; if (file_size > BUF_SIZE)is_file = 3;
+		  file_size = statbuf_.st_size; code = 200;// if (file_size > BUF_SIZE)is_file = 3;
 		  return;
 		}
 		throw err::not_found(Buffer() << "Content-type of [" << extension << "] is not allowed!");

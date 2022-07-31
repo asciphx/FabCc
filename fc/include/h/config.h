@@ -12,6 +12,7 @@
 #else
 #define LOG_GER(_)
 #endif
+#define  $_(_)  #@_
 
 //#define DISABLE_HOME
 //#define ENABLE_SSL

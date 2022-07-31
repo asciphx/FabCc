@@ -2,12 +2,12 @@
 
 namespace fc {
   Conn::Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c)
-	:loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
+	:loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {  fs_.data = this;
 	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE); res_.content_types = c;
   }
   Conn::~Conn() {
 	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
-	tcp_ = nullptr; res_.content_types = nullptr;
+	tcp_ = nullptr; res_.content_types = nullptr; fs_.data = nullptr;
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
@@ -71,19 +71,19 @@ namespace fc {
 	case 304:status_ = "304 Not Modified\r\n"; break;
 	case 307:status_ = "307 Temporary redirect\r\n"; break;
 
-	case 400:status_ = "400 Bad Request\r\n"; res.body = status_; break;
-	case 401:status_ = "401 Unauthorized\r\n"; res.body = status_; break;
-	case 402:status_ = "402 Payment Required\r\n"; res.body = status_; break;
-	case 403:status_ = "403 Forbidden\r\n"; res.body = status_; break;
-	case 405:status_ = "405 HTTP verb used to access this page is not allowed\r\n"; res.body = status_; break;
-	case 406:status_ = "406 Browser does not accept the MIME type of the requested page\r\n"; res.body = status_; break;
-	case 409:status_ = "409 Conflict\r\n"; res.body = status_; break;
+	case 400:status_ = "400 Bad Request\r\n"; break;
+	case 401:status_ = "401 Unauthorized\r\n"; break;
+	case 402:status_ = "402 Payment Required\r\n"; break;
+	case 403:status_ = "403 Forbidden\r\n"; break;
+	case 405:status_ = "405 HTTP verb used to access this page is not allowed\r\n"; break;
+	case 406:status_ = "406 Browser does not accept the MIME type of the requested page\r\n"; break;
+	case 409:status_ = "409 Conflict\r\n"; break;
 
 	case 500:status_ = "500 Internal Server Error\r\n"; break;
-	case 501:status_ = "501 Not Implemented\r\n"; res.body = status_; break;
-	case 502:status_ = "502 Bad Gateway\r\n"; res.body = status_; break;
-	case 503:status_ = "503 Service Unavailable\r\n"; res.body = status_; break;
-	default: status_ = "404 Not Found\r\n"; res.body = status_; res.code = 404;
+	case 501:status_ = "501 Not Implemented\r\n"; break;
+	case 502:status_ = "502 Bad Gateway\r\n"; break;
+	case 503:status_ = "503 Service Unavailable\r\n"; break;
+	default: status_ = "404 Not Found\r\n"; res.code = 404;
 	}
   }
 }
