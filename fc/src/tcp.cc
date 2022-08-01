@@ -9,6 +9,7 @@ namespace fc {
 #endif
 	time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; RES_last = uv_now(loop);
 	RES_DATE_STR.resize(0x30); RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
+	if (app_ != nullptr)app_->content_types = &content_types;
   }
   Tcp& Tcp::timeout(unsigned short m) {
 	keep_milliseconds = m < 301 ? m * 1000 : m < 0x640 ? m *= 6 : m; return *this;
@@ -30,7 +31,7 @@ namespace fc {
   }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
   Tcp::~Tcp() { uv_mutex_destroy(&RES_MUTEX); exit(); }
-  Tcp& Tcp::router(App& app) { app_ = &app; return *this; }
+  Tcp& Tcp::router(App& app) { app_ = &app; app_->content_types = &content_types; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
 	printf("C++ web[服务] run on http://%s:%d", ip_addr, port); int $; if (is_ipv4) {
@@ -83,20 +84,16 @@ namespace fc {
 	  } //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
 	  fc::Buffer& s = co->buf_;
 	  try {
-		failed = ((App*)co->app_)->_call(req.method, req.url, req, res); if (failed) res.set_static_file_info(req.url);
+		((App*)co->app_)->_call(req.method, req.url, req, res);
 		co->set_status(res, res.code);
 		if (res.is_file > 0) {
 		  s << RES_http_status << co->status_;
-		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #if SHOW_SERVER_NAME
 		  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
 		  if (res.is_file == 1) {
-			res.is_file = 0;
-			req.uuid = hackUrl(req.url.c_str());
-			if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
-			  res.body = RES_CACHE_MENU[req.uuid]; goto _;
-			}
+			res.is_file = 0; req.uuid = hackUrl(req.url.c_str());
+			if (RES_CACHE_TIME[req.uuid] > nowStamp()) { res.body = RES_CACHE_MENU[req.uuid]; goto _; }
 			RES_CACHE_TIME[req.uuid] = nowStamp(CACHE_HTML_TIME_SECOND);
 			s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
 			s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
@@ -112,19 +109,18 @@ namespace fc {
 			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
 			return;
 		  }
+		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
-		  if (co->write(s.data_, s.size())) { s.reset(); }
+		  if (!co->write(s.data_, s.size())) { return; }; s.reset();
 		  res.is_file = 0; res.headers.clear();
-		  //char realpath_out[CROSSPLATFORM_MAX_PATH]{ 0 };
-		  //if (!crossplatform_realpath(res.path_, realpath_out)) throw err::not_found("file not found.");
-		  if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
-			res.body = ((App*)co->app_)->file_map_[req.uuid];
-		  }
+		  // if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
+			 //res.body = ((App*)co->app_)->file_map_[req.uuid];
+		  // }
 		  co->fd_ = uv_fs_open(co->loop_, &co->fs_, res.path_.c_str(), O_RDONLY, 0, NULL);
 		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
-		  ((App*)co->app_)->file_map_[co->fd_] = nowStamp(CACHE_HTML_TIME_SECOND);
+		  //((App*)co->app_)->file_map_[co->fd_] = nowStamp(CACHE_HTML_TIME_SECOND);
 		  uv_fs_req_cleanup(&co->fs_); uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->rbuf, 1, 0, on_read);
 		  return;
 
@@ -184,7 +180,7 @@ namespace fc {
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
 	Tcp* t = (Tcp*)srv->data; if (t->connection_num > t->max_conn) return;
-	Conn* co = new Conn(t->keep_milliseconds, t->loop_, &t->content_types);
+	Conn* co = new Conn(t->keep_milliseconds, t->loop_);
 	int $ = uv_tcp_init(t->loop_, &co->slot_); if ($) { delete co; return; }
 	$ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&co->slot_);
 	if ($) { uv_close((uv_handle_t*)&co->slot_, NULL); delete co; return; }

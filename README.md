@@ -1,5 +1,5 @@
 # FabCc(v1.0-beta)
-Concise, fast, practical, reactive, functional. Inspired by other well-known c++ web frameworks.
+Concise, fast, practical, reactive, functional. Inspired by other well-known C++ web frameworks, which can be called the C++ version of nodejs.
 
 ## Features
 - Can add, delete, modify and query the route
@@ -11,7 +11,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known c++
 - The fewest third-party libraries, except libuv, are stored in the project in the form of source files
 
 ## Still under development
-- [ ] Processing of routing brace
+- [x] Processing of routing brace
 - [ ] Gzip compression
 - [x] Body parser
 - [ ] SSL certificate support
@@ -35,7 +35,11 @@ int main() {
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };
-  app["/api"] = [&app](Req&, Res& res) {
+  app.sub_api("/", app.serve_file("static"));//Service file interface
+  app["/u/:id(\\d+)"] = [&app](Req&, Res& res) {
+	res.write("！");
+  };
+  app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes().c_str());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {

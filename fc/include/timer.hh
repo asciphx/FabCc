@@ -7,10 +7,10 @@ namespace fc {
   static struct tm* RES_NOW;
   static int64_t RES_TIME_T, RES_last;
   static std::string RES_DATE_STR;
-  tm now();
-  int64_t nowStamp(short& i);
-  int64_t nowStamp(short&& i);
-  int64_t nowStamp();
+  static _INLINE tm now() { return *RES_NOW; }
+  static _INLINE int64_t nowStamp(short& i) { return RES_TIME_T + i; }
+  static _INLINE int64_t nowStamp(short&& i) { return RES_TIME_T + i; }
+  static _INLINE int64_t nowStamp() { return RES_TIME_T; }
   class Timer {
 	uv_timer_t* t_;
 	std::function<void()> cb_;

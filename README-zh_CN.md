@@ -1,5 +1,5 @@
 # FabCc(v1.0-beta)
-简洁、迅速、实用、活跃、全面。灵感来自于其他c++知名web框架。
+简洁、迅速、实用、活跃、全面。灵感来自于其他c++知名web框架, 堪称c++版的nodejs。
 
 ## 特征
 - 可以对路由进行增删改查
@@ -11,7 +11,7 @@
 - 最少的第三方库，除了libuv，其他均以源文件形式存放项目中
 
 ## 仍在开发中
-- [ ] 路由大括号表达式
+- [x] 路由大括号表达式
 - [ ] gzip压缩
 - [x] body-parser的支持
 - [ ] ssl证书
@@ -35,7 +35,11 @@ int main() {
   app.get() = [](Req&, Res& res) {
 	res.write("hello world!你好！世界！这是主页！");
   };
-  app["/api"] = [&app](Req&, Res& res) {
+  app.sub_api("/", app.serve_file("static"));//服务文件接口
+  app["/u/:id(\\d+)"] = [&app](Req&, Res& res) {
+	res.write("！");
+  };
+  app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {

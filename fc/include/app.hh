@@ -5,6 +5,7 @@
 #include <atomic>
 #include <memory>
 #include <h/common.h>
+#include <h/any_types.h>
 #include "router.hh"
 #include <buffer.hh>
 #include <file_sptr.hh>
@@ -28,10 +29,11 @@ namespace fc {
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
 	Buffer _print_routes();
-	char _call(HTTP& m, std::string& r, Req& request, Res& response) const;
+	void _call(HTTP& m, std::string& r, Req& request, Res& response) const;
 	DRT map_;
     std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
 	std::unordered_map<uv_file, int64_t> file_map_;
+	std::unordered_map<std::string_view, std::string_view>* content_types;
 	void sub_api(const char* prefix, const App& subapi);
 	//Serve static directory
 	App serve_file(const char* r);

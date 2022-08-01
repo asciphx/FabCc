@@ -1,6 +1,7 @@
 #include <app.hh>
 #include <directory.hh>
 #include <http_error.hh>
+#include <fstream>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
   char c2m(const char* m) {
@@ -51,14 +52,14 @@ namespace fc {
 		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << ',' << (i % 6 == 0 ? '\n' : ' ');
 	  }); return b;
   }
-  char App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {
+  void App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
 	std::string g(1, static_cast<char>(m) + 0x30); g += r;
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
-	  it->second(request, response); return $_(\0);
-	}; return $_(\1);
+	  it->second(request, response);
+	};
   }
   void App::sub_api(const char* prefix, const App& app) {
 	char m; if ((prefix[0] == '/' || prefix[0] == '\\') && prefix[1] == 0)++prefix;
@@ -78,13 +79,48 @@ namespace fc {
 		throw err::internal_server_error(fc::Buffer("serve_file error: ", 18) << real_root << " is not a directory.");
 	  std::string $(r); if ($.back() != $_(\\) && $.back() != $_(/ )) $.push_back($_(/ )); detail::directory_ = $;
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; res.write(_); res.write("index.html");
+		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		if (res.is_file == 0 && statbuf_.st_size < BUF_SIZE) {
+		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; throw err::not_found();
+		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
+		  if (last_dot) {
+			std::string ss = _.substr(last_dot);
+			if(ss[0] == 'h' && ss[1] == 't') {
+			  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
+			}
+		  }
+		}
 	  };
-	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
+	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1;// if (_ == $) { res.write("index.html"); return;}
-		struct stat statbuf_; stat(_.c_str(), &statbuf_);
-		uint64_t length = statbuf_.st_size;
-		res.write(_);
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		if (res.is_file == 0 && statbuf_.st_size < BUF_SIZE) {
+		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  throw err::not_found();
+		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
+		  if (last_dot) {
+			std::string ss = _.substr(last_dot);
+			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", is_file, path_.c_str());
+			if (content_types->find(extension) != content_types->end()) {
+			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
+#ifdef ENABLE_COMPRESSION
+				compressed = false;
+#endif
+				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
+				ss = content_types->at(extension); res.add_header(RES_CT, ss);
+			  }
+			  res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
+			  //printf("<%ld,%s>", res.file_size, _.c_str());
+			  return;
+			}
+			throw err::not_found(Buffer() << "Content-type of [" << extension << "] is not allowed!");
+		  }
+		}
+		throw err::not_found();
 	  };
 	} catch (const http_error& e) {
 	  printf("http_error[%d]: %s", e.i(), e.what().data());

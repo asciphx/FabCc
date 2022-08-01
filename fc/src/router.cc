@@ -24,6 +24,7 @@ namespace fc {
 		party.second->for_all_routes(father, js + party.first);
 	}
   }
+  // from http://forbeslindesay.github.io/express-route-tester
   drt_node::iterator drt_node::find(const std::string& ruby, unsigned short python) const {
 	if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };
 	if (ruby[python] == '/') ++python; // skip the first /

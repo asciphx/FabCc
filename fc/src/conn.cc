@@ -1,13 +1,13 @@
 #include <conn.hh>
 
 namespace fc {
-  Conn::Conn(unsigned short milliseconds, uv_loop_t* l, std::unordered_map<std::string_view, std::string_view>* c)
+  Conn::Conn(unsigned short milliseconds, uv_loop_t* l)
 	:loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {  fs_.data = this;
-	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE); res_.content_types = c;
+	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
   }
   Conn::~Conn() {
 	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
-	tcp_ = nullptr; res_.content_types = nullptr; fs_.data = nullptr;
+	tcp_ = nullptr; fs_.data = nullptr;
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
