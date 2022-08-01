@@ -8,6 +8,8 @@
 #include <h/any_types.h>
 #include "router.hh"
 #include <buffer.hh>
+#include <directory.hh>
+#include <http_error.hh>
 #include <file_sptr.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 #define CTX_BUF_SIZE 0x10000
@@ -32,7 +34,6 @@ namespace fc {
 	void _call(HTTP& m, std::string& r, Req& request, Res& response) const;
 	DRT map_;
     std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
-	std::unordered_map<uv_file, int64_t> file_map_;
 	std::unordered_map<std::string_view, std::string_view>* content_types;
 	void sub_api(const char* prefix, const App& subapi);
 	//Serve static directory

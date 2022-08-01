@@ -3,7 +3,8 @@
 #include <functional>
 #include <h/common.h>
 #include <timer.hh>
-#define BUF_SIZE 0x40000
+#define BUF_SIZE 0x28000
+#define BUF_HTML_MAXSIZE 0x3e801
 #define BUF_MAXSIZE 256000000
 namespace fc {
   class Conn; class Tcp; struct App;
@@ -32,6 +33,7 @@ namespace fc {
 	fc::Timer timer_;
 	int is_file{ 0 };
 	long file_size = 0;
+	std::function<void(int64_t o, int64_t k,std::function<void(const char* c, size_t s, std::function<void()> d)> sink)> provider;
 	Res();
   public:
 	uint16_t code{ 200 };// Check whether the response has a static file defined.

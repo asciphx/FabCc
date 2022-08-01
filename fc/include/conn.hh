@@ -52,6 +52,7 @@ namespace fc {
 	virtual ~Conn();
 	bool write(const char* buf, int size);
 	void set_status(Res& res, uint16_t status);
+    std::function<void(const char* c, size_t s, std::function<void()> f)> sink_;
   };
 }
 #endif // CONN_HH

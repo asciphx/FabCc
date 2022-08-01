@@ -13,7 +13,7 @@
 #endif
 //from https://github.com/neithern/libhttp/blob/master/src/file-map.cpp
 namespace fc {
-  file_sptr::file_sptr(const std::string& path, size_t length, long modified_time) {
+  file_sptr::file_sptr(const std::string& path, size_t length, long long modified_time) {
 	const char* psz = path.c_str();
 	modified_time_ = modified_time;
 	size_ = 0;

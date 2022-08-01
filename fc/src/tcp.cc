@@ -57,7 +57,7 @@ namespace fc {
 	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size(); DEBUG("!%Id!", f->result);
 	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
 	uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
-	  Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
+	  Conn* co = (Conn*)wr; if (st) { return; }//uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL);
 	   }); co->buf_.reset();
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
@@ -86,11 +86,11 @@ namespace fc {
 	  try {
 		((App*)co->app_)->_call(req.method, req.url, req, res);
 		co->set_status(res, res.code);
-		if (res.is_file > 0) {
-		  s << RES_http_status << co->status_;
+		s << RES_http_status << co->status_;
 #if SHOW_SERVER_NAME
-		  s << RES_server_tag << SERVER_NAME << RES_crlf;
+		s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
+		if (res.is_file > 0) {
 		  if (res.is_file == 1) {
 			res.is_file = 0; req.uuid = hackUrl(req.url.c_str());
 			if (RES_CACHE_TIME[req.uuid] > nowStamp()) { res.body = RES_CACHE_MENU[req.uuid]; goto _; }
@@ -110,34 +110,24 @@ namespace fc {
 			return;
 		  }
 		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
-		  s << RES_date_tag << RES_DATE_STR << RES_crlf;
+		  s << RES_date_tag << RES_DATE_STR << RES_crlf << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
 		  if (!co->write(s.data_, s.size())) { return; }; s.reset();
 		  res.is_file = 0; res.headers.clear();
-		  // if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
-			 //res.body = ((App*)co->app_)->file_map_[req.uuid];
-		  // }
-		  co->fd_ = uv_fs_open(co->loop_, &co->fs_, res.path_.c_str(), O_RDONLY, 0, NULL);
+		  if (res.provider) {
+			res.provider(0, res.file_size, co->sink_);
+		  }
 		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
-		  //((App*)co->app_)->file_map_[co->fd_] = nowStamp(CACHE_HTML_TIME_SECOND);
-		  uv_fs_req_cleanup(&co->fs_); uv_fs_read(co->loop_, (uv_fs_t*)&co->fs_, co->fd_, &co->rbuf, 1, 0, on_read);
-		  return;
-
-		  res.is_file = 0; res.headers.clear();
-		  throw err::forbidden("file too big!");//((App*)co->app_);
 		  return;
 		}
 	  } catch (const http_error& e) {
 		s.reset(); co->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << co->status_; goto _;
 	  } catch (const std::runtime_error& e) {
 		s.reset(); co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
-	  } catch (std::exception& e) {
-		s.reset(); co->set_status(res, 501); res.body = e.what(); s << RES_http_status << co->status_; goto _;
 	  }
 	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
 	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
-	  s << RES_http_status << co->status_;
 	  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
 	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
@@ -150,9 +140,6 @@ namespace fc {
 #endif
 #ifdef AccessControlAllowOrigin
 	  s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
-#endif
-#if SHOW_SERVER_NAME
-	  s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
 	_:
 	  if (!res.headers.count(RES_CT)) { s << RES_CT << RES_seperator << RES_Txt << RES_crlf; }

@@ -8,7 +8,7 @@
 - 极简的api，无限的可能
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
 - 难以置信的编译速度，开发速度同时也得到提升
-- 最少的第三方库，除了libuv，其他均以源文件形式存放项目中
+- 最少的第三方库，均以源文件形式存放项目中
 
 ## 仍在开发中
 - [x] 路由大括号表达式
@@ -36,7 +36,7 @@ int main() {
 	res.write("hello world!你好！世界！这是主页！");
   };
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/u/:id(\\d+)"] = [&app](Req&, Res& res) {
+  app["/u/:id(\\d+)"] = [](Req&, Res& res) {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {

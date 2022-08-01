@@ -21,7 +21,7 @@ namespace fc {
   static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), RES_empty,
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
 	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Con("Connection", 10), RES_Ex("expect", 6),
-	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5);
+	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5), RES_HaR("Accept-Ranges", 13);
   static const std::string& get_header(const str_map& headers, const std::string& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
@@ -33,7 +33,7 @@ namespace fc {
 	RES_AcC("Access-Control-Allow-Credentials: ", 34), RES_t("true", 4), RES_AcM("Access-Control-Allow-Methods: ", 30), RES_host("Host", 4),
 	RES_AcH("Access-Control-Allow-Headers: ", 30), RES_AcO("Access-Control-Allow-Origin: ", 29), RES_expect("HTTP/1.1 100 Continue\r\n\r\n", 25),
 	RES_date_tag("Date: ", 6), RES_content_length("content-length", 14), RES_seperator(": ", 2), RES_crlf("\r\n", 2), RES_loc("location", 8),
-	RES_AE("Accept-Encoding", 15), RES_CE("Content-Encoding", 16), RES_gzip("gzip", 4), RES_deflate("deflate", 7),
+	RES_AE("Accept-Encoding", 15), RES_CE("Content-Encoding", 16), RES_gzip("gzip", 4), RES_deflate("deflate", 7), RES_bytes("bytes", 5),
 	expect_100_continue("HTTP/1.1 100 Continue\r\n\r\n", 25);
   static const char RES_GMT[26] = "%a, %d %b %Y %H:%M:%S GMT";
   static std::unordered_map<uint64_t, std::string> RES_CACHE_MENU = {};

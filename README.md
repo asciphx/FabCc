@@ -8,7 +8,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - Minimalist API, infinite possibilities
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL
 - Incredible compilation speed and development speed are also improved
-- The fewest third-party libraries, except libuv, are stored in the project in the form of source files
+- The fewest third-party libraries, are stored in the project in the form of source files
 
 ## Still under development
 - [x] Processing of routing brace
@@ -36,7 +36,7 @@ int main() {
 	res.write("hello world!你好！世界！这是主页！");
   };
   app.sub_api("/", app.serve_file("static"));//Service file interface
-  app["/u/:id(\\d+)"] = [&app](Req&, Res& res) {
+  app["/u/:id(\\d+)"] = [](Req&, Res& res) {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
