@@ -56,7 +56,7 @@ namespace fc {
 	std::string g(1, static_cast<char>(m) + 0x30); g += r;
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
 	  it->second(request, response);
-	};
+	} else throw err::not_found();
   }
   void App::sub_api(const char* prefix, const App& app) {
 	char m; if ((prefix[0] == '/' || prefix[0] == '\\') && prefix[1] == 0)++prefix;
@@ -92,13 +92,13 @@ namespace fc {
 	  };
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1;// if (_ == $) { res.write("index.html"); return;}
-		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_); printf("#");
 		if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
 		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _; printf("^");
 		  throw err::not_found();
-		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
+		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1; printf("@");
 		  if (last_dot) {
 			std::string ss = _.substr(last_dot);
 			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", is_file, path_.c_str());
