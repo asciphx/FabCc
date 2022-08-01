@@ -92,13 +92,13 @@ namespace fc {
 	  };
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1;// if (_ == $) { res.write("index.html"); return;}
-		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_); printf("#");
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
 		if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
 		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _; printf("^");
+		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  throw err::not_found();
-		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1; printf("@");
+		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
 		  if (last_dot) {
 			std::string ss = _.substr(last_dot);
 			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", is_file, path_.c_str());
