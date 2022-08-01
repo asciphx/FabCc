@@ -11,7 +11,10 @@ int main() {
 	res.write("hello world!你好！世界！这是主页！");
   };
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/api/.*"] = [&app](Req& req, Res& res) {
+  app["/u/:id(\\d+)"] = [&app](Req&, Res& res) {
+	res.write("！");
+  };
+  app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {

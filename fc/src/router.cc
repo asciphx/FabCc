@@ -1,5 +1,4 @@
 #include <router.hh>
-#include <regex>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/dynamic_routing_table.hh
 namespace fc {
   drt_node::drt_node(): v_{ nullptr } {};
@@ -20,7 +19,7 @@ namespace fc {
   void drt_node::for_all_routes(std::function<void(std::string, const fc::VH)>& father, std::string js) const {
 	if (children_.size() == 0) father(js, v_);
 	else {
-	  if (js.size() && js.back() != '/') { if (js.size() > 2) father(js, v_); js.push_back('/'); }
+	  if (js.size() && js.back() != '/') { if (v_ != nullptr) father(js, v_); js.push_back('/'); }
 	  for (std::pair<const std::string, drt_node*> party : children_)
 		party.second->for_all_routes(father, js + party.first);
 	}
@@ -32,18 +31,20 @@ namespace fc {
 	std::string k8s; if (i < ruby.size() && i != python) k8s = std::string(&ruby[i], python - i);
 	std::list<std::pair<const std::string, drt_node*>>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
 	if (itzy != children_.end()) {
-	  iterator dynamic_routing_node = itzy->second->find(ruby, python);// search in the corresponding child.
-	  if (dynamic_routing_node != DRT_END) {//if (dynamic_routing_node.first.back() != '/' || ruby.size() == 2)
-		return dynamic_routing_node;
+	  iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
+	  if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
+		return json;
 	  } return DRT_END;
 	}
 	for (const std::pair<const std::string, drt_node*>& _ : children_) {
 	  switch (_.first[0]) {
 	  case'*': return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
-	  case':': break;//params
-	  default: if (std::regex_match(ruby.data() + 2, std::regex(_.first))) {
-		return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
-	  };
+	  case':': { const char* c = _.first.c_str(); std::string param;
+		while (*++c != '(')param.push_back(*c); if (*(_.first.end() - 1) != ')') return DRT_END;
+		printf("<%s>", param.c_str());// get param
+		if (std::regex_match(k8s, std::regex(c))) return _.second->find(ruby, python);
+	  } break;//params
+	  default: if (std::regex_match(k8s, std::regex(_.first))) return _.second->find(ruby, python);
 	  }
 	} return DRT_END;
   }
