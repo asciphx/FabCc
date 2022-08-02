@@ -37,7 +37,7 @@ int main() {
   app["/u/:id(\\d+)"] = [](Req&, Res& res) {
 	res.write("！");
   };
-  app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
+  app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
 	res.write(req.url.c_str());//routing regex 
   };
   app["/api"] = [&app](Req& req, Res& res) {
