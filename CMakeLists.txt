@@ -78,7 +78,6 @@ if(WIN32)
         ws2_32)
   set( FabCc_LIBRARIES
   Fab
-  ${uv_libraries}
   ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/Uv.lib
   )
   add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
@@ -90,6 +89,11 @@ if(WIN32)
   fc/src/lexical_cast.cc
   )
 else ()
+  list(APPEND uv_defines _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE)
+  if(NOT CMAKE_SYSTEM_NAME MATCHES "Android|OS390|QNX")
+    list(APPEND uv_libraries pthread)
+    message(STATUS "NAME: ${CMAKE_SYSTEM_NAME}")
+  endif()
   list(APPEND uv_sources
          ${SRC}/unix/async.c
          ${SRC}/unix/core.c
@@ -215,16 +219,16 @@ else ()
   target_compile_options(Uv PRIVATE ${uv_cflags})
   set( FabCc_LIBRARIES
   Fab
-  ${uv_libraries}
   Uv
   )
+  message(STATUS "LIBRARIES: ${uv_libraries}")
   add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
   message(STATUS "to: ${PROJECT_SOURCE_DIR}/FabCc")
   add_custom_command(TARGET FabCc
-	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/FabCc ${PROJECT_SOURCE_DIR}/FabCc
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/FabCc ${PROJECT_SOURCE_DIR}/FabCc
   )#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
   add_executable(W w.cc
   fc/src/lexical_cast.cc
   )
 endif ()
-target_link_libraries( FabCc ${FabCc_LIBRARIES})
+target_link_libraries( FabCc ${FabCc_LIBRARIES} ${uv_libraries})

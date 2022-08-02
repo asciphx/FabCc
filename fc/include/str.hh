@@ -37,19 +37,23 @@ namespace fc {
   bool operator<=(tm& t, tm& m);
   bool operator>=(tm& t, tm& m);
   template<typename T> inline const char* ObjName() {
-	const char* s = typeid(T).name(); if constexpr (_WIN32) {
+	const char* s = typeid(T).name();
+  #ifdef _WIN32
 	  while (*++s != 0x20); return ++s;
-	} else { while (*s < 0x3a && *s++ != 0x24) {}; return s; }
+  #else
+    while (*s < 0x3a && *s++ != 0x24) {}; return s;
+  #endif
   }
   template<typename T, typename U> inline uint64_t ObjLink() {//*s > 0x5e ? *s - 0x5f : 
-	const char* s = typeid(T).name(), * c = typeid(U).name(); unsigned long long r = 0; if constexpr (_WIN32) {
+	const char* s = typeid(T).name(), * c = typeid(U).name(); unsigned long long r = 0;
+  #ifdef _WIN32
 	  while (*++s != 0x20); while (*++c != 0x20); for (; *++s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12);
 	  for (; *++c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12);
-	} else {
+  #else
 	  while (*s < 0x3a && *s++ != 0x24) {}; while (*c < 0x3a && *c++ != 0x24) {};
 	  for (; *s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12, ++s);
 	  for (; *c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12, ++c);
-	}
+  #endif
 	return r;
   }
   constexpr unsigned long long operator""_l(const char* s, size_t /*len*/) {
@@ -74,10 +78,19 @@ namespace fc {
 	char* subStr_f(const char* c, int i, int e);
 	char* to8Str_f(unsigned long long i);
 	char* to4Str_f(int i);
-	inline constexpr unsigned long long hack8Str(const char* s);
-	inline constexpr int hack4Str(const char* s);
-	inline constexpr unsigned long long hackStr(const char* s);
-	inline constexpr unsigned long long hackUrl(const char* s);
+	inline unsigned long long hack8Str(const char* s) {
+	  unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r << 8, r += s[i]); return r;
+	}//If only the first four digits need to be matched and there is no conflict, it is recommended to use hack4Str to improve efficiency
+	inline int hack4Str(const char* s) { int r = s[0]; for (signed char i = 0; ++i < 4 && s[i]; r << 8, r += s[i]); return r; }
+	//Hack8str is downward compatible with hack4str, however, it is not compatible with the hackstr method
+	inline unsigned long long hackStr(const char* s) {
+	  unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
+	  for (unsigned short i = 0; s[++i]; r *= 0x17, r += s[i] > 0x5c ? s[i] - 0x5d : s[i] - 0x12); return r;
+	}
+	inline unsigned long long hackUrl(const char* s) {
+	  unsigned long long r = s[0] - 0x23;
+	  for (unsigned char i = 0; s[++i]; r *= 0x29, r += s[i] > 0x5e ? s[i] - 0x5f : s[i] > 0x40 ? s[i] - 0x3f : s[i] - 0x10); return r;
+	}//s[++i] > 0x22
 #ifdef __cplusplus
   }  /* extern "C" */
 #endif

@@ -174,19 +174,6 @@ namespace fc {
 	  while (t > 0x7f) { w[--z] = RES_ASCII[b]; i = t; t = i / 0x100; b = i - t * 0x100 - 32; }
 	  w[--z] = RES_ASCII[b]; if (z > 0) { t -= 32; w[0] = RES_ASCII[t]; } return w;
 	}
-	unsigned long long hack8Str(const char* s) {
-	  unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r << 8, r += s[i]); return r;
-	}//If only the first four digits need to be matched and there is no conflict, it is recommended to use hack4Str to improve efficiency
-	int hack4Str(const char* s) { int r = s[0]; for (signed char i = 0; ++i < 4 && s[i]; r << 8, r += s[i]); return r; }
-	//Hack8str is downward compatible with hack4str, however, it is not compatible with the hackstr method
-	unsigned long long hackStr(const char* s) {
-	  unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
-	  for (unsigned short i = 0; s[++i]; r *= 0x17, r += s[i] > 0x5c ? s[i] - 0x5d : s[i] - 0x12); return r;
-	}
-	unsigned long long hackUrl(const char* s) {
-	  unsigned long long r = s[0] - 0x23;
-	  for (unsigned char i = 0; s[++i]; r *= 0x29, r += s[i] > 0x5e ? s[i] - 0x5f : s[i] > 0x40 ? s[i] - 0x3f : s[i] - 0x10); return r;
-	}//s[++i] > 0x22
 #ifdef __cplusplus
   }  /* extern "C" */
 #endif

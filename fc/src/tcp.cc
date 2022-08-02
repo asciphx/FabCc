@@ -9,7 +9,7 @@ namespace fc {
 #endif
 	time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; RES_last = uv_now(loop);
 	RES_DATE_STR.resize(0x30); RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
-	if (app_ != nullptr)app_->content_types = &content_types;
+	if (app_ != nullptr)app_->content_types = &content_types; _.data = this;
   }
   Tcp& Tcp::timeout(unsigned short m) {
 	keep_milliseconds = m < 301 ? m * 1000 : m < 0x640 ? m *= 6 : m; return *this;
@@ -27,7 +27,7 @@ namespace fc {
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog; return *this; }
   Tcp& Tcp::thread(unsigned char n) { max_thread = n; return *this; }//?
   bool Tcp::init() {
-	if (opened)return true; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false; _.data = this; return true;
+	if (opened)return true; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false; return true;
   }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
   Tcp::~Tcp() { uv_mutex_destroy(&RES_MUTEX); exit(); }
@@ -48,6 +48,9 @@ namespace fc {
 	std::string s(detail::directory_ + detail::upload_path_); if (!fc::is_directory(s)) fc::create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
+#ifdef SIGPIPE
+  signal(SIGPIPE, SIG_IGN);
+#endif
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
   }
   void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
@@ -182,7 +185,12 @@ namespace fc {
 	  }
 	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
-	co->id = co->slot_.socket; ++t->connection_num;
+#ifdef _WIN32
+	co->id = co->slot_.socket;
+#else
+	co->id = co->slot_.accepted_fd;
+#endif
+	++t->connection_num;
 	//uv_tcp_keepalive(&co->slot_, 1, t->keep_milliseconds / 1000);
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }

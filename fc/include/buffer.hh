@@ -1,6 +1,7 @@
 #ifndef BUFFER_HH
 #define BUFFER_HH
 #include <h/common.h>
+#include <cstring>
 #include <lexical_cast.hh>
 #pragma warning(disable:4244)
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
@@ -15,12 +16,12 @@ namespace fc {
 	Buffer& operator=(Buffer&& o);
 	void clear();
 
-	_INLINE void Buffer::reset() { end_ = data_; }
-	_INLINE bool Buffer::empty() { return end_ == data_; };
-	_INLINE unsigned int Buffer::size() { return end_ - data_; }
-	_INLINE Buffer& Buffer::append(const char c) { return (*this) << c; }
-	_INLINE std::string_view Buffer::data() const { return std::string_view(data_, end_ - data_); }
-	_INLINE std::string Buffer::c_str() { return std::string(data_, end_ - data_); };
+	_INLINE void reset() { end_ = data_; }
+	_INLINE bool empty() { return end_ == data_; };
+	_INLINE unsigned int size() { return end_ - data_; }
+	_INLINE Buffer& append(const char c) { return (*this) << c; }
+	_INLINE std::string_view data() const { return std::string_view(data_, end_ - data_); }
+	_INLINE std::string c_str() { return std::string(data_, end_ - data_); };
 
 	std::string substr(unsigned int a, unsigned int b = -1);
 	size_t find(const char* c);

@@ -1,12 +1,15 @@
 #pragma once
 #include <stdlib.h>
 #include <string>
-#include <direct.h>
+#include <cstring>
 #include <h/config.h>
 #if defined _WIN32
+#include <direct.h>
 #include <windows.h>
 #define CROSSPLATFORM_MAX_PATH MAX_PATH
 #else
+#include <sys/stat.h>
+#include <dirent.h>
 #define CROSSPLATFORM_MAX_PATH PATH_MAX
 #endif
 namespace fc {

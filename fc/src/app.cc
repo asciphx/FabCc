@@ -1,5 +1,10 @@
 #include <app.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
+#ifdef _WIN32
+#define $_(_) _._Ptr
+#else
+#define $_(_) _.base()
+#endif // _WIN32
 namespace fc {
   char c2m(const char* m) {
 	switch (hack8Str(m)) {
@@ -74,14 +79,14 @@ namespace fc {
 		throw err::not_found(fc::Buffer("serve_file error: Directory ", 28) << r << " does not exists.");
 	  if (!fc::is_directory(real_root))
 		throw err::internal_server_error(fc::Buffer("serve_file error: ", 18) << real_root << " is not a directory.");
-	  std::string $(r); if ($.back() != $_(\\) && $.back() != $_(/ )) $.push_back($_(/ )); detail::directory_ = $;
+	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); detail::directory_ = $;
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
 		if (res.is_file == 0 && statbuf_.st_size < BUF_HTML_MAXSIZE) {
 		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; throw err::not_found();
-		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
+		_:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
 		  if (last_dot) {
 			std::string ss = _.substr(last_dot);
 			if (ss[0] == 'h' && ss[1] == 't') {
@@ -98,7 +103,7 @@ namespace fc {
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		  throw err::not_found();
-		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
+		_:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
 		  if (last_dot) {
 			std::string ss = _.substr(last_dot);
 			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
@@ -111,7 +116,7 @@ namespace fc {
 				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
 				ss = content_types->at(extension); res.add_header(RES_CT, ss);
 				std::shared_ptr<file_sptr> __;
-				std::list<std::pair<const std::string, std::shared_ptr<file_sptr>>>::iterator p = file_cache_.find(_);
+				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
 				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
 				  __ = p->second;
 				} else {

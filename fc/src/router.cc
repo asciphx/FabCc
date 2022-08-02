@@ -9,12 +9,12 @@ namespace fc {
 	if (python == ruby.size()) return v_; if (ruby[python] == '/') ++python; // skip the /
 	int i = python; while (python < ruby.size() && ruby[python] != '/') ++python;
 	std::string k8s = ruby.substr(i, python - i);
-	std::list<std::pair<const std::string, drt_node*>>::const_iterator itzy = children_.find(k8s);//auto
+	std::unordered_map<const std::string, drt_node*>::const_iterator itzy = children_.find(k8s);//auto
 	if (itzy != children_.end()) return children_[k8s]->find_or_create(ruby, python);
 	else {
 	  drt_node* new_node_js = new drt_node(); children_.insert({ k8s, new_node_js });
 	  return new_node_js->find_or_create(ruby, python);
-	} return v_;
+	}
   }
   void drt_node::for_all_routes(std::function<void(std::string, const fc::VH)>& father, std::string js) const {
 	if (children_.size() == 0) father(js, v_);
@@ -30,7 +30,7 @@ namespace fc {
 	if (ruby[python] == '/') ++python; // skip the first /
 	unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
 	std::string k8s; if (i < ruby.size() && i != python) k8s = std::string(&ruby[i], python - i);
-	std::list<std::pair<const std::string, drt_node*>>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
+	std::unordered_map<const std::string, drt_node*>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
 	if (itzy != children_.end()) {
 	  iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
 	  if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
@@ -54,5 +54,4 @@ namespace fc {
 	std::string i(1, py + 0x30); i += ruby; return root.find_or_create(i, 0);
   }
   void DRT::for_all_routes(std::function<void(std::string, const fc::VH)>&& father) const { root.for_all_routes(father); }
-
 } // namespace fc
