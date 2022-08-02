@@ -9,7 +9,7 @@
 //<Ctrl> + Left mouse button -> Jump to the specified location
 namespace fc {
   //RFC_ALL
-  std::string_view DecodeURL(std::string& str);
+  std::string DecodeURL(std::string& str);
   //RFC_ALL
   std::string DecodeURL(const char* d);
   //RFC3986

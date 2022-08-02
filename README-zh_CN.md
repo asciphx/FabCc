@@ -9,6 +9,7 @@
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
 - 难以置信的编译速度，开发速度同时也得到提升
 - 最少的第三方库，均以源文件形式存放项目中
+- 全平台支持，（已经测试Linux和Windows）
 
 ## 仍在开发中
 - [x] 路由大括号表达式
@@ -32,9 +33,6 @@ void funk(Req& req, Res& res) {
 };
 int main() {
   Timer t; App app; Tcp srv;
-  app.get() = [](Req&, Res& res) {
-	res.write("hello world!你好！世界！这是主页！");
-  };
   app.sub_api("/", app.serve_file("static"));//服务文件接口
   app["/u/:id(\\d+)"] = [](Req&, Res& res) {
 	res.write("！");
@@ -43,7 +41,7 @@ int main() {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {
-	BP<4096> bp(req);
+	BP bp(req, 4096);
 	for (auto p : bp.params) {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
@@ -61,7 +59,7 @@ int main() {
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("127.0.0.1", 8080);
+  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
   return 0;
 }
 ```

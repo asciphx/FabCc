@@ -9,6 +9,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL
 - Incredible compilation speed and development speed are also improved
 - The fewest third-party libraries, are stored in the project in the form of source files
+- Cross platform support, (Linux and windows have been tested)
 
 ## Still under development
 - [x] Processing of routing brace
@@ -32,9 +33,6 @@ void funk(Req& req, Res& res) {
 };
 int main() {
   Timer t; App app; Tcp srv;
-  app.get() = [](Req&, Res& res) {
-	res.write("hello world!你好！世界！这是主页！");
-  };
   app.sub_api("/", app.serve_file("static"));//Service file interface
   app["/u/:id(\\d+)"] = [](Req&, Res& res) {
 	res.write("！");

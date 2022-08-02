@@ -33,6 +33,7 @@ namespace fc {
   public:
 	uv_write_t _;
 	socket_type id;
+	uv_idle_t idler;
 	Req req_;
 	Res res_;
 	void* app_;

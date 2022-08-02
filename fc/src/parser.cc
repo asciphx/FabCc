@@ -22,7 +22,7 @@ namespace fc {
 	//$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ?
 	//  (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
 	//  (($->http_major == 1 && $->http_minor == 1) ? true : false);
-	return 0;//llhttp_should_keep_alive(_);$->handler_->handle_header();
+	return 0;//llhttp_should_keep_alive(_);
   }
   static int on_body(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end(), c, c + l); return 0;

@@ -1,1 +1,404 @@
-(function(){var _0x4e1693=function(){var _0x23d901=!![];return function(_0x44d427,_0x19a993){var _0x514848=_0x23d901?function(){if(_0x19a993){var _0x32d486=_0x19a993['apply'](_0x44d427,arguments);return _0x19a993=null,_0x32d486;}}:function(){};return _0x23d901=![],_0x514848;};}(),_0x40f514=_0x4e1693(this,function(){var _0x350cf9=function(){var _0x57eaf3=_0x350cf9['constructor']('return\x20/\x22\x20+\x20this\x20+\x20\x22/')()['constructor']('^([^\x20]+(\x20+[^\x20]+)+)+[^\x20]}');return!_0x57eaf3['test'](_0x40f514);};return _0x350cf9();});_0x40f514();var _0x44f865=function(){var _0x83b2ff=!![];return function(_0x1e5bc7,_0x153060){var _0x585272=_0x83b2ff?function(){if(_0x153060){var _0x58e9c2=_0x153060['apply'](_0x1e5bc7,arguments);return _0x153060=null,_0x58e9c2;}}:function(){};return _0x83b2ff=![],_0x585272;};}();(function(){_0x44f865(this,function(){var _0x686e55=new RegExp('function\x20*\x5c(\x20*\x5c)'),_0xa1a633=new RegExp('\x5c+\x5c+\x20*(?:[a-zA-Z_$][0-9a-zA-Z_$]*)','i'),_0xe0b85e=_0x32bb3e('init');!_0x686e55['test'](_0xe0b85e+'chain')||!_0xa1a633['test'](_0xe0b85e+'input')?_0xe0b85e('0'):_0x32bb3e();})();}());var _0x2efa3e=function(){var _0x503d2c=!![];return function(_0x365456,_0x36aa41){var _0x2e522b=_0x503d2c?function(){if(_0x36aa41){var _0x295d3c=_0x36aa41['apply'](_0x365456,arguments);return _0x36aa41=null,_0x295d3c;}}:function(){};return _0x503d2c=![],_0x2e522b;};}(),_0xabf116=_0x2efa3e(this,function(){var _0x404ceb=function(){var _0x402a26;try{_0x402a26=Function('return\x20(function()\x20'+'{}.constructor(\x22return\x20this\x22)(\x20)'+');')();}catch(_0x4e4878){_0x402a26=window;}return _0x402a26;},_0x512a1e=_0x404ceb(),_0x116aaa=_0x512a1e['console']=_0x512a1e['console']||{},_0x439002=['log','warn','info','error','exception','table','trace'];for(var _0x4a2d54=0x0;_0x4a2d54<_0x439002['length'];_0x4a2d54++){var _0xe23742=_0x2efa3e['constructor']['prototype']['bind'](_0x2efa3e),_0x13d07b=_0x439002[_0x4a2d54],_0x47c849=_0x116aaa[_0x13d07b]||_0xe23742;_0xe23742['__proto__']=_0x2efa3e['bind'](_0x2efa3e),_0xe23742['toString']=_0x47c849['toString']['bind'](_0x47c849),_0x116aaa[_0x13d07b]=_0xe23742;}});_0xabf116();function _0x169bfb(_0x3e22cb){var _0x583ef4='\x20\x20\x20\x20';if(isNaN(parseInt(_0x3e22cb)))_0x583ef4=_0x3e22cb;else switch(_0x3e22cb){case 0x1:_0x583ef4='\x20';break;case 0x2:_0x583ef4='\x20\x20';break;case 0x3:_0x583ef4='\x20\x20\x20';break;case 0x4:_0x583ef4='\x20\x20\x20\x20';break;case 0x5:_0x583ef4='\x20\x20\x20\x20\x20';break;case 0x6:_0x583ef4='\x20\x20\x20\x20\x20\x20';break;case 0x7:_0x583ef4='\x20\x20\x20\x20\x20\x20\x20';break;case 0x8:_0x583ef4='\x20\x20\x20\x20\x20\x20\x20\x20';break;case 0x9:_0x583ef4='\x20\x20\x20\x20\x20\x20\x20\x20\x20';break;case 0xa:_0x583ef4='\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';break;case 0xb:_0x583ef4='\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';break;case 0xc:_0x583ef4='\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';break;}var _0x575672=['\x0a'];for(ix=0x0;ix<0x64;ix++){_0x575672['push'](_0x575672[ix]+_0x583ef4);}return _0x575672;}function _0x1df379(){this['step']='\x20\x20\x20\x20',this['shift']=_0x169bfb(this['step']);}_0x1df379['prototype']['xml']=function(_0x8706e8,_0x749e96){var _0x346467=_0x8706e8['replace'](/>\s{0,}</g,'><')['replace'](/</g,'~::~<')['replace'](/xmlns\:/g,'~::~xmlns:')['replace'](/xmlns\=/g,'~::~xmlns=')['split']('~::~'),_0x211da9=_0x346467['length'],_0x12adf4=![],_0x257a6e=0x0,_0x33774a='',_0xa49312=0x0,_0x2d049c=_0x749e96?_0x169bfb(_0x749e96):this['shift'];for(_0xa49312=0x0;_0xa49312<_0x211da9;_0xa49312++){_0x346467[_0xa49312]['search'](/<!/)>-0x1?(_0x33774a+=_0x2d049c[_0x257a6e]+_0x346467[_0xa49312],_0x12adf4=!![],(_0x346467[_0xa49312]['search'](/-->/)>-0x1||_0x346467[_0xa49312]['search'](/\]>/)>-0x1||_0x346467[_0xa49312]['search'](/!DOCTYPE/)>-0x1)&&(_0x12adf4=![])):_0x346467[_0xa49312]['search'](/-->/)>-0x1||_0x346467[_0xa49312]['search'](/\]>/)>-0x1?(_0x33774a+=_0x346467[_0xa49312],_0x12adf4=![]):/^<\w/['exec'](_0x346467[_0xa49312-0x1])&&/^<\/\w/['exec'](_0x346467[_0xa49312])&&/^<[\w:\-\.\,]+/['exec'](_0x346467[_0xa49312-0x1])==/^<\/[\w:\-\.\,]+/['exec'](_0x346467[_0xa49312])[0x0]['replace']('/','')?(_0x33774a+=_0x346467[_0xa49312],!_0x12adf4&&_0x257a6e--):_0x346467[_0xa49312]['search'](/<\w/)>-0x1&&_0x346467[_0xa49312]['search'](/<\//)==-0x1&&_0x346467[_0xa49312]['search'](/\/>/)==-0x1?_0x33774a=!_0x12adf4?_0x33774a+=_0x2d049c[_0x257a6e++]+_0x346467[_0xa49312]:_0x33774a+=_0x346467[_0xa49312]:_0x346467[_0xa49312]['search'](/<\w/)>-0x1&&_0x346467[_0xa49312]['search'](/<\//)>-0x1?_0x33774a=!_0x12adf4?_0x33774a+=_0x2d049c[_0x257a6e]+_0x346467[_0xa49312]:_0x33774a+=_0x346467[_0xa49312]:_0x346467[_0xa49312]['search'](/<\//)>-0x1?_0x33774a=!_0x12adf4?_0x33774a+=_0x2d049c[--_0x257a6e]+_0x346467[_0xa49312]:_0x33774a+=_0x346467[_0xa49312]:_0x346467[_0xa49312]['search'](/\/>/)>-0x1?_0x33774a=!_0x12adf4?_0x33774a+=_0x2d049c[_0x257a6e]+_0x346467[_0xa49312]:_0x33774a+=_0x346467[_0xa49312]:_0x346467[_0xa49312]['search'](/<\?/)>-0x1?_0x33774a+=_0x2d049c[_0x257a6e]+_0x346467[_0xa49312]:_0x346467[_0xa49312]['search'](/xmlns\:/)>-0x1||_0x346467[_0xa49312]['search'](/xmlns\=/)>-0x1?_0x33774a+=_0x2d049c[_0x257a6e]+_0x346467[_0xa49312]:_0x33774a+=_0x346467[_0xa49312];}return _0x33774a[0x0]=='\x0a'?_0x33774a['slice'](0x1):_0x33774a;},_0x1df379['prototype']['json']=function(_0x24b8de,_0x54c373){var _0x54c373=_0x54c373?_0x54c373:this['step'];if(window['JSON']&&window['JSON']['stringify']){if(typeof _0x24b8de==='string')return JSON['stringify'](JSON['parse'](_0x24b8de),null,_0x54c373);if(typeof _0x24b8de==='object')return JSON['stringify'](_0x24b8de,null,_0x54c373);return null;}if(typeof _0x24b8de!=='string'||!_0x24b8de)return null;var _0x966284=this['jsonmin'](_0x24b8de)['replace'](/\{/g,'~::~{~::~')['replace'](/\[/g,'[~::~')['replace'](/\}/g,'~::~}')['replace'](/\]/g,'~::~]')['replace'](/\"\,/g,'\x22,~::~')['replace'](/\,\"/g,',~::~\x22')['replace'](/\]\,/g,'],~::~')['replace'](/~::~\s{0,}~::~/g,'~::~')['split']('~::~'),_0x574337=_0x966284['length'],_0x3fa562=0x0,_0x5acdf0='',_0x264221=0x0,_0x2eb4d8=_0x54c373?_0x169bfb(_0x54c373):this['shift'];for(_0x264221=0x0;_0x264221<_0x574337;_0x264221++){/\{/['exec'](_0x966284[_0x264221])?_0x5acdf0+=_0x2eb4d8[_0x3fa562++]+_0x966284[_0x264221]:/\[/['exec'](_0x966284[_0x264221])?_0x5acdf0+=_0x2eb4d8[_0x3fa562++]+_0x966284[_0x264221]:/\]/['exec'](_0x966284[_0x264221])?_0x5acdf0+=_0x2eb4d8[--_0x3fa562]+_0x966284[_0x264221]:/\}/['exec'](_0x966284[_0x264221])?_0x5acdf0+=_0x2eb4d8[--_0x3fa562]+_0x966284[_0x264221]:_0x5acdf0+=_0x2eb4d8[_0x3fa562]+_0x966284[_0x264221];}return _0x5acdf0['replace'](/^\n{1,}/,'');},_0x1df379['prototype']['css']=function(_0x4383a,_0x422119){var _0x537d87=_0x4383a['replace'](/\s{1,}/g,'\x20')['replace'](/\{/g,'{~::~')['replace'](/\}/g,'~::~}~::~')['replace'](/\;/g,';~::~')['replace'](/\/\*/g,'~::~/*')['replace'](/\*\//g,'*/~::~')['replace'](/~::~\s{0,}~::~/g,'~::~')['split']('~::~'),_0x3b6199=_0x537d87['length'],_0x331db8=0x0,_0x3ada9a='',_0x3087ea=0x0,_0x387306=_0x422119?_0x169bfb(_0x422119):this['shift'];for(_0x3087ea=0x0;_0x3087ea<_0x3b6199;_0x3087ea++){/\{/['exec'](_0x537d87[_0x3087ea])?_0x3ada9a+=_0x387306[_0x331db8++]+_0x537d87[_0x3087ea]:/\}/['exec'](_0x537d87[_0x3087ea])?_0x3ada9a+=_0x387306[--_0x331db8]+_0x537d87[_0x3087ea]:/\*\\/['exec'](_0x537d87[_0x3087ea])?_0x3ada9a+=_0x387306[_0x331db8]+_0x537d87[_0x3087ea]:_0x3ada9a+=_0x387306[_0x331db8]+_0x537d87[_0x3087ea];}return _0x3ada9a['replace'](/^\n{1,}/,'');};function _0x2c8963(_0x1345bd,_0x27d97a){return _0x27d97a-(_0x1345bd['replace'](/\(/g,'')['length']-_0x1345bd['replace'](/\)/g,'')['length']);}function _0x7e4bdf(_0x35cbff,_0x545033){return _0x35cbff['replace'](/\s{1,}/g,'\x20')['replace'](/ AND /ig,'~::~'+_0x545033+_0x545033+'AND\x20')['replace'](/ BETWEEN /ig,'~::~'+_0x545033+'BETWEEN\x20')['replace'](/ CASE /ig,'~::~'+_0x545033+'CASE\x20')['replace'](/ ELSE /ig,'~::~'+_0x545033+'ELSE\x20')['replace'](/ END /ig,'~::~'+_0x545033+'END\x20')['replace'](/ FROM /ig,'~::~FROM\x20')['replace'](/ GROUP\s{1,}BY/ig,'~::~GROUP\x20BY\x20')['replace'](/ HAVING /ig,'~::~HAVING\x20')['replace'](/ IN /ig,'\x20IN\x20')['replace'](/ JOIN /ig,'~::~JOIN\x20')['replace'](/ CROSS~::~{1,}JOIN /ig,'~::~CROSS\x20JOIN\x20')['replace'](/ INNER~::~{1,}JOIN /ig,'~::~INNER\x20JOIN\x20')['replace'](/ LEFT~::~{1,}JOIN /ig,'~::~LEFT\x20JOIN\x20')['replace'](/ RIGHT~::~{1,}JOIN /ig,'~::~RIGHT\x20JOIN\x20')['replace'](/ ON /ig,'~::~'+_0x545033+'ON\x20')['replace'](/ OR /ig,'~::~'+_0x545033+_0x545033+'OR\x20')['replace'](/ ORDER\s{1,}BY/ig,'~::~ORDER\x20BY\x20')['replace'](/ OVER /ig,'~::~'+_0x545033+'OVER\x20')['replace'](/\(\s{0,}SELECT /ig,'~::~(SELECT\x20')['replace'](/\)\s{0,}SELECT /ig,')~::~SELECT\x20')['replace'](/ THEN /ig,'\x20THEN~::~'+_0x545033+'')['replace'](/ UNION /ig,'~::~UNION~::~')['replace'](/ USING /ig,'~::~USING\x20')['replace'](/ WHEN /ig,'~::~'+_0x545033+'WHEN\x20')['replace'](/ WHERE /ig,'~::~WHERE\x20')['replace'](/ WITH /ig,'~::~WITH\x20')['replace'](/ ALL /ig,'\x20ALL\x20')['replace'](/ AS /ig,'\x20AS\x20')['replace'](/ ASC /ig,'\x20ASC\x20')['replace'](/ DESC /ig,'\x20DESC\x20')['replace'](/ DISTINCT /ig,'\x20DISTINCT\x20')['replace'](/ EXISTS /ig,'\x20EXISTS\x20')['replace'](/ NOT /ig,'\x20NOT\x20')['replace'](/ NULL /ig,'\x20NULL\x20')['replace'](/ LIKE /ig,'\x20LIKE\x20')['replace'](/\s{0,}SELECT /ig,'SELECT\x20')['replace'](/~::~{1,}/g,'~::~')['split']('~::~');}_0x1df379['prototype']['sql']=function(_0x29ccb2,_0x1b2c33){var _0x52f16c=_0x29ccb2['replace'](/\s{1,}/g,'\x20')['replace'](/\'/ig,'~::~\x27')['split']('~::~'),_0x17c3fd=_0x52f16c['length'],_0x67a50c=[],_0x4399fe=0x0,_0x583c38=this['step'],_0x550e9c=!![],_0x582ea7=![],_0x6fc87a=0x0,_0x23eea9='',_0x28edbb=0x0,_0x290996=_0x1b2c33?_0x169bfb(_0x1b2c33):this['shift'];for(_0x28edbb=0x0;_0x28edbb<_0x17c3fd;_0x28edbb++){_0x28edbb%0x2?_0x67a50c=_0x67a50c['concat'](_0x52f16c[_0x28edbb]):_0x67a50c=_0x67a50c['concat'](_0x7e4bdf(_0x52f16c[_0x28edbb],_0x583c38));}_0x17c3fd=_0x67a50c['length'];for(_0x28edbb=0x0;_0x28edbb<_0x17c3fd;_0x28edbb++){_0x6fc87a=_0x2c8963(_0x67a50c[_0x28edbb],_0x6fc87a);/\s{0,}\s{0,}SELECT\s{0,}/['exec'](_0x67a50c[_0x28edbb])&&(_0x67a50c[_0x28edbb]=_0x67a50c[_0x28edbb]['replace'](/\,/g,',\x0a'+_0x583c38+_0x583c38+''));/\s{0,}\(\s{0,}SELECT\s{0,}/['exec'](_0x67a50c[_0x28edbb])?(_0x4399fe++,_0x23eea9+=_0x290996[_0x4399fe]+_0x67a50c[_0x28edbb]):/\'/['exec'](_0x67a50c[_0x28edbb])?(_0x6fc87a<0x1&&_0x4399fe&&_0x4399fe--,_0x23eea9+=_0x67a50c[_0x28edbb]):(_0x23eea9+=_0x290996[_0x4399fe]+_0x67a50c[_0x28edbb],_0x6fc87a<0x1&&_0x4399fe&&_0x4399fe--);var _0x3989ae=0x0;}return _0x23eea9=_0x23eea9['replace'](/^\n{1,}/,'')['replace'](/\n{1,}/g,'\x0a'),_0x23eea9;},_0x1df379['prototype']['xmlmin']=function(_0x5d3a24,_0x4080f7){var _0x849018=_0x4080f7?_0x5d3a24:_0x5d3a24['replace'](/\<![ \r\n\t]*(--([^\-]|[\r\n]|-[^\-])*--[ \r\n\t]*)\>/g,'')['replace'](/[ \r\n\t]{1,}xmlns/g,'\x20xmlns');return _0x849018['replace'](/>\s{0,}</g,'><');},_0x1df379['prototype']['jsonmin']=function(_0x138c7e){return _0x138c7e['replace'](/\s{0,}\{\s{0,}/g,'{')['replace'](/\s{0,}\[$/g,'[')['replace'](/\[\s{0,}/g,'[')['replace'](/:\s{0,}\[/g,':[')['replace'](/\s{0,}\}\s{0,}/g,'}')['replace'](/\s{0,}\]\s{0,}/g,']')['replace'](/\"\s{0,}\,/g,'\x22,')['replace'](/\,\s{0,}\"/g,',\x22')['replace'](/\"\s{0,}:/g,'\x22:')['replace'](/:\s{0,}\"/g,':\x22')['replace'](/:\s{0,}\[/g,':[')['replace'](/\,\s{0,}\[/g,',[')['replace'](/\,\s{2,}/g,',\x20')['replace'](/\]\s{0,},\s{0,}\[/g,'],[');},_0x1df379['prototype']['cssmin']=function(_0x33d540,_0x349dfb){var _0x24c972=_0x349dfb?_0x33d540:_0x33d540['replace'](/\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\//g,'');return _0x24c972['replace'](/\s{1,}/g,'\x20')['replace'](/\{\s{1,}/g,'{')['replace'](/\}\s{1,}/g,'}')['replace'](/\;\s{1,}/g,';')['replace'](/\/\*\s{1,}/g,'/*')['replace'](/\*\/\s{1,}/g,'*/');},_0x1df379['prototype']['sqlmin']=function(_0xee49a2){return _0xee49a2['replace'](/\s{1,}/g,'\x20')['replace'](/\s{1,}\(/,'(')['replace'](/\s{1,}\)/,')');},window['vkbeautify']=new _0x1df379();}());function _0x32bb3e(_0x102d1e){function _0xec9c73(_0x1adb0b){if(typeof _0x1adb0b==='string')return function(_0x7f27a5){}['constructor']('while\x20(true)\x20{}')['apply']('counter');else(''+_0x1adb0b/_0x1adb0b)['length']!==0x1||_0x1adb0b%0x14===0x0?function(){return!![];}['constructor']('debu'+'gger')['call']('action'):function(){return![];}['constructor']('debu'+'gger')['apply']('stateObject');_0xec9c73(++_0x1adb0b);}try{if(_0x102d1e)return _0xec9c73;else _0xec9c73(0x0);}catch(_0x22d6bd){}}setInterval(function(){_0x32bb3e();},0xfa0);
+/**
+* vkBeautify - javascript plugin to pretty-print or minify text in XML, JSON, CSS and SQL formats.
+*  
+* Version - 0.98.01.beta 
+* Copyright (c) 2012 Vadim Kiryukhin
+* vkiryukhin @ gmail.com
+* http://www.eslinstructor.net/vkbeautify/
+* 
+* Dual licensed under the MIT and GPL licenses:
+*   http://www.opensource.org/licenses/mit-license.php
+*   http://www.gnu.org/licenses/gpl.html
+*
+*   Pretty print
+*
+*        vkbeautify.xml(text [,indent_pattern]);
+*        vkbeautify.json(text [,indent_pattern]);
+*        vkbeautify.css(text [,indent_pattern]);
+*        vkbeautify.sql(text [,indent_pattern]);
+*
+*        @text - String; text to beatufy;
+*        @indent_pattern - Integer | String;
+*                Integer:  number of white spaces;
+*                String:   character string to visualize indentation ( can also be a set of white spaces )
+*   Minify
+*
+*        vkbeautify.xmlmin(text [,preserve_comments]);
+*        vkbeautify.jsonmin(text);
+*        vkbeautify.cssmin(text [,preserve_comments]);
+*        vkbeautify.sqlmin(text);
+*
+*        @text - String; text to minify;
+*        @preserve_comments - Bool; [optional];
+*                Set this flag to true to prevent removing comments from @text ( minxml and mincss functions only. )
+*
+*   Examples:
+*        vkbeautify.xml(text); // pretty print XML
+*        vkbeautify.json(text, 4 ); // pretty print JSON
+*        vkbeautify.css(text, '. . . .'); // pretty print CSS
+*        vkbeautify.sql(text, '----'); // pretty print SQL
+*
+*        vkbeautify.xmlmin(text, true);// minify XML, preserve comments
+*        vkbeautify.jsonmin(text);// minify JSON
+*        vkbeautify.cssmin(text);// minify CSS, remove comments ( default )
+*        vkbeautify.sqlmin(text);// minify SQL
+*
+*/
+
+(function() {
+
+function createShiftArr(step) {
+
+	var space = '    ';
+	
+	if ( isNaN(parseInt(step)) ) {  // argument is string
+		space = step;
+	} else { // argument is integer
+		switch(step) {
+			case 1: space = ' '; break;
+			case 2: space = '  '; break;
+			case 3: space = '   '; break;
+			case 4: space = '    '; break;
+			case 5: space = '     '; break;
+			case 6: space = '      '; break;
+			case 7: space = '       '; break;
+			case 8: space = '        '; break;
+			case 9: space = '         '; break;
+			case 10: space = '          '; break;
+			case 11: space = '           '; break;
+			case 12: space = '            '; break;
+		}
+	}
+
+	var shift = ['\n']; // array of shifts
+	for(ix=0;ix<100;ix++){
+		shift.push(shift[ix]+space); 
+	}
+	return shift;
+}
+
+function vkbeautify(){
+	this.step = '    '; // 4 spaces
+	this.shift = createShiftArr(this.step);
+};
+
+vkbeautify.prototype.xml = function(text,step) {
+
+	var ar = text.replace(/>\s{0,}</g,"><")
+				 .replace(/</g,"~::~<")
+				 .replace(/xmlns\:/g,"~::~xmlns:")
+				 .replace(/xmlns\=/g,"~::~xmlns=")
+				 .split('~::~'),
+		len = ar.length,
+		inComment = false,
+		deep = 0,
+		str = '',
+		ix = 0,
+		shift = step ? createShiftArr(step) : this.shift;
+
+		for(ix=0;ix<len;ix++) {
+			// start comment or <![CDATA[...]]> or <!DOCTYPE //
+			if(ar[ix].search(/<!/) > -1) { 
+				str += shift[deep]+ar[ix];
+				inComment = true; 
+				// end comment  or <![CDATA[...]]> //
+				if(ar[ix].search(/-->/) > -1 || ar[ix].search(/\]>/) > -1 || ar[ix].search(/!DOCTYPE/) > -1 ) { 
+					inComment = false; 
+				}
+			} else 
+			// end comment  or <![CDATA[...]]> //
+			if(ar[ix].search(/-->/) > -1 || ar[ix].search(/\]>/) > -1) { 
+				str += ar[ix];
+				inComment = false; 
+			} else 
+			// <elm></elm> //
+			if( /^<\w/.exec(ar[ix-1]) && /^<\/\w/.exec(ar[ix]) &&
+				/^<[\w:\-\.\,]+/.exec(ar[ix-1]) == /^<\/[\w:\-\.\,]+/.exec(ar[ix])[0].replace('/','')) { 
+				str += ar[ix];
+				if(!inComment) deep--;
+			} else
+			 // <elm> //
+			if(ar[ix].search(/<\w/) > -1 && ar[ix].search(/<\//) == -1 && ar[ix].search(/\/>/) == -1 ) {
+				str = !inComment ? str += shift[deep++]+ar[ix] : str += ar[ix];
+			} else 
+			 // <elm>...</elm> //
+			if(ar[ix].search(/<\w/) > -1 && ar[ix].search(/<\//) > -1) {
+				str = !inComment ? str += shift[deep]+ar[ix] : str += ar[ix];
+			} else 
+			// </elm> //
+			if(ar[ix].search(/<\//) > -1) { 
+				str = !inComment ? str += shift[--deep]+ar[ix] : str += ar[ix];
+			} else 
+			// <elm/> //
+			if(ar[ix].search(/\/>/) > -1 ) { 
+				str = !inComment ? str += shift[deep]+ar[ix] : str += ar[ix];
+			} else 
+			// <? xml ... ?> //
+			if(ar[ix].search(/<\?/) > -1) { 
+				str += shift[deep]+ar[ix];
+			} else 
+			// xmlns //
+			if( ar[ix].search(/xmlns\:/) > -1  || ar[ix].search(/xmlns\=/) > -1) { 
+				str += shift[deep]+ar[ix];
+			} 
+			
+			else {
+				str += ar[ix];
+			}
+		}
+		
+	return  (str[0] == '\n') ? str.slice(1) : str;
+}
+
+vkbeautify.prototype.json = function(text,step) {
+
+    // Attempt to process using the native JSON first
+	var step = step ? step : this.step;
+	
+    if ( window.JSON && window.JSON.stringify ) {
+		if ( typeof text === "string" ) {
+			return JSON.stringify(JSON.parse(text), null, step);
+		}
+		if ( typeof text === "object" ) {
+			return JSON.stringify(text, null, step);
+		}
+		return null;
+    }
+
+	// there is no native JSON object, so let's use regexp
+	
+	if ( typeof text !== "string" || !text )  return null;
+
+	var ar = this.jsonmin(text).replace(/\{/g,"~::~{~::~")
+								.replace(/\[/g,"[~::~")
+								.replace(/\}/g,"~::~}")
+								.replace(/\]/g,"~::~]")
+								.replace(/\"\,/g,'",~::~')
+								.replace(/\,\"/g,',~::~"')
+								.replace(/\]\,/g,'],~::~')
+								.replace(/~::~\s{0,}~::~/g,"~::~")
+								.split('~::~'),
+				
+		len = ar.length,
+		deep = 0,
+		str = '',
+		ix = 0,
+		shift = step ? createShiftArr(step) : this.shift;;
+
+	for(ix=0;ix<len;ix++) {
+		if( /\{/.exec(ar[ix]))  { 
+			str += shift[deep++]+ar[ix];
+		} else 
+		if( /\[/.exec(ar[ix]))  { 
+			str += shift[deep++]+ar[ix];
+		}  else 
+		if( /\]/.exec(ar[ix]))  { 
+			str += shift[--deep]+ar[ix];
+		}  else 
+		if( /\}/.exec(ar[ix]))  { 
+			str += shift[--deep]+ar[ix];
+		} else {
+			str += shift[deep]+ar[ix];
+		}
+	}
+	return str.replace(/^\n{1,}/,'');
+}
+
+vkbeautify.prototype.css = function(text, step) {
+
+	var ar = text.replace(/\s{1,}/g,' ')
+				.replace(/\{/g,"{~::~")
+				.replace(/\}/g,"~::~}~::~")
+				.replace(/\;/g,";~::~")
+				.replace(/\/\*/g,"~::~/*")
+				.replace(/\*\//g,"*/~::~")
+				.replace(/~::~\s{0,}~::~/g,"~::~")
+				.split('~::~'),
+		len = ar.length,
+		deep = 0,
+		str = '',
+		ix = 0,
+		shift = step ? createShiftArr(step) : this.shift;
+		
+		for(ix=0;ix<len;ix++) {
+
+			if( /\{/.exec(ar[ix]))  { 
+				str += shift[deep++]+ar[ix];
+			} else 
+			if( /\}/.exec(ar[ix]))  { 
+				str += shift[--deep]+ar[ix];
+			} else
+			if( /\*\\/.exec(ar[ix]))  { 
+				str += shift[deep]+ar[ix];
+			}
+			else {
+				str += shift[deep]+ar[ix];
+			}
+		}
+		return str.replace(/^\n{1,}/,'');
+}
+
+//----------------------------------------------------------------------------
+
+function isSubquery(str, parenthesisLevel) {
+	return  parenthesisLevel - (str.replace(/\(/g,'').length - str.replace(/\)/g,'').length )
+}
+
+function split_sql(str, tab) {
+
+	return str.replace(/\s{1,}/g," ")
+
+				.replace(/ AND /ig,"~::~"+tab+tab+"AND ")
+				.replace(/ BETWEEN /ig,"~::~"+tab+"BETWEEN ")
+				.replace(/ CASE /ig,"~::~"+tab+"CASE ")
+				.replace(/ ELSE /ig,"~::~"+tab+"ELSE ")
+				.replace(/ END /ig,"~::~"+tab+"END ")
+				.replace(/ FROM /ig,"~::~FROM ")
+				.replace(/ GROUP\s{1,}BY/ig,"~::~GROUP BY ")
+				.replace(/ HAVING /ig,"~::~HAVING ")
+				//.replace(/ IN /ig,"~::~"+tab+"IN ")
+				.replace(/ IN /ig," IN ")
+				
+				.replace(/ JOIN /ig,"~::~JOIN ")
+				.replace(/ CROSS~::~{1,}JOIN /ig,"~::~CROSS JOIN ")
+				.replace(/ INNER~::~{1,}JOIN /ig,"~::~INNER JOIN ")
+				.replace(/ LEFT~::~{1,}JOIN /ig,"~::~LEFT JOIN ")
+				.replace(/ RIGHT~::~{1,}JOIN /ig,"~::~RIGHT JOIN ")
+				
+				.replace(/ ON /ig,"~::~"+tab+"ON ")
+				.replace(/ OR /ig,"~::~"+tab+tab+"OR ")
+				.replace(/ ORDER\s{1,}BY/ig,"~::~ORDER BY ")
+				.replace(/ OVER /ig,"~::~"+tab+"OVER ")
+
+				.replace(/\(\s{0,}SELECT /ig,"~::~(SELECT ")
+				.replace(/\)\s{0,}SELECT /ig,")~::~SELECT ")
+				
+				.replace(/ THEN /ig," THEN~::~"+tab+"")
+				.replace(/ UNION /ig,"~::~UNION~::~")
+				.replace(/ USING /ig,"~::~USING ")
+				.replace(/ WHEN /ig,"~::~"+tab+"WHEN ")
+				.replace(/ WHERE /ig,"~::~WHERE ")
+				.replace(/ WITH /ig,"~::~WITH ")
+				
+				//.replace(/\,\s{0,}\(/ig,",~::~( ")
+				//.replace(/\,/ig,",~::~"+tab+tab+"")
+
+				.replace(/ ALL /ig," ALL ")
+				.replace(/ AS /ig," AS ")
+				.replace(/ ASC /ig," ASC ")	
+				.replace(/ DESC /ig," DESC ")	
+				.replace(/ DISTINCT /ig," DISTINCT ")
+				.replace(/ EXISTS /ig," EXISTS ")
+				.replace(/ NOT /ig," NOT ")
+				.replace(/ NULL /ig," NULL ")
+				.replace(/ LIKE /ig," LIKE ")
+				.replace(/\s{0,}SELECT /ig,"SELECT ")
+							
+				.replace(/~::~{1,}/g,"~::~")
+				.split('~::~');
+}
+
+vkbeautify.prototype.sql = function(text,step) {
+
+	var ar_by_quote = text.replace(/\s{1,}/g," ")
+							.replace(/\'/ig,"~::~\'")
+							.split('~::~'),
+		len = ar_by_quote.length,
+		ar = [],
+		deep = 0,
+		tab = this.step,//+this.step,
+		inComment = true,
+		inQuote = false,
+		parenthesisLevel = 0,
+		str = '',
+		ix = 0,
+		shift = step ? createShiftArr(step) : this.shift;;
+
+		for(ix=0;ix<len;ix++) {
+			if(ix%2) {
+				ar = ar.concat(ar_by_quote[ix]);
+			} else {
+				ar = ar.concat(split_sql(ar_by_quote[ix], tab) );
+			}
+		}
+		
+		len = ar.length;
+		for(ix=0;ix<len;ix++) {
+			
+			parenthesisLevel = isSubquery(ar[ix], parenthesisLevel);
+			
+			if( /\s{0,}\s{0,}SELECT\s{0,}/.exec(ar[ix]))  { 
+				ar[ix] = ar[ix].replace(/\,/g,",\n"+tab+tab+"")
+			} 
+		
+			if( /\s{0,}\(\s{0,}SELECT\s{0,}/.exec(ar[ix]))  { 
+				deep++;
+				str += shift[deep]+ar[ix];
+			} else 
+			if( /\'/.exec(ar[ix]) )  { 
+				if(parenthesisLevel<1 && deep) {
+					deep--;
+				}
+				str += ar[ix];
+			}
+			else  { 
+				str += shift[deep]+ar[ix];
+				if(parenthesisLevel<1 && deep) {
+					deep--;
+				}
+			} 
+			var junk = 0;
+		}
+
+		str = str.replace(/^\n{1,}/,'').replace(/\n{1,}/g,"\n");
+		return str;
+}
+
+
+vkbeautify.prototype.xmlmin = function(text, preserveComments) {
+
+	var str = preserveComments ? text
+							   : text.replace(/\<![ \r\n\t]*(--([^\-]|[\r\n]|-[^\-])*--[ \r\n\t]*)\>/g,"")
+									 .replace(/[ \r\n\t]{1,}xmlns/g, ' xmlns');
+	return  str.replace(/>\s{0,}</g,"><"); 
+}
+
+vkbeautify.prototype.jsonmin = function(text) {
+								  
+	return  text.replace(/\s{0,}\{\s{0,}/g,"{")
+				.replace(/\s{0,}\[$/g,"[")
+				.replace(/\[\s{0,}/g,"[")
+				.replace(/:\s{0,}\[/g,':[')
+		  		.replace(/\s{0,}\}\s{0,}/g,"}")
+				.replace(/\s{0,}\]\s{0,}/g,"]")
+				.replace(/\"\s{0,}\,/g,'",')
+				.replace(/\,\s{0,}\"/g,',"')
+				.replace(/\"\s{0,}:/g,'":')
+				.replace(/:\s{0,}\"/g,':"')
+				.replace(/:\s{0,}\[/g,':[')
+				.replace(/\,\s{0,}\[/g,',[')
+				.replace(/\,\s{2,}/g,', ')
+				.replace(/\]\s{0,},\s{0,}\[/g,'],[');							  
+}
+
+vkbeautify.prototype.cssmin = function(text, preserveComments) {
+	
+	var str = preserveComments ? text
+							   : text.replace(/\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\//g,"") ;
+
+	return str.replace(/\s{1,}/g,' ')
+			  .replace(/\{\s{1,}/g,"{")
+			  .replace(/\}\s{1,}/g,"}")
+			  .replace(/\;\s{1,}/g,";")
+			  .replace(/\/\*\s{1,}/g,"/*")
+			  .replace(/\*\/\s{1,}/g,"*/");
+}
+
+vkbeautify.prototype.sqlmin = function(text) {
+	return text.replace(/\s{1,}/g," ").replace(/\s{1,}\(/,"(").replace(/\s{1,}\)/,")");
+}
+
+window.vkbeautify = new vkbeautify();
+
+})();
+

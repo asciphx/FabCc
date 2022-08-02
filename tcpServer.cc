@@ -7,9 +7,6 @@ void funk(Req& req, Res& res) {
 };
 int main() {
   Timer t; App app; Tcp srv;
-  app.get() = [](Req&, Res& res) {
-	res.write("hello world!你好！世界！这是主页！");
-  };
   app.sub_api("/", app.serve_file("static"));//服务文件接口
   app["/u/:id(\\d+)"] = [](Req&, Res& res) {
 	res.write("！");
@@ -36,6 +33,6 @@ int main() {
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("127.0.0.1", 8080);
+  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
   return 0;
 }

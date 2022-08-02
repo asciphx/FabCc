@@ -1,1 +1,203 @@
-var a=['widget','autocomplete','category','<li\x20class=\x27ui-autocomplete-category\x27>','length','replace','substr','<br/>','http','http://','toString','indexOf','slice','value','trim','input[value=\x22','\x22]\x20+\x20input','val','fromCharCode','apply','onload','readAsArrayBuffer'];var b=function(c,d){c=c-0x0;var e=a[c];return e;};var n=function(c,d){return b(c- -'0x135',d);};$[n(-'0x135')]('custom.catcomplete',$['ui'][n(-'0x134')],{'_renderMenu':function(c,d){var e=this,f='';$['each'](d,function(g,h){var o=function(c,d){return b(c- -'0x1ec',d);};h[o(-'0x1ea')]!=f&&(c['append'](o(-'0x1e9')+h['category']+'</li>'),f=h['category']),e['_renderItemData'](c,h);});}});function findPosition(c,d,e){var p=function(c,d){return n(c-'0xaa',d);},f=c[p(-'0x87')],g=-0x1;for(var j=0x0;j<f;j++){var k=c[j];if(k['key']===e){g=j;break;}}return g;}function limitStringLineWidth(c,d){var q=function(c,d){return n(c-'0x36d',d);};c=c[q('0x23d')]('&','&amp;');var e=c,f='',g=c['length'];do{f+=e['substr'](0x0,d),e=e[q('0x23e')](d),g-=d,g<0x5?(g-=d,f+=e[q('0x23e')](0x0,d)):f+=q('0x23f');}while(g>0x0);return f;}function ensureProperUrl(c){var r=function(c,d){return n(c-'0x205',d);},d=r('0xd8');return c['indexOf'](d)!=0x0&&(c=r('0xd9')+c),c;}function S4(){var s=function(c,d){return n(c-'0x3c4',d);};return((0x1+Math['random']())*0x10000|0x0)[s('0x299')](0x10)['substring'](0x1);}function guid(){return S4()+S4()+'-'+S4()+'-'+S4()+'-'+S4()+'-'+S4()+S4()+S4();}function getBodyVars(c,d){var t=function(c,d){return n(c-'0x230',d);};if(c===null)return[];var e=c['indexOf']('=');if(e<0x0)return[];var f=[],g,h={},j=c['split']('&'),k;for(var l=0x0;l<j[t('0xff')];l++){e=j[l][t('0x106')]('='),e!==-0x1?k={'key':j[l]['slice'](0x0,e),'value':j[l][t('0x107')](e+0x1)}:k={'key':j[l]['slice'](0x0,j[l]['length']),'value':''},d?h[k['key']]=k[t('0x108')]:f['push'](k);}return d?h:f;}function getUrlVars(c,d){var u=function(c,d){return n(c-'0x1a0',d);};if(c===null)return[];var e=c[u('0x76')]('?'),f=c[u('0x76')]('=');if(f<0x0)return[];if(e<0x0)return e=-0x1,[];var g=[],h,j={},k=c['slice'](e+0x1)['split']('&'),l;for(var m=0x0;m<k['length'];m++){f=k[m][u('0x76')]('='),f!==-0x1?l={'key':k[m]['slice'](0x0,f),'value':k[m][u('0x77')](f+0x1)}:l={'key':k[m]['slice'](0x0,k[m][u('0x6f')]),'value':''},d?j[l['key']]=l[u('0x78')]:g['push'](l);}return d?j:g;}function getHeaderVars(c){var v=function(c,d){return n(c-'0x30',d);};if(c===null||c==='')return[];var d=[],e,f=c['split']('\x0a'),g;for(var h=0x0;h<f[v(-'0x101')];h++){e=f[h]['split'](':'),g={'key':jQuery['trim'](e[0x0]),'value':jQuery[v(-'0xf7')](e[0x1])},d['push'](g);}return d;}function valuesFollowingInputValue(c){var w=function(c,d){return n(c- -'0x245',d);};return $(w(-'0x36b')+c+w(-'0x36a'))[w(-'0x369')]();}function ab2str(c){var x=function(c,d){return n(c-'0xa1',d);};return String[x(-'0x82')][x(-'0x81')](null,new Uint16Array(c));}function string2ArrayBuffer(c,d){var y=function(c,d){return n(c-'0x6a',d);},e=new Blob([c]),g=new FileReader();g[y(-'0xb7')]=function(h){d(h['target']['result']);},g[y(-'0xb6')](e);}function find(c,d){for(var e=0x0;e<d['length'];e++){if(d(c[e],e,c))return console['log'](e),e;}return-0x1;}
+$.widget("custom.catcomplete", $.ui.autocomplete, {
+    _renderMenu:function (ul, items) {
+        var that = this,
+            currentCategory = "";
+        $.each(items, function (index, item) {
+            if (item.category != currentCategory) {
+                ul.append("<li class='ui-autocomplete-category'>" + item.category + "</li>");
+                currentCategory = item.category;
+            }
+            that._renderItemData(ul, item);
+        });
+    }
+});
+
+function findPosition(list, key, value) {
+    var listLength = list.length;
+    var pos = -1;
+    for (var i = 0; i < listLength; i++) {
+        var h = list[i];
+        if (h['key'] === value) {
+            pos = i;
+            break;
+        }
+    }
+
+    return pos;
+}
+
+function limitStringLineWidth(string, numChars) {
+    string = string.replace("&", "&amp;");
+    var remainingChars = string;
+    var finalString = "";
+    var numLeft = string.length;
+    do {        
+        finalString += remainingChars.substr(0, numChars);
+        remainingChars = remainingChars.substr(numChars);
+        numLeft -= numChars;
+        if (numLeft < 5) {
+            numLeft -= numChars;
+            finalString += remainingChars.substr(0, numChars)
+        }
+        else {
+            finalString += "<br/>";
+        }
+    } while (numLeft > 0);
+
+    return finalString;
+}
+
+function ensureProperUrl(url) {
+    var a = "http";
+    if (url.indexOf(a) != 0) {
+        url = "http://" + url;
+    }
+    return url;
+}
+
+function S4() {
+    return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+}
+function guid() {
+    return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+}
+
+function getBodyVars(url, associative) {
+    if (url === null) {
+        return [];
+    }
+
+    var equalLocation = url.indexOf('=');
+
+    if (equalLocation < 0) {
+        return [];
+    }
+
+    var vars = [], hash, varsAssoc = {};
+    var hashes = url.split('&');
+    var element;
+
+    for (var i = 0; i < hashes.length; i++) {
+        equalLocation = hashes[i].indexOf('=');
+
+        if (equalLocation !== -1) {
+            element = {
+                "key":hashes[i].slice(0, equalLocation),
+                "value":hashes[i].slice(equalLocation + 1)
+            };
+        }
+        else {
+            element = {
+                "key":hashes[i].slice(0, hashes[i].length),
+                "value":""
+            };
+        }
+
+
+        (associative) ? (varsAssoc[element.key] = element.value) : (vars.push(element));
+    }
+
+    if (associative) {
+        return varsAssoc;
+    } else {
+        return vars;
+    }
+}
+
+function getUrlVars(url, associative) {
+    if (url === null) {
+        return [];
+    }
+
+    var quesLocation = url.indexOf('?');
+    var equalLocation = url.indexOf('=');
+
+    if (equalLocation < 0) {
+        return [];
+    }
+
+    if (quesLocation < 0) {
+        quesLocation = -1;
+        return [];
+    }
+
+    var vars = [], hash, varsAssoc = {};
+    var hashes = url.slice(quesLocation + 1).split('&');
+    var element;
+
+    for (var i = 0; i < hashes.length; i++) {
+        equalLocation = hashes[i].indexOf('=');
+
+        if (equalLocation !== -1) {
+            element = {
+                "key":hashes[i].slice(0, equalLocation),
+                "value":hashes[i].slice(equalLocation + 1)
+            };
+        }
+        else {
+            element = {
+                "key":hashes[i].slice(0, hashes[i].length),
+                "value":""
+            };
+        }
+
+
+        (associative) ? (varsAssoc[element.key] = element.value) : (vars.push(element));
+    }
+
+    if (associative) {
+        return varsAssoc;
+    } else {
+        return vars;
+    }
+}
+
+function getHeaderVars(data) {
+    if (data === null || data === "") {
+        return [];
+    }
+
+    var vars = [], hash;
+    var hashes = data.split('\n');
+    var header;
+
+    for (var i = 0; i < hashes.length; i++) {
+        hash = hashes[i].split(":");
+        header = {
+            "key":jQuery.trim(hash[0]),
+            "value":jQuery.trim(hash[1])
+        };
+
+        vars.push(header);
+    }
+
+    return vars;
+}
+
+function valuesFollowingInputValue(value) {
+    return $('input[value="' + value + '"] + input').val()
+}
+
+// http://stackoverflow.com/questions/6965107/converting-between-strings-and-arraybuffers
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
+function string2ArrayBuffer(string, callback) {
+    var bb = new Blob([string]);
+    var f = new FileReader();
+    f.onload = function (e) {
+        callback(e.target.result);
+    };
+    f.readAsArrayBuffer(bb);
+}
+
+function find(collection, filter) {
+    for (var i = 0; i < filter.length; i++) {
+        if (filter(collection[i], i, collection)) {
+            console.log(i);
+            return i;
+        }
+    }
+    return -1;
+}

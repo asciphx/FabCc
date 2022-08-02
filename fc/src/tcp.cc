@@ -49,11 +49,13 @@ namespace fc {
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 #ifdef SIGPIPE
-  signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 #endif
-	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(loop_, UV_RUN_DEFAULT); uv_loop_close(loop_); return false;
+	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(uv_default_loop(), UV_RUN_DEFAULT); uv_loop_close(loop_); return true;
   }
-  void Tcp::write_cb(uv_write_t* wr, int st) { Conn* co = (Conn*)wr; uv_close((uv_handle_t*)&co->slot_, on_close); }
+  void Tcp::write_cb(uv_write_t* wr, int st) {
+	Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
+  }
   void Tcp::fs_cb(uv_fs_t* f) { /*reinterpret_cast<Ctx*>(f->data)->func(f);*/ }
   void Tcp::on_read(uv_fs_t* f) {
 	Conn* co = (Conn*)f->data; co->buf_ << std::string_view(co->rbuf.base, f->result);
@@ -68,7 +70,7 @@ namespace fc {
 	if (nread > 0) {
 	  char failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
-	  Req& req = co->req_; req = std::move(co->parser_.to_request());
+	  Req& req = co->req_; req = std::move(co->parser_.to_request());// printf("(%s) ",req.url.c_str());
 	  if (!req.url[0] || req.method == HTTP::OPTIONS) return; Res& res = co->res_;
 	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// co->_.data = &res;
 	  if (co->req_.keep_alive) {
@@ -102,25 +104,42 @@ namespace fc {
 			s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
 			s << RES_date_tag << RES_DATE_STR << RES_crlf;
 			s << RES_crlf;
-			if (!co->write(s.data_, s.size())) { return; }; s.reset();
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
+#ifdef _WIN32
+			if (!co->write(s.data_, s.size())) { return; }; s.reset();
 			int l = 0, i; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
 			if (l) {
 			  i = ::send(co->id, co->readbuf, l, 0);
 			  res.body += std::string_view(co->readbuf, l); if (i > 0) goto $;
 			}
 			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
+#else
+			int l = 0; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
+			if (l) {
+			  std::string_view v = std::string_view(co->readbuf, l);
+			  s << v; res.body += v; goto $;
+			}
+			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
+			co->wbuf.base = s.data_; co->wbuf.len = s.size();
+			uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
+#endif
 			return;
 		  }
 		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
-		  s << RES_crlf;
-		  if (!co->write(s.data_, s.size())) { return; }; s.reset();
-		  res.is_file = 0; res.headers.clear();
-		  if (res.provider) {
-			res.provider(0, res.file_size, co->sink_);
+		  s << RES_crlf; co->wbuf.base = s.data_; co->wbuf.len = s.size();
+		  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
+		  res.is_file = 0; if (co->idler.data == nullptr) {
+			uv_idle_init(co->loop_, &co->idler); co->idler.data = co;
 		  }
+		  uv_idle_start(&co->idler, [](uv_idle_t* h) {
+			Conn* co = (Conn*)h->data;
+			if (co->res_.is_file == 0) {
+			  co->res_.provider(0, co->res_.file_size, co->sink_);
+			}
+			uv_idle_stop(h);
+		   }); res.headers.clear();
 		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
 		  return;
 		}
@@ -150,10 +169,13 @@ namespace fc {
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.clear();
 	  DEBUG("客户端：%lld %s \n", co->id, s.c_str());
+#ifdef _WIN32
 	  co->write(s.data_, s.size()); s.reset();
-	  //co->wbuf.base = s.data_; co->wbuf.len = s.size();
-	  //int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-	  //if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+#else
+	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
+	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
+	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+#endif
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
@@ -188,7 +210,7 @@ namespace fc {
 #ifdef _WIN32
 	co->id = co->slot_.socket;
 #else
-	co->id = co->slot_.accepted_fd;
+	co->id = uv__stream_fd(&t->_);
 #endif
 	++t->connection_num;
 	//uv_tcp_keepalive(&co->slot_, 1, t->keep_milliseconds / 1000);

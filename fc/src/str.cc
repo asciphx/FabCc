@@ -11,7 +11,7 @@ namespace fc {
   0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
   0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0 };
   // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/url_unescape.hh
-  std::string_view DecodeURL(std::string& s) {
+  std::string DecodeURL(std::string& s) {
 	char* o = (char*)s.c_str(), * c = (char*)s.c_str();
 	const char* e = c + s.size(); while (c < e) {
 	  if (*c == '%' && c < e - 2 && _X[c[1]] !=-1 && _X[c[2]] !=-1) {
@@ -19,7 +19,7 @@ namespace fc {
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }
 	  if (o != c) *o = *c; ++o; ++c;
-	} return std::string_view(s.data(), o - s.data());
+	} return std::string(s.data(), o - s.data());
   }
   std::string DecodeURL(const char* d) {
 	std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
