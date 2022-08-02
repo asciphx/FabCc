@@ -128,20 +128,27 @@ namespace fc {
 		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
-		  s << RES_crlf; co->wbuf.base = s.data_; co->wbuf.len = s.size();
+		  s << RES_crlf;
+		  res.is_file = 0; res.headers.clear();
+#ifdef _WIN32
+		  if (!co->write(s.data_, s.size())) { return; }; s.reset();
+		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
+#else
+		  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 		  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-		  res.is_file = 0; if (co->idler.data == nullptr) {
+		  if (co->idler.data == nullptr) {
 			uv_idle_init(co->loop_, &co->idler); co->idler.data = co;
 		  }
 		  uv_idle_start(&co->idler, [](uv_idle_t* h) {
 			Conn* co = (Conn*)h->data;
 			if (co->res_.is_file == 0) {
 			  co->res_.provider(0, co->res_.file_size, co->sink_);
+			  uv_idle_stop(h);
 			}
-			uv_idle_stop(h);
-		   }); res.headers.clear();
-		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
-		  return;
+		   });
+#endif
+		   DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
+		   return;
 		}
 	  } catch (const http_error& e) {
 		s.reset(); co->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << co->status_; goto _;

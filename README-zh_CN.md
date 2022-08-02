@@ -38,6 +38,9 @@ int main() {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
+	res.write(req.url.c_str());//regex表达式
+  };
+  app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes().c_str());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {

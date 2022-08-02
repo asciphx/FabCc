@@ -38,6 +38,9 @@ int main() {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [&app](Req& req, Res& res) {
+	res.write(req.url.c_str());//routing regex 
+  };
+  app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes().c_str());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {

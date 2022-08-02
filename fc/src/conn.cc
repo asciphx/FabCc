@@ -15,7 +15,7 @@ namespace fc {
   }
   Conn::~Conn() {
 	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
-	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr;
+	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr; idler.data = nullptr;
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
