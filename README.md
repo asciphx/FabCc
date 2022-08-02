@@ -44,7 +44,7 @@ int main() {
 	res.write(app._print_routes().c_str());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {
-	BP<4096> bp(req);
+	BP bp(req, 4096);
 	for (auto p : bp.params) {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
