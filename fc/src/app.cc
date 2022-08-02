@@ -101,30 +101,30 @@ namespace fc {
 		_:std::size_t last_dot = i._Ptr - _.begin()._Ptr + 1;
 		  if (last_dot) {
 			std::string ss = _.substr(last_dot);
-			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", is_file, path_.c_str());
+			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
 			if (content_types->find(extension) != content_types->end()) {
+			  res.file_size = statbuf_.st_size; res.code = 200;
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
 #ifdef ENABLE_COMPRESSION
 				compressed = false;
 #endif
 				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
 				ss = content_types->at(extension); res.add_header(RES_CT, ss);
-			  }
-			  res.file_size = statbuf_.st_size; res.code = 200;
-			  std::shared_ptr<file_sptr> __;
-			  std::list<std::pair<const std::string, std::shared_ptr<file_sptr>>>::iterator p = file_cache_.find(_);
-			  if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-				__ = p->second;
-			  } else {
-				file_cache_[_] = __ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
-			  }
-			  if (__ && __->ptr_ != nullptr) {
-				res.provider = [__](int64_t o, int64_t k,
-				std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
-				  //size_t l = min(BUF_MAXSIZE, (size_t)(k - o));
-				  int r = __->read_chunk(o, k - o, sink); if (r < 0 && r != UV_EAGAIN) { sink(nullptr, r, nullptr); return; }
-				  //_:o += l; if (o < k) { goto _; }if(__.use_count()>2)__.~shared_ptr();// printf("[%ld]",__.use_count());
-				};
+				std::shared_ptr<file_sptr> __;
+				std::list<std::pair<const std::string, std::shared_ptr<file_sptr>>>::iterator p = file_cache_.find(_);
+				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+				  __ = p->second;
+				} else {
+				  file_cache_[_] = __ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
+				}
+				if (__ && __->ptr_ != nullptr) {
+				  res.provider = [__](int64_t o, int64_t k,
+				  std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
+					//size_t l = min(BUF_MAXSIZE, (size_t)(k - o));
+					int r = __->read_chunk(o, k - o, sink); if (r < 0 && r != UV_EAGAIN) { sink(nullptr, r, nullptr); return; }
+					//_:o += l; if (o < k) { goto _; }if(__.use_count()>2)__.~shared_ptr();// printf("[%ld]",__.use_count());
+				  };
+				}
 			  }
 			  //printf("<%ld,%s>", res.file_size, _.c_str());
 			  res.path_ = std::move(_);
