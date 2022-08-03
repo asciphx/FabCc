@@ -22,7 +22,6 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 
 ## Description
 - The namespace uses the uppercase hump fc of FabCc.
-- cmake plans to support Linux and MAC in the future. (cmakelists.txt has not been integrated yet)
 - ![test](./test.jpg)
 
 ## example

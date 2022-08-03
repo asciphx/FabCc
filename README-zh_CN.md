@@ -22,7 +22,6 @@
 
 ## 説明
 - 命名空間采用FabCc的大寫駝峰fc來使用。
-- cmake方面後續打算支持linux，mac。(CMakeLists.txt还没集成)
 - ![测试](./test.jpg)
 
 ## 例子
