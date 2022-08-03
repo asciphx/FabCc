@@ -13,14 +13,13 @@ namespace fc {
 	HTTP method;
   public:
 	Req();
-	Req(HTTP method, std::string url, std::string params, str_map headers, std::string body/*, bool keep_alive*/);
+	Req(HTTP method, std::string url, std::string params, str_map headers, std::string body);
 	std::string url;
 	std::string params;
 	std::string body;
 	uint64_t uuid;
 	str_map headers;
 	std::string ip_addr;
-	bool keep_alive = false;
 	void add_header(std::string key, std::string value);
   };// request
 

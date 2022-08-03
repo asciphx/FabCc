@@ -73,11 +73,9 @@ namespace fc {
 	  Req& req = co->req_; req = std::move(co->parser_.to_request());// printf("(%s) ",req.url.c_str());
 	  if (!req.url[0] || req.method == HTTP::OPTIONS) return; Res& res = co->res_;
 	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// co->_.data = &res;
-	  if (co->req_.keep_alive) {
-		res.timer_.setTimeout([h] {
-		  uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-		}, co->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
-	  } else { co->req_.keep_alive = true; }
+	  res.timer_.setTimeout([h] {
+		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+	  }, co->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(co->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(co->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
