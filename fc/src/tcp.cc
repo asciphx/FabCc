@@ -114,11 +114,8 @@ namespace fc {
 			}
 			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
 #else
-			int l = 0; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-			if (l) {
-			  std::string_view v = std::string_view(co->readbuf, l);
-			  s << v; res.body += v; goto $;
-			}
+			int l = 0; std::string_view v; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
+			if (l) { v = std::string_view(co->readbuf, l); s << v; res.body += v; goto $; }
 			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
 			co->wbuf.base = s.data_; co->wbuf.len = s.size();
 			uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
@@ -134,21 +131,10 @@ namespace fc {
 		  if (!co->write(s.data_, s.size())) { return; }; s.reset();
 		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
 #else
-		  co->wbuf.base = s.data_; co->wbuf.len = s.size();
-		  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-		  if (co->idler.data == nullptr) {
-			uv_idle_init(co->loop_, &co->idler); co->idler.data = co;
-		  }
-		  uv_idle_start(&co->idler, [](uv_idle_t* h) {
-			Conn* co = (Conn*)h->data;
-			if (co->res_.is_file == 0) {
-			  co->res_.provider(0, co->res_.file_size, co->sink_);
-			  uv_idle_stop(h);
-			}
-		   });
+		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
 #endif
-		   DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
-		   return;
+		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
+		  return;
 		}
 	  } catch (const http_error& e) {
 		s.reset(); co->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << co->status_; goto _;
@@ -220,7 +206,7 @@ namespace fc {
 	co->id = uv__stream_fd(&t->_);
 #endif
 	++t->connection_num;
-	//uv_tcp_keepalive(&co->slot_, 1, t->keep_milliseconds / 1000);
+	co->set_keep_alive(co->id, 3, 2, 3);
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }
 }

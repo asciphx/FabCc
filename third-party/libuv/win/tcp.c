@@ -788,7 +788,7 @@ static int uv__tcp_try_connect(uv_connect_t* req,
                               unsigned int addrlen,
                               uv_connect_cb cb) {
   uv_loop_t* loop = handle->loop;
-  TCP_INITIAL_RTO_PARAMETERS retransmit_ioctl;
+  TCP_INITIAL_RTO_PARAMETER retransmit_ioctl;
   const struct sockaddr* bind_addr;
   struct sockaddr_storage converted;
   BOOL success;

@@ -5,12 +5,20 @@ namespace fc {
 	:loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
 	fs_.data = this; slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
 	sink_ = [this](const char* data, size_t size, std::function<void()> done) {
+#ifdef _WIN32
 	  wbuf.base = const_cast<char*>(data);
 	  wbuf.len = static_cast<decltype(wbuf.len)>(size);
 	  if (wbuf.len > 0) {
-		uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, [](uv_write_t* wr, int st) { Conn* co = (Conn*)wr; if (st) { return; } });
+		uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL);
 		if (done != nullptr) done();
 	  }
+#else
+	  buf_ << std::string_view(data, size);
+	  if (done != nullptr) done();
+	  wbuf.base = buf_.data_; wbuf.len = buf_.size();
+	  int r = uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL); buf_.reset();
+	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+#endif // _WIN32
 	};
   }
   Conn::~Conn() {
@@ -46,21 +54,21 @@ namespace fc {
 	//if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (const char*)&intvl, sizeof intvl))return -1;
 	//if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, (const char*)&probes, sizeof(int)))return -1;
 	//if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&RES_KEEP_Alive, sizeof RES_KEEP_Alive) != 0) return -1;
-	//struct tcp_keepalive in_kavars; memset(&in_kavars, 0, sizeof(in_kavars)); unsigned long in_len = sizeof(struct tcp_keepalive);
-	//struct tcp_keepalive out_kavars; memset(&out_kavars, 0, sizeof(out_kavars)); unsigned long out_len = sizeof(struct tcp_keepalive);
-	//in_kavars.onoff = probes; in_kavars.keepalivetime = idle * 1000; in_kavars.keepaliveinterval = intvl * 1000; DWORD ulBytesReturn;
-	//if (WSAIoctl(fd, SIO_KEEPALIVE_VALS, (LPVOID)&in_kavars, in_len, (LPVOID)&out_kavars, out_len, &ulBytesReturn, NULL, NULL) == SOCKET_ERROR) {
-	//  DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError()); return -1;
-	//}
-	//setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&RES_RCV, sizeof(RES_RCV));
-	//setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&RES_SED, sizeof(RES_SED));
+	struct tcp_keepalive in_kavars; memset(&in_kavars, 0, sizeof(in_kavars)); unsigned long in_len = sizeof(struct tcp_keepalive);
+	struct tcp_keepalive out_kavars; memset(&out_kavars, 0, sizeof(out_kavars)); unsigned long out_len = sizeof(struct tcp_keepalive);
+	in_kavars.onoff = probes; in_kavars.keepalivetime = idle * 1000; in_kavars.keepaliveinterval = intvl * 1000; DWORD ulBytesReturn;
+	if (WSAIoctl(fd, SIO_KEEPALIVE_VALS, (LPVOID)&in_kavars, in_len, (LPVOID)&out_kavars, out_len, &ulBytesReturn, NULL, NULL) == SOCKET_ERROR) {
+	  DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError()); return -1;
+	}
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&RES_RCV, sizeof(RES_RCV));
+	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&RES_SED, sizeof(RES_SED));
 #else
-	//if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &RES_KEEP_Alive, sizeof(RES_KEEP_Alive)) != 0) return -1;
-	//setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&idle, sizeof(idle));
-	//setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, (void*)&intvl, sizeof(intvl));//second
-	//setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void*)&probes, sizeof(int));
-	//setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &RES_RCV, sizeof(RES_RCV));
-	//setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &RES_SED, sizeof(RES_SED));
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &RES_KEEP_Alive, sizeof(RES_KEEP_Alive)) != 0) return -1;
+	setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, (void*)&idle, sizeof(idle));
+	setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, (void*)&intvl, sizeof(intvl));//second
+	setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void*)&probes, sizeof(int));
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &RES_RCV, sizeof(RES_RCV));
+	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &RES_SED, sizeof(RES_SED));
 #endif
 	return 0;
   }

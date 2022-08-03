@@ -12,13 +12,9 @@
 #include <http_error.hh>
 #include <file_sptr.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
-#define CTX_BUF_SIZE 0x10000
 namespace fc {
   char c2m(const char* m);
   const char* m2c(HTTP m);
-  //uv_idle_start(&this->idler, [](uv_idle_t* h) {
-  //  uv_idle_stop(h);
-  //  }); uv_idle_t idler; uv_idle_init(uv_default_loop(), &this->idler); this->idler.data = this;
   struct App {
 	App();
 	VH& operator[](const char* r);
