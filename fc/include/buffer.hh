@@ -34,9 +34,11 @@ namespace fc {
 	_INLINE const char* c_str() const { end_[0] = 0; return data_; };
 	_INLINE char operator[](unsigned int i) { return i < end_ - data_ ? data_[i] : '\0'; };
 	_INLINE const char back() { return data_[end_ - data_ - 1]; }
-
-	std::string substr(unsigned int a, unsigned int b = -1);
-	Buffer subbuf(unsigned int a, unsigned int b = -1);
+	
+	std::string substr(unsigned int a);
+	std::string substr(unsigned int a, unsigned int b);
+	Buffer subbuf(unsigned int a);
+	Buffer subbuf(unsigned int a, unsigned int b);
 	unsigned int find(const char* c);
 	unsigned int find(const std::string& c);
 	unsigned int find(const char c);
@@ -59,8 +61,6 @@ namespace fc {
 	_INLINE Buffer& operator<<(int i) { return operator<<(std::lexical_cast<std::string>(i)); }
 	_INLINE Buffer& operator<<(unsigned int ui) { return operator<<(std::lexical_cast<std::string>(ui)); }
 	Buffer& operator=(const char* s);
-	//template <typename I>
-	//Buffer& operator<<(I v);
 	char* data_;
 	char* end_;
   private:

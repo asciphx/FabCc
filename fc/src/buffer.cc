@@ -22,9 +22,19 @@ namespace fc {
 	delete[] data_; cap_ = o.cap_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_;
 	memcpy(end_, o.data_, o.end_ - o.data_); end_ += o.end_ - o.data_; not_null_ = true; return *this;
   }
+ // Buffer& Buffer::operator=(Buffer& o) {
+	//data_ = o.data_; not_null_ = o.not_null_; cap_ = o.cap_; end_ = o.end_; back_ = data_ + cap_;
+	//o.data_ = nullptr; o.not_null_ = false; return *this;
+ // }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
+  std::string Buffer::substr(unsigned int a) {
+	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, l - a);
+  }
   std::string Buffer::substr(unsigned int a, unsigned int b) {
 	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
+  }
+  Buffer Buffer::subbuf(unsigned int a) {
+	unsigned int l = end_ - data_; return Buffer(a > l ? data_ : data_ + a, l - a);
   }
   Buffer Buffer::subbuf(unsigned int a, unsigned int b) {
 	unsigned int l = end_ - data_; return Buffer(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
