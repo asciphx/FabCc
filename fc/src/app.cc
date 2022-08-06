@@ -141,7 +141,7 @@ namespace fc {
 		throw err::not_found();
 	  };
 	} catch (const http_error& e) {
-	  printf("http_error[%d]: %s", e.i(), e.what().data());
+	  printf("http_error[%d]: %s", e.i(), e.what());
 	}
 	return api;
   }

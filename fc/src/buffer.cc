@@ -14,9 +14,9 @@ namespace fc {
 	: data_(new char[capacity]), not_null_(true), end_(data_), back_(data_ + capacity), cap_(capacity) {
 	memcpy(end_, c, capacity); end_ += capacity;
   }
- // Buffer::Buffer(const char* c): cap_((unsigned int)strlen(c)), data_(new char[cap_]), not_null_(true), end_(data_), back_(data_ + cap_) {
-	//memcpy(end_, c, cap_); end_ += cap_;
- // };
+  // Buffer::Buffer(const char* c): cap_((unsigned int)strlen(c)), data_(new char[cap_]), not_null_(true), end_(data_), back_(data_ + cap_) {
+	 //memcpy(end_, c, cap_); end_ += cap_;
+  // };
   Buffer::~Buffer() { if (not_null_) delete[] data_; }
   Buffer& Buffer::operator=(Buffer&& o) {
 	delete[] data_; cap_ = o.cap_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_;
@@ -76,8 +76,8 @@ namespace fc {
 	}
 	operator<<(std::string_view(str_start, mega_buffer + 10 - str_start)); return *this;
   }
-  Buffer& Buffer::operator=(std::string_view s) {
-	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this;
+  Buffer& Buffer::operator=(const char* s) {
+	unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;
 	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << s;
   }
 }

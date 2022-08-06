@@ -31,7 +31,7 @@ namespace fc {
 	_INLINE std::string b2s() { return std::string(data_, end_ - data_); };
 	_INLINE std::string_view b2v() const { return std::string_view(data_, end_ - data_); };
 	_INLINE const char* data() const { end_[0] = 0; return data_; };
-	_INLINE const char* c_str() { end_[0] = 0; return data_; };
+	_INLINE const char* c_str() const { end_[0] = 0; return data_; };
 	_INLINE char operator[](unsigned int i) { return i < end_ - data_ ? data_[i] : '\0'; };
 	_INLINE const char back() { return data_[end_ - data_ - 1]; }
 
@@ -58,7 +58,7 @@ namespace fc {
 	_INLINE Buffer& operator<<(long long l) { return operator<<(std::lexical_cast<std::string>(l)); }
 	_INLINE Buffer& operator<<(int i) { return operator<<(std::lexical_cast<std::string>(i)); }
 	_INLINE Buffer& operator<<(unsigned int ui) { return operator<<(std::lexical_cast<std::string>(ui)); }
-	Buffer& operator=(std::string_view s);
+	Buffer& operator=(const char* s);
 	//template <typename I>
 	//Buffer& operator<<(I v);
 	char* data_;

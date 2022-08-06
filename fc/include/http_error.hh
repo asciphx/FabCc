@@ -9,7 +9,7 @@ namespace fc {
 	http_error(int status, const Buffer& what);
 	http_error(int status, const char* what);
 	int i() const;
-	const std::string_view what() const;
+	const char* what() const;
   private:
 	int status_; Buffer what_;
   };

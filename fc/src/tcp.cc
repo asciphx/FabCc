@@ -117,7 +117,7 @@ namespace fc {
 			co->wbuf.base = s.data_; co->wbuf.len = s.size();
 			uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
-			res.zlib_cp_str.reset(); return;
+			res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
 		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
@@ -163,8 +163,7 @@ namespace fc {
 	  co->write(s.data_, s.size()); s.reset();
 #else
 	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
-	  int r = uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+	  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
@@ -203,7 +202,7 @@ namespace fc {
 	co->id = uv__stream_fd(&t->_);
 #endif
 	++t->connection_num;
-	co->set_keep_alive(co->id, 3, 2, 3);
+	co->set_keep_alive(co->id, 4, 2, 2);
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }
 }
