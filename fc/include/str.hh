@@ -6,19 +6,19 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
+#include <cstring>
+#include <buffer.hh>
 //<Ctrl> + Left mouse button -> Jump to the specified location
 namespace fc {
   //RFC_ALL
   std::string DecodeURL(std::string& str);
-  //RFC_ALL
+  fc::Buffer DecodeURL(const char* s, size_t l);
   std::string DecodeURL(const char* d);
   //RFC3986
   std::string EncodeURL(const std::string& s);
-  //RFC3986
   std::string EncodeURL(const char* c);
   //RFC2396
   std::string EncodeURLComponent(const std::string& s);
-  //RFC2396
   std::string EncodeURLComponent(const char* c);
   std::string& toUpperCase(std::string& s);
   std::string toUpperCase(const char* s);

@@ -12,10 +12,10 @@ int main() {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
-	res.write(req.url.c_str());//regex表达式访问
+	res.write(req.url);//regex表达式访问
   };
   app["/api"] = [&app](Req& req, Res& res) {
-	res.write(app._print_routes().c_str());//返回路由列表
+	res.write(app._print_routes());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {
 	BP bp(req, 4096);
@@ -36,6 +36,6 @@ int main() {
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
+  srv.router(app).timeout(9000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
   return 0;
 }

@@ -54,11 +54,11 @@ namespace fc {
 		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << ',' << (i % 6 == 0 ? '\n' : ' ');
 	  }); return b;
   }
-  void App::_call(HTTP& m, std::string& r, Req& request, Res& response) const {
+  void App::_call(HTTP& m, fc::Buffer& r, Req& request, Res& response) const {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-	std::string g(1, static_cast<char>(m) + 0x30); g += r;
+	std::string g(1, static_cast<char>(m) + 0x30); g += r.b2v();
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
 	  it->second(request, response);
 	} else throw err::not_found();

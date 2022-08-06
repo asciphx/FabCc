@@ -13,7 +13,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 
 ## Still under development
 - [x] Processing of routing brace
-- [ ] Gzip compression
+- [x] Gzip compression
 - [x] Body parser
 - [ ] SSL certificate support
 - [ ] WebSocket
@@ -38,10 +38,10 @@ int main() {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
-	res.write(req.url.c_str());//routing regex 
+	res.write(req.url);//routing regex 
   };
   app["/api"] = [&app](Req& req, Res& res) {
-	res.write(app._print_routes().c_str());//Return to routing list
+	res.write(app._print_routes());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {
 	BP bp(req, 4096);

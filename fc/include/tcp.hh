@@ -16,6 +16,8 @@
 //#include <detail.h>
 namespace fc {
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
+  static std::unordered_map<uint64_t, fc::Buffer> RES_CACHE_MENU = {};
+  static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
@@ -42,7 +44,7 @@ namespace fc {
 	// from https://man7.org/linux/man-pages/man7/tcp.7.html#TCP_USER_TIMEOUT
 	// from https://docs.microsoft.com/en-us/windows/win32/winsock/ipproto-tcp-socket-options#TCP_MAXRT
 	// from https://opensource.apple.com/source/xnu/xnu-4570.41.2/bsd/netinet/tcp.h.auto.html#TCP_RXT_CONNDROPTIME
-	Tcp& timeout(unsigned short milliseconds = 6000);
+	Tcp& timeout(unsigned short milliseconds = 6500);// suggested time, if there is a large file, needs to be longer
 	//Set upload path
 	Tcp& upload_path(std::string path);
 	//Set mime types

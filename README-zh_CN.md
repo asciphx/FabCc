@@ -13,7 +13,7 @@
 
 ## 仍在开发中
 - [x] 路由大括号表达式
-- [ ] gzip压缩
+- [x] gzip压缩
 - [x] body-parser的支持
 - [ ] ssl证书
 - [ ] websocket
@@ -38,10 +38,10 @@ int main() {
 	res.write("！");
   };
   app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
-	res.write(req.url.c_str());//regex表达式
+	res.write(req.url);//regex表达式
   };
   app["/api"] = [&app](Req& req, Res& res) {
-	res.write(app._print_routes().c_str());//返回路由列表
+	res.write(app._print_routes());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {
 	BP bp(req, 4096);

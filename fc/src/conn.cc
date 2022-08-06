@@ -16,14 +16,13 @@ namespace fc {
 	  buf_ << std::string_view(data, size);
 	  if (done != nullptr) done();
 	  wbuf.base = buf_.data_; wbuf.len = buf_.size();
-	  int r = uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL); buf_.reset();
-	  if (r) { DEBUG("uv_write error: %s\n", uv_strerror(r)); return; }
+	  uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL); buf_.reset();
 #endif // _WIN32
 	};
   }
   Conn::~Conn() {
 	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
-	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr; idler.data = nullptr;
+	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr;
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
@@ -99,6 +98,7 @@ namespace fc {
 	case 501:status_ = "501 Not Implemented\r\n"; break;
 	case 502:status_ = "502 Bad Gateway\r\n"; break;
 	case 503:status_ = "503 Service Unavailable\r\n"; break;
+	case 510:status_ = "510 Not Extended\r\n"; break;
 	default: status_ = "404 Not Found\r\n"; res.code = 404;
 	}
   }

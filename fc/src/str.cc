@@ -1,10 +1,4 @@
-#include <ctime>
-#include <string>
-#include <string_view>
-#include <sstream>
-#include <iomanip>
-#include <cstdlib>
-#include <cstring>
+#include <str.hh>
 namespace fc {
   static const char _X[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,
@@ -14,17 +8,27 @@ namespace fc {
   std::string DecodeURL(std::string& s) {
 	char* o = (char*)s.c_str(), * c = (char*)s.c_str();
 	const char* e = c + s.size(); while (c < e) {
-	  if (*c == '%' && c < e - 2 && _X[c[1]] !=-1 && _X[c[2]] !=-1) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }
 	  if (o != c) *o = *c; ++o; ++c;
 	} return std::string(s.data(), o - s.data());
   }
+  fc::Buffer DecodeURL(const char* s, size_t l) {
+	char* o = (char*)s, * c = (char*)s;
+	const char* e = c + l; while (c < e) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
+		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
+	  }
+	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }
+	  if (o != c) *o = *c; ++o; ++c;
+	} return fc::Buffer(s, (unsigned int)(o - s));
+  }
   std::string DecodeURL(const char* d) {
 	std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
 	const char* e = c + s.length(); while (c < e) {
-	  if (*c == '%' && c < e - 2 && _X[c[1]] !=-1 && _X[c[2]] !=-1) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }

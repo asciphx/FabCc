@@ -1,6 +1,5 @@
 #ifndef PARSER_HH
 #define PARSER_HH
-#include <string>
 #include <unordered_map>
 #include <algorithm>
 #include <h/llhttp.h>
@@ -12,9 +11,9 @@ namespace fc {
   struct llParser: public llhttp__internal_s {
 	llParser();
 	void set_type(llhttp_type t = llhttp_type::HTTP_REQUEST);
-	std::string url_params;
-	std::string url;
-	std::string body;
+	fc::Buffer url_params;
+	fc::Buffer url;
+	fc::Buffer body;
 	fc::Buffer header_field;
 	fc::Buffer header_value;
 	fc::str_map headers;

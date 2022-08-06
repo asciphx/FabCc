@@ -27,7 +27,7 @@ namespace fc {
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
 	Buffer _print_routes();
-	void _call(HTTP& m, std::string& r, Req& request, Res& response) const;
+	void _call(HTTP& m, fc::Buffer& r, Req& request, Res& response) const;
 	DRT map_;
     std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
 	std::unordered_map<std::string_view, std::string_view>* content_types;

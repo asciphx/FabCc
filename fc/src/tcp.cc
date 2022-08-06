@@ -44,8 +44,8 @@ namespace fc {
   }
   bool Tcp::Start(const char* ip_addr, int port, bool is_ipv4) {
 	exit(); if (!port)port = port_; if (!init())return false; if (bind(ip_addr, port, is_ipv4))return false;
-	if (!fc::is_directory(detail::directory_)) fc::create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
-	std::string s(detail::directory_ + detail::upload_path_); if (!fc::is_directory(s)) fc::create_directory(s);
+	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
+	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 #ifdef SIGPIPE
@@ -71,6 +71,9 @@ namespace fc {
 	  char failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
 	  Req& req = co->req_; req = std::move(co->parser_.to_request());// printf("(%s) ",req.url.c_str());
+	  if (co->parser_.http_major == 1 && co->parser_.http_minor == 1 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
+		uv_close((uv_handle_t*)h, on_close); return;
+	  }
 	  if (!req.url[0] || req.method == HTTP::OPTIONS) return; Res& res = co->res_;
 	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// co->_.data = &res;
 	  res.timer_.setTimeout([h] {
@@ -85,7 +88,7 @@ namespace fc {
 #endif
 		RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
 	  } //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
-	  fc::Buffer& s = co->buf_;
+	  Buffer& s = co->buf_;
 	  try {
 		((App*)co->app_)->_call(req.method, req.url, req, res);
 		co->set_status(res, res.code);
@@ -96,29 +99,25 @@ namespace fc {
 		if (res.is_file > 0) {
 		  if (res.is_file == 1) {
 			res.is_file = 0; req.uuid = hackUrl(req.url.c_str());
-			if (RES_CACHE_TIME[req.uuid] > nowStamp()) { res.body = RES_CACHE_MENU[req.uuid]; goto _; }
+			s << RES_CE << RES_seperator << RES_gzip << RES_crlf;
+			if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
+			  res.body << RES_CACHE_MENU[req.uuid]; goto _;
+			}
 			RES_CACHE_TIME[req.uuid] = nowStamp(CACHE_HTML_TIME_SECOND);
 			s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
-			s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
 			s << RES_date_tag << RES_DATE_STR << RES_crlf;
-			s << RES_crlf;
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
+			int l = 0; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
+			if (l) { res.body << res.compress_str(co->readbuf, l); goto $; }
+			inf.close(); s << RES_content_length_tag << res.body.size() << RES_crlf;
+			s << RES_crlf << res.body; RES_CACHE_MENU[req.uuid] = std::move(res.body);
 #ifdef _WIN32
-			if (!co->write(s.data_, s.size())) { return; }; s.reset();
-			int l = 0, i; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-			if (l) {
-			  i = ::send(co->id, co->readbuf, l, 0);
-			  res.body += std::string_view(co->readbuf, l); if (i > 0) goto $;
-			}
-			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
+			co->write(s.data_, s.size()); s.reset();
 #else
-			int l = 0; std::string_view v; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-			if (l) { v = std::string_view(co->readbuf, l); s << v; res.body += v; goto $; }
-			inf.close(); RES_CACHE_MENU[req.uuid] = std::move(res.body);
 			co->wbuf.base = s.data_; co->wbuf.len = s.size();
 			uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
-			return;
+			res.zlib_cp_str.reset(); return;
 		  }
 		  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_date_tag << RES_DATE_STR << RES_crlf << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
@@ -139,7 +138,7 @@ namespace fc {
 	  } catch (const std::runtime_error& e) {
 		s.reset(); co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
 	  }
-	  //if (fc::KEY_EQUALS(fc::get_header(req.headers, RES_Ex), "100-continue") &&
+	  //if (KEY_EQUALS(get_header(req.headers, RES_Ex), "100-continue") &&
 	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
 	  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
@@ -156,9 +155,9 @@ namespace fc {
 #endif
 	_:
 	  if (!res.headers.count(RES_CT)) { s << RES_CT << RES_seperator << RES_Txt << RES_crlf; }
-	  s << RES_content_length_tag << std::to_string(res.body.size()) << RES_crlf;
+	  s << RES_content_length_tag << res.body.size() << RES_crlf;
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
-	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.clear();
+	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
 	  DEBUG("客户端：%lld %s \n", co->id, s.c_str());
 #ifdef _WIN32
 	  co->write(s.data_, s.size()); s.reset();

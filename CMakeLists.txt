@@ -76,14 +76,18 @@ if(WIN32)
         iphlpapi
         userenv
         ws2_32)
+  add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
+  add_subdirectory(third-party/zlib)
+  target_link_libraries(FabCc PUBLIC zlib)
+  message(STATUS "to: ${PROJECT_SOURCE_DIR}/FabCc.exe")
   set( FabCc_LIBRARIES
   Fab
   ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/Uv.lib
+  zlibstatic
   )
-  add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
-  message(STATUS "to: ${PROJECT_SOURCE_DIR}/FabCc.exe")
   add_custom_command(TARGET FabCc
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/FabCc.exe ${PROJECT_SOURCE_DIR}/FabCc.exe
+#COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlib.dll ${PROJECT_SOURCE_DIR}/zlib.dll
   )#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
   add_executable(W w.cc
   fc/src/lexical_cast.cc
@@ -217,12 +221,15 @@ else ()
   add_library(Uv STATIC ${uv_sources} ${uv_c_files})
   target_compile_definitions(Uv PRIVATE ${uv_defines})
   target_compile_options(Uv PRIVATE ${uv_cflags})
+  message(STATUS "LIBRARIES: ${uv_libraries}")
+  add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
+  add_subdirectory(third-party/zlib)
+  target_link_libraries(FabCc PUBLIC zlib)
   set( FabCc_LIBRARIES
   Fab
   Uv
+  zlibstatic
   )
-  message(STATUS "LIBRARIES: ${uv_libraries}")
-  add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
   message(STATUS "to: ${PROJECT_SOURCE_DIR}/FabCc")
   add_custom_command(TARGET FabCc
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/FabCc ${PROJECT_SOURCE_DIR}/FabCc

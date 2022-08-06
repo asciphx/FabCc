@@ -14,27 +14,36 @@ namespace fc {
 	: data_(new char[capacity]), not_null_(true), end_(data_), back_(data_ + capacity), cap_(capacity) {
 	memcpy(end_, c, capacity); end_ += capacity;
   }
+ // Buffer::Buffer(const char* c): cap_((unsigned int)strlen(c)), data_(new char[cap_]), not_null_(true), end_(data_), back_(data_ + cap_) {
+	//memcpy(end_, c, cap_); end_ += cap_;
+ // };
   Buffer::~Buffer() { if (not_null_) delete[] data_; }
   Buffer& Buffer::operator=(Buffer&& o) {
-	data_ = o.data_; not_null_ = o.not_null_; end_ = o.end_; back_ = o.back_; cap_ = o.cap_;
-	o.data_ = nullptr; o.not_null_ = false; return *this;
+	delete[] data_; cap_ = o.cap_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_;
+	memcpy(end_, o.data_, o.end_ - o.data_); end_ += o.end_ - o.data_; not_null_ = true; return *this;
   }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
   std::string Buffer::substr(unsigned int a, unsigned int b) {
-	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, b < l ? b : l);
+	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
   }
-  size_t Buffer::find(const char* c) {
-	size_t l = 0, L = strlen(c), a = 0; while (data_[l]) {
+  Buffer Buffer::subbuf(unsigned int a, unsigned int b) {
+	unsigned int l = end_ - data_; return Buffer(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
+  }
+  unsigned int Buffer::find(const char* c) {
+	unsigned int l = 0, L = (unsigned int)strlen(c), s = end_ - data_, a = 0; while (l < s) {
 	  if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
 	} return -1;
   }
-  size_t Buffer::find(const std::string& c) {
-	size_t l = 0, L = c.size(), a = 0; while (data_[l]) {
+  unsigned int Buffer::find(const std::string& c) {
+	unsigned int l = 0, L = (unsigned int)c.size(), s = end_ - data_, a = 0; while (l < s) {
 	  if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
 	} return -1;
   }
-  size_t Buffer::find(const char c) {
-	size_t l = 0; while (data_[l]) { if (data_[l] == c) { return l; } ++l; } return -1;
+  unsigned int Buffer::find(const char c) {
+	unsigned int l = 0, s = end_ - data_; while (l < s) { if (data_[l] == c) { return l; } ++l; } return -1;
+  }
+  unsigned int Buffer::rfind(const char c) {
+	unsigned int s = end_ - data_; while (0 < s) { if (data_[s] == c) { return s; } --s; } return -1;
   }
   void Buffer::erase(unsigned int a, unsigned int b) {
 	unsigned int l = end_ - data_; if (a > l)a = l; if (b > l)b = l;
@@ -48,19 +57,18 @@ namespace fc {
 	back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c; return true;
   };
   Buffer& Buffer::insert(char*& s, const char* e, const char* f) {
-	unsigned int l = f - e; if (s + l >= back_ && !reserve(cap_ + l)) return *this;
-	memcpy(s, e, l); s += l; return *this;
+	unsigned int l = f - e; if (s + l >= back_ && !reserve(cap_ + l)) return *this; memcpy(s, e, l); s += l; return *this;
+	//for (unsigned int i = 0xffffffff; ++i < l; *s = e[i], ++s); s += l; return *this;
   }
   Buffer& Buffer::assign(const char* s, const char* e) {
 	unsigned int l = e - s; if (end_ + l >= back_ && !reserve(cap_ + l)) return *this;
 	for (unsigned int i = 0xffffffff; ++i < l; *end_ = s[i], ++end_); return *this;
   }
-  Buffer& Buffer::operator<<(std::string_view s) {
-	if (end_ + s.size() >= back_) reserve((unsigned int)((end_ - data_) + s.size()));
-	memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
+  Buffer& Buffer::operator<<(const Buffer& buf) {
+	Buffer* b = const_cast<Buffer*>(&buf); unsigned int l = b->end_ - b->data_;
+	if (end_ + b->size() >= back_ && !reserve((unsigned int)((end_ - data_) + l))) return *this;
+	memcpy(end_, b->data_, l); end_ += l; return *this;
   }
-  Buffer& Buffer::operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
-  Buffer& Buffer::operator<<(char v) { end_[0] = v; ++end_; return *this; }
   Buffer& Buffer::operator<<(size_t v) {
 	if (v == 0) operator<<('0'); char mega_buffer[10], * str_start = mega_buffer;
 	for (char i = 0; i < 10; ++i) {
@@ -68,15 +76,8 @@ namespace fc {
 	}
 	operator<<(std::string_view(str_start, mega_buffer + 10 - str_start)); return *this;
   }
-  Buffer& Buffer::operator<<(int b) {
-	std::string s(std::lexical_cast<std::string>(b)); return operator<<(std::string_view(s.data(), s.size()));
+  Buffer& Buffer::operator=(std::string_view s) {
+	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this;
+	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << s;
   }
-  Buffer& Buffer::operator=(std::string s) {
-	if (s.size() > cap_) s.resize(cap_); delete[] data_; data_ = new char[cap_]; end_ = data_;
-	memcpy(end_, s.data(), s.size()); end_ += s.size(); back_ = data_ + cap_; return *this;
-  }
-  // template <typename I>
-  // Buffer& Buffer::operator<<(I v) {
-	 //std::string b(std::lexical_cast<std::string>(v));return operator<<(std::string_view(b.data(), b.size()));
-  // }
 }

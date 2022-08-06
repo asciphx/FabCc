@@ -6,8 +6,8 @@ namespace fc {
 	size_t r = 0, n = z.size();
 	unsigned char const* p = reinterpret_cast<unsigned char const*>(z.data());
 	while (n >= 4) {
-	  const unsigned int v = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
-	  r = (r * 5 + (v & ~0x20202020)); p += 4; n -= 4;
+	  r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & ~0x20202020));
+	  p += 4; n -= 4;
 	}
 	while (n > 0) { r = r * 5 + (*p | 0x20); ++p; --n; } return r;
   }
@@ -15,12 +15,10 @@ namespace fc {
 	unsigned long long n = l.length(); if (n != r.length()) return false;
 	unsigned char const* x = reinterpret_cast<unsigned char const*>(l.data());
 	unsigned char const* y = reinterpret_cast<unsigned char const*>(r.data());
-	unsigned long long z = sizeof(unsigned int);
-	unsigned int m = static_cast<unsigned int>(0xDFDFDFDFDFDFDFDF & ~std::uint32_t{ 0 });
+	unsigned int z = sizeof(unsigned int), m = 0xDFDFDFDF & ~std::uint32_t{ 0 };
 	for (; n >= z; x += z, y += z, n -= z) {
-	  unsigned int const v = x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24);
-	  unsigned int const w = y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24);
-	  if ((v ^ w) & m) return false;
+	  if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
+		(y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24))) & m) return false;
 	}
 	for (; n; ++x, ++y, --n) if ((*x ^ *y) & 0xDF) return false; return true;
   }

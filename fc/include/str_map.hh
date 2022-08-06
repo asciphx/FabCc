@@ -12,6 +12,6 @@ namespace fc {
 	bool operator()(const std::string& l, const std::string& r) const;
   };
   using str_map = std::unordered_multimap<std::string, std::string, str_hash, str_key_eq>;
-  static const str_key_eq KEY_EQUALS;
+  static const str_key_eq STR_KEY_EQ;
 }
 #endif // STR_MAP_H
