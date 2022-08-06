@@ -361,7 +361,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
 
   *count = numcpus;
 
-  for (i = 0; i < numcpus; i++) {
+  for (i = 0; i < numcpus; ++i) {
     cpu_info = &(*cpu_infos)[i];
 
     cpu_info->cpu_times.user = (uint64_t)(info[i].cpu_ticks[0]) * multiplier;

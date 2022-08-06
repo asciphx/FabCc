@@ -66,7 +66,7 @@ static void uv__pollfds_maybe_resize(uv_loop_t* loop) {
     abort();
 
   loop->poll_fds = p;
-  for (i = loop->poll_fds_size; i < n; i++) {
+  for (i = loop->poll_fds_size; i < n; ++i) {
     loop->poll_fds[i].fd = -1;
     loop->poll_fds[i].events = 0;
     loop->poll_fds[i].revents = 0;
@@ -255,7 +255,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     have_signals = 0;
 
     /* Loop over the entire poll fds array looking for returned events.  */
-    for (i = 0; i < loop->poll_fds_used; i++) {
+    for (i = 0; i < loop->poll_fds_used; ++i) {
       pe = loop->poll_fds + i;
       fd = pe->fd;
 
@@ -288,7 +288,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
           w->cb(loop, w, pe->revents);
         }
 
-        nevents++;
+        ++nevents;
       }
     }
 
@@ -340,7 +340,7 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
 
   if (loop->poll_fds_iterating) {
     /* uv__io_poll is currently iterating.  Just invalidate fd.  */
-    for (i = 0; i < loop->poll_fds_used; i++)
+    for (i = 0; i < loop->poll_fds_used; ++i)
       if (loop->poll_fds[i].fd == fd) {
         loop->poll_fds[i].fd = -1;
         loop->poll_fds[i].events = 0;

@@ -139,7 +139,7 @@ static void uv__udp_run_completed(uv_udp_t* handle) {
     uv__req_unregister(handle->loop, req);
 
     handle->send_queue_size -= uv__count_bufs(req->bufs, req->nbufs);
-    handle->send_queue_count--;
+    --handle->send_queue_count;
 
     if (req->bufs != req->bufsml)
       uv__free(req->bufs);
@@ -222,7 +222,7 @@ static int uv__udp_recvmmsg(uv_udp_t* handle, uv_buf_t* buf) {
       handle->recv_cb(handle, UV__ERR(errno), buf, NULL, 0);
   } else {
     /* pass each chunk to the application */
-    for (k = 0; k < (size_t) nread && handle->recv_cb != NULL; k++) {
+    for (k = 0; k < (size_t) nread && handle->recv_cb != NULL; ++k) {
       flags = UV_UDP_MMSG_CHUNK;
       if (msgs[k].msg_hdr.msg_flags & MSG_TRUNC)
         flags |= UV_UDP_PARTIAL;
@@ -302,7 +302,7 @@ static void uv__udp_recvmsg(uv_udp_t* handle) {
 
       handle->recv_cb(handle, nread, &buf, (const struct sockaddr*) &peer, flags);
     }
-    count--;
+    --count;
   }
   /* recv_cb callback may decide to pause or close the handle */
   while (nread != -1
@@ -774,7 +774,7 @@ int uv__udp_send(uv_udp_send_t* req,
 
   memcpy(req->bufs, bufs, nbufs * sizeof(bufs[0]));
   handle->send_queue_size += uv__count_bufs(req->bufs, req->nbufs);
-  handle->send_queue_count++;
+  ++handle->send_queue_count;
   QUEUE_INSERT_TAIL(&handle->write_queue, &req->queue);
   uv__handle_start(handle);
 

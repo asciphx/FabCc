@@ -210,7 +210,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
     goto error;
 
   size = sizeof(info);
-  for (i = 0; i < numcpus; i++) {
+  for (i = 0; i < numcpus; ++i) {
     percpu[2] = i;
     if (sysctl(percpu, ARRAY_SIZE(percpu), &info, &size, NULL, 0))
       goto error;
@@ -231,7 +231,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
 
 error:
   *count = 0;
-  for (j = 0; j < i; j++)
+  for (j = 0; j < i; ++j)
     uv__free((*cpu_infos)[j].model);
 
   uv__free(*cpu_infos);

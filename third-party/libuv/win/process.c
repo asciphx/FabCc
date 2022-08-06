@@ -207,7 +207,7 @@ static WCHAR* search_path_join_test(const WCHAR* dir,
   /* Add a path separator if cwd didn't end with one */
   if (cwd_len && wcsrchr(L"\\/:", result_pos[-1]) == NULL) {
     result_pos[0] = L'\\';
-    result_pos++;
+    ++result_pos;
   }
 
   /* Copy dir */
@@ -217,7 +217,7 @@ static WCHAR* search_path_join_test(const WCHAR* dir,
   /* Add a separator if the dir didn't end with one */
   if (dir_len && wcsrchr(L"\\/:", result_pos[-1]) == NULL) {
     result_pos[0] = L'\\';
-    result_pos++;
+    ++result_pos;
   }
 
   /* Copy filename */
@@ -228,7 +228,7 @@ static WCHAR* search_path_join_test(const WCHAR* dir,
     /* Add a dot if the filename didn't end with one */
     if (name_len && result_pos[-1] != '.') {
       result_pos[0] = L'.';
-      result_pos++;
+      ++result_pos;
     }
 
     /* Copy extension */
@@ -368,7 +368,7 @@ static WCHAR* search_path(const WCHAR *file,
            && file_name_start[-1] != L'\\'
            && file_name_start[-1] != L'/'
            && file_name_start[-1] != L':';
-       file_name_start--);
+       --file_name_start);
 
   file_has_dir = file_name_start != file;
 
@@ -400,7 +400,7 @@ static WCHAR* search_path(const WCHAR *file,
 
       /* Skip the separator that dir_end now points to */
       if (dir_end != path || *path == L';') {
-        dir_end++;
+        ++dir_end;
       }
 
       /* Next slice starts just after where the previous one ended */
@@ -536,7 +536,7 @@ int make_program_args(char** args, int verbatim_arguments, WCHAR** dst_ptr) {
   int err = 0;
 
   /* Count the required size. */
-  for (arg = args; *arg; arg++) {
+  for (arg = args; *arg; ++arg) {
     DWORD arg_len;
 
     arg_len = MultiByteToWideChar(CP_UTF8,
@@ -554,7 +554,7 @@ int make_program_args(char** args, int verbatim_arguments, WCHAR** dst_ptr) {
     if (arg_len > temp_buffer_len)
       temp_buffer_len = arg_len;
 
-    arg_count++;
+    ++arg_count;
   }
 
   /* Adjust for potential quotes. Also assume the worst-case scenario that
@@ -576,7 +576,7 @@ int make_program_args(char** args, int verbatim_arguments, WCHAR** dst_ptr) {
   }
 
   pos = dst;
-  for (arg = args; *arg; arg++) {
+  for (arg = args; *arg; ++arg) {
     DWORD arg_len;
 
     /* Convert argument to wide char. */
@@ -628,7 +628,7 @@ int env_strncmp(const wchar_t* a, int na, const wchar_t* b) {
     assert(a_eq);
     na = (int)(long)(a_eq - a);
   } else {
-    na--;
+    --na;
   }
   b_eq = wcschr(b, L'=');
   assert(b_eq);
@@ -696,7 +696,7 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
   DWORD required_vars_value_len[ARRAY_SIZE(required_vars)];
 
   /* first pass: determine size in UTF-16 */
-  for (env = env_block; *env; env++) {
+  for (env = env_block; *env; ++env) {
     int len;
     if (strchr(*env, '=')) {
       len = MultiByteToWideChar(CP_UTF8,
@@ -709,7 +709,7 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
         return GetLastError();
       }
       env_len += len;
-      env_block_count++;
+      ++env_block_count;
     }
   }
 
@@ -722,7 +722,7 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
 
   ptr = dst_copy;
   ptr_copy = env_copy;
-  for (env = env_block; *env; env++) {
+  for (env = env_block; *env; ++env) {
     if (strchr(*env, '=')) {
       len = MultiByteToWideChar(CP_UTF8,
                                 0,
@@ -763,11 +763,11 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
         env_len += required_vars[i].len;
         env_len += var_size;
       }
-      i++;
+      ++i;
     } else {
-      ptr_copy++;
+      ++ptr_copy;
       if (cmp == 0)
-        i++;
+        ++i;
     }
   }
 
@@ -804,14 +804,14 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
           uv_fatal_error(GetLastError(), "GetEnvironmentVariableW");
         }
       }
-      i++;
+      ++i;
     } else {
       /* copy var from env_block */
       len = wcslen(*ptr_copy) + 1;
       wmemcpy(ptr, *ptr_copy, len);
-      ptr_copy++;
+      ++ptr_copy;
       if (cmp == 0)
-        i++;
+        ++i;
     }
   }
 
@@ -1071,7 +1071,7 @@ int uv_spawn(uv_loop_t* loop,
   if ((options->flags & UV_PROCESS_WINDOWS_HIDE_CONSOLE) ||
       (options->flags & UV_PROCESS_WINDOWS_HIDE)) {
     /* Avoid creating console window if stdio is not inherited. */
-    for (i = 0; i < options->stdio_count; i++) {
+    for (i = 0; i < options->stdio_count; ++i) {
       if (options->stdio[i].flags & UV_INHERIT_FD)
         break;
       if (i == options->stdio_count - 1)
@@ -1143,7 +1143,7 @@ int uv_spawn(uv_loop_t* loop,
   }
 
   /* Set IPC pid to all IPC pipes. */
-  for (i = 0; i < options->stdio_count; i++) {
+  for (i = 0; i < options->stdio_count; ++i) {
     const uv_stdio_container_t* fdopt = &options->stdio[i];
     if (fdopt->flags & UV_CREATE_PIPE &&
         fdopt->data.stream->type == UV_NAMED_PIPE &&

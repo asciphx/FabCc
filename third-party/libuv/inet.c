@@ -78,18 +78,18 @@ static int inet_ntop6(const unsigned char *src, char *dst, size_t size) {
    *  Find the longest run of 0x00's in src[] for :: shorthanding.
    */
   memset(words, '\0', sizeof words);
-  for (i = 0; i < (int) sizeof(struct in6_addr); i++)
+  for (i = 0; i < (int) sizeof(struct in6_addr); ++i)
     words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
   best.base = -1;
   best.len = 0;
   cur.base = -1;
   cur.len = 0;
-  for (i = 0; i < (int) ARRAY_SIZE(words); i++) {
+  for (i = 0; i < (int) ARRAY_SIZE(words); ++i) {
     if (words[i] == 0) {
       if (cur.base == -1)
         cur.base = i, cur.len = 1;
       else
-        cur.len++;
+        ++cur.len;
     } else {
       if (cur.base != -1) {
         if (best.base == -1 || cur.len > best.len)
@@ -285,7 +285,7 @@ static int inet_pton6(const char *src, unsigned char *dst) {
 
     if (tp == endp)
       return UV_EINVAL;
-    for (i = 1; i <= n; i++) {
+    for (i = 1; i <= n; ++i) {
       endp[- i] = colonp[n - i];
       colonp[n - i] = 0;
     }

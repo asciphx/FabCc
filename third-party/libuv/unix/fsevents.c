@@ -245,7 +245,7 @@ static void uv__fsevents_event_cb(const FSEventStreamRef streamRef,
     QUEUE_INIT(&head);
 
     /* Process and filter out events */
-    for (i = 0; i < numEvents; i++) {
+    for (i = 0; i < numEvents; ++i) {
       flags = eventFlags[i];
 
       /* Ignore system events */
@@ -287,15 +287,15 @@ static void uv__fsevents_event_cb(const FSEventStreamRef streamRef,
            * realpath == path, and we now need to get the basename of the file back
            * (for commonality with other codepaths and platforms). */
           while (len < handle->realpath_len && path[-1] != '/') {
-            path--;
-            len++;
+            --path;
+            ++len;
           }
           /* Created and Removed seem to be always set, but don't make sense */
           flags &= ~kFSEventsRenamed;
         } else {
           /* Skip forward slash */
-          path++;
-          len--;
+          ++path;
+          --len;
         }
       }
 
@@ -454,7 +454,7 @@ static void uv__fsevents_reschedule(uv_fs_event_t* handle,
     }
 
     q = &state->fsevent_handles;
-    for (; i < path_count; i++) {
+    for (; i < path_count; ++i) {
       q = QUEUE_NEXT(q);
       assert(q != &state->fsevent_handles);
       curr = QUEUE_DATA(q, uv_fs_event_t, cf_member);
@@ -844,7 +844,7 @@ int uv__fsevents_init(uv_fs_event_t* handle) {
   state = handle->loop->cf_state;
   uv_mutex_lock(&state->fsevent_mutex);
   QUEUE_INSERT_TAIL(&state->fsevent_handles, &handle->cf_member);
-  state->fsevent_handle_count++;
+  ++state->fsevent_handle_count;
   state->fsevent_need_reschedule = 1;
   uv_mutex_unlock(&state->fsevent_mutex);
 
@@ -884,7 +884,7 @@ int uv__fsevents_close(uv_fs_event_t* handle) {
   state = handle->loop->cf_state;
   uv_mutex_lock(&state->fsevent_mutex);
   QUEUE_REMOVE(&handle->cf_member);
-  state->fsevent_handle_count--;
+  --state->fsevent_handle_count;
   state->fsevent_need_reschedule = 1;
   uv_mutex_unlock(&state->fsevent_mutex);
 

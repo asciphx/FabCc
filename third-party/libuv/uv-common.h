@@ -226,14 +226,14 @@ void uv__threadpool_cleanup(void);
 
 #define uv__req_register(loop, req)                                           \
   do {                                                                        \
-    (loop)->active_reqs.count++;                                              \
+    ++(loop)->active_reqs.count;                                              \
   }                                                                           \
   while (0)
 
 #define uv__req_unregister(loop, req)                                         \
   do {                                                                        \
     assert(uv__has_active_reqs(loop));                                        \
-    (loop)->active_reqs.count--;                                              \
+    --(loop)->active_reqs.count;                                              \
   }                                                                           \
   while (0)
 
@@ -242,13 +242,13 @@ void uv__threadpool_cleanup(void);
 
 #define uv__active_handle_add(h)                                              \
   do {                                                                        \
-    (h)->loop->active_handles++;                                              \
+    ++(h)->loop->active_handles;                                              \
   }                                                                           \
   while (0)
 
 #define uv__active_handle_rm(h)                                               \
   do {                                                                        \
-    (h)->loop->active_handles--;                                              \
+    --(h)->loop->active_handles;                                              \
   }                                                                           \
   while (0)
 

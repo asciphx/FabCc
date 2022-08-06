@@ -407,7 +407,7 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
 
     /* Process immediate callbacks (e.g. write_cb) a small fixed number of
      * times to avoid loop starvation.*/
-    for (r = 0; r < 8 && !QUEUE_EMPTY(&loop->pending_queue); r++)
+    for (r = 0; r < 8 && !QUEUE_EMPTY(&loop->pending_queue); ++r)
       uv__run_pending(loop);
 
     /* Run one final update on the provider_idle_time in case uv__io_poll
@@ -759,7 +759,7 @@ void uv_disable_stdio_inheritance(void) {
   /* Set the CLOEXEC flag on all open descriptors. Unconditionally try the
    * first 16 file descriptors. After that, bail out after the first error.
    */
-  for (fd = 0; ; fd++)
+  for (fd = 0; ; ++fd)
     if (uv__cloexec(fd, 1) && fd > 15)
       break;
 }
@@ -848,7 +848,7 @@ static void maybe_resize(uv_loop_t* loop, unsigned int len) {
 
   if (watchers == NULL)
     abort();
-  for (i = loop->nwatchers; i < nwatchers; i++)
+  for (i = loop->nwatchers; i < nwatchers; ++i)
     watchers[i] = NULL;
   watchers[nwatchers] = fake_watcher_list;
   watchers[nwatchers + 1] = fake_watcher_count;
@@ -893,7 +893,7 @@ void uv__io_start(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
 
   if (loop->watchers[w->fd] == NULL) {
     loop->watchers[w->fd] = w;
-    loop->nfds++;
+    ++loop->nfds;
   }
 }
 
@@ -921,7 +921,7 @@ void uv__io_stop(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
     if (w == loop->watchers[w->fd]) {
       assert(loop->nfds > 0);
       loop->watchers[w->fd] = NULL;
-      loop->nfds--;
+      --loop->nfds;
     }
   }
   else if (QUEUE_EMPTY(&w->watcher_queue))
@@ -1148,7 +1148,7 @@ return_buffer:
 
   /* The returned directory should not have a trailing slash. */
   if (len > 1 && buf[len - 1] == '/') {
-    len--;
+    --len;
   }
 
   memcpy(buffer, buf, len + 1);
@@ -1267,14 +1267,14 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
   *envitems = NULL;
   *count = 0;
 
-  for (i = 0; environ[i] != NULL; i++);
+  for (i = 0; environ[i] != NULL; ++i);
 
   *envitems = uv__calloc(i, sizeof(**envitems));
 
   if (*envitems == NULL)
     return UV_ENOMEM;
 
-  for (j = 0, cnt = 0; j < i; j++) {
+  for (j = 0, cnt = 0; j < i; ++j) {
     char* buf;
     char* ptr;
 
@@ -1297,14 +1297,14 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
     envitem->name = buf;
     envitem->value = ptr + 1;
 
-    cnt++;
+    ++cnt;
   }
 
   *count = cnt;
   return 0;
 
 fail:
-  for (i = 0; i < cnt; i++) {
+  for (i = 0; i < cnt; ++i) {
     envitem = &(*envitems)[cnt];
     uv__free(envitem->name);
   }

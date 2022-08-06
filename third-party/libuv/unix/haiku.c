@@ -137,7 +137,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   }
 
   cpuspeed = 0;
-  for (i = 0; i < (int)topology_count; i++) {
+  for (i = 0; i < (int)topology_count; ++i) {
     if (topology_infos[i].type == B_TOPOLOGY_CORE) {
       cpuspeed = topology_infos[i].data.core.default_frequency;
       break;
@@ -156,10 +156,10 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
 
   /* CPU time and model are not exposed by Haiku. */
   cpu_info = *cpu_infos;
-  for (i = 0; i < (int)system.cpu_count; i++) {
+  for (i = 0; i < (int)system.cpu_count; ++i) {
     cpu_info->model = uv__strdup("unknown");
     cpu_info->speed = (int)(cpuspeed / 1000000);
-    cpu_info++;
+    ++cpu_info;
   }
   *count = system.cpu_count;
 

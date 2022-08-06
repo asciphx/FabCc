@@ -192,12 +192,12 @@ int uv__stdio_create(uv_loop_t* loop,
   /* Prepopulate the buffer with INVALID_HANDLE_VALUE handles so we can clean
    * up on failure. */
   CHILD_STDIO_COUNT(buffer) = count;
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     CHILD_STDIO_CRT_FLAGS(buffer, i) = 0;
     CHILD_STDIO_HANDLE(buffer, i) = INVALID_HANDLE_VALUE;
   }
 
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     uv_stdio_container_t fdopt;
     if (i < options->stdio_count) {
       fdopt = options->stdio[i];
@@ -358,7 +358,7 @@ void uv__stdio_destroy(BYTE* buffer) {
   int i, count;
 
   count = CHILD_STDIO_COUNT(buffer);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     HANDLE handle = CHILD_STDIO_HANDLE(buffer, i);
     if (handle != INVALID_HANDLE_VALUE) {
       CloseHandle(handle);
@@ -373,7 +373,7 @@ void uv__stdio_noinherit(BYTE* buffer) {
   int i, count;
 
   count = CHILD_STDIO_COUNT(buffer);
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     HANDLE handle = CHILD_STDIO_HANDLE(buffer, i);
     if (handle != INVALID_HANDLE_VALUE) {
       SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0);

@@ -369,11 +369,11 @@ static int uv__interface_addresses_v6(uv_interface_address_t** addresses,
     memcpy(address->name, p->__nif6e_name, i);
     address->name[i] = '\0';
     __e2a_s(address->name);
-    count_names++;
+    ++count_names;
 
     address->address.address6 = *((struct sockaddr_in6*) &p->__nif6e_addr);
 
-    for (i = 0; i < (p->__nif6e_prefixlen / 8); i++)
+    for (i = 0; i < (p->__nif6e_prefixlen / 8); ++i)
       netmask[i] = 0xFF;
 
     if (p->__nif6e_prefixlen % 8)
@@ -384,7 +384,7 @@ static int uv__interface_addresses_v6(uv_interface_address_t** addresses,
     address->netmask.netmask6.sin6_family = AF_INET6;
 
     address->is_internal = p->__nif6e_flags & _NIF6E_FLAGS_LOOPBACK ? 1 : 0;
-    address++;
+    ++address;
   }
 
   uv__free(ifc.__nif6h_buffer);
@@ -542,7 +542,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
     memcpy(address->name, p->ifr_name, i);
     address->name[i] = '\0';
     __e2a_s(address->name);
-    count_names++;
+    ++count_names;
 
     address->address.address4 = *((struct sockaddr_in*) &p->ifr_addr);
 
@@ -556,7 +556,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
     address->netmask.netmask4 = *((struct sockaddr_in*) &p->ifr_addr);
     address->netmask.netmask4.sin_family = AF_INET;
     address->is_internal = flg.ifr_flags & IFF_LOOPBACK ? 1 : 0;
-    address++;
+    ++address;
   }
 
 #undef ADDR_SIZE
@@ -590,7 +590,7 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
   nfds = (uintptr_t) loop->watchers[loop->nwatchers + 1];
   if (events != NULL)
     /* Invalidate events with same file descriptor */
-    for (i = 0; i < nfds; i++)
+    for (i = 0; i < nfds; ++i)
       if ((int) events[i].fd == fd)
         events[i].fd = -1;
 
@@ -944,7 +944,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     assert(loop->watchers != NULL);
     loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
-    for (i = 0; i < nfds; i++) {
+    for (i = 0; i < nfds; ++i) {
       pe = events + i;
       fd = pe->fd;
 
@@ -955,7 +955,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       ep = loop->ep;
       if (pe->is_msg) {
         os390_message_queue_handler(ep);
-        nevents++;
+        ++nevents;
         continue;
       }
 
@@ -994,7 +994,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
           uv__metrics_update_idle_time(loop);
           w->cb(loop, w, pe->events);
         }
-        nevents++;
+        ++nevents;
       }
     }
 

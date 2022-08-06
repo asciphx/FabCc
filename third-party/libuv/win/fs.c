@@ -1265,7 +1265,7 @@ void fs__mktemp(uv_fs_t* req, uv__fs_mktemp_func func) {
     }
 
     cp = ep - num_x;
-    for (i = 0; i < num_x; i++) {
+    for (i = 0; i < num_x; ++i) {
       *cp++ = tempchars[v % num_chars];
       v /= num_chars;
     }
@@ -2429,7 +2429,7 @@ static void fs__create_junction(uv_fs_t* req, const WCHAR* path,
   path_buf_len += JUNCTION_PREFIX_LEN;
 
   add_slash = 0;
-  for (i = is_long_path ? LONG_PATH_PREFIX_LEN : 0; path[i] != L'\0'; i++) {
+  for (i = is_long_path ? LONG_PATH_PREFIX_LEN : 0; path[i] != L'\0'; ++i) {
     if (IS_SLASH(path[i])) {
       add_slash = 1;
       continue;
@@ -2455,7 +2455,7 @@ static void fs__create_junction(uv_fs_t* req, const WCHAR* path,
   /* Copy the print name of the target path */
   start = path_buf_len;
   add_slash = 0;
-  for (i = is_long_path ? LONG_PATH_PREFIX_LEN : 0; path[i] != L'\0'; i++) {
+  for (i = is_long_path ? LONG_PATH_PREFIX_LEN : 0; path[i] != L'\0'; ++i) {
     if (IS_SLASH(path[i])) {
       add_slash = 1;
       continue;
@@ -2471,7 +2471,7 @@ static void fs__create_junction(uv_fs_t* req, const WCHAR* path,
   len = path_buf_len - start;
   if (len == 2) {
     path_buf[path_buf_len++] = L'\\';
-    len++;
+    ++len;
   }
 
   /* Set the info about the print name */

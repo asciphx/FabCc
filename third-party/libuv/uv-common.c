@@ -251,7 +251,7 @@ int uv_ip6_addr(const char* ip, int port, struct sockaddr_in6* addr) {
     address_part[address_part_size] = '\0';
     ip = address_part;
 
-    zone_index++; /* skip '%' */
+    ++zone_index; /* skip '%' */
     /* NOTE: unknown interface (id=0) is silently ignored */
 #ifdef _WIN32
     addr->sin6_scope_id = atoi(zone_index);
@@ -591,7 +591,7 @@ size_t uv__count_bufs(const uv_buf_t bufs[], unsigned int nbufs) {
   size_t bytes;
 
   bytes = 0;
-  for (i = 0; i < nbufs; i++)
+  for (i = 0; i < nbufs; ++i)
     bytes += (size_t) bufs[i].len;
 
   return bytes;
@@ -870,7 +870,7 @@ int uv_read_start(uv_stream_t* stream,
 void uv_os_free_environ(uv_env_item_t* envitems, int count) {
   int i;
 
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     uv__free(envitems[i].name);
   }
 
@@ -881,7 +881,7 @@ void uv_os_free_environ(uv_env_item_t* envitems, int count) {
 void uv_free_cpu_info(uv_cpu_info_t* cpu_infos, int count) {
   int i;
 
-  for (i = 0; i < count; i++)
+  for (i = 0; i < count; ++i)
     uv__free(cpu_infos[i].model);
 
   uv__free(cpu_infos);

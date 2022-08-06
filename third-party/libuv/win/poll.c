@@ -241,7 +241,7 @@ static SOCKET uv__fast_poll_get_peer_socket(uv_loop_t* loop,
   SOCKET peer_socket;
 
   index = -1;
-  for (i = 0; (size_t) i < ARRAY_SIZE(uv_msafd_provider_ids); i++) {
+  for (i = 0; (size_t) i < ARRAY_SIZE(uv_msafd_provider_ids); ++i) {
     if (memcmp((void*) &protocol_info->ProviderId,
                (void*) &uv_msafd_provider_ids[i],
                sizeof protocol_info->ProviderId) == 0) {

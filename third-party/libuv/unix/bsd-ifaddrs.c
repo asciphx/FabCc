@@ -123,7 +123,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
     address->is_internal = !!(ent->ifa_flags & IFF_LOOPBACK);
 
-    address++;
+    ++address;
   }
 
 #if !(defined(__CYGWIN__) || defined(__MSYS__)) && !defined(__GNU__)
@@ -134,13 +134,13 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
     address = *addresses;
 
-    for (i = 0; i < *count; i++) {
+    for (i = 0; i < *count; ++i) {
       if (strcmp(address->name, ent->ifa_name) == 0) {
         struct sockaddr_dl* sa_addr;
         sa_addr = (struct sockaddr_dl*)(ent->ifa_addr);
         memcpy(address->phys_addr, LLADDR(sa_addr), sizeof(address->phys_addr));
       }
-      address++;
+      ++address;
     }
   }
 #endif
@@ -155,7 +155,7 @@ void uv_free_interface_addresses(uv_interface_address_t* addresses,
                                  int count) {
   int i;
 
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     uv__free(addresses[i].name);
   }
 

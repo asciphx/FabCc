@@ -244,7 +244,7 @@ void uv__tcp_endgame(uv_loop_t* loop, uv_tcp_t* handle) {
 
   if (!(handle->flags & UV_HANDLE_CONNECTION) && handle->tcp.serv.accept_reqs) {
     if (handle->flags & UV_HANDLE_EMULATE_IOCP) {
-      for (i = 0; i < uv_simultaneous_server_accepts; i++) {
+      for (i = 0; i < uv_simultaneous_server_accepts; ++i) {
         req = &handle->tcp.serv.accept_reqs[i];
         if (req->wait_handle != INVALID_HANDLE_VALUE) {
           UnregisterWait(req->wait_handle);
@@ -274,7 +274,7 @@ void uv__tcp_endgame(uv_loop_t* loop, uv_tcp_t* handle) {
   }
 
   uv__handle_close(handle);
-  loop->active_tcp_streams--;
+  --loop->active_tcp_streams;
 }
 
 
@@ -410,7 +410,7 @@ static void uv__tcp_queue_accept(uv_tcp_t* handle, uv_tcp_accept_t* req) {
   if (accept_socket == INVALID_SOCKET) {
     SET_REQ_ERROR(req, WSAGetLastError());
     uv__insert_pending_req(loop, (uv_req_t*)req);
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     return;
   }
 
@@ -418,7 +418,7 @@ static void uv__tcp_queue_accept(uv_tcp_t* handle, uv_tcp_accept_t* req) {
   if (!SetHandleInformation((HANDLE) accept_socket, HANDLE_FLAG_INHERIT, 0)) {
     SET_REQ_ERROR(req, GetLastError());
     uv__insert_pending_req(loop, (uv_req_t*)req);
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     closesocket(accept_socket);
     return;
   }
@@ -442,12 +442,12 @@ static void uv__tcp_queue_accept(uv_tcp_t* handle, uv_tcp_accept_t* req) {
   if (UV_SUCCEEDED_WITHOUT_IOCP(success)) {
     /* Process the req without IOCP. */
     req->accept_socket = accept_socket;
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     uv__insert_pending_req(loop, (uv_req_t*)req);
   } else if (UV_SUCCEEDED_WITH_IOCP(success)) {
     /* The req will be processed with IOCP. */
     req->accept_socket = accept_socket;
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     if (handle->flags & UV_HANDLE_EMULATE_IOCP &&
         req->wait_handle == INVALID_HANDLE_VALUE &&
         !RegisterWaitForSingleObject(&req->wait_handle,
@@ -460,7 +460,7 @@ static void uv__tcp_queue_accept(uv_tcp_t* handle, uv_tcp_accept_t* req) {
     /* Make this req pending reporting an error. */
     SET_REQ_ERROR(req, WSAGetLastError());
     uv__insert_pending_req(loop, (uv_req_t*)req);
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     /* Destroy the preallocated client socket. */
     closesocket(accept_socket);
     /* Destroy the event handle */
@@ -522,7 +522,7 @@ static void uv__tcp_queue_read(uv_loop_t* loop, uv_tcp_t* handle) {
                    NULL);
 
   handle->flags |= UV_HANDLE_READ_PENDING;
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
 
   if (UV_SUCCEEDED_WITHOUT_IOCP(result == 0)) {
     /* Process the req without IOCP. */
@@ -617,7 +617,7 @@ int uv__tcp_listen(uv_tcp_t* handle, int backlog, uv_connection_cb cb) {
       uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
     }
 
-    for (i = 0; i < simultaneous_accepts; i++) {
+    for (i = 0; i < simultaneous_accepts; ++i) {
       req = &handle->tcp.serv.accept_reqs[i];
       UV_REQ_INIT(req, UV_ACCEPT);
       req->accept_socket = INVALID_SOCKET;
@@ -639,7 +639,7 @@ int uv__tcp_listen(uv_tcp_t* handle, int backlog, uv_connection_cb cb) {
     /* Initialize other unused requests too, because uv_tcp_endgame doesn't
      * know how many requests were initialized, so it will try to clean up
      * {uv_simultaneous_server_accepts} requests. */
-    for (i = simultaneous_accepts; i < uv_simultaneous_server_accepts; i++) {
+    for (i = simultaneous_accepts; i < uv_simultaneous_server_accepts; ++i) {
       req = &handle->tcp.serv.accept_reqs[i];
       UV_REQ_INIT(req, UV_ACCEPT);
       req->accept_socket = INVALID_SOCKET;
@@ -701,7 +701,7 @@ int uv__tcp_accept(uv_tcp_t* server, uv_tcp_t* client) {
       /* We better be switching to a single pending accept. */
       assert(server->flags & UV_HANDLE_TCP_SINGLE_ACCEPT);
 
-      server->tcp.serv.processed_accepts++;
+      ++server->tcp.serv.processed_accepts;
 
       if (server->tcp.serv.processed_accepts >= uv_simultaneous_server_accepts) {
         server->tcp.serv.processed_accepts = 0;
@@ -716,7 +716,7 @@ int uv__tcp_accept(uv_tcp_t* server, uv_tcp_t* client) {
     }
   }
 
-  loop->active_tcp_streams++;
+  ++loop->active_tcp_streams;
 
   return err;
 }
@@ -851,7 +851,7 @@ out:
 
   if (handle->delayed_error != 0) {
     /* Process the req without IOCP. */
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     REGISTER_HANDLE_REQ(loop, handle, req);
     uv__insert_pending_req(loop, (uv_req_t*)req);
     return 0;
@@ -867,12 +867,12 @@ out:
 
   if (UV_SUCCEEDED_WITHOUT_IOCP(success)) {
     /* Process the req without IOCP. */
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     REGISTER_HANDLE_REQ(loop, handle, req);
     uv__insert_pending_req(loop, (uv_req_t*)req);
   } else if (UV_SUCCEEDED_WITH_IOCP(success)) {
     /* The req will be processed with IOCP. */
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     REGISTER_HANDLE_REQ(loop, handle, req);
   } else {
     return WSAGetLastError();
@@ -941,15 +941,15 @@ int uv__tcp_write(uv_loop_t* loop,
   if (UV_SUCCEEDED_WITHOUT_IOCP(result == 0)) {
     /* Request completed immediately. */
     req->u.io.queued_bytes = 0;
-    handle->reqs_pending++;
-    handle->stream.conn.write_reqs_pending++;
+    ++handle->reqs_pending;
+    ++handle->stream.conn.write_reqs_pending;
     REGISTER_HANDLE_REQ(loop, handle, req);
     uv__insert_pending_req(loop, (uv_req_t*) req);
   } else if (UV_SUCCEEDED_WITH_IOCP(result == 0)) {
     /* Request queued by the kernel. */
     req->u.io.queued_bytes = uv__count_bufs(bufs, nbufs);
-    handle->reqs_pending++;
-    handle->stream.conn.write_reqs_pending++;
+    ++handle->reqs_pending;
+    ++handle->stream.conn.write_reqs_pending;
     REGISTER_HANDLE_REQ(loop, handle, req);
     handle->write_queue_size += req->u.io.queued_bytes;
     if (handle->flags & UV_HANDLE_EMULATE_IOCP &&
@@ -962,8 +962,8 @@ int uv__tcp_write(uv_loop_t* loop,
   } else {
     /* Send failed due to an error, report it later */
     req->u.io.queued_bytes = 0;
-    handle->reqs_pending++;
-    handle->stream.conn.write_reqs_pending++;
+    ++handle->reqs_pending;
+    ++handle->stream.conn.write_reqs_pending;
     REGISTER_HANDLE_REQ(loop, handle, req);
     SET_REQ_ERROR(req, WSAGetLastError());
     uv__insert_pending_req(loop, (uv_req_t*) req);
@@ -1157,7 +1157,7 @@ void uv__process_tcp_write_req(uv_loop_t* loop, uv_tcp_t* handle,
     req->cb(req, err);
   }
 
-  handle->stream.conn.write_reqs_pending--;
+  --handle->stream.conn.write_reqs_pending;
   if (handle->stream.conn.write_reqs_pending == 0) {
     if (handle->flags & UV_HANDLE_CLOSING) {
       closesocket(handle->socket);
@@ -1248,7 +1248,7 @@ void uv__process_tcp_connect_req(uv_loop_t* loop, uv_tcp_t* handle,
                           0) == 0) {
       uv__connection_init((uv_stream_t*)handle);
       handle->flags |= UV_HANDLE_READABLE | UV_HANDLE_WRITABLE;
-      loop->active_tcp_streams++;
+      ++loop->active_tcp_streams;
     } else {
       err = WSAGetLastError();
     }
@@ -1331,7 +1331,7 @@ int uv__tcp_xfer_import(uv_tcp_t* tcp,
     tcp->flags |= UV_HANDLE_READABLE | UV_HANDLE_WRITABLE;
   }
 
-  tcp->loop->active_tcp_streams++;
+  ++tcp->loop->active_tcp_streams;
   return 0;
 }
 
@@ -1471,7 +1471,7 @@ void uv__tcp_close(uv_loop_t* loop, uv_tcp_t* tcp) {
       /* First close the incoming sockets to cancel the accept operations before
        * we free their resources. */
       unsigned int i;
-      for (i = 0; i < uv_simultaneous_server_accepts; i++) {
+      for (i = 0; i < uv_simultaneous_server_accepts; ++i) {
         uv_tcp_accept_t* req = &tcp->tcp.serv.accept_reqs[i];
         if (req->accept_socket != INVALID_SOCKET) {
           closesocket(req->accept_socket);

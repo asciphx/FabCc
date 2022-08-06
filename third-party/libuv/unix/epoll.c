@@ -59,7 +59,7 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
   nfds = (uintptr_t) loop->watchers[loop->nwatchers + 1];
   if (events != NULL)
     /* Invalidate events with same file descriptor */
-    for (i = 0; i < nfds; i++)
+    for (i = 0; i < nfds; ++i)
       if (events[i].data.fd == fd)
         events[i].data.fd = -1;
 
@@ -314,7 +314,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
     }
 
-    for (i = 0; i < nfds; i++) {
+    for (i = 0; i < nfds; ++i) {
       pe = events + i;
       fd = pe->data.fd;
 
@@ -374,7 +374,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
           w->cb(loop, w, pe->events);
         }
 
-        nevents++;
+        ++nevents;
       }
     }
 

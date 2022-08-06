@@ -283,7 +283,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     assert(loop->watchers != NULL);
     loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
-    for (i = 0; i < nfds; i++) {
+    for (i = 0; i < nfds; ++i) {
       ev = events + i;
       fd = ev->ident;
 
@@ -297,7 +297,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
             break;
           }
         }
-        nevents++;
+        ++nevents;
         continue;
       }
 
@@ -324,7 +324,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
         assert(w->pevents == POLLIN);
         uv__metrics_update_idle_time(loop);
         w->cb(loop, w, ev->fflags); /* XXX always uv__fs_event() */
-        nevents++;
+        ++nevents;
         continue;
       }
 
@@ -387,7 +387,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
         w->cb(loop, w, revents);
       }
 
-      nevents++;
+      ++nevents;
     }
 
     if (loop->flags & UV_LOOP_REAP_CHILDREN) {
@@ -452,7 +452,7 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
     return;
 
   /* Invalidate events with same file descriptor */
-  for (i = 0; i < nfds; i++)
+  for (i = 0; i < nfds; ++i)
     if ((int) events[i].ident == fd && events[i].filter != EVFILT_PROC)
       events[i].ident = -1;
 }

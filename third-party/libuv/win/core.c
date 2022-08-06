@@ -351,7 +351,7 @@ void uv__loop_close(uv_loop_t* loop) {
   uv__handle_closing(&loop->wq_async);
   uv__handle_close(&loop->wq_async);
 
-  for (i = 0; i < ARRAY_SIZE(loop->poll_peer_sockets); i++) {
+  for (i = 0; i < ARRAY_SIZE(loop->poll_peer_sockets); ++i) {
     SOCKET sock = loop->poll_peer_sockets[i];
     if (sock != 0 && sock != INVALID_SOCKET)
       closesocket(sock);
@@ -443,7 +443,7 @@ static void uv__poll_wine(uv_loop_t* loop, DWORD timeout) {
     reset_timeout = 0;
   }
 
-  for (repeat = 0; ; repeat++) {
+  for (repeat = 0; ; ++repeat) {
     /* Only need to set the provider_entry_time if timeout != 0. The function
      * will return early if the loop isn't configured with UV_METRICS_IDLE_TIME.
      */
@@ -523,7 +523,7 @@ static void uv__poll(uv_loop_t* loop, DWORD timeout) {
     reset_timeout = 0;
   }
 
-  for (repeat = 0; ; repeat++) {
+  for (repeat = 0; ; ++repeat) {
     /* Only need to set the provider_entry_time if timeout != 0. The function
      * will return early if the loop isn't configured with UV_METRICS_IDLE_TIME.
      */
@@ -550,7 +550,7 @@ static void uv__poll(uv_loop_t* loop, DWORD timeout) {
     uv__metrics_update_idle_time(loop);
 
     if (success) {
-      for (i = 0; i < count; i++) {
+      for (i = 0; i < count; ++i) {
         /* Package was dequeued, but see if it is not a empty package
          * meant only to wake us up.
          */
@@ -619,7 +619,7 @@ int uv_run(uv_loop_t *loop, uv_run_mode mode) {
 
     /* Process immediate callbacks (e.g. write_cb) a small fixed number of
      * times to avoid loop starvation.*/
-    for (r = 0; r < 8 && loop->pending_reqs_tail != NULL; r++)
+    for (r = 0; r < 8 && loop->pending_reqs_tail != NULL; ++r)
       uv__process_reqs(loop);
 
     /* Run one final update on the provider_idle_time in case uv__poll*

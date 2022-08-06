@@ -310,17 +310,17 @@ static void uv__udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
       /* Process the req without IOCP. */
       handle->flags |= UV_HANDLE_READ_PENDING;
       req->u.io.overlapped.InternalHigh = bytes;
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
       uv__insert_pending_req(loop, req);
     } else if (UV_SUCCEEDED_WITH_IOCP(result == 0)) {
       /* The req will be processed with IOCP. */
       handle->flags |= UV_HANDLE_READ_PENDING;
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
     } else {
       /* Make this req pending reporting an error. */
       SET_REQ_ERROR(req, WSAGetLastError());
       uv__insert_pending_req(loop, req);
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
     }
 
   } else {
@@ -342,17 +342,17 @@ static void uv__udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
       /* Process the req without IOCP. */
       handle->flags |= UV_HANDLE_READ_PENDING;
       req->u.io.overlapped.InternalHigh = bytes;
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
       uv__insert_pending_req(loop, req);
     } else if (UV_SUCCEEDED_WITH_IOCP(result == 0)) {
       /* The req will be processed with IOCP. */
       handle->flags |= UV_HANDLE_READ_PENDING;
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
     } else {
       /* Make this req pending reporting an error. */
       SET_REQ_ERROR(req, WSAGetLastError());
       uv__insert_pending_req(loop, req);
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
     }
   }
 }
@@ -376,7 +376,7 @@ int uv__udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloc_cb,
 
   handle->flags |= UV_HANDLE_READING;
   INCREASE_ACTIVE_COUNT(loop, handle);
-  loop->active_udp_streams++;
+  ++loop->active_udp_streams;
 
   handle->recv_cb = recv_cb;
   handle->alloc_cb = alloc_cb;
@@ -393,7 +393,7 @@ int uv__udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloc_cb,
 int uv__udp_recv_stop(uv_udp_t* handle) {
   if (handle->flags & UV_HANDLE_READING) {
     handle->flags &= ~UV_HANDLE_READING;
-    handle->loop->active_udp_streams--;
+    --handle->loop->active_udp_streams;
     DECREASE_ACTIVE_COUNT(loop, handle);
   }
 
@@ -429,17 +429,17 @@ static int uv__send(uv_udp_send_t* req,
   if (UV_SUCCEEDED_WITHOUT_IOCP(result == 0)) {
     /* Request completed immediately. */
     req->u.io.queued_bytes = 0;
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     handle->send_queue_size += req->u.io.queued_bytes;
-    handle->send_queue_count++;
+    ++handle->send_queue_count;
     REGISTER_HANDLE_REQ(loop, handle, req);
     uv__insert_pending_req(loop, (uv_req_t*)req);
   } else if (UV_SUCCEEDED_WITH_IOCP(result == 0)) {
     /* Request queued by the kernel. */
     req->u.io.queued_bytes = uv__count_bufs(bufs, nbufs);
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     handle->send_queue_size += req->u.io.queued_bytes;
-    handle->send_queue_count++;
+    ++handle->send_queue_count;
     REGISTER_HANDLE_REQ(loop, handle, req);
   } else {
     /* Send failed due to an error. */
@@ -570,7 +570,7 @@ void uv__process_udp_send_req(uv_loop_t* loop, uv_udp_t* handle,
   assert(handle->send_queue_size >= req->u.io.queued_bytes);
   assert(handle->send_queue_count >= 1);
   handle->send_queue_size -= req->u.io.queued_bytes;
-  handle->send_queue_count--;
+  --handle->send_queue_count;
 
   UNREGISTER_HANDLE_REQ(loop, handle, req);
 

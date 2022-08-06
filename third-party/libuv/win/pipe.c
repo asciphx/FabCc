@@ -223,7 +223,7 @@ static int uv__pipe_server(
     }
 
     /* Pipe name collision.  Increment the random number and try again. */
-    random++;
+    ++random;
   }
 
   *pipeHandle_ptr = pipeHandle;
@@ -718,7 +718,7 @@ int uv_pipe_bind(uv_pipe_t* handle, const char* name) {
     uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
   }
 
-  for (i = 0; i < handle->pipe.serv.pending_instances; i++) {
+  for (i = 0; i < handle->pipe.serv.pending_instances; ++i) {
     req = &handle->pipe.serv.accept_reqs[i];
     UV_REQ_INIT(req, UV_ACCEPT);
     req->data = handle;
@@ -868,7 +868,7 @@ void uv_pipe_connect(uv_connect_t* req, uv_pipe_t* handle,
       }
 
       REGISTER_HANDLE_REQ(loop, handle, req);
-      handle->reqs_pending++;
+      ++handle->reqs_pending;
 
       return;
     }
@@ -881,7 +881,7 @@ void uv_pipe_connect(uv_connect_t* req, uv_pipe_t* handle,
   req->u.connect.duplex_flags = duplex_flags;
   SET_REQ_SUCCESS(req);
   uv__insert_pending_req(loop, (uv_req_t*) req);
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
   REGISTER_HANDLE_REQ(loop, handle, req);
   return;
 
@@ -897,7 +897,7 @@ error:
   /* Make this req pending reporting an error. */
   SET_REQ_ERROR(req, err);
   uv__insert_pending_req(loop, (uv_req_t*) req);
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
   REGISTER_HANDLE_REQ(loop, handle, req);
   return;
 }
@@ -985,7 +985,7 @@ void uv__pipe_close(uv_loop_t* loop, uv_pipe_t* handle) {
   }
 
   if (handle->flags & UV_HANDLE_PIPESERVER) {
-    for (i = 0; i < handle->pipe.serv.pending_instances; i++) {
+    for (i = 0; i < handle->pipe.serv.pending_instances; ++i) {
       pipeHandle = handle->pipe.serv.accept_reqs[i].pipeHandle;
       if (pipeHandle != INVALID_HANDLE_VALUE) {
         CloseHandle(pipeHandle);
@@ -1017,7 +1017,7 @@ static void uv__pipe_queue_accept(uv_loop_t* loop, uv_pipe_t* handle,
   if (!firstInstance && !pipe_alloc_accept(loop, handle, req, FALSE)) {
     SET_REQ_ERROR(req, GetLastError());
     uv__insert_pending_req(loop, (uv_req_t*) req);
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     return;
   }
 
@@ -1037,12 +1037,12 @@ static void uv__pipe_queue_accept(uv_loop_t* loop, uv_pipe_t* handle,
       SET_REQ_ERROR(req, GetLastError());
     }
     uv__insert_pending_req(loop, (uv_req_t*) req);
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     return;
   }
 
   /* Wait for completion via IOCP */
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
 }
 
 
@@ -1062,7 +1062,7 @@ int uv__pipe_accept(uv_pipe_t* server, uv_stream_t* client) {
 
     q = QUEUE_HEAD(&server->pipe.conn.ipc_xfer_queue);
     QUEUE_REMOVE(q);
-    server->pipe.conn.ipc_xfer_queue_length--;
+    --server->pipe.conn.ipc_xfer_queue_length;
     item = QUEUE_DATA(q, uv__ipc_xfer_queue_item_t, member);
 
     err = uv__tcp_xfer_import(
@@ -1136,7 +1136,7 @@ int uv__pipe_listen(uv_pipe_t* handle, int backlog, uv_connection_cb cb) {
   /* First pipe handle should have already been created in uv_pipe_bind */
   assert(handle->pipe.serv.accept_reqs[0].pipeHandle != INVALID_HANDLE_VALUE);
 
-  for (i = 0; i < handle->pipe.serv.pending_instances; i++) {
+  for (i = 0; i < handle->pipe.serv.pending_instances; ++i) {
     uv__pipe_queue_accept(loop, handle, &handle->pipe.serv.accept_reqs[i], i == 0);
   }
 
@@ -1336,13 +1336,13 @@ static void uv__pipe_queue_read(uv_loop_t* loop, uv_pipe_t* handle) {
   /* Start the eof timer if there is one */
   eof_timer_start(handle);
   handle->flags |= UV_HANDLE_READ_PENDING;
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
   return;
 
 error:
   uv__insert_pending_req(loop, (uv_req_t*)req);
   handle->flags |= UV_HANDLE_READ_PENDING;
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
 }
 
 
@@ -1440,7 +1440,7 @@ static int uv__build_coalesced_write_req(uv_write_t* user_req,
 
   /* Compute combined size of all combined buffers from `bufs`. */
   data_length = 0;
-  for (i = 0; i < nbufs; i++)
+  for (i = 0; i < nbufs; ++i)
     data_length += bufs[i].len;
 
   /* The total combined size of data buffers should not exceed UINT32_MAX,
@@ -1466,7 +1466,7 @@ static int uv__build_coalesced_write_req(uv_write_t* user_req,
 
   /* Copy data buffers to the heap buffer. */
   data_start = &heap_buffer[heap_buffer_offset];
-  for (i = 0; i < nbufs; i++) {
+  for (i = 0; i < nbufs; ++i) {
     memcpy(&heap_buffer[heap_buffer_offset],
            bufs[i].base,
            bufs[i].len);               /* copy (c) */
@@ -1544,8 +1544,8 @@ static int uv__pipe_write_data(uv_loop_t* loop,
     }
 
     REGISTER_HANDLE_REQ(loop, handle, req);
-    handle->reqs_pending++;
-    handle->stream.conn.write_reqs_pending++;
+    ++handle->reqs_pending;
+    ++handle->stream.conn.write_reqs_pending;
     POST_COMPLETION_FOR_REQ(loop, req);
     return 0;
   } else if (handle->flags & UV_HANDLE_NON_OVERLAPPED_PIPE) {
@@ -1592,8 +1592,8 @@ static int uv__pipe_write_data(uv_loop_t* loop,
     req->event_handle = NULL;
 
     REGISTER_HANDLE_REQ(loop, handle, req);
-    handle->reqs_pending++;
-    handle->stream.conn.write_reqs_pending++;
+    ++handle->reqs_pending;
+    ++handle->stream.conn.write_reqs_pending;
     return 0;
   } else {
     result = WriteFile(handle->handle,
@@ -1625,8 +1625,8 @@ static int uv__pipe_write_data(uv_loop_t* loop,
   }
 
   REGISTER_HANDLE_REQ(loop, handle, req);
-  handle->reqs_pending++;
-  handle->stream.conn.write_reqs_pending++;
+  ++handle->reqs_pending;
+  ++handle->stream.conn.write_reqs_pending;
 
   return 0;
 }
@@ -1664,7 +1664,7 @@ int uv__pipe_write_ipc(uv_loop_t* loop,
 
   /* Compute the combined size of data buffers. */
   data_length = 0;
-  for (i = 0; i < data_buf_count; i++)
+  for (i = 0; i < data_buf_count; ++i)
     data_length += data_bufs[i].len;
   if (data_length > UINT32_MAX)
     return WSAENOBUFS; /* Maps to UV_ENOBUFS. */
@@ -1730,7 +1730,7 @@ int uv__pipe_write_ipc(uv_loop_t* loop,
     frame_header.flags |= UV__IPC_FRAME_HAS_DATA;
     frame_header.data_length = (uint32_t) data_length;
     /* Add data buffers to buffers list. */
-    for (i = 0; i < data_buf_count; i++)
+    for (i = 0; i < data_buf_count; ++i)
       bufs[buf_index++] = data_bufs[i];
   }
 
@@ -1813,7 +1813,7 @@ static void uv__pipe_queue_ipc_xfer_info(
   item->xfer_info = *xfer_info;
 
   QUEUE_INSERT_TAIL(&handle->pipe.conn.ipc_xfer_queue, &item->member);
-  handle->pipe.conn.ipc_xfer_queue_length++;
+  ++handle->pipe.conn.ipc_xfer_queue_length;
 }
 
 
@@ -2061,7 +2061,7 @@ void uv__process_pipe_write_req(uv_loop_t* loop, uv_pipe_t* handle,
     req->cb(req, uv_translate_sys_error(err));
   }
 
-  handle->stream.conn.write_reqs_pending--;
+  --handle->stream.conn.write_reqs_pending;
 
   if (handle->flags & UV_HANDLE_NON_OVERLAPPED_PIPE &&
       handle->pipe.conn.non_overlapped_writes_tail) {

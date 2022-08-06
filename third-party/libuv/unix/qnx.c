@@ -127,7 +127,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   if (*cpu_infos == NULL)
     return UV_ENOMEM;
 
-  for (i = 0; i < num_cpus; i++) {
+  for (i = 0; i < num_cpus; ++i) {
     (*cpu_infos)[i].model = strdup(&strings->data[cpuinfo->name]);
     (*cpu_infos)[i].speed = cpuinfo->speed;
     SYSPAGE_ARRAY_ADJ_OFFSET(cpuinfo, cpuinfo, cpuinfo_size);

@@ -100,7 +100,7 @@ static int uv__async_spin(uv_async_t* handle) {
     /* 997 is not completely chosen at random. It's a prime number, acyclical
      * by nature, and should therefore hopefully dampen sympathetic resonance.
      */
-    for (i = 0; i < 997; i++) {
+    for (i = 0; i < 997; ++i) {
       /* rc=0 -- handle is not pending.
        * rc=1 -- handle is pending, other thread is still working with it.
        * rc=2 -- handle is pending, other thread is done.

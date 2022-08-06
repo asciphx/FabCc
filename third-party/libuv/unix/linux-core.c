@@ -191,7 +191,7 @@ int uv_resident_set_memory(size_t* rss) {
   if (s == NULL)
     goto err;
 
-  for (i = 1; i <= 22; i++) {
+  for (i = 1; i <= 22; ++i) {
     s = strchr(s + 1, ' ');
     if (s == NULL)
       goto err;
@@ -254,7 +254,7 @@ static int uv__cpu_num(FILE* statfile_fp, unsigned int* numcpus) {
   while (fgets(buf, sizeof(buf), statfile_fp)) {
     if (strncmp(buf, "cpu", 3))
       break;
-    num++;
+    ++num;
   }
 
   if (num == 0)
@@ -319,7 +319,7 @@ out:
 static void read_speeds(unsigned int numcpus, uv_cpu_info_t* ci) {
   unsigned int num;
 
-  for (num = 0; num < numcpus; num++)
+  for (num = 0; num < numcpus; ++num)
     ci[num].speed = read_cpufreq(num) / 1000;
 }
 
@@ -461,7 +461,7 @@ static int read_models(unsigned int numcpus, uv_cpu_info_t* ci) {
           return UV_EINVAL;
         }
 
-        for (part_idx = 0; part_idx < ARRAY_SIZE(arm_chips); part_idx++) {
+        for (part_idx = 0; part_idx < ARRAY_SIZE(arm_chips); ++part_idx) {
           if (model_id == arm_chips[part_idx].id) {
             model = uv__strdup(arm_chips[part_idx].name);
             if (model == NULL) {
@@ -560,7 +560,7 @@ static int read_times(FILE* statfile_fp,
       int r = sscanf(buf, "cpu%u ", &n);
       assert(r == 1);
       (void) r;  /* silence build warning */
-      for (len = sizeof("cpu0"); n /= 10; len++);
+      for (len = sizeof("cpu0"); n /= 10; ++len);
     }
 
     /* Line contains user, nice, system, idle, iowait, irq, softirq, steal,
@@ -691,7 +691,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
     address->is_internal = !!(ent->ifa_flags & IFF_LOOPBACK);
 
-    address++;
+    ++address;
   }
 
   /* Fill in physical addresses for each interface */
@@ -701,7 +701,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
     address = *addresses;
 
-    for (i = 0; i < (*count); i++) {
+    for (i = 0; i < (*count); ++i) {
       size_t namelen = strlen(ent->ifa_name);
       /* Alias interface share the same physical address */
       if (strncmp(address->name, ent->ifa_name, namelen) == 0 &&
@@ -709,7 +709,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
         sll = (struct sockaddr_ll*)ent->ifa_addr;
         memcpy(address->phys_addr, sll->sll_addr, sizeof(address->phys_addr));
       }
-      address++;
+      ++address;
     }
   }
 
@@ -724,7 +724,7 @@ void uv_free_interface_addresses(uv_interface_address_t* addresses,
   int count) {
   int i;
 
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     uv__free(addresses[i].name);
   }
 

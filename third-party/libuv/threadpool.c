@@ -102,7 +102,7 @@ static void worker(void* arg) {
         continue;
 
       is_slow_work = 1;
-      slow_io_work_running++;
+      ++slow_io_work_running;
 
       q = QUEUE_HEAD(&slow_io_pending_wq);
       QUEUE_REMOVE(q);
@@ -133,7 +133,7 @@ static void worker(void* arg) {
     uv_mutex_lock(&mutex);
     if (is_slow_work) {
       /* `slow_io_work_running` is protected by `mutex`. */
-      slow_io_work_running--;
+      --slow_io_work_running;
     }
   }
 }
@@ -226,11 +226,11 @@ static void init_threads(void) {
   if (uv_sem_init(&sem, 0))
     abort();
 
-  for (i = 0; i < nthreads; i++)
+  for (i = 0; i < nthreads; ++i)
     if (uv_thread_create(threads + i, worker, &sem))
       abort();
 
-  for (i = 0; i < nthreads; i++)
+  for (i = 0; i < nthreads; ++i)
     uv_sem_wait(&sem);
 
   uv_sem_destroy(&sem);

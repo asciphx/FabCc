@@ -605,7 +605,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
 
   assert(result_size == sppi_size);
 
-  for (i = 0; i < cpu_count; i++) {
+  for (i = 0; i < cpu_count; ++i) {
     WCHAR key_name[128];
     HKEY processor_key;
     DWORD cpu_speed;
@@ -675,7 +675,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
  error:
   if (cpu_infos != NULL) {
     /* This is safe because the cpu_infos array is zeroed on allocation. */
-    for (i = 0; i < cpu_count; i++)
+    for (i = 0; i < cpu_count; ++i)
       uv__free(cpu_infos[i].model);
   }
 
@@ -738,7 +738,7 @@ static int address_prefix_match(int family,
       (uint8_t*) &(((struct sockaddr_in *) prefix_address)->sin_addr);
   }
 
-  for (i = 0; i < prefix_len >> 3; i++) {
+  for (i = 0; i < prefix_len >> 3; ++i) {
     if (address_data[i] != prefix_address_data[i])
       return 0;
   }
@@ -889,7 +889,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
                            adapter->FirstUnicastAddress;
          unicast_address != NULL;
          unicast_address = unicast_address->Next) {
-      count++;
+      ++count;
       uv_address_buf_size += sizeof(uv_interface_address_t);
     }
   }
@@ -1010,7 +1010,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
             htonl(0xffffffff << (32 - prefix_len)) : 0;
       }
 
-      uv_address++;
+      ++uv_address;
     }
 
     name_buf += name_size;
@@ -1154,7 +1154,7 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
    * at a drive root, like c:\. Remove it if needed. */
   if (path[len - 1] == L'\\' &&
       !(len == 3 && path[1] == L':')) {
-    len--;
+    --len;
     path[len] = L'\0';
   }
 
@@ -1387,7 +1387,7 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
   if (env == NULL)
     return 0;
 
-  for (penv = env, i = 0; *penv != L'\0'; penv += wcslen(penv) + 1, i++);
+  for (penv = env, i = 0; *penv != L'\0'; penv += wcslen(penv) + 1, ++i);
 
   *envitems = uv__calloc(i, sizeof(**envitems));
   if (*envitems == NULL) {
@@ -1419,7 +1419,7 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
     envitem->name = buf;
     envitem->value = ptr + 1;
 
-    cnt++;
+    ++cnt;
 
   do_continue:
     penv += wcslen(penv) + 1;
@@ -1433,7 +1433,7 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
 fail:
   FreeEnvironmentStringsW(env);
 
-  for (i = 0; i < cnt; i++) {
+  for (i = 0; i < cnt; ++i) {
     envitem = &(*envitems)[cnt];
     uv__free(envitem->name);
   }

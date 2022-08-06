@@ -125,7 +125,7 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
     return;
 
   /* Invalidate events with same file descriptor */
-  for (i = 0; i < nfds; i++)
+  for (i = 0; i < nfds; ++i)
     if ((int) events[i].portev_object == fd)
       events[i].portev_object = -1;
 }
@@ -283,7 +283,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     assert(loop->watchers != NULL);
     loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
-    for (i = 0; i < nfds; i++) {
+    for (i = 0; i < nfds; ++i) {
       pe = events + i;
       fd = pe->portev_object;
 
@@ -310,7 +310,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
         w->cb(loop, w, pe->portev_events);
       }
 
-      nevents++;
+      ++nevents;
 
       if (w != loop->watchers[fd])
         continue;  /* Disabled by callback. */
@@ -673,7 +673,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   /* Get count of cpus */
   lookup_instance = 0;
   while ((ksp = kstat_lookup(kc, (char*) "cpu_info", lookup_instance, NULL))) {
-    lookup_instance++;
+    ++lookup_instance;
   }
 
   *cpu_infos = uv__malloc(lookup_instance * sizeof(**cpu_infos));
@@ -702,8 +702,8 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
       cpu_info->model = uv__strdup(KSTAT_NAMED_STR_PTR(knp));
     }
 
-    lookup_instance++;
-    cpu_info++;
+    ++lookup_instance;
+    ++cpu_info;
   }
 
   cpu_info = *cpu_infos;
@@ -739,8 +739,8 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
       cpu_info->cpu_times.nice = 0;
     }
 
-    lookup_instance++;
-    cpu_info++;
+    ++lookup_instance;
+    ++cpu_info;
   }
 
   kstat_close(kc);
@@ -772,7 +772,7 @@ static int uv__set_phys_addr(uv_interface_address_t* address,
   /* This appears to only work as root */
   sa_addr = (struct sockaddr_dl*)(ent->ifa_addr);
   memcpy(address->phys_addr, LLADDR(sa_addr), sizeof(address->phys_addr));
-  for (i = 0; i < sizeof(address->phys_addr); i++) {
+  for (i = 0; i < sizeof(address->phys_addr); ++i) {
     /* Check that all bytes of phys_addr are zero. */
     if (address->phys_addr[i] != 0)
       return 0;
@@ -868,7 +868,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
                            (ent->ifa_flags & IFF_LOOPBACK));
 
     uv__set_phys_addr(address, ent);
-    address++;
+    ++address;
   }
 
   freeifaddrs(addrs);
@@ -881,7 +881,7 @@ void uv_free_interface_addresses(uv_interface_address_t* addresses,
   int count) {
   int i;
 
-  for (i = 0; i < count; i++) {
+  for (i = 0; i < count; ++i) {
     uv__free(addresses[i].name);
   }
 

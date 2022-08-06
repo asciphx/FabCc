@@ -1004,16 +1004,16 @@ static int uv__stream_recv_cmsg(uv_stream_t* stream, struct msghdr* msg) {
     end = (char*) cmsg + cmsg->cmsg_len;
     count = 0;
     while (start + CMSG_LEN(count * sizeof(*pi)) < end)
-      count++;
+      ++count;
     assert(start + CMSG_LEN(count * sizeof(*pi)) == end);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i) {
       /* Already has accepted fd, queue now */
       if (stream->accepted_fd != -1) {
         err = uv__stream_queue_fd(stream, pi[i]);
         if (err != 0) {
           /* Close rest */
-          for (; i < count; i++)
+          for (; i < count; ++i)
             uv__close(pi[i]);
           return err;
         }
@@ -1569,7 +1569,7 @@ void uv__stream_close(uv_stream_t* handle) {
   /* Close all queued fds */
   if (handle->queued_fds != NULL) {
     queued_fds = handle->queued_fds;
-    for (i = 0; i < queued_fds->offset; i++)
+    for (i = 0; i < queued_fds->offset; ++i)
       uv__close(queued_fds->fds[i]);
     uv__free(handle->queued_fds);
     handle->queued_fds = NULL;

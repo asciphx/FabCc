@@ -134,9 +134,9 @@ static int uv__idna_toascii_label(const char* s, const char* se,
       return UV_EINVAL;
 
     if (c < 128)
-      h++;
+      ++h;
     else
-      todo++;
+      ++todo;
   }
 
   /* Only write "xn--" when there are non-ASCII characters. */
@@ -249,7 +249,7 @@ static int uv__idna_toascii_label(const char* s, const char* se,
       /* No overflow check is needed because |delta| was just
        * divided by 2 and |delta+delta >= delta + delta/h|.
        */
-      h++;
+      ++h;
       delta += delta / h;
 
       for (bias = 0; delta > 35 * 26 / 2; bias += 36)
@@ -257,11 +257,11 @@ static int uv__idna_toascii_label(const char* s, const char* se,
 
       bias += 36 * delta / (delta + 38);
       delta = 0;
-      todo--;
+      --todo;
     }
 
-    delta++;
-    n++;
+    ++delta;
+    ++n;
   }
 
   return 0;

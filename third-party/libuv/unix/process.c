@@ -290,7 +290,7 @@ static void uv__process_child_init(const uv_process_options_t* options,
    * they could get replaced. Example: swapping stdout and stderr; without
    * this fd 2 (stderr) would be duplicated into fd 1, thus making both
    * stdout and stderr go to the same fd, which was not the intention. */
-  for (fd = 0; fd < stdio_count; fd++) {
+  for (fd = 0; fd < stdio_count; ++fd) {
     use_fd = pipes[fd][1];
     if (use_fd < 0 || use_fd >= fd)
       continue;
@@ -308,7 +308,7 @@ static void uv__process_child_init(const uv_process_options_t* options,
 #endif
   }
 
-  for (fd = 0; fd < stdio_count; fd++) {
+  for (fd = 0; fd < stdio_count; ++fd) {
     close_fd = -1;
     use_fd = pipes[fd][1];
 
@@ -543,17 +543,17 @@ static int uv__spawn_set_posix_spawn_file_actions(
    * they could get replaced. Example: swapping stdout and stderr; without
    * this fd 2 (stderr) would be duplicated into fd 1, thus making both
    * stdout and stderr go to the same fd, which was not the intention. */
-  for (fd = 0; fd < stdio_count; fd++) {
+  for (fd = 0; fd < stdio_count; ++fd) {
     use_fd = pipes[fd][1];
     if (use_fd < 0 || use_fd >= fd)
       continue;
     use_fd = stdio_count;
-    for (fd2 = 0; fd2 < stdio_count; fd2++) {
+    for (fd2 = 0; fd2 < stdio_count; ++fd2) {
       /* If we were not setting POSIX_SPAWN_CLOEXEC_DEFAULT, we would need to
        * also consider whether fcntl(fd, F_GETFD) returned without the
        * FD_CLOEXEC flag set. */
       if (pipes[fd2][1] == use_fd) {
-        use_fd++;
+        ++use_fd;
         fd2 = 0;
       }
     }
@@ -568,7 +568,7 @@ static int uv__spawn_set_posix_spawn_file_actions(
   }
 
   /* Second, move the descriptors into their respective places */
-  for (fd = 0; fd < stdio_count; fd++) {
+  for (fd = 0; fd < stdio_count; ++fd) {
     use_fd = pipes[fd][1];
     if (use_fd < 0) {
       if (fd >= 3)
@@ -602,13 +602,13 @@ static int uv__spawn_set_posix_spawn_file_actions(
   }
 
   /* Finally, close all the superfluous descriptors */
-  for (fd = 0; fd < stdio_count; fd++) {
+  for (fd = 0; fd < stdio_count; ++fd) {
     use_fd = pipes[fd][1];
     if (use_fd < stdio_count)
       continue;
 
     /* Check if we already closed this. */
-    for (fd2 = 0; fd2 < fd; fd2++) {
+    for (fd2 = 0; fd2 < fd; ++fd2) {
       if (pipes[fd2][1] == use_fd)
           break;
     }
@@ -634,7 +634,7 @@ char* uv__spawn_find_path_in_env(char** env) {
 
   /* Look for an environment variable called PATH in the
    * provided env array, and return its value if found */
-  for (env_iterator = env; *env_iterator != NULL; env_iterator++) {
+  for (env_iterator = env; *env_iterator != NULL; ++env_iterator) {
     if (strncmp(*env_iterator, path_var, sizeof(path_var) - 1) == 0) {
       /* Found "PATH=" at the beginning of the string */
       return *env_iterator + sizeof(path_var) - 1;
@@ -972,12 +972,12 @@ int uv_spawn(uv_loop_t* loop,
   if (pipes == NULL)
     goto error;
 
-  for (i = 0; i < stdio_count; i++) {
+  for (i = 0; i < stdio_count; ++i) {
     pipes[i][0] = -1;
     pipes[i][1] = -1;
   }
 
-  for (i = 0; i < options->stdio_count; i++) {
+  for (i = 0; i < options->stdio_count; ++i) {
     err = uv__process_init_stdio(options->stdio + i, pipes[i]);
     if (err)
       goto error;
@@ -1020,7 +1020,7 @@ int uv_spawn(uv_loop_t* loop,
     uv__handle_start(process);
   }
 
-  for (i = 0; i < options->stdio_count; i++) {
+  for (i = 0; i < options->stdio_count; ++i) {
     err = uv__process_open_stream(options->stdio + i, pipes[i]);
     if (err == 0)
       continue;
@@ -1038,7 +1038,7 @@ int uv_spawn(uv_loop_t* loop,
 
 error:
   if (pipes != NULL) {
-    for (i = 0; i < stdio_count; i++) {
+    for (i = 0; i < stdio_count; ++i) {
       if (i < options->stdio_count)
         if (options->stdio[i].flags & (UV_INHERIT_FD | UV_INHERIT_STREAM))
           continue;

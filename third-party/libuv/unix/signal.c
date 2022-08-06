@@ -213,7 +213,7 @@ static void uv__signal_handler(int signum) {
            (r == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)));
 
     if (r != -1)
-      handle->caught_signals++;
+      ++handle->caught_signals;
   }
 
   uv__signal_unlock();
@@ -461,7 +461,7 @@ static void uv__signal_event(uv_loop_t* loop,
         handle->signal_cb(handle, handle->signum);
       }
 
-      handle->dispatched_signals++;
+      ++handle->dispatched_signals;
 
       if (handle->flags & UV_SIGNAL_ONE_SHOT)
         uv__signal_stop(handle);

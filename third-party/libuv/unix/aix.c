@@ -284,7 +284,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
 
-    for (i = 0; i < nfds; i++) {
+    for (i = 0; i < nfds; ++i) {
       pe = events + i;
       pc.cmd = PS_DELETE;
       pc.fd = pe->fd;
@@ -318,7 +318,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
         w->cb(loop, w, pe->revents);
       }
 
-      nevents++;
+      ++nevents;
     }
 
     if (reset_timeout != 0) {
@@ -470,7 +470,7 @@ static int uv__is_ahafs_mounted(void){
   }
 
   /* Look for dev in filesystems mount info */
-  for(vmt = p, i = 0; i < rv; i++) {
+  for(vmt = p, i = 0; i < rv; ++i) {
     obj = vmt2dataptr(vmt, VMT_OBJECT);     /* device */
     stub = vmt2dataptr(vmt, VMT_STUB);      /* mount point */
 
@@ -500,7 +500,7 @@ static int uv__makedir_p(const char *dir) {
   len = strlen(tmp);
   if (tmp[len - 1] == '/')
     tmp[len - 1] = 0;
-  for (p = tmp + 1; *p; p++) {
+  for (p = tmp + 1; *p; ++p) {
     if (*p == '/') {
       *p = 0;
       err = mkdir(tmp, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -620,8 +620,8 @@ static int uv__skip_lines(char **p, int n) {
       return lines;
 
     (*p)++;
-    n--;
-    lines++;
+    --n;
+    ++lines;
   }
   return lines;
 }
@@ -644,7 +644,7 @@ static int uv__parse_data(char *buf, int *events, uv_fs_event_t* handle) {
   *events = 0;
 
   /* Clean the filename buffer*/
-  for(i = 0; i < PATH_MAX; i++) {
+  for(i = 0; i < PATH_MAX; ++i) {
     filename[i] = 0;
   }
   i = 0;
@@ -743,7 +743,7 @@ static void uv__ahafs_event(uv_loop_t* loop, uv__io_t* event_watch, unsigned int
     if (p == NULL)
       p = handle->path;
     else
-      p++;
+      ++p;
   }
 
   /* TODO(bnoordhuis) Check uv__strscpy() return value. */
@@ -897,7 +897,7 @@ char** uv_setup_args(int argc, char** argv) {
 
   /* Calculate how much memory we need for the argv strings. */
   size = 0;
-  for (i = 0; i < argc; i++)
+  for (i = 0; i < argc; ++i)
     size += strlen(argv[i]) + 1;
 
   /* Add space for the argv pointers. */
@@ -910,7 +910,7 @@ char** uv_setup_args(int argc, char** argv) {
 
   /* Copy over the strings and set up the pointer table. */
   s = (char*) &new_argv[argc + 1];
-  for (i = 0; i < argc; i++) {
+  for (i = 0; i < argc; ++i) {
     size = strlen(argv[i]) + 1;
     memcpy(s, argv[i], size);
     new_argv[i] = s;
@@ -1088,8 +1088,8 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
     cpu_info->cpu_times.idle = ps_cpus[idx].idle;
     cpu_info->cpu_times.irq = ps_cpus[idx].wait;
     cpu_info->cpu_times.nice = 0;
-    cpu_info++;
-    idx++;
+    ++cpu_info;
+    ++idx;
   }
 
   uv__free(ps_cpus);
@@ -1223,7 +1223,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
     address->is_internal = flg.ifr_flags & IFF_LOOPBACK ? 1 : 0;
 
-    address++;
+    ++address;
   }
 
   /* Fill in physical addresses. */
@@ -1237,12 +1237,12 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
       continue;
 
     address = *addresses;
-    for (i = 0; i < *count; i++) {
+    for (i = 0; i < *count; ++i) {
       if (strcmp(address->name, p->ifr_name) == 0) {
         sa_addr = (struct sockaddr_dl*) &p->ifr_addr;
         memcpy(address->phys_addr, LLADDR(sa_addr), sizeof(address->phys_addr));
       }
-      address++;
+      ++address;
     }
   }
 
@@ -1291,7 +1291,7 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
 
   if (events != NULL)
     /* Invalidate events with same file descriptor */
-    for (i = 0; i < nfds; i++)
+    for (i = 0; i < nfds; ++i)
       if ((int) events[i].fd == fd)
         events[i].fd = -1;
 

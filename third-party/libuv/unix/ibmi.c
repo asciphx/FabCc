@@ -154,7 +154,7 @@ static const unsigned char a2e[256] = {
 
 static void iconv_e2a(unsigned char src[], unsigned char dst[], size_t length) {
   size_t i;
-  for (i = 0; i < length; i++)
+  for (i = 0; i < length; ++i)
     dst[i] = e2a[src[i]];
 }
 
@@ -166,10 +166,10 @@ static void iconv_a2e(const char* src, unsigned char dst[], size_t length) {
   srclen = strlen(src);
   if (srclen > length)
     srclen = length;
-  for (i = 0; i < srclen; i++)
+  for (i = 0; i < srclen; ++i)
     dst[i] = a2e[src[i]];
   /* padding the remaining part with spaces */
-  for (; i < length; i++)
+  for (; i < length; ++i)
     dst[i] = a2e[' '];
 }
 
@@ -294,7 +294,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   }
 
   cpu_info = *cpu_infos;
-  for (idx = 0; idx < numcpus; idx++) {
+  for (idx = 0; idx < numcpus; ++idx) {
     cpu_info->speed = 0;
     cpu_info->model = uv__strdup("unknown");
     cpu_info->cpu_times.user = 0;
@@ -302,7 +302,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
     cpu_info->cpu_times.idle = 0;
     cpu_info->cpu_times.irq = 0;
     cpu_info->cpu_times.nice = 0;
-    cpu_info++;
+    ++cpu_info;
   }
   *count = numcpus;
 
@@ -484,7 +484,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
       }
     }
 
-    address++;
+    ++address;
   }
 
   Qp2freeifaddrs(ifap);

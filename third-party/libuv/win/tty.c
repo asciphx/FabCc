@@ -474,7 +474,7 @@ static void uv__tty_queue_read_raw(uv_loop_t* loop, uv_tty_t* handle) {
   }
 
   handle->flags |= UV_HANDLE_READ_PENDING;
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
 }
 
 
@@ -561,7 +561,7 @@ static DWORD CALLBACK uv_tty_line_read_thread(void* data) {
            line. The right position to reset the cursor to is therefore one line
            higher */
         if (pos.Y == uv__saved_screen_state.dwSize.Y - 1)
-          pos.Y--;
+          --pos.Y;
 
         SetConsoleCursorPosition(active_screen_buffer, pos);
         CloseHandle(active_screen_buffer);
@@ -610,7 +610,7 @@ static void uv__tty_queue_read_line(uv_loop_t* loop, uv_tty_t* handle) {
   }
 
   handle->flags |= UV_HANDLE_READ_PENDING;
-  handle->reqs_pending++;
+  ++handle->reqs_pending;
 }
 
 
@@ -748,7 +748,7 @@ void uv_process_tty_read_raw_req(uv_loop_t* loop, uv_tty_t* handle,
                         &buf);
         goto out;
       }
-      records_left--;
+      --records_left;
 
       /* We might be not subscribed to EVENT_CONSOLE_LAYOUT or we might be
        * running under some TTY emulator that does not send those events. */
@@ -1036,7 +1036,7 @@ int uv__tty_read_start(uv_tty_t* handle, uv_alloc_cb alloc_cb,
     uv__insert_pending_req(handle->loop, (uv_req_t*) &handle->read_req);
     /* Make sure no attempt is made to insert it again until it's handled. */
     handle->flags |= UV_HANDLE_READ_PENDING;
-    handle->reqs_pending++;
+    ++handle->reqs_pending;
     return 0;
   }
 
@@ -1414,7 +1414,7 @@ static int uv__tty_set_style(uv_tty_t* handle, DWORD* error) {
     inverse = uv_tty_default_inverse;
   }
 
-  for (i = 0; i < argc; i++) {
+  for (i = 0; i < argc; ++i) {
     short arg = argv[i];
 
     if (arg == 0) {
@@ -1701,11 +1701,11 @@ static int uv__tty_write_bufs(uv_tty_t* handle,
 
   uv_sem_wait(&uv_tty_output_lock);
 
-  for (i = 0; i < nbufs; i++) {
+  for (i = 0; i < nbufs; ++i) {
     uv_buf_t buf = bufs[i];
     unsigned int j;
 
-    for (j = 0; j < buf.len; j++) {
+    for (j = 0; j < buf.len; ++j) {
       unsigned char c = buf.base[j];
 
       /* Run the character through the utf8 decoder We happily accept non
@@ -1742,7 +1742,7 @@ static int uv__tty_write_bufs(uv_tty_t* handle,
 
       } else if ((c & 0xc0) == 0x80) {
         /* Valid continuation of utf-8 multibyte sequence */
-        utf8_bytes_left--;
+        --utf8_bytes_left;
         utf8_codepoint <<= 6;
         utf8_codepoint |= ((unsigned int) c & 0x3f);
 
@@ -1752,7 +1752,7 @@ static int uv__tty_write_bufs(uv_tty_t* handle,
         utf8_codepoint = UNICODE_REPLACEMENT_CHARACTER;
         /* Patch buf offset so this character will be parsed again as a start
          * byte. */
-        j--;
+        --j;
       }
 
       /* Maybe we need to parse more bytes to find a character. */
@@ -1872,7 +1872,7 @@ static int uv__tty_write_bufs(uv_tty_t* handle,
               continue;
             }
             ansi_parser_state |= ANSI_IN_ARG;
-            handle->tty.wr.ansi_csi_argc++;
+            ++handle->tty.wr.ansi_csi_argc;
             handle->tty.wr.ansi_csi_argv[handle->tty.wr.ansi_csi_argc - 1] =
                 (unsigned short) utf8_codepoint - '0';
             continue;
@@ -1911,7 +1911,7 @@ static int uv__tty_write_bufs(uv_tty_t* handle,
               continue;
             }
 
-            handle->tty.wr.ansi_csi_argc++;
+            ++handle->tty.wr.ansi_csi_argc;
             handle->tty.wr.ansi_csi_argv[handle->tty.wr.ansi_csi_argc - 1] = 0;
             continue;
           }
@@ -2187,8 +2187,8 @@ int uv__tty_write(uv_loop_t* loop,
   req->handle = (uv_stream_t*) handle;
   req->cb = cb;
 
-  handle->reqs_pending++;
-  handle->stream.conn.write_reqs_pending++;
+  ++handle->reqs_pending;
+  ++handle->stream.conn.write_reqs_pending;
   REGISTER_HANDLE_REQ(loop, handle, req);
 
   req->u.io.queued_bytes = 0;
@@ -2233,7 +2233,7 @@ void uv__process_tty_write_req(uv_loop_t* loop, uv_tty_t* handle,
   }
 
 
-  handle->stream.conn.write_reqs_pending--;
+  --handle->stream.conn.write_reqs_pending;
   if (handle->stream.conn.write_reqs_pending == 0)
     if (handle->flags & UV_HANDLE_SHUTTING)
       uv__process_tty_shutdown_req(loop,

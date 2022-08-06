@@ -47,7 +47,7 @@ char** uv_setup_args(int argc, char** argv) {
 
   /* Calculate how much memory we need for the argv strings. */
   size = 0;
-  for (i = 0; i < argc; i++)
+  for (i = 0; i < argc; ++i)
     size += strlen(argv[i]) + 1;
 
   /* Add space for the argv pointers. */
@@ -59,7 +59,7 @@ char** uv_setup_args(int argc, char** argv) {
 
   /* Copy over the strings and set up the pointer table. */
   s = (char*) &new_argv[argc + 1];
-  for (i = 0; i < argc; i++) {
+  for (i = 0; i < argc; ++i) {
     size = strlen(argv[i]) + 1;
     memcpy(s, argv[i], size);
     new_argv[i] = s;

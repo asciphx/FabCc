@@ -583,7 +583,7 @@ static void uv__custom_sem_post(uv_sem_t* sem_) {
 
   sem = *(uv_semaphore_t**)sem_;
   uv_mutex_lock(&sem->mutex);
-  sem->value++;
+  ++sem->value;
   if (sem->value == 1)
     uv_cond_signal(&sem->cond);
   uv_mutex_unlock(&sem->mutex);
@@ -597,7 +597,7 @@ static void uv__custom_sem_wait(uv_sem_t* sem_) {
   uv_mutex_lock(&sem->mutex);
   while (sem->value == 0)
     uv_cond_wait(&sem->cond, &sem->mutex);
-  sem->value--;
+  --sem->value;
   uv_mutex_unlock(&sem->mutex);
 }
 
@@ -614,7 +614,7 @@ static int uv__custom_sem_trywait(uv_sem_t* sem_) {
     return UV_EAGAIN;
   }
 
-  sem->value--;
+  --sem->value;
   uv_mutex_unlock(&sem->mutex);
 
   return 0;

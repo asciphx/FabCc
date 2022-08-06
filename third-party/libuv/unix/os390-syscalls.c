@@ -335,7 +335,7 @@ int epoll_wait(uv__os390_epoll* lst, struct epoll_event* events,
     ev.events = pfd->revents;
     ev.is_msg = 0;
 
-    reventcount++;
+    ++reventcount;
     events[nevents++] = ev;
   }
 
@@ -413,7 +413,7 @@ char* mkdtemp(char* path) {
       break;
 
     cp = ep - num_x;
-    for (i = 0; i < num_x; i++) {
+    for (i = 0; i < num_x; ++i) {
       *cp++ = tempchars[v % num_chars];
       v /= num_chars;
     }

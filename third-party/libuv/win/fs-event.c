@@ -71,7 +71,7 @@ static void uv__relative_path(const WCHAR* filename,
   size_t dirlen = wcslen(dir);
   assert(!_wcsnicmp(filename, dir, dirlen));
   if (dirlen > 0 && dir[dirlen - 1] == '\\')
-    dirlen--;
+    --dirlen;
   relpathlen = filenamelen - dirlen - 1;
   *relpath = uv__malloc((relpathlen + 1) * sizeof(WCHAR));
   if (!*relpath)
