@@ -1,31 +1,30 @@
 #include <iostream>
 #include <cassert>
 //#include <str.hh>
-static const char _X[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0,
-0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-std::string DecodeURL(const char* d) {
-  std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
-  const char* e = c + s.length(); while (c < e) {
-	if (*c == '%' && c < e - 2) {
-	  *o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
-	} else if (*c == '+') {
-	  *o = ' ';
-	} else if (o != c) *o = *c; ++o; ++c;
-  } return std::string(s.c_str(), o - s.c_str());// 0x67
-}
+static const char _X[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,
+ 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+ 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
 std::string DecodeURL(std::string& s) {
   char* o = (char*)s.c_str(), * c = (char*)s.c_str();
   const char* e = c + s.size(); while (c < e) {
-	if (*c == '%' && c < e - 2) {
-	  *o = (_X[c[1]] << 4) | _X[c[2]]; c += 2;
-	} else if (*c == '+') {
-	  *o = ' ';
-	} else if (o != c) *o = *c; ++o; ++c;
+	if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
+	  *o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
+	}
+	if (*c == '+') { *o = ' '; ++o; ++c; continue; }
+	if (o != c) *o = *c; ++o; ++c;
   } return std::string(s.data(), o - s.data());
 }
-
+std::string DecodeURL(const char* d) {
+  std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
+  const char* e = c + s.length(); while (c < e) {
+	if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
+	  *o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
+	}
+	if (*c == '+') { *o = ' '; ++o; ++c; continue; }
+	if (o != c) *o = *c; ++o; ++c;
+  } return std::string(s.c_str(), o - s.c_str());
+}
 static const char _H[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0, 0, 0, 0x2b, 0x21, 0, 0x23, 0x24, 0, 0x26, 0x27, 0x28, 0x29, 0x2a, 0, 0x2c, 0x2d, 0x2e,
 0x2f, 0x30 , 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0, 0x3d, 0, 0x3f,

@@ -1,7 +1,7 @@
 #ifndef BUFFER_HH
 #define BUFFER_HH
 #include <cstring>
-#include <lexical_cast.hh>
+#include <string>
 #pragma warning(disable:4244)
 #if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
@@ -57,9 +57,9 @@ namespace fc {
 	}
 	_INLINE Buffer& operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
 	_INLINE Buffer& operator<<(char v) { end_[0] = v; ++end_; return *this; }
-	_INLINE Buffer& operator<<(long long l) { return operator<<(std::lexical_cast<std::string>(l)); }
-	_INLINE Buffer& operator<<(int i) { return operator<<(std::lexical_cast<std::string>(i)); }
-	_INLINE Buffer& operator<<(unsigned int ui) { return operator<<(std::lexical_cast<std::string>(ui)); }
+	_INLINE Buffer& operator<<(long long l) { return operator<<(std::to_string(l)); }
+	_INLINE Buffer& operator<<(int i) { return operator<<(std::to_string(i)); }
+	_INLINE Buffer& operator<<(unsigned int ui) { return operator<<(std::to_string(ui)); }
 	Buffer& operator=(const char* s);
 	char* data_;
 	char* end_;

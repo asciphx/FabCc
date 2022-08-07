@@ -125,7 +125,7 @@ namespace fc {
 		  s << RES_crlf;
 		  res.is_file = 0; res.headers.clear();
 #ifdef _WIN32
-		  if (!co->write(s.data_, s.size())) { return; }; s.reset();
+		  if (!co->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
 		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
 #else
 		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
