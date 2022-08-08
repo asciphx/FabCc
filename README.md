@@ -1,4 +1,4 @@
-# FabCc(v1.0-beta)
+# FabCc
 Concise, fast, practical, reactive, functional. Inspired by other well-known C++ web frameworks, which can be called the C++ version of nodejs.
 
 ## Features
