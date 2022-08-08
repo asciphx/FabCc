@@ -22,6 +22,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - [ ] TCP client
 
 ## Description
+- If translated by machine, FabCc can be a wafer factory, so FabCc symbolizes the most sophisticated and minimal chip.
 - The namespace uses the uppercase hump fc of FabCc.
 - [Demo site](http://8.129.58.72:8080/)🚀
 - ![test](./test.jpg)
