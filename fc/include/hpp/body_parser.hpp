@@ -55,7 +55,7 @@ namespace fc {
 	  value.erase(0, f + (unsigned int)boundary.length() + 2); Buffer s; _:;
 	  if (value.size() > 2) {
 		f = value.find(boundary);
-		s = value.subbuf(0, f - 0xf);
+		s = value.substr(0, f - 0xf);
 		params.emplace_back(p_s(s));
 		value.erase(0, f + (unsigned int)boundary.length() + 2); goto _;
 	  }
@@ -65,7 +65,7 @@ namespace fc {
 	param p_s(Buffer& s) {
 	  struct param p;
 	  size_t f = s.find("\r\n\r\n");
-	  string lines = s.substr(0, (unsigned int)f + 2);
+	  string lines(s.substr(0, (unsigned int)f + 2));
 	  s.erase(0, (unsigned int)f + 4);
 	  f = lines.find(';');
 	  if (f != string::npos) lines.erase(0, f + 2);

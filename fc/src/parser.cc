@@ -29,7 +29,7 @@ namespace fc {
   static int on_message_complete(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_); unsigned int l = $->url_params.find('?');
 	if (l != -1) {
-	  $->url << $->url_params.subbuf(0, l); $->url_params = $->url_params.subbuf(++l);
+	  $->url << $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
 	} else { $->url << $->url_params; }
 	$->ready = true; return 0;//$->url_params = query_string($->url_params); handler_->handle();
   }

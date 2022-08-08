@@ -71,9 +71,11 @@ namespace fc {
 	  char failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
 	  Req& req = co->req_; req = std::move(co->parser_.to_request());// printf("(%s) ",req.url.c_str());
+#if defined __linux__ || defined __APPLE__
 	  if (co->parser_.http_major == 1 && co->parser_.http_minor == 1 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
 		uv_close((uv_handle_t*)h, on_close); return;
 	  }
+#endif
 	  if (!req.url[0] || req.method == HTTP::OPTIONS) return; Res& res = co->res_;
 	  LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// co->_.data = &res;
 	  res.timer_.setTimeout([h] {
@@ -135,46 +137,46 @@ namespace fc {
 		}
 	  } catch (const http_error& e) {
 		s.reset(); co->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << co->status_; goto _;
-	  } catch (const std::runtime_error& e) {
-		s.reset(); co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
-	  }
-	  //if (KEY_EQUALS(get_header(req.headers, RES_Ex), "100-continue") &&
-	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
-	  for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
+	} catch (const std::runtime_error& e) {
+	  s.reset(); co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
+	}
+	//if (KEY_EQUALS(get_header(req.headers, RES_Ex), "100-continue") &&
+	// co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
+	for (std::pair<const std::string, std::string>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
-	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
+	s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
 #endif
 #ifdef AccessControlAllowHeaders
-	  s << RES_AcH << AccessControlAllowHeaders << RES_crlf;
+	s << RES_AcH << AccessControlAllowHeaders << RES_crlf;
 #endif
 #ifdef AccessControlAllowMethods
-	  s << RES_AcM << AccessControlAllowMethods << RES_crlf;
+	s << RES_AcM << AccessControlAllowMethods << RES_crlf;
 #endif
 #ifdef AccessControlAllowOrigin
-	  s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
+	s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
 #endif
-	_:
-	  if (!res.headers.count(RES_CT)) { s << RES_CT << RES_seperator << RES_Txt << RES_crlf; }
-	  s << RES_content_length_tag << res.body.size() << RES_crlf;
-	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
-	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
-	  DEBUG("客户端：%lld %s \n", co->id, s.c_str());
+  _:
+	if (!res.headers.count(RES_CT)) { s << RES_CT << RES_seperator << RES_Txt << RES_crlf; }
+	s << RES_content_length_tag << res.body.size() << RES_crlf;
+	s << RES_date_tag << RES_DATE_STR << RES_crlf;
+	s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
+	DEBUG("客户端：%lld %s \n", co->id, s.c_str());
 #ifdef _WIN32
-	  co->write(s.data_, s.size()); s.reset();
+	co->write(s.data_, s.size()); s.reset();
 #else
-	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
-	  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
+	co->wbuf.base = s.data_; co->wbuf.len = s.size();
+	uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
-	} else if (nread < 0) {
-	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_close((uv_handle_t*)h, on_close);
-	  } else {//UV_ENOBUFS
-		DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_close((uv_handle_t*)h, on_close);
-	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
-	}//printf("%d\n", nread);uv_read_stop(h);
-  }
+  } else if (nread < 0) {
+	if (nread == UV_EOF || nread == UV_ECONNRESET) {
+	  DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+	  uv_close((uv_handle_t*)h, on_close);
+	} else {//UV_ENOBUFS
+	  DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+	  uv_close((uv_handle_t*)h, on_close);
+	}//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
+  }//printf("%d\n", nread);uv_read_stop(h);
+}
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) { Conn* c = (Conn*)h->data; *b = c->rbuf; }
   void Tcp::on_close(uv_handle_t* h) {
 	Conn* c = (Conn*)h->data; --((Tcp*)c->tcp_)->connection_num; DEBUG("{x%Id}\n", c->id); delete c;

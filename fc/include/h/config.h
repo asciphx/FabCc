@@ -25,9 +25,9 @@
 
 //Cors config
 #define AccessControlAllowOrigin "*"
-#define AccessControlAllowCredentials "true"
-#define AccessControlAllowHeaders "content-type,cache-control,x-requested-with"
-#define AccessControlAllowMethods "GET,POST,DELETE,PUT,PATCH"
+//#define AccessControlAllowCredentials "true"
+//#define AccessControlAllowHeaders "content-type,cache-control,x-requested-with"
+//#define AccessControlAllowMethods "GET,POST,DELETE,PUT,PATCH"
 #define SHOW_SERVER_NAME 1
 #define CACHE_HTML_TIME_SECOND 6
 

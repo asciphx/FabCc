@@ -35,10 +35,8 @@ namespace fc {
 	_INLINE char operator[](unsigned int i) { return i < end_ - data_ ? data_[i] : '\0'; };
 	_INLINE const char back() { return data_[end_ - data_ - 1]; }
 	
-	std::string substr(unsigned int a);
-	std::string substr(unsigned int a, unsigned int b);
-	Buffer subbuf(unsigned int a);
-	Buffer subbuf(unsigned int a, unsigned int b);
+	std::string_view substr(unsigned int a);
+	std::string_view substr(unsigned int a, unsigned int b);
 	unsigned int find(const char* c);
 	unsigned int find(const std::string& c);
 	unsigned int find(const char c);
@@ -61,6 +59,7 @@ namespace fc {
 	_INLINE Buffer& operator<<(int i) { return operator<<(std::to_string(i)); }
 	_INLINE Buffer& operator<<(unsigned int ui) { return operator<<(std::to_string(ui)); }
 	Buffer& operator=(const char* s);
+	Buffer& operator=(std::string_view s);
 	char* data_;
 	char* end_;
   private:
