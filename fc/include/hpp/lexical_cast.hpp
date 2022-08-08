@@ -46,15 +46,15 @@ namespace std {
   template <> _INLINE std::string lexical_cast<std::string>(float&& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(long double&& f) { return std::to_string(f); }
   template <> _INLINE std::string lexical_cast<std::string>(std::string&& c) { return c; }
-
-  static unsigned short STD_PO[] = {
+  
+  static short STD_PO[] = {
 	1,
 	10,
 	100,
 	1000,
 	10000
   };
-  static unsigned long STD_POW[] = {
+  static long STD_POW[] = {
 	1,
 	10,
 	100,
@@ -66,7 +66,7 @@ namespace std {
 	100000000,
 	1000000000
   };
-  static unsigned long long STD_POWS[] = {
+  static long long STD_POWS[] = {
 	1,
 	10,
 	100,
@@ -85,8 +85,7 @@ namespace std {
 	1000000000000000,
 	10000000000000000,
 	100000000000000000,
-	1000000000000000000,
-	10000000000000000000ull
+	1000000000000000000
   };
   template <typename T> inline T lexical_cast(const char* c);
 
