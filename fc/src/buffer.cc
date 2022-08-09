@@ -70,7 +70,7 @@ namespace fc {
   }
   Buffer& Buffer::operator<<(const Buffer& buf) {
 	Buffer* b = const_cast<Buffer*>(&buf); unsigned int l = b->end_ - b->data_;
-	if (end_ + b->size() >= back_ && !reserve((unsigned int)((end_ - data_) + l))) return *this;
+	if (end_ + l >= back_ && !reserve((unsigned int)((end_ - data_) + l))) return *this;
 	memcpy(end_, b->data_, l); end_ += l; return *this;
   }
   Buffer& Buffer::operator<<(size_t v) {

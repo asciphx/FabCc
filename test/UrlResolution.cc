@@ -15,15 +15,15 @@ std::string DecodeURL(std::string& s) {
 	if (o != c) *o = *c; ++o; ++c;
   } return std::string(s.data(), o - s.data());
 }
-std::string DecodeURL(const char* d) {
-  std::string s(d); char* o = (char*)s.data(), * c = (char*)s.data();
-  const char* e = c + s.length(); while (c < e) {
+std::string DecodeURL(const char* s) {
+  size_t l = strlen(s); char* o = (char*)s, * c = (char*)s;
+  const char* e = c + l; while (c < e) {
 	if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
 	  *o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
 	}
 	if (*c == '+') { *o = ' '; ++o; ++c; continue; }
 	if (o != c) *o = *c; ++o; ++c;
-  } return std::string(s.c_str(), o - s.c_str());
+  } return std::string(s, o - s);
 }
 static const char _H[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0, 0, 0, 0x2b, 0x21, 0, 0x23, 0x24, 0, 0x26, 0x27, 0x28, 0x29, 0x2a, 0, 0x2c, 0x2d, 0x2e,

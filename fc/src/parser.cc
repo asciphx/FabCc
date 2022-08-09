@@ -6,7 +6,7 @@ namespace fc {
 	$->headers.clear(); $->body.reset(); $->http_major = $->http_minor = 0; return 0;
   }
   static int on_url(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->url_params = DecodeURL(c, l);  return 0;
+	llParser* $ = static_cast<llParser*>(_); $->url_params << DecodeURL(c, l);  return 0;
   }
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); $->header_field.assign(c, c + l); return 0;
@@ -31,7 +31,7 @@ namespace fc {
 	if (l != -1) {
 	  $->url << $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
 	} else { $->url << $->url_params; }
-	$->ready = true; return 0;//$->url_params = query_string($->url_params); handler_->handle();
+	return 0;//$->url_params = query_string($->url_params); handler_->handle();
   }
   Req llParser::to_request() const {
 	return Req{ static_cast<HTTP>(method), std::move(url), std::move(url_params), std::move(headers), std::move(body) };
@@ -47,7 +47,7 @@ namespace fc {
 	  on_message_complete
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
-  llParser::llParser(): header_field(0x1f), header_value(0x7f), body(0x2ff), url_params(0x3f), url(0x1f) {
+  llParser::llParser(): header_field(0x1f), header_value(0x7f), body(0x28f), url_params(0x3f), url(0x1f) {
 	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }

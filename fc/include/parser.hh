@@ -18,7 +18,7 @@ namespace fc {
 	fc::Buffer header_value;
 	fc::str_map headers;
 	//fc::query_string url_params;
-	bool ready = true/*, keep_alive*/;
+	//bool keep_alive;
 	const static llhttp_settings_s _;
 	Req to_request() const;
   };
