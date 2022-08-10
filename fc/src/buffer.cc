@@ -27,11 +27,11 @@ namespace fc {
 	o.data_ = nullptr; o.not_null_ = false; return *this;
   }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
-  std::string_view Buffer::substr(unsigned int a) {
-	unsigned int l = end_ - data_; return std::string_view(a > l ? data_ : data_ + a, l - a);
+  std::string Buffer::substr(unsigned int a) {
+	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, l - a);
   }
-  std::string_view Buffer::substr(unsigned int a, unsigned int b) {
-	unsigned int l = end_ - data_; return std::string_view(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
+  std::string Buffer::substr(unsigned int a, unsigned int b) {
+	unsigned int l = end_ - data_; return std::string(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
   }
   unsigned int Buffer::find(const char* c) {
 	unsigned int l = 0, L = (unsigned int)strlen(c), s = end_ - data_, a = 0; while (l < s) {
@@ -82,7 +82,7 @@ namespace fc {
 	unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;
 	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s, l);
   }
-  Buffer& Buffer::operator=(std::string_view s) {
+  Buffer& Buffer::operator=(std::string&& s) {
 	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this;
 	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << s;
   }

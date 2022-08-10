@@ -2,17 +2,15 @@
 #define STR_HH
 #include <ctime>
 #include <string>
-#include <string_view>
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
 #include <cstring>
-#include <buffer.hh>
 //<Ctrl> + Left mouse button -> Jump to the specified location
 namespace fc {
   //RFC_ALL
   std::string DecodeURL(std::string& str);
-  std::string_view DecodeURL(const char*& s, size_t l);
+  std::string DecodeURL(const char*& s, size_t l);
   std::string DecodeURL(const char* d);
   //RFC3986
   std::string EncodeURL(const std::string& s);
