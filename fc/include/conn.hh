@@ -2,7 +2,6 @@
 #define CONN_HH
 #include <uv.h>
 #include <string>
-#include <thread>
 #include <parser.hh>
 #include <req-res.hh>
 #include <h/config.h>

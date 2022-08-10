@@ -1,5 +1,4 @@
 #include "tcp.hh"
-#include <functional>
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app) {
 #ifdef _WIN32

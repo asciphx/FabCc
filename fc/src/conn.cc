@@ -29,7 +29,6 @@ namespace fc {
 	const char* e = c + i; int l = ::send(id, c, e - c, 0);
 	if (l > 0) c += l; while (c != e) {
 	  if ((l < 0 && errno != EAGAIN) || l == 0) return false;
-	  std::this_thread::yield();
 	  l = ::send(id, c, int(e - c), 0); if (l > 0) c += l;
 	} return true;
   };

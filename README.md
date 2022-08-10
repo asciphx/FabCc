@@ -10,7 +10,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - Incredible compilation speed and development speed are also improved
 - The fewest third-party libraries, are stored in the project in the form of source files
 - Cross platform support, (Linux and windows have been tested)
-- Minimize the application and release of memory, friendly to hard disk,% 0 disk occupied, almost no disk IO
+- Minimize the allocate and release of memory, which is friendly to the hard disk and does not generate a large amount of memory fragments, so there is almost no disk IO
 
 ## Still under development
 - [x] Processing of routing brace
