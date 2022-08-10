@@ -12,7 +12,7 @@
 namespace fc {
   //RFC_ALL
   std::string DecodeURL(std::string& str);
-  fc::Buffer DecodeURL(const char* s, size_t l);
+  std::string_view DecodeURL(const char*& s, size_t l);
   std::string DecodeURL(const char* d);
   //RFC3986
   std::string EncodeURL(const std::string& s);

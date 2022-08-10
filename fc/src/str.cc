@@ -15,7 +15,7 @@ namespace fc {
 	  if (o != c) *o = *c; ++o; ++c;
 	} return std::string(s.data(), o - s.data());
   }
-  fc::Buffer DecodeURL(const char* s, size_t l) {
+  std::string_view DecodeURL(const char*& s, size_t l) {
 	char* o = (char*)s, * c = (char*)s;
 	const char* e = c + l; while (c < e) {
 	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
@@ -23,7 +23,7 @@ namespace fc {
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }
 	  if (o != c) *o = *c; ++o; ++c;
-	} return fc::Buffer(s, (unsigned int)(o - s));
+	} return std::string_view(s, o - s);
   }
   std::string DecodeURL(const char* s) {
 	size_t l = strlen(s); char* o = (char*)s, * c = (char*)s;

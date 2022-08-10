@@ -29,25 +29,27 @@ namespace fc {
 	if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };
 	if (ruby[python] == '/') ++python; // skip the first /
 	unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
-	std::string k8s; if (i < ruby.size() && i != python) k8s = std::string(&ruby[i], python - i);
-	std::unordered_map<const std::string, drt_node*>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
-	if (itzy != children_.end()) {
-	  iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
-	  if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
-		return json;
-	  } return DRT_END;
-	}
-	for (const std::pair<const std::string, drt_node*>& _ : children_) {
-	  switch (_.first[0]) {
-	  case'*': return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
-	  case':': { const char* c = _.first.c_str(); std::string param;
-		while (*++c != '(')param.push_back(*c); if (*(_.first.end() - 1) != ')') return DRT_END;
-		printf("<%s>", param.c_str());// get param
-		if (std::regex_match(k8s, std::regex(c))) return _.second->find(ruby, python);
-	  } break;//params
-	  default: if (std::regex_match(k8s, std::regex(_.first))) return _.second->find(ruby, python);
+	if (i != python && i < ruby.size()) {
+	  std::string k8s(&ruby[i], python - i);
+	  std::unordered_map<const std::string, drt_node*>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
+	  if (itzy != children_.end()) {
+		iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
+		if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
+		  return json;
+		} return DRT_END;
 	  }
-	} return DRT_END;
+	  for (const std::pair<const std::string, drt_node*>& _ : children_) {
+		switch (_.first[0]) {
+		case'*': return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
+		case':': { const char* c = _.first.c_str(); std::string param;
+		  while (*++c != '(')param.push_back(*c); if (*(_.first.end() - 1) != ')') return DRT_END;
+		  printf("<%s>", param.c_str());// get param
+		  if (std::regex_match(k8s, std::regex(c))) return _.second->find(ruby, python);
+		} break;//params
+		default: if (std::regex_match(k8s, std::regex(_.first))) return _.second->find(ruby, python);
+		}
+	  } return DRT_END;
+	} drt_node* dn = children_.at(""); return iterator{ dn, ruby, dn->v_ };
   }
   VH& DRT::add(const char* ruby, char py) {
 	//std::string i; py < '\12' ? i.push_back(py + 0x30) : (i.push_back(py % 10 + 0x30), i.push_back(py / 10 + 0x30));

@@ -2,8 +2,8 @@
 #include <http_error.hh>
 namespace fc {
   Req::Req():body(0x1ff), params(0x3f), url(0x1f) {};
-  Req::Req(HTTP method, fc::Buffer url, fc::Buffer params, str_map headers, fc::Buffer body/*, bool k*/):/* keep_alive(k),*/
-	method(method), url(std::move(url)), params(std::move(params)), headers(std::move(headers)), body(std::move(body)) {}
+  Req::Req(HTTP m, fc::Buffer u, fc::Buffer p, str_map h, fc::Buffer b/*, bool keep_alive*/):
+	method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
   void Req::add_header(std::string key, std::string value) { headers.emplace(std::move(key), std::move(value)); }
   /******************************** ************************************/
   Res::Res():zlib_cp_str(0x1ff), body(0xff) {};

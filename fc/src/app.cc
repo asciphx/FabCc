@@ -83,16 +83,8 @@ namespace fc {
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
-		if (res.is_file == 0 && statbuf_.st_size < BUF_HTML_MAXSIZE) {
-		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
-		  if (*--i == '.')goto _; if (*--i == '.')goto _; throw err::not_found();
-		_:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
-		  if (last_dot) {
-			std::string ss = _.substr(last_dot);
-			if (ss[0] == 'h' && ss[1] == 't') {
-			  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
-			}
-		  }
+		if (res.is_file == 0) {
+		  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
 		}
 	  };
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
@@ -110,9 +102,6 @@ namespace fc {
 			if (content_types->find(extension) != content_types->end()) {
 			  res.file_size = statbuf_.st_size; res.code = 200;
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
-#ifdef ENABLE_COMPRESSION
-				compressed = false;
-#endif
 				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
 				ss = content_types->at(extension); res.add_header(RES_CT, ss);
 				std::shared_ptr<file_sptr> __;
@@ -127,7 +116,6 @@ namespace fc {
 				  std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
 					//size_t l = min(BUF_MAXSIZE, (size_t)(k - o));
 					int r = __->read_chunk(o, k - o, sink); if (r < 0 && r != UV_EAGAIN) { sink(nullptr, r, nullptr); return; }
-					//_:o += l; if (o < k) { goto _; }if(__.use_count()>2)__.~shared_ptr();// printf("[%ld]",__.use_count());
 				  };
 				}
 			  }

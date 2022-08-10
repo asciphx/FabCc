@@ -22,10 +22,10 @@ namespace fc {
 	delete[] data_; cap_ = o.cap_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_;
 	memcpy(end_, o.data_, o.end_ - o.data_); end_ += o.end_ - o.data_; not_null_ = true; return *this;
   }
-  // Buffer& Buffer::operator=(Buffer& o) {
-	 //data_ = o.data_; not_null_ = o.not_null_; cap_ = o.cap_; end_ = o.end_; back_ = data_ + cap_;
-	 //o.data_ = nullptr; o.not_null_ = false; return *this;
-  // }
+  Buffer& Buffer::operator=(Buffer& o) {
+	data_ = o.data_; not_null_ = o.not_null_; cap_ = o.cap_; end_ = o.end_; back_ = data_ + cap_;
+	o.data_ = nullptr; o.not_null_ = false; return *this;
+  }
   void Buffer::clear() { delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
   std::string_view Buffer::substr(unsigned int a) {
 	unsigned int l = end_ - data_; return std::string_view(a > l ? data_ : data_ + a, l - a);
@@ -62,11 +62,9 @@ namespace fc {
   };
   Buffer& Buffer::insert(char*& s, const char* e, const char* f) {
 	unsigned int l = f - e; if (s + l >= back_ && !reserve(cap_ + l)) return *this; memcpy(s, e, l); s += l; return *this;
-	//for (unsigned int i = 0xffffffff; ++i < l; *s = e[i], ++s); s += l; return *this;
   }
   Buffer& Buffer::assign(const char* s, const char* e) {
-	unsigned int l = e - s; if (end_ + l >= back_ && !reserve(cap_ + l)) return *this;
-	for (unsigned int i = 0xffffffff; ++i < l; *end_ = s[i], ++end_); return *this;
+	unsigned int l = e - s; if (end_ + l >= back_ && !reserve(cap_ + l)) return *this; memcpy(end_, s, l); end_ += l; return *this;
   }
   Buffer& Buffer::operator<<(const Buffer& buf) {
 	Buffer* b = const_cast<Buffer*>(&buf); unsigned int l = b->end_ - b->data_;

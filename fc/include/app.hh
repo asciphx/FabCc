@@ -13,6 +13,8 @@
 #include <file_sptr.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
+  static std::unordered_map<uint64_t, fc::Buffer> RES_CACHE_MENU = {};
+  static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
   char c2m(const char* m);
   const char* m2c(HTTP m);
   struct App {

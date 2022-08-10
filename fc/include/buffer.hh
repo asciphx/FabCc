@@ -19,7 +19,7 @@ namespace fc {
 	//Buffer(const char* c);
 	~Buffer();
 	Buffer& operator=(Buffer&& o);
-	//Buffer& operator=(Buffer& o);
+	Buffer& operator=(Buffer& o);
 	void clear();
 	
 	_INLINE void push_back(const char c) { end_[0] = c; ++end_; }

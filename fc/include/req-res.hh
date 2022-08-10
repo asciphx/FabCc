@@ -7,7 +7,6 @@
 #include <buffer.hh>
 #include <h/common.h>
 #define BUF_SIZE 0x28000
-#define BUF_HTML_MAXSIZE 0x3e801
 #define BUF_MAXSIZE 256000000
 namespace fc {
   class Conn; class Tcp; struct App;
