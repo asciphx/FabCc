@@ -1,4 +1,13 @@
 # FabCc
+[![license][license-badge]][license-link]
+![platform][supported-platforms-badge]
+[![release][release-badge]][release-link]
+
+[license-badge]: https://img.shields.io/badge/License-AGPL%20v3-gold.svg
+[license-link]: LICENSE
+[supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
+[release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
+[release-link]: https://github.com/asciphx/FabCc/releases
 简洁、迅速、实用、活跃、全面。灵感来自于其他c++知名web框架, 堪称c++版的nodejs。
 
 ## 特征

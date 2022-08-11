@@ -1,4 +1,13 @@
-# FabCc
+## FabCc
+[![license][license-badge]][license-link]
+![platform][supported-platforms-badge]
+[![release][release-badge]][release-link]
+
+[license-badge]: https://img.shields.io/badge/License-AGPL%20v3-gold.svg
+[license-link]: LICENSE
+[supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
+[release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
+[release-link]: https://github.com/asciphx/FabCc/releases
 Concise, fast, practical, reactive, functional. Inspired by other well-known C++ web frameworks, which can be called the C++ version of nodejs.
 
 ## Features
