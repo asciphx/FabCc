@@ -384,8 +384,8 @@ namespace json {
 	//   - dbg() like the str(), but will truncate long string type (> 512 bytes).
 	//   - pretty() converts Json to human readable string.
 	//   - mdp: max decimal places for float point numbers.
-	fc::Buffer& str(int mdp = 16)    const {fc::Buffer b(0x6f); return this->_json2str(b, false, mdp); }
-	fc::Buffer& dump(int mdp = 16) const {fc::Buffer b(0x7f);  return this->_json2pretty(b, 2, 2, mdp); }
+	fc::Buffer str(int mdp = 16)    const { return this->_json2str(false, mdp); }
+	fc::Buffer dump(int mdp = 16) const { return this->_json2pretty(2, 2, mdp); }
 	fc::Buffer& str(fc::Buffer& s, int mdp = 16)    const { return this->_json2str(s, false, mdp); }
 	fc::Buffer& dbg(fc::Buffer& s, int mdp = 16)    const { return this->_json2str(s, true, mdp); }
 	fc::Buffer& pretty(fc::Buffer& s, int mdp = 16) const { return this->_json2pretty(s, 4, 4, mdp); }
@@ -405,6 +405,8 @@ namespace json {
 	Json& _set(const char* key);
 	fc::Buffer& _json2str(fc::Buffer& fs, bool debug, int mdp) const;
 	fc::Buffer& _json2pretty(fc::Buffer& fs, int indent, int n, int mdp) const;
+	fc::Buffer _json2str(bool debug, int mdp) const;
+	fc::Buffer _json2pretty(int indent, int n, int mdp) const;
   private:
 	_H* _h;
   };

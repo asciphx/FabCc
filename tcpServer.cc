@@ -8,7 +8,7 @@ int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
   app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//路由regex键
-	res.write(req.key.get("id").str(Buffer(16) << "{\"id\": ") << ", "
+	res.write(req.key["id"].str(Buffer(16) << "{\"id\": ") << ", "
 	<< req.key["name"].str(Buffer(32) << "\"name\": ") << '}');
   };
   app["/json"] = [&app](Req& req, Res& res) {

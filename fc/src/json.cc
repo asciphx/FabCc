@@ -641,9 +641,106 @@ namespace json {
 	}
 	return fs;
   }
+  fc::Buffer Json::_json2str(bool debug, int mdp) const {
+	fc::Buffer fs(4);
+	if (!_h) return fs.append("null", 4);
+	switch (_h->type) {
+	case t_string: {
+	  fs << '"';
+	  const u32 len = _h->size;
+	  const bool trunc = debug && len > 512;
+	  S s = _h->s;
+	  S e = trunc ? s + 32 : s + len;
+	  char c;
+	  for (S p; (p = find_escapse(s, e, c)) < e;) {
+		fs.append(s, p - s).append('\\').append(c);
+		s = p + 1;
+	  }
+	  if (s != e) fs.append(s, e - s);
+	  if (trunc) fs.append(3, '.');
+	  fs << '"';
+	  break;
+	}
+	case t_object: {
+	  fs << '{';
+	  if (_h->p) {
+		auto& a = *(xx::Array*)&_h->p;
+		for (u32 i = 0; i < a.size(); i += 2) {
+		  fs << '"' << (S)a[i] << '"' << ':';
+		  ((Json*)&a[i + 1])->_json2str(fs, debug, mdp) << ',';
+		}
+	  }
+	  fs.back() == ',' ? (void)(fs.back() = '}') : (void)(fs.append('}'));
+	  break;
+	}
+	case t_array: {
+	  fs << '[';
+	  if (_h->p) {
+		auto& a = *(xx::Array*)&_h->p;
+		for (u32 i = 0; i < a.size(); ++i) {
+		  ((Json*)&a[i])->_json2str(fs, debug, mdp) << ',';
+		}
+	  }
+	  fs.back() == ',' ? (void)(fs.back() = ']') : (void)(fs.append(']'));
+	  break;
+	}
+	case t_int:
+	  fs << (long long)_h->i;
+	  break;
+	case t_bool:
+	  fs << _h->b;
+	  break;
+	case t_double:
+	  fs << _h->d;
+	  break;
+	}
+	return fs;
+  }
   // @indent:  4 spaces by default
   // @n:       number of spaces to insert at the beginning for the current line
   fc::Buffer& Json::_json2pretty(fc::Buffer& fs, int indent, int n, int mdp) const {
+	if (!_h) return fs.append("null", 4);
+	switch (_h->type) {
+	case t_object: {
+	  fs << '{';
+	  if (_h->p) {
+		auto& a = *(xx::Array*)&_h->p;
+		for (u32 i = 0; i < a.size(); i += 2) {
+		  fs.append('\n').append(n, ' ');
+		  fs << '"' << (S)a[i] << '"' << ": ";
+		  ((Json*)&a[i + 1])->_json2pretty(fs, indent, n + indent, mdp) << ',';
+		}
+	  }
+	  if (fs.back() == ',') {
+		fs.back() = '\n';
+		if (n > indent) fs.append(n - indent, ' ');
+	  }
+	  fs << '}';
+	  break;
+	}
+	case t_array: {
+	  fs << '[';
+	  if (_h->p) {
+		auto& a = *(xx::Array*)&_h->p;
+		for (u32 i = 0; i < a.size(); ++i) {
+		  fs.append('\n').append(n, ' ');
+		  ((Json*)&a[i])->_json2pretty(fs, indent, n + indent, mdp) << ',';
+		}
+	  }
+	  if (fs.back() == ',') {
+		fs.back() = '\n';
+		if (n > indent) fs.append(n - indent, ' ');
+	  }
+	  fs << ']';
+	  break;
+	}
+	default:
+	  _json2str(fs, false, mdp);
+	}
+	return fs;
+  }
+  fc::Buffer Json::_json2pretty(int indent, int n, int mdp) const {
+	fc::Buffer fs(4);
 	if (!_h) return fs.append("null", 4);
 	switch (_h->type) {
 	case t_object: {
