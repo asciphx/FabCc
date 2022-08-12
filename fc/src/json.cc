@@ -630,7 +630,7 @@ namespace json {
 	  break;
 	}
 	case t_int:
-	  fs << _h->i;
+	  fs << (long long)_h->i;
 	  break;
 	case t_bool:
 	  fs << _h->b;

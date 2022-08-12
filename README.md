@@ -46,8 +46,8 @@ int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//Service file interface
   app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//Route regex keys
-	res.write(req.key["id"].str(Buffer("{\"id\": ", 7)) << ", "
-	<< req.key["name"].str(Buffer(33) << "\"name\": ") << '}');
+	res.write(req.key["id"].str(Buffer(16) << "{\"id\": ") << ", "
+	<< req.key["name"].str(Buffer(32) << "\"name\": ") << '}');
   };
   app["/json"] = [&app](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };

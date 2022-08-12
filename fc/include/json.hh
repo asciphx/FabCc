@@ -14,6 +14,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #ifndef __thread
 #define __thread __declspec(thread)
 #endif
+#else
+#include <math.h>
 #endif
 #include "str.hh"
 #include "buffer.hh"
@@ -215,7 +217,7 @@ namespace json {
 	// returns a std::string.
 	// for non-string types, it is equal to Json::str().
 	std::string as_string() const {
-	  return this->is_string() ? std::string(_h->s, _h->size) : this->str(fc::Buffer()).b2s();
+	  return this->is_string() ? std::string(_h->s, _h->size) : this->str().b2s();
 	}
 	// get Json by index or key.
 	//   - It is a read-only operation.
@@ -382,8 +384,8 @@ namespace json {
 	//   - dbg() like the str(), but will truncate long string type (> 512 bytes).
 	//   - pretty() converts Json to human readable string.
 	//   - mdp: max decimal places for float point numbers.
-	fc::Buffer& str(int mdp = 16)    const { return this->_json2str(fc::Buffer(), false, mdp); }
-	fc::Buffer& dump(int mdp = 16) const { return this->_json2pretty(fc::Buffer(), 2, 2, mdp); }
+	fc::Buffer& str(int mdp = 16)    const {fc::Buffer b(0x6f); return this->_json2str(b, false, mdp); }
+	fc::Buffer& dump(int mdp = 16) const {fc::Buffer b(0x7f);  return this->_json2pretty(b, 2, 2, mdp); }
 	fc::Buffer& str(fc::Buffer& s, int mdp = 16)    const { return this->_json2str(s, false, mdp); }
 	fc::Buffer& dbg(fc::Buffer& s, int mdp = 16)    const { return this->_json2str(s, true, mdp); }
 	fc::Buffer& pretty(fc::Buffer& s, int mdp = 16) const { return this->_json2pretty(s, 4, 4, mdp); }
