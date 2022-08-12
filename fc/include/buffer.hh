@@ -21,20 +21,29 @@ namespace fc {
 	Buffer& operator=(Buffer&& o);
 	Buffer& operator=(Buffer& o);
 	void clear();
-	
-	_INLINE void push_back(const char c) { end_[0] = c; ++end_; }
+
+	_INLINE void push_back(const char c) { end_[0] = c; ++end_; }// not safe, but fast
+	_INLINE Buffer& pop_back() { --end_; return *this; }// safe
 	_INLINE void reset() { end_ = data_; }
 	_INLINE bool empty() { return end_ == data_; };
 	_INLINE unsigned int size() const { return end_ - data_; }
 	_INLINE unsigned int length() const { return end_ - data_; }
-	_INLINE Buffer& append(const char c) { return (*this) << c; }
+	_INLINE Buffer& append(size_t n, char c) {
+	  if (cap_ < end_ - data_ + n) reserve(cap_ + (unsigned int)n); memset(end_, c, n); end_ += n; return *this;
+	}
+	_INLINE Buffer& append(char c) {
+	  if (cap_ < end_ - data_ + 1u) reserve(cap_ + 1u); end_[0] = c; ++end_; return *this;
+	}
+	_INLINE Buffer& append(const char* p, size_t n) {
+	  if (cap_ < end_ - data_ + n) reserve(cap_ + (unsigned int)n); memcpy(end_, p, n); end_ += n; return *this;
+	}
 	_INLINE std::string b2s() { return std::string(data_, end_ - data_); };
 	_INLINE std::string_view b2v() const { return std::string_view(data_, end_ - data_); };
 	_INLINE const char* data() const { end_[0] = 0; return data_; };
 	_INLINE const char* c_str() const { end_[0] = 0; return data_; };
-	_INLINE char operator[](unsigned int i) { return i < end_ - data_ ? data_[i] : '\0'; };
-	_INLINE const char back() { return data_[end_ - data_ - 1]; }
-	
+	_INLINE char& operator[](unsigned int i) { return i < end_ - data_ ? data_[i] : data_[0]; };
+	_INLINE char& back() { return data_[end_ - data_ - 1]; }
+
 	std::string substr(unsigned int a);
 	std::string substr(unsigned int a, unsigned int b);
 	unsigned int find(const char* c);
@@ -45,12 +54,12 @@ namespace fc {
 	bool reserve(unsigned int l);
 	Buffer& insert(char*& s, const char* e, const char* f);
 	Buffer& assign(const char* s, const char* e);
-	
+
 	Buffer& operator<<(const Buffer& s);
-	Buffer& operator<<(size_t v);
+	Buffer& operator<<(unsigned long long v);
 	//Buffer& operator<<(std::string_view s);
 	_INLINE Buffer& operator<<(std::string_view s) {
-	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_) + s.size()))) return *this;
+	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
 	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
 	}
 	_INLINE Buffer& operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
@@ -58,6 +67,7 @@ namespace fc {
 	_INLINE Buffer& operator<<(long long l) { return operator<<(std::to_string(l)); }
 	_INLINE Buffer& operator<<(int i) { return operator<<(std::to_string(i)); }
 	_INLINE Buffer& operator<<(unsigned int ui) { return operator<<(std::to_string(ui)); }
+	_INLINE Buffer& operator<<(double d) { return operator<<(std::to_string(d)); }
 	Buffer& operator=(const char* s);
 	Buffer& operator=(std::string&& s);
 	char* data_;

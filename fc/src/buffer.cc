@@ -71,12 +71,10 @@ namespace fc {
 	if (end_ + l >= back_ && !reserve((unsigned int)((end_ - data_) + l))) return *this;
 	memcpy(end_, b->data_, l); end_ += l; return *this;
   }
-  Buffer& Buffer::operator<<(size_t v) {
-	if (v == 0) operator<<('0'); char mega_buffer[10], * str_start = mega_buffer;
-	for (char i = 0; i < 10; ++i) {
-	  if (v > 0) str_start = mega_buffer + 9 - i; mega_buffer[9 - i] = (v % 10) + '0'; v /= 10;
-	}
-	operator<<(std::string_view(str_start, mega_buffer + 10 - str_start)); return *this;
+  Buffer& Buffer::operator<<(unsigned long long v) {
+	if (v == 0) operator<<('0'); char mega_buffer[20], * str_start = mega_buffer; for (int i = 0; v != 0; ++i) {
+	  str_start = mega_buffer + 19 - i; mega_buffer[19 - i] = (v % 10) + '0'; v /= 10;
+	} operator<<(std::string_view(str_start, mega_buffer + 20 - str_start)); return *this;
   }
   Buffer& Buffer::operator=(const char* s) {
 	unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;

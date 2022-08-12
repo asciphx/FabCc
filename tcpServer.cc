@@ -1,6 +1,5 @@
 #include <tcp.hh>
 #include <hpp/body_parser.hpp>
-
 using namespace fc;
 void funk(Req& req, Res& res) {
   res.write("主页路由被std::bind复写！");
@@ -8,8 +7,14 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/u/:id(\\d+)"] = [](Req&, Res& res) {
-	res.write("！");
+  app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//路由regex键
+	res.write(req.key["id"].str(Buffer("{\"id\": ", 7)) << ", "
+	<< req.key["name"].str(Buffer(33) << "\"name\": ") << '}');
+  };
+  app["/json"] = [&app](Req& req, Res& res) {
+	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
+	res.add_header(fc::RES_CT, fc::RES_AJ);
+	res.write(x.dump());//json响应
   };
   app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
 	res.write(req.url);//regex表达式访问

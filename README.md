@@ -1,4 +1,4 @@
-## FabCc
+# FabCc
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -45,8 +45,14 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//Service file interface
-  app["/u/:id(\\d+)"] = [](Req&, Res& res) {
-	res.write("！");
+  app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//Route regex keys
+	res.write(req.key["id"].str(Buffer("{\"id\": ", 7)) << ", "
+	<< req.key["name"].str(Buffer(33) << "\"name\": ") << '}');
+  };
+  app["/json"] = [&app](Req& req, Res& res) {
+	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
+	res.add_header(fc::RES_CT, fc::RES_AJ);
+	res.write(x.dump());//JSON response
   };
   app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
 	res.write(req.url);//routing regex 

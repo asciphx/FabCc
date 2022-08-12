@@ -6,6 +6,7 @@
 #include "tp/zlib.h"
 #include <buffer.hh>
 #include <h/common.h>
+#include <json.hh>
 #define BUF_SIZE 0x28000
 #define BUF_MAXSIZE 256000000
 namespace fc {
@@ -19,6 +20,7 @@ namespace fc {
 	fc::Buffer url;
 	fc::Buffer params;
 	fc::Buffer body;
+	Json key;
 	uint64_t uuid;
 	str_map headers;
 	std::string ip_addr;

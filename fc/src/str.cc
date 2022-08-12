@@ -1,6 +1,6 @@
 #include <str.hh>
 namespace fc {
-  static const char _X[] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+  static const char _X[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
  -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,
   0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
   0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
@@ -146,6 +146,71 @@ namespace fc {
   bool operator>(tm& t, tm& m) { return mktime(&t) > mktime(&m); }
   bool operator<=(tm& t, tm& m) { return mktime(&t) <= mktime(&m); }
   bool operator>=(tm& t, tm& m) { return mktime(&t) >= mktime(&m); }
+  i64 to_int64(const char* s) {
+	if (!*s) return 0;
+	char* end = 0;
+	i64 x = strtoll(s, &end, 0);
+	size_t n = strlen(s);
+	if (end == s + n) return x;
+	if (end == s + n - 1) {
+	  int shift = _Shift(s[n - 1]);
+	  if (shift != 0) {
+		if (x == 0) return 0;
+		if (x < (INT64_MIN >> shift) || x >(INT64_MAX >> shift)) {
+		  return 0;
+		}
+		return x << shift;
+	  }
+	}
+	return 0;
+  }
+  i32 to_int32(const char* s) {
+	i64 x = to_int64(s);
+	if (unlikely(x > INT32_MAX || x < INT32_MIN)) {
+	  return 0;
+	}
+	return (i32)x;
+  }
+  u64 to_uint64(const char* s) {
+	if (!*s) return 0;
+	char* end = 0;
+	u64 x = strtoull(s, &end, 0);
+	if (errno != 0) {
+	  return 0;
+	}
+	size_t n = strlen(s);
+	if (end == s + n) return x;
+	if (end == s + n - 1) {
+	  int shift = _Shift(s[n - 1]);
+	  if (shift != 0) {
+		if (x == 0) return 0;
+		i64 absx = (i64)x;
+		if (absx < 0) absx = -absx;
+		if (absx > static_cast<i64>(UINT64_MAX >> shift)) {
+		  return 0;
+		}
+		return x << shift;
+	  }
+	}
+	return 0;
+  }
+  u32 to_uint32(const char* s) {
+	i64 x = (i64)to_uint64(s);
+	i64 absx = x < 0 ? -x : x;
+	if (unlikely(absx > UINT32_MAX)) {
+	  return 0;
+	}
+	return (u32)x;
+  }
+  double to_double(const char* s) {
+	char* end = 0;
+	double x = strtod(s, &end);
+	if (errno != 0) {
+	  return 0;
+	}
+	if (end == s + strlen(s)) return x;
+	return 0;
+  }
 #ifdef __cplusplus
   extern "C" {
 #endif
@@ -167,16 +232,16 @@ namespace fc {
 	}
 	char* to8Str_f(unsigned long long i) {
 	  int z = 2; for (unsigned long long a = i; a > 0x7f; a -= 0x7f, a /= 0x100, ++z);
-	  unsigned long long b, t = i / 0x100; b = i - t * 0x100 - 32;
+	  unsigned long long t = i / 0x100; char b = (char)(i - t * 0x100);
 	  char* w = (char*)malloc(sizeof(char) * z); w[--z] = '\0';
-	  while (t > 0x7f) { w[--z] = RES_ASCII[b]; i = t; t = i / 0x100; b = i - t * 0x100 - 32; }
-	  w[--z] = RES_ASCII[b]; if (z > 0) { t -= 32; w[0] = RES_ASCII[t]; } return w;
+	  while (t > 0x7f) { w[--z] = b; i = t; t = i / 0x100; b = (char)(i - t * 0x100); }
+	  w[--z] = b; if (z > 0) { w[0] = (char)t; } return w;
 	}
 	char* to4Str_f(int i) {
-	  int t = i / 0x100, b = i - t * 0x100 - 32, z = i > 0x7f7f7f ? 5 : i > 0x7f7f ? 4 : i > 0x7f ? 3 : 2;
-	  char* w = (char*)malloc(sizeof(char) * z);  w[--z] = '\0';
-	  while (t > 0x7f) { w[--z] = RES_ASCII[b]; i = t; t = i / 0x100; b = i - t * 0x100 - 32; }
-	  w[--z] = RES_ASCII[b]; if (z > 0) { t -= 32; w[0] = RES_ASCII[t]; } return w;
+	  int t = i / 0x100, z = i > 0x7f7f7f ? 5 : i > 0x7f7f ? 4 : i > 0x7f ? 3 : 2;
+	  char b = i - t * 0x100, * w = (char*)malloc(sizeof(char) * z);  w[--z] = '\0';
+	  while (t > 0x7f) { w[--z] = b; i = t; t = i / 0x100; b = (char)(i - t * 0x100); }
+	  w[--z] = b; if (z > 0) { w[0] = t; } return w;
 	}
 #ifdef __cplusplus
   }  /* extern "C" */

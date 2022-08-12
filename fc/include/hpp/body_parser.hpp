@@ -24,7 +24,7 @@ namespace fc {
 	  }
 	  p_b(req.body);
 	}
-	BP(Req& req, unsigned short l = 256): headers(&(req.headers)), menu(detail::upload_path_), L(l),
+	BP(Req& req, unsigned short kb = 256): headers(&(req.headers)), menu(detail::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
 	  p_b(req.body);
 	}
@@ -38,10 +38,12 @@ namespace fc {
 	  if (boundary[0xc] == 'j') {//application/json
 		// json j = json::parse(value);
 		throw err::not_extended(value);
-	  } else if (boundary[0xc] == 'x') {//x-www-form-urlencoded; charset=UTF-8
+	  }
+	  if (boundary[0xc] == 'x') {//x-www-form-urlencoded; charset=UTF-8
 		throw err::not_extended(value);
 		throw err::not_extended("Wrong application/x-www-form-urlencoded!");
-	  } else if (boundary[0] == 't') {//text/plain;charset=UTF-8
+	  }
+	  if (boundary[0] == 't') {//text/plain;charset=UTF-8
 		try {
 		  //json j = json::parse(value);
 		  //throw std::runtime_error(j.dump());

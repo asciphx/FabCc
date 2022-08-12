@@ -6,6 +6,21 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cstring>
+#include <stdint.h>
+typedef int8_t  i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+
+typedef uint8_t  u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define unlikely(x) (x)
+#endif
 //<Ctrl> + Left mouse button -> Jump to the specified location
 namespace fc {
   //RFC_ALL
@@ -36,22 +51,22 @@ namespace fc {
   bool operator>=(tm& t, tm& m);
   template<typename T> inline const char* ObjName() {
 	const char* s = typeid(T).name();
-  #ifdef _WIN32
-	  while (*++s != 0x20); return ++s;
-  #else
-    while (*s < 0x3a && *s++ != 0x24) {}; return s;
-  #endif
+#ifdef _WIN32
+	while (*++s != 0x20); return ++s;
+#else
+	while (*s < 0x3a && *s++ != 0x24) {}; return s;
+#endif
   }
   template<typename T, typename U> inline uint64_t ObjLink() {//*s > 0x5e ? *s - 0x5f : 
 	const char* s = typeid(T).name(), * c = typeid(U).name(); unsigned long long r = 0;
-  #ifdef _WIN32
-	  while (*++s != 0x20); while (*++c != 0x20); for (; *++s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12);
-	  for (; *++c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12);
-  #else
-	  while (*s < 0x3a && *s++ != 0x24) {}; while (*c < 0x3a && *c++ != 0x24) {};
-	  for (; *s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12, ++s);
-	  for (; *c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12, ++c);
-  #endif
+#ifdef _WIN32
+	while (*++s != 0x20); while (*++c != 0x20); for (; *++s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12);
+	for (; *++c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12);
+#else
+	while (*s < 0x3a && *s++ != 0x24) {}; while (*c < 0x3a && *c++ != 0x24) {};
+	for (; *s; r *= 0x17, r += *s > 0x5c ? *s - 0x5d : *s - 0x12, ++s);
+	for (; *c; r *= 0x17, r += *c > 0x5c ? *c - 0x5d : *c - 0x12, ++c);
+#endif
 	return r;
   }
   constexpr unsigned long long operator""_l(const char* s, size_t /*len*/) {
@@ -65,6 +80,37 @@ namespace fc {
 	unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
 	for (unsigned long long i = 0; s[++i]; r *= 0x17, r += s[i] > 0x5c ? s[i] - 0x5d : s[i] - 0x12); return r;
   }
+  inline int _Shift(char c) {
+	switch (c) {
+	case 'k':
+	case 'K':
+	  return 10;
+	case 'm':
+	case 'M':
+	  return 20;
+	case 'g':
+	case 'G':
+	  return 30;
+	case 't':
+	case 'T':
+	  return 40;
+	case 'p':
+	case 'P':
+	  return 50;
+	default:
+	  return 0;
+	}
+  }
+  inline bool to_bool(const char* s) {
+	if (strcmp(s, "false") == 0 || strcmp(s, "0") == 0) return false;
+	if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) return true;
+	return false;
+  }
+  i64 to_int64(const char* s);
+  i32 to_int32(const char* s);
+  u64 to_uint64(const char* s);
+  u32 to_uint32(const char* s);
+  double to_double(const char* s);
 #ifdef __cplusplus
   extern "C" {
 #endif
