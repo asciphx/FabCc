@@ -68,7 +68,7 @@ int main() {
   };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
-	res.write("主页的路由被删除！！");//或者像下面std::bind的方式把void方法绑定都行
+	res.write("主页的路由被删除！！");
   };
   app["/timer"] = [&](Req&, Res& res) {
 	t.setTimeout([&srv] {

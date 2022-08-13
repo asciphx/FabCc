@@ -68,7 +68,7 @@ int main() {
   };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
-	res.write("The routing of the home page is delete！！");//Or bind the void method in the following std::bind way
+	res.write("The routing of the home page is delete！！");
   };
   app["/timer"] = [&](Req&, Res& res) {
 	t.setTimeout([&srv] {
