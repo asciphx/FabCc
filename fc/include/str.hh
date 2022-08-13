@@ -11,13 +11,12 @@ typedef int8_t  i8;
 typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
-
 typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#define unlikely(x) __builtin_expect(x, 0)
 #else
 #define unlikely(x) (x)
 #endif
