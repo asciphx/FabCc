@@ -331,26 +331,21 @@ namespace str {
 	return x;
   }
 }
-#ifdef _MSC_VER
-#pragma warning(disable:4503)
-#endif
+#ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#pragma warning(disable:4503)
 namespace color {
   inline bool ansi_color_seq_enabled() {
 	fc::Buf s(64);
-#ifdef _WIN32
 	DWORD r = GetEnvironmentVariableA("TERM", s.data_, 64);
 	s.resize(r);
 	if (r > 64) {
 	  GetEnvironmentVariableA("TERM", s.data_, r);
 	  s.resize(r - 1);
 	}
-#else
-	char* c = ::getenv("TERM"); if (c)s << c;
-#endif // _WIN32
 	static const bool x = !s.empty();
 	return x;
   }
@@ -369,14 +364,14 @@ namespace color {
 	if (!GetConsoleScreenBufferInfo(h, &buf)) return 15;
 	return buf.wAttributes & 0x0f;
   }
-  Color::Color(const char* ansi_seq, int win_color) {
-	ansi_color_seq_enabled() ? (void)(s = ansi_seq) : (void)(i = win_color);
-  }
   const Color red("\033[38;5;1m", FOREGROUND_RED);     // 12
   const Color green("\033[38;5;2m", FOREGROUND_GREEN); // 10
   const Color blue("\033[38;5;12m", FOREGROUND_BLUE);  // 9
   const Color yellow("\033[38;5;11m", 14);
   const Color deflt("\033[39m", get_default_color());
+  Color::Color(const char* ansi_seq, int win_color) {
+	ansi_color_seq_enabled() ? (void)(s = ansi_seq) : (void)(i = win_color);
+  }
 } // color
 std::ostream& operator<<(std::ostream& os, const color::Color& color) {
   if (color::ansi_color_seq_enabled()) {
@@ -388,3 +383,4 @@ std::ostream& operator<<(std::ostream& os, const color::Color& color) {
 	return os;
   }
 }
+#endif // _WIN32

@@ -13,7 +13,7 @@ namespace std {
 #if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
 #elif !defined(_INLINE)
-#define _INLINE inline
+#define _INLINE __attribute__((always_inline))
 #endif
   static const std::string STD_TURE("true", 4), STD_FALSE("false", 5);
   template <typename S, typename T> _INLINE S lexical_cast(T& i);

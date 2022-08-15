@@ -172,11 +172,11 @@ namespace fc {
   Buf& Buf::operator<<(unsigned long long v) {
 	if (v == 0) operator<<('0'); char mega_buffer[20], * str_start = mega_buffer; for (int i = 0; v != 0; ++i) {
 	  str_start = mega_buffer + 19 - i; mega_buffer[19 - i] = (v % 10) + '0'; v /= 10;
-	} operator<<(std::string_view(str_start, mega_buffer + 20 - str_start)); return *this;
+	} operator<<(Buf(str_start, mega_buffer + 20 - str_start)); return *this;
   }
   Buf& Buf::operator=(const char* s) {
 	unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;
-	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s, l);
+	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << Buf(s, l);
   }
   Buf& Buf::operator=(std::string&& s) {
 	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this;

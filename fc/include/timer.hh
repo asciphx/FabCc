@@ -2,15 +2,15 @@
 #define TIMER_HH
 #include <uv.h>
 #include <functional>
-#include <h/common.h>
+#include <string>
 namespace fc {
   static struct tm* RES_NOW;
   static int64_t RES_TIME_T, RES_last;
   static std::string RES_DATE_STR;
-  static _INLINE tm now() { return *RES_NOW; }
-  static _INLINE int64_t nowStamp(short& i) { return RES_TIME_T + i; }
-  static _INLINE int64_t nowStamp(short&& i) { return RES_TIME_T + i; }
-  static _INLINE int64_t nowStamp() { return RES_TIME_T; }
+  static inline tm now() { return *RES_NOW; }
+  static inline int64_t nowStamp(short& i) { return RES_TIME_T + i; }
+  static inline int64_t nowStamp(short&& i) { return RES_TIME_T + i; }
+  static inline int64_t nowStamp() { return RES_TIME_T; }
   class Timer {
 	uv_timer_t* t_;
 	std::function<void()> cb_;

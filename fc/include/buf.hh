@@ -8,7 +8,7 @@
 #if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
 #elif !defined(_INLINE)
-#define _INLINE _INLINE
+#define _INLINE __attribute__((always_inline))
 #endif
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
@@ -121,19 +121,22 @@ namespace fc {
 	}
 	Buf& operator<<(const Buf& s);
 	Buf& operator<<(unsigned long long v);
-	//Buf& operator<<(std::string_view s);
+#ifndef __linux__
 	_INLINE Buf& operator<<(std::string_view s) {
 	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
 	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
 	}
+#endif
 	_INLINE Buf& operator<<(std::string s) {
 	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
 	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
 	}
-	_INLINE Buf& operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
+	_INLINE Buf& operator<<(const char* s) { return operator<<(Buf(s, (unsigned int)strlen(s))); }
 	_INLINE Buf& operator<<(char v) { end_[0] = v; ++end_; return *this; }
 	_INLINE Buf& operator<<(long long l) { return operator<<(std::to_string(l)); }
 	_INLINE Buf& operator<<(int i) { return operator<<(std::to_string(i)); }
+	_INLINE Buf& operator<<(long i) { return operator<<(std::to_string(i)); }
+	_INLINE Buf& operator<<(unsigned long i) { return operator<<(std::to_string(i)); }
 	_INLINE Buf& operator<<(unsigned int ui) { return operator<<(std::to_string(ui)); }
 	_INLINE Buf& operator<<(short a) { return operator<<(std::to_string(a)); }
 	_INLINE Buf& operator<<(unsigned short ua) { return operator<<(std::to_string(ua)); }

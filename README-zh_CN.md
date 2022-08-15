@@ -21,7 +21,7 @@
 - 全平台支持，（已经测试Linux和Windows）
 - 最小化分配与释放内存，对硬盘友好，不产生大量内存碎片，因此几乎没有磁盘io
 - 支持单元测试，类似[coost](https://coostdocs.gitee.io/cn/co/unitest/)
-- 支持网页版poostman，地址是127.0.0.1:8080/test.heml
+- 支持网页版poostman，地址是127.0.0.1:8080/test.html
 
 ## 仍在开发中
 - [x] 路由大括号表达式
