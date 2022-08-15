@@ -2,19 +2,20 @@
 #include <http_error.hh>
 namespace fc {
   Req::Req():body(0x1ff), params(0x3f), url(0x1f) {};
-  Req::Req(HTTP m, fc::Buffer u, fc::Buffer p, str_map h, fc::Buffer b/*, bool keep_alive*/):
+  Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b/*, bool keep_alive*/):
 	method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
-  void Req::add_header(std::string key, std::string value) { headers.emplace(std::move(key), std::move(value)); }
+  void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
   /******************************** ************************************/
   Res::Res():zlib_cp_str(0x1ff), body(0xff) {};
-  void Res::set_header(const std::string& key, std::string value) { headers.erase(key); headers.emplace(key, std::move(value)); }
-  void Res::add_header(const std::string& key, std::string value) { headers.emplace(key, std::move(value)); }
-  const std::string& Res::get_header(const std::string& key) {
+  void Res::set_header(const fc::Buf& key, fc::Buf value) { headers.erase(key); headers.emplace(key, std::move(value)); }
+  void Res::add_header(const fc::Buf& key, fc::Buf value) { headers.emplace(key, std::move(value)); }
+  const fc::Buf& Res::get_header(const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
   void Res::write(const std::string& body_part) { body << body_part; };
-  void Res::write(const fc::Buffer& body_part) { body << body_part; };
-  fc::Buffer& Res::compress_str(char* const str, size_t len) {
+  void Res::write(const fc::Buf& body_part) { body << body_part; };
+  void Res::write(const char* body_part) { body << body_part; };
+  fc::Buf& Res::compress_str(char* const str, size_t len) {
 	// Initialize with the default values
 	if (::deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, algorithm::GZIP, 8, Z_DEFAULT_STRATEGY) == Z_OK) {
 	  stream.avail_in = (unsigned int)len; // zlib does not take a const pointer. The data is not altered.
@@ -34,7 +35,7 @@ namespace fc {
 	}
 	return zlib_cp_str;
   }
-  fc::Buffer& Res::decompress_str(char* const str, size_t len) {
+  fc::Buf& Res::decompress_str(char* const str, size_t len) {
 	stream.avail_in = (unsigned int)len; // Nasty const_cast but zlib won't alter its contents
 	stream.next_in = const_cast<Bytef*>(reinterpret_cast<Bytef const*>(str));
 	// Initialize with automatic header detection, for gzip support

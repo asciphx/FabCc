@@ -5,17 +5,17 @@
 #include <h/llhttp.h>
 #include <h/common.h>
 #include <req-res.hh>
-#include <buffer.hh>
+#include <buf.hh>
 // from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 namespace fc {
   struct llParser: public llhttp__internal_s {
 	llParser();
 	void set_type(llhttp_type t = llhttp_type::HTTP_REQUEST);
-	fc::Buffer url_params;
-	fc::Buffer url;
-	fc::Buffer body;
-	fc::Buffer header_field;
-	fc::Buffer header_value;
+	fc::Buf url_params;
+	fc::Buf url;
+	fc::Buf body;
+	fc::Buf header_field;
+	fc::Buf header_value;
 	fc::str_map headers;
 	//fc::query_string url_params;
 	//bool keep_alive;

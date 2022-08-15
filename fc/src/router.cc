@@ -25,7 +25,7 @@ namespace fc {
 	}
   }
   // from http://forbeslindesay.github.io/express-route-tester
-  drt_node::iterator drt_node::find(const std::string& ruby, unsigned short python, Req* request) const {
+  drt_node::iterator drt_node::find(const std::string& ruby, unsigned short python) const {
 	if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };
 	if (ruby[python] == '/') ++python; // skip the first /
 	unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
@@ -33,7 +33,7 @@ namespace fc {
 	  std::string k8s(&ruby[i], python - i);
 	  std::unordered_map<const std::string, drt_node*>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
 	  if (itzy != children_.end()) {
-		iterator json = itzy->second->find(ruby, python, request);// search in the corresponding child.
+		iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
 		if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
 		  return json;
 		} return DRT_END;
@@ -43,10 +43,10 @@ namespace fc {
 		case'*': return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
 		case':': { const char* c = _.first.c_str(); std::string param;
 		  while (*++c != '(')param.push_back(*c); if (*(_.first.end() - 1) != ')') return DRT_END;
-		  request->key[param.c_str()] = k8s;// get param
-		  if (std::regex_match(k8s, std::regex(c))) return _.second->find(ruby, python, request);
+		  //request->key[param.c_str()] = k8s;// get param
+		  if (std::regex_match(k8s, std::regex(c))) return _.second->find(ruby, python);
 		} break;//params
-		case'\\': if (std::regex_match(k8s, std::regex(_.first))) return _.second->find(ruby, python, request);
+		case'\\': if (std::regex_match(k8s, std::regex(_.first))) return _.second->find(ruby, python);
 		}
 	  } return DRT_END;
 	} drt_node* dn = children_.at(""); return iterator{ dn, ruby, dn->v_ };

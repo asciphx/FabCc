@@ -11,18 +11,18 @@
 #define WIN32_LEAN_AND_MEAN
 #define _INLINE __forceinline
 #else
-#define _INLINE inline
+#define _INLINE __attribute__((always_inline))
 #endif
 #define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
 #include <str_map.hh>
 #include <h/config.h>
 #include <str.hh>
 namespace fc {
-  static const std::string RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), RES_empty,
+  static const fc::Buf RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), RES_empty("", 0),
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
 	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Con("Connection", 10), RES_Ex("expect", 6),
 	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5), RES_HaR("Accept-Ranges", 13);
-  static const std::string& get_header(const str_map& headers, const std::string& key) {
+  static const fc::Buf& get_header(const str_map& headers, const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
   enum class HTTP {

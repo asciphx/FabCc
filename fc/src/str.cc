@@ -146,6 +146,43 @@ namespace fc {
   bool operator>(tm& t, tm& m) { return mktime(&t) > mktime(&m); }
   bool operator<=(tm& t, tm& m) { return mktime(&t) <= mktime(&m); }
   bool operator>=(tm& t, tm& m) { return mktime(&t) >= mktime(&m); }
+#ifdef __cplusplus
+  extern "C" {
+#endif
+	char RES_ASCII[97] = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+	long long strLen(const char* s) { const char* e = s; while (*++e); return e - s; }
+	void strCpy(char* d, const char* s) { while (*s) { *d++ = *s++; }*d = 0; }
+	char* strStr(char* d, const char* s) {
+	  long long i = 0, j = 0, l = strLen(d), k = strLen(s);
+	  while (i < l && j < k) if (d[i] == s[j])++i, ++j; else i = i - j + 1, j = 0;
+	  if (j == k) { return d + i - k; } return (char*)0;
+	}
+	int strCmp(const char* c, const char* s) {
+	  while (*s == *c && *c && *s)++c, ++s; return *c == *s ? 0 : *c > *s ? 1 : -1;
+	}
+	//If not safe, _f
+	char* subStr_f(const char* c, int i, int e) {
+	  if (e < i || i < 0)return (char*)0;
+	  char* w = (char*)malloc(sizeof(char) * (e - i + 1)); int p = 0; while (i < e)w[p++] = c[i++]; w[p] = 0; return w;
+	}
+	char* to8Str_f(unsigned long long i) {
+	  int z = 2; for (unsigned long long a = i; a > 0x7f; a -= 0x7f, a /= 0x100, ++z);
+	  unsigned long long t = i / 0x100; char b = (char)(i - t * 0x100);
+	  char* w = (char*)malloc(sizeof(char) * z); w[--z] = '\0';
+	  while (t > 0x7f) { w[--z] = b; i = t; t = i / 0x100; b = (char)(i - t * 0x100); }
+	  w[--z] = b; if (z > 0) { w[0] = (char)t; } return w;
+	}
+	char* to4Str_f(int i) {
+	  int t = i / 0x100, z = i > 0x7f7f7f ? 5 : i > 0x7f7f ? 4 : i > 0x7f ? 3 : 2;
+	  char b = i - t * 0x100, * w = (char*)malloc(sizeof(char) * z);  w[--z] = '\0';
+	  while (t > 0x7f) { w[--z] = b; i = t; t = i / 0x100; b = (char)(i - t * 0x100); }
+	  w[--z] = b; if (z > 0) { w[0] = t; } return w;
+	}
+#ifdef __cplusplus
+  }  /* extern "C" */
+#endif
+}
+namespace str {
   i64 to_int64(const char* s) {
 	if (!*s) return 0;
 	char* end = 0;
@@ -211,39 +248,143 @@ namespace fc {
 	if (end == s + strlen(s)) return x;
 	return 0;
   }
-#ifdef __cplusplus
-  extern "C" {
+  fc::Buf strip(const char* s, const char* c, char d) {
+	if (unlikely(!*s)) return fc::Buf();
+	char bs[256] = { 0 };
+	while (*c) bs[(const u8)(*c++)] = 1;
+	if (d == 'l' || d == 'L') {
+	  while (bs[(u8)(*s)]) ++s;
+	  return fc::Buf(s);
+	} else if (d == 'r' || d == 'R') {
+	  const char* e = s + strlen(s) - 1;
+	  while (e >= s && bs[(u8)(*e)]) --e;
+	  return fc::Buf(s, e + 1 - s);
+	} else {
+	  while (bs[(u8)(*s)]) ++s;
+	  const char* e = s + strlen(s) - 1;
+	  while (e >= s && bs[(u8)(*e)]) --e;
+	  return fc::Buf(s, e + 1 - s);
+	}
+  }
+  fc::Buf strip(const fc::Buf& s, const char* c, char d) {
+	if (unlikely(s.empty())) return fc::Buf();
+	char bs[256] = { 0 };
+	while (*c) bs[(const u8)(*c++)] = 1;
+	if (d == 'l' || d == 'L') {
+	  u32 b = 0;
+	  while (b < s.size() && bs[(u8)(s(b))]) ++b;
+	  return b == 0 ? s : s.substr(b);
+	} else if (d == 'r' || d == 'R') {
+	  u32 e = s.size();
+	  while (e > 0 && bs[(u8)(s(e - 1))]) --e;
+	  return e == s.size() ? s : s.substr(0, e);
+	} else {
+	  u32 b = 0, e = s.size();
+	  while (b < s.size() && bs[(u8)(s(b))]) ++b;
+	  if (b == s.size()) return fc::Buf();
+	  while (e > 0 && bs[(u8)(s(e - 1))]) --e;
+	  return (e - b == s.size()) ? s : s.substr(b, e - b);
+	}
+  }
+  std::vector<fc::Buf> split(const fc::Buf& s, char c, u32 maxsplit) {
+	std::vector<fc::Buf> v;
+	v.reserve(8);
+	const char* p;
+	const char* from = s.data_;
+	const char* end = from + s.size();
+	while ((p = (const char*)memchr(from, c, end - from))) {
+	  v.push_back(fc::Buf(from, p - from));
+	  from = p + 1;
+	  if (v.size() == maxsplit) break;
+	}
+	if (from < end) v.push_back(fc::Buf(from, end - from));
+	return v;
+  }
+  fc::Buf replace(const char* s, const char* sub, const char* to, u32 maxreplace) {
+	const char* p;
+	const char* from = s;
+	size_t n = strlen(sub);
+	size_t m = strlen(to);
+	fc::Buf x;
+	while ((p = strstr(from, sub))) {
+	  x.append(from, p - from);
+	  x.append(to, m);
+	  from = p + n;
+	  if (--maxreplace == 0) break;
+	}
+	if (from < s + strlen(s)) x.append(from);
+	return x;
+  }
+  fc::Buf replace(const fc::Buf& s, const char* sub, const char* to, u32 maxreplace) {
+	const char* from = s.c_str();
+	const char* p = strstr(from, sub);
+	if (!p) return s;
+	size_t n = strlen(sub);
+	size_t m = strlen(to);
+	fc::Buf x(s.size());
+	do {
+	  x.append(from, p - from).append(to, m);
+	  from = p + n;
+	  if (--maxreplace == 0) break;
+	} while ((p = strstr(from, sub)));
+	if (from < s.data_ + s.size()) x.append(from);
+	return x;
+  }
+}
+#ifdef _MSC_VER
+#pragma warning(disable:4503)
 #endif
-	char RES_ASCII[97] = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-	long long strLen(const char* s) { const char* e = s; while (*++e); return e - s; }
-	void strCpy(char* d, const char* s) { while (*s) { *d++ = *s++; }*d = 0; }
-	char* strStr(char* d, const char* s) {
-	  long long i = 0, j = 0, l = strLen(d), k = strLen(s);
-	  while (i < l && j < k) if (d[i] == s[j])++i, ++j; else i = i - j + 1, j = 0;
-	  if (j == k) { return d + i - k; } return (char*)0;
-	}
-	int strCmp(const char* c, const char* s) {
-	  while (*s == *c && *c && *s)++c, ++s; return *c == *s ? 0 : *c > *s ? 1 : -1;
-	}
-	//If not safe, _f
-	char* subStr_f(const char* c, int i, int e) {
-	  if (e < i || i < 0)return (char*)0;
-	  char* w = (char*)malloc(sizeof(char) * (e - i + 1)); int p = 0; while (i < e)w[p++] = c[i++]; w[p] = 0; return w;
-	}
-	char* to8Str_f(unsigned long long i) {
-	  int z = 2; for (unsigned long long a = i; a > 0x7f; a -= 0x7f, a /= 0x100, ++z);
-	  unsigned long long t = i / 0x100; char b = (char)(i - t * 0x100);
-	  char* w = (char*)malloc(sizeof(char) * z); w[--z] = '\0';
-	  while (t > 0x7f) { w[--z] = b; i = t; t = i / 0x100; b = (char)(i - t * 0x100); }
-	  w[--z] = b; if (z > 0) { w[0] = (char)t; } return w;
-	}
-	char* to4Str_f(int i) {
-	  int t = i / 0x100, z = i > 0x7f7f7f ? 5 : i > 0x7f7f ? 4 : i > 0x7f ? 3 : 2;
-	  char b = i - t * 0x100, * w = (char*)malloc(sizeof(char) * z);  w[--z] = '\0';
-	  while (t > 0x7f) { w[--z] = b; i = t; t = i / 0x100; b = (char)(i - t * 0x100); }
-	  w[--z] = b; if (z > 0) { w[0] = t; } return w;
-	}
-#ifdef __cplusplus
-  }  /* extern "C" */
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
+#include <windows.h>
+namespace color {
+  inline bool ansi_color_seq_enabled() {
+	fc::Buf s(64);
+#ifdef _WIN32
+	DWORD r = GetEnvironmentVariableA("TERM", s.data_, 64);
+	s.resize(r);
+	if (r > 64) {
+	  GetEnvironmentVariableA("TERM", s.data_, r);
+	  s.resize(r - 1);
+	}
+#else
+	char* c = ::getenv("TERM"); if (c)s << c;
+#endif // _WIN32
+	static const bool x = !s.empty();
+	return x;
+  }
+  inline HANDLE& std_handle() {
+	static HANDLE handle = []() {
+	  HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	  if (handle != INVALID_HANDLE_VALUE && handle != NULL) return handle;
+	  return (HANDLE)NULL;
+	}();
+	return handle;
+  }
+  inline int get_default_color() {
+	auto h = std_handle();
+	if (!h) return 15;
+	CONSOLE_SCREEN_BUFFER_INFO buf;
+	if (!GetConsoleScreenBufferInfo(h, &buf)) return 15;
+	return buf.wAttributes & 0x0f;
+  }
+  Color::Color(const char* ansi_seq, int win_color) {
+	ansi_color_seq_enabled() ? (void)(s = ansi_seq) : (void)(i = win_color);
+  }
+  const Color red("\033[38;5;1m", FOREGROUND_RED);     // 12
+  const Color green("\033[38;5;2m", FOREGROUND_GREEN); // 10
+  const Color blue("\033[38;5;12m", FOREGROUND_BLUE);  // 9
+  const Color yellow("\033[38;5;11m", 14);
+  const Color deflt("\033[39m", get_default_color());
+} // color
+std::ostream& operator<<(std::ostream& os, const color::Color& color) {
+  if (color::ansi_color_seq_enabled()) {
+	os << color.s;
+	return os;
+  } else {
+	auto h = color::std_handle();
+	if (h) SetConsoleTextAttribute(h, (WORD)color.i);
+	return os;
+  }
 }

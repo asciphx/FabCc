@@ -13,7 +13,10 @@ namespace fc {
   }
   static int on_header_value(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); $->header_value.assign(c, c + l);
-	$->headers.emplace($->header_field.b2s(), $->header_value.b2s());
+	//str_map::iterator i = $->headers.find($->header_field);
+	//if (i != $->headers.end()) { i->second = $->header_value;
+	//$->header_field.reset(); $->header_value.reset(); return 0; }
+	$->headers.emplace($->header_field, $->header_value);
 	$->header_field.reset(); $->header_value.reset(); return 0;
   }
   static int on_headers_complete(llhttp__internal_s* _) {

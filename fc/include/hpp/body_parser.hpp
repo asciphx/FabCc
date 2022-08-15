@@ -29,12 +29,12 @@ namespace fc {
 	  p_b(req.body);
 	}
   private: //get_boundary
-	string g_b(const string& h) const {
+	string g_b(const Buf& h) const {
 	  //std::cout << "<" << h << ">" << h.size() << std::endl;
-	  size_t f = h.find("=----"); if (f != std::string::npos) return h.substr(f + 0xe); return h;//raw
+	  unsigned int f = h.find("=----"); if (f != -1) return h.substr(f + 0xe).b2s(); return h.b2s();//raw
 	}
 	//parse_body
-	void p_b(Buffer& value) {//std::cout<<boundary<<std::endl;
+	void p_b(Buf& value) {//std::cout<<boundary<<std::endl;
 	  if (boundary[0xc] == 'j') {//application/json
 		// json j = json::parse(value);
 		throw err::not_extended(value);
@@ -54,21 +54,21 @@ namespace fc {
 	  if (value.size() < 45) throw std::runtime_error("Wrong value size!");
 	  if (value.size() > L * 1024u) throw std::runtime_error(std::string("Body size can't be biger than : ") + std::to_string(L) + "kb");
 	  unsigned int f = value.find(boundary);
-	  value.erase(0, f + (unsigned int)boundary.length() + 2); Buffer s; _:;
+	  value.erase(0, f + (unsigned int)boundary.length() + 2); std::string s(64, 0); _:;
 	  if (value.size() > 2) {
 		f = value.find(boundary);
-		s = value.substr(0, f - 0xf);
+		s = value.substr(0, f - 0xf).b2v();
 		params.emplace_back(p_s(s));
 		value.erase(0, f + (unsigned int)boundary.length() + 2); goto _;
 	  }
 	  if (params.size() == 0) throw std::runtime_error("Not Found!");
 	}
 	//parse_section
-	param p_s(Buffer& s) {
+	param p_s(std::string& s) {
 	  struct param p;
 	  size_t f = s.find("\r\n\r\n");
-	  string lines(s.substr(0, (unsigned int)f + 2));
-	  s.erase(0, (unsigned int)f + 4);
+	  string lines(s.substr(0, f + 2));
+	  s.erase(0, f + 4);
 	  f = lines.find(';');
 	  if (f != string::npos) lines.erase(0, f + 2);
 	  f = lines.find("\r\n");

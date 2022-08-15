@@ -20,6 +20,8 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - The fewest third-party libraries, are stored in the project in the form of source files
 - Cross platform support, (Linux and windows have been tested)
 - Minimize the allocate and release of memory, which is friendly to the hard disk and does not generate a large amount of memory fragments, so there is almost no disk IO
+- Support unit test, similar to [coost](https://coostdocs.github.io/en/co/unitest/)
+- Support the web version of poostman, the address is 127.0.0.1:8080/test.heml
 
 ## Still under development
 - [x] Processing of routing brace
@@ -33,6 +35,8 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 ## Description
 - If translated by machine, FabCc can be a wafer factory, so FabCc symbolizes the most sophisticated and minimal chip.
 - The namespace uses the uppercase hump fc of FabCc.
+- The logo hasn't been replaced yet. It's the crow logo for the time being.
+- Regex expression routing, because performance issues will be removed.
 - [Demo site](http://8.129.58.72:8080/)🚀
 - ![test](./test.jpg)
 
@@ -45,17 +49,10 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//Service file interface
-  app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//Route regex keys
-	res.write(req.key["id"].str(Buffer(16) << "{\"id\": ") << ", "
-	<< req.key["name"].str(Buffer(32) << "\"name\": ") << '}');
-  };
   app["/json"] = [&app](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
 	res.add_header(fc::RES_CT, fc::RES_AJ);
 	res.write(x.dump());//JSON response
-  };
-  app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
-	res.write(req.url);//routing regex 
   };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//Return to routing list
@@ -75,11 +72,11 @@ int main() {
 	  printf("The route has been idle for 1 minute, and the server will shut down automatically！！");
 	  srv.exit();
 	}, 60000);
-	res.write("Timer countdown start！");
+	res.write("Turn off the server timer and start the countdown！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
-  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
+  srv.router(app).timeout(6000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
   return 0;
 }
 ```

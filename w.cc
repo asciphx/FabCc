@@ -2,9 +2,22 @@
 #include <hpp/text.hpp>
 #include <time.h>
 #include <iostream>
-//#include <str_map.hh>
+#include <str_map.hh>
 //#include <llhttp.h>
+#include <buf.hh>
+#include <vector>
 int main() {
+  fc::Buf b(15, '#');
+  // std::vector<fc::Buf> mm;
+  // mm.push_back(b);
+  // mm.push_back(b);
+  // mm.push_back(b);
+  // for (auto m : mm) {
+	 //std::cout << m << " <> ";
+  // }
+  fc::str_map mmp;
+  mmp.emplace("f", "dsgsg");
+  std::cout << mmp.find("f")->second << " <> ";
   clock_t start = clock();
   unsigned long long l;
   // double d;

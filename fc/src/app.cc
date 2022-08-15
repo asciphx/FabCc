@@ -46,21 +46,21 @@ namespace fc {
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it
-  Buffer App::_print_routes() {
-	Buffer b(0x1ff); int i = 0; char m;
+  Buf App::_print_routes() {
+	Buf b(0x1ff); int i = 0; char m;
 	map_.for_all_routes([this, &b, &i, &m](std::string r, VH h) {
 	  m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
 	  b << '(' << ++i << ')' << '[' << m2c((HTTP)m) << ']' <<
 		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
 	  }); return b.pop_back();
   }
-  void App::_call(HTTP& m, fc::Buffer& r, Req& request, Res& response) const {
+  void App::_call(HTTP& m, fc::Buf& r, Req& req, Res& res) const {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
 	std::string g(1, static_cast<char>(m) + 0x30); g += r.b2v();
-	fc::drt_node::iterator it = map_.root.find(g, 0, &request); if (it.second != nullptr) {
-	  it->second(request, response);
+	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
+	  it->second(req, res);
 	} else throw err::not_found();
   }
   void App::sub_api(const char* prefix, const App& app) {
@@ -76,9 +76,9 @@ namespace fc {
 	  char real_root[CROSSPLATFORM_MAX_PATH]{ 0 };
 	  if (r[0] == 0)r = "."; if (r[0] == '/' || r[0] == '\\')++r;
 	  if (!fc::crossplatform_realpath(r, real_root))
-		throw err::not_found(fc::Buffer("serve_file error: Directory ", 28) << r << " does not exists.");
+		throw err::not_found(fc::Buf("serve_file error: Directory ", 28) << r << " does not exists.");
 	  if (!fc::is_directory(real_root))
-		throw err::internal_server_error(fc::Buffer("serve_file error: ", 18) << real_root << " is not a directory.");
+		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
 	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); detail::directory_ = $;
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
@@ -123,7 +123,7 @@ namespace fc {
 			  res.path_ = std::move(_);
 			  return;
 			}
-			throw err::not_found(Buffer() << "Content-type of [" << extension << "] is not allowed!");
+			throw err::not_found(Buf() << "Content-type of [" << extension << "] is not allowed!");
 		  }
 		}
 		throw err::not_found();

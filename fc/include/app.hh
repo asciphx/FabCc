@@ -7,7 +7,7 @@
 #include <h/common.h>
 #include <h/any_types.h>
 #include "router.hh"
-#include <buffer.hh>
+#include <buf.hh>
 #include <directory.hh>
 #include <http_error.hh>
 #include <file_sptr.hh>
@@ -26,8 +26,8 @@ namespace fc {
 	//template <typename Adaptor> //websocket
 	//void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
 	///Process the Req and generate a Res for it
-	Buffer _print_routes();
-	void _call(HTTP& m, fc::Buffer& r, Req& request, Res& response) const;
+	Buf _print_routes();
+	void _call(HTTP& m, fc::Buf& r, Req& request, Res& response) const;
 	DRT map_;
     std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
 	std::unordered_map<std::string_view, std::string_view>* content_types;

@@ -17,5 +17,6 @@ namespace fc {
   int create_directory(const std::string& path);
   bool is_regular_file(const std::string& path);
   bool is_directory(const std::string& path);
+  bool exists(const char* path);
   bool starts_with(const char* pre, const char* str);
 } // namespace fc

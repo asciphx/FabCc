@@ -1,5 +1,6 @@
 #include <tcp.hh>
 #include <hpp/body_parser.hpp>
+#include <json.hh>
 using namespace fc;
 void funk(Req& req, Res& res) {
   res.write("主页路由被std::bind复写！");
@@ -7,17 +8,10 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//路由regex键
-	res.write(req.key["id"].str(Buffer(16) << "{\"id\": ") << ", "
-	<< req.key["name"].str(Buffer(32) << "\"name\": ") << '}');
-  };
   app["/json"] = [&app](Req& req, Res& res) {
-	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
+	Json x = { { "h", -1 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
 	res.add_header(fc::RES_CT, fc::RES_AJ);
 	res.write(x.dump());//json响应
-  };
-  app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
-	res.write(req.url);//regex表达式访问
   };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//返回路由列表
@@ -37,7 +31,7 @@ int main() {
 	  printf("该路由已闲置1分钟，服务器即将自动关闭！！");
 	  srv.exit();
 	}, 60000);
-	res.write("计时器倒计时启动！");
+	res.write("关闭服务计时器倒计时启动！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器

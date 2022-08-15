@@ -6,20 +6,97 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 #include <stdint.h>
-typedef int8_t  i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+#include <buf.hh>
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
 #define unlikely(x) __builtin_expect(x, 0)
+#define likely(x) __builtin_expect(x, 1)
 #else
-#define unlikely(x) (x)
+#define unlikely(x) x
+#define likely(x) x
 #endif
+#define DISALLOW_COPY_AND_ASSIGN(T) T(const T&) = delete; void operator=(const T&) = delete
+#ifdef _WIN32
+namespace color {
+  struct Color {
+	Color(const char* s, int i);
+	union { int i; const char* s; };
+  };
+  extern const Color red;
+  extern const Color green;
+  extern const Color blue;
+  extern const Color yellow;
+  extern const Color deflt; // default color
+} // color
+std::ostream& operator<<(std::ostream&, const color::Color&);
+#else
+namespace color {
+  const char* const red = "\033[38;5;1m";
+  const char* const green = "\033[38;5;2m";
+  const char* const blue = "\033[38;5;12m";
+  const char* const yellow = "\033[38;5;3m"; // or 11
+  const char* const deflt = "\033[39m";
+}
+#endif
+typedef signed char  i8;
+typedef short i16;
+typedef int i32;
+typedef long long i64;
+typedef unsigned char  u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long long u64;
+namespace str {
+  template <typename T>
+  inline void del(T* p) {
+	if (p) { p->~T(); ::free((void*)p); }
+  }
+  template <typename T, typename... Args>
+  inline T* make(Args&&... args) {
+	return new (malloc(sizeof(T))) T(std::forward<Args>(args)...);
+  }
+  template<typename T>
+  inline fc::Buf from(T&& t) {
+	fc::Buf s(0x18); s << std::forward<T>(t); return s;
+  }
+  inline int _Shift(char c) {
+	switch (c) {
+	case 'k':
+	case 'K':
+	  return 10;
+	case 'm':
+	case 'M':
+	  return 20;
+	case 'g':
+	case 'G':
+	  return 30;
+	case 't':
+	case 'T':
+	  return 40;
+	case 'p':
+	case 'P':
+	  return 50;
+	default:
+	  return 0;
+	}
+  }
+  inline bool to_bool(const char* s) {
+	if (strcmp(s, "false") == 0 || strcmp(s, "0") == 0) return false;
+	if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) return true;
+	return false;
+  }
+  i64 to_int64(const char* s);
+  i32 to_int32(const char* s);
+  u64 to_uint64(const char* s);
+  u32 to_uint32(const char* s);
+  double to_double(const char* s);
+  fc::Buf strip(const char* s, const char* c, char d = 'b');
+  fc::Buf strip(const fc::Buf& s, const char* c = " \t\r\n", char d = 'b');
+  std::vector<fc::Buf> split(const fc::Buf& s, char c, u32 maxsplit = 0);
+  fc::Buf replace(const char* s, const char* sub, const char* to, u32 maxreplace = 0);
+  fc::Buf replace(const fc::Buf& s, const char* sub, const char* to, u32 maxreplace = 0);
+}
 //<Ctrl> + Left mouse button -> Jump to the specified location
 namespace fc {
   //RFC_ALL
@@ -79,37 +156,6 @@ namespace fc {
 	unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
 	for (unsigned long long i = 0; s[++i]; r *= 0x17, r += s[i] > 0x5c ? s[i] - 0x5d : s[i] - 0x12); return r;
   }
-  inline int _Shift(char c) {
-	switch (c) {
-	case 'k':
-	case 'K':
-	  return 10;
-	case 'm':
-	case 'M':
-	  return 20;
-	case 'g':
-	case 'G':
-	  return 30;
-	case 't':
-	case 'T':
-	  return 40;
-	case 'p':
-	case 'P':
-	  return 50;
-	default:
-	  return 0;
-	}
-  }
-  inline bool to_bool(const char* s) {
-	if (strcmp(s, "false") == 0 || strcmp(s, "0") == 0) return false;
-	if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) return true;
-	return false;
-  }
-  i64 to_int64(const char* s);
-  i32 to_int32(const char* s);
-  u64 to_uint64(const char* s);
-  u32 to_uint32(const char* s);
-  double to_double(const char* s);
 #ifdef __cplusplus
   extern "C" {
 #endif
@@ -137,8 +183,7 @@ namespace fc {
 #ifdef __cplusplus
   }  /* extern "C" */
 #endif
-
-}
+  }
 //Basic judgment type characters supported by ccORM (with switch(hack8Str(...)))
 #if _WIN32
 #define T_INT8 "signed char"_l
@@ -189,5 +234,4 @@ namespace fc {
 #define T_STRING_ 'c'
 #define T_POINTER_ '*'
 #define T_VECTOR_ '_'
-
 #endif

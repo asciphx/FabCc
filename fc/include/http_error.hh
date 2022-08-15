@@ -2,20 +2,20 @@
 #define HTTP_ERROR_HH
 #include <h/common.h>
 #include <string>
-#include <buffer.hh>
+#include <buf.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/error.hh
 namespace fc {
   struct http_error {
-	http_error(int status, const Buffer& what);
+	http_error(int status, const Buf& what);
 	http_error(int status, const char* what);
 	int i() const;
 	const char* what() const;
   private:
-	int status_; Buffer what_;
+	int status_; Buf what_;
   };
   namespace err {
 #define FC_HTTP_ERROR(CODE, ERR) static http_error ERR(const char* w = "") { return http_error(CODE, w); }\
- static http_error ERR(const Buffer& w) { return http_error(CODE, w); }
+ static http_error ERR(const Buf& w) { return http_error(CODE, w); }
 	FC_HTTP_ERROR(400, bad_request)
 	  FC_HTTP_ERROR(401, unauthorized)
 	  FC_HTTP_ERROR(403, forbidden)

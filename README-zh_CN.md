@@ -20,6 +20,8 @@
 - 最少的第三方库，均以源文件形式存放项目中
 - 全平台支持，（已经测试Linux和Windows）
 - 最小化分配与释放内存，对硬盘友好，不产生大量内存碎片，因此几乎没有磁盘io
+- 支持单元测试，类似[coost](https://coostdocs.gitee.io/cn/co/unitest/)
+- 支持网页版poostman，地址是127.0.0.1:8080/test.heml
 
 ## 仍在开发中
 - [x] 路由大括号表达式
@@ -33,6 +35,8 @@
 ## 説明
 - 如果机器翻译过来，FabCc可以是晶圆厂，所以FabCc象征着最复杂又最小化的芯片。
 - 命名空間采用FabCc的大寫駝峰fc來使用。
+- logo还没来得及更换，暂时是用的crow的logo。
+- regex表达式路由，因为性能的问题将被移除。
 - [示例](http://8.129.58.72:8080/)🚀
 - ![测试](./test.jpg)
 
@@ -45,17 +49,10 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/u/:id(\\d+)/:name(\\w+)"] = [](Req& req, Res& res) {//路由regex键
-	res.write(req.key["id"].str(Buffer(16) << "{\"id\": ") << ", "
-	<< req.key["name"].str(Buffer(32) << "\"name\": ") << '}');
-  };
   app["/json"] = [&app](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
 	res.add_header(fc::RES_CT, fc::RES_AJ);
 	res.write(x.dump());//json响应
-  };
-  app["/api/\\d/\\w+"] = [](Req& req, Res& res) {
-	res.write(req.url);//regex表达式
   };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//返回路由列表
@@ -75,11 +72,11 @@ int main() {
 	  printf("该路由已闲置1分钟，服务器即将自动关闭！！");
 	  srv.exit();
 	}, 60000);
-	res.write("计时器倒计时启动！");
+	res.write("关闭服务计时器倒计时启动！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  srv.router(app).timeout(4000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
+  srv.router(app).timeout(6000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
   return 0;
 }
 ```

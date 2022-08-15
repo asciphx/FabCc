@@ -31,7 +31,13 @@ namespace fc {
   bool is_directory(const std::string& path) {
 	struct stat ps; if (-1 == stat(path.c_str(), &ps)) return false; return ps.st_mode & S_IFDIR;
   }
-
+  bool exists(const char* path) {
+#ifdef _WIN32
+	return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
+#else
+	struct stat attr; return ::lstat(path, &attr) == 0;
+#endif
+  }
   bool starts_with(const char* pre, const char* str) {
 	size_t lp = strlen(pre), ls = strlen(str); return ls < lp ? false : memcmp(pre, str, lp) == 0;
   }
