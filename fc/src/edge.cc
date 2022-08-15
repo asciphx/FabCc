@@ -192,9 +192,9 @@ namespace edge {
 	  for (unsigned int i = 0; i < name.size(); ++i) {
 		flag = find_flag(name.substr(i, 1));
 		if (!flag) {
-		  return fc::Buf("undefined bool flag -") << name[i] << " in -" << name;
+		  return fc::Buf("undefined bool flag -") << name[i] << " in -" << std::string_view(name.data(),name.size());
 		} else if (flag->type != TYPE_bool) {
-		  return fc::Buf("-") << name[i] << " is not bool in -" << name;
+		  return fc::Buf("-") << name[i] << " is not bool in -" << std::string_view(name.data(),name.size());
 		} else {
 		  *static_cast<bool*>(flag->addr) = true;
 		}
@@ -269,9 +269,6 @@ namespace edge {
 	  fc::Buf fname(exe);
 	  if (fname.ends_with(".exe")) fname.resize(fname.size() - 4);
 	  fname << ".conf";
-#ifdef _WIN32
-	  fname = fname.substr(fname.rfind('\\') - 1); fname[0] = '.'; fname[1] = '/';
-#endif // _WIN32
 	  std::ofstream f(fname.c_str(), std::ios::trunc | std::ios::out | std::ios::binary);
 	  if (!f) {
 		std::cout << "can't open config file: " << fname << std::endl;
