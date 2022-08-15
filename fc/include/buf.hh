@@ -2,6 +2,7 @@
 #define BUF_HH
 #include <cstring>
 #include <string>
+#include <string_view>
 #include <ostream>
 #include <h/dtoa_milo.h>
 #pragma warning(disable:4244)
@@ -12,7 +13,7 @@
 #endif
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
-  static const std::string RES_TURE("true", 4), RES_FALSE("false", 5);
+  static const std::string_view RES_TURE("true", 4), RES_FALSE("false", 5);
   struct Buf {
 	Buf();
 	Buf(Buf&& o);
@@ -82,7 +83,6 @@ namespace fc {
 	  }
 	}
 	_INLINE friend std::ostream& operator<<(std::ostream& os, const Buf& s) { return os.write(s.data_, s.size()); }
-	_INLINE friend std::ostream& operator<<(std::ostream& os, Buf&& s) { return os.write(s.data_, s.size()); }
 	Buf substr(unsigned int a) const;
 	Buf substr(unsigned int a, unsigned int b) const;
 	unsigned int find(const char* c) const;
@@ -120,19 +120,21 @@ namespace fc {
 	  return data_[r] ? r : -1;
 	}
 	Buf& operator<<(const Buf& s);
+	Buf& operator<<(Buf&& s);
 	Buf& operator<<(unsigned long long v);
-#ifndef __linux__
-	_INLINE Buf& operator<<(std::string_view s) {
-	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
-	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
-	}
-#endif
+#ifdef __linux__
+	_INLINE Buf& operator<<(long long l) { return operator<<(std::string_view(std::to_string(l))); }
+	_INLINE Buf& operator<<(int i) { return operator<<(std::string_view(std::to_string(i))); }
+	_INLINE Buf& operator<<(long i) { return operator<<(std::string_view(std::to_string(i))); }
+	_INLINE Buf& operator<<(unsigned long i) { return operator<<(std::string_view(std::to_string(i))); }
+	_INLINE Buf& operator<<(unsigned int ui) { return operator<<(std::string_view(std::to_string(ui))); }
+	_INLINE Buf& operator<<(short a) { return operator<<(std::string_view(std::to_string(a))); }
+	_INLINE Buf& operator<<(unsigned short ua) { return operator<<(std::string_view(std::to_string(ua))); }
+#else
 	_INLINE Buf& operator<<(std::string s) {
 	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
 	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
 	}
-	_INLINE Buf& operator<<(const char* s) { return operator<<(Buf(s, (unsigned int)strlen(s))); }
-	_INLINE Buf& operator<<(char v) { end_[0] = v; ++end_; return *this; }
 	_INLINE Buf& operator<<(long long l) { return operator<<(std::to_string(l)); }
 	_INLINE Buf& operator<<(int i) { return operator<<(std::to_string(i)); }
 	_INLINE Buf& operator<<(long i) { return operator<<(std::to_string(i)); }
@@ -140,6 +142,13 @@ namespace fc {
 	_INLINE Buf& operator<<(unsigned int ui) { return operator<<(std::to_string(ui)); }
 	_INLINE Buf& operator<<(short a) { return operator<<(std::to_string(a)); }
 	_INLINE Buf& operator<<(unsigned short ua) { return operator<<(std::to_string(ua)); }
+#endif
+	_INLINE Buf& operator<<(std::string_view s) {
+	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
+	  memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
+	}
+	_INLINE Buf& operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
+	_INLINE Buf& operator<<(char v) { end_[0] = v; ++end_; return *this; }
 	_INLINE Buf& operator<<(double d) { this->ensure(8); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
 	_INLINE Buf& operator<<(float f) { this->ensure(2); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
 	_INLINE Buf& operator<<(bool b) { return operator<<(b ? RES_TURE : RES_FALSE); }
@@ -150,6 +159,7 @@ namespace fc {
   private:
 	char* back_;
 	unsigned int cap_;
+	bool not_null_;
   };
 }
 #endif

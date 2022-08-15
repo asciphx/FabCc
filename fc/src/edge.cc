@@ -192,9 +192,9 @@ namespace edge {
 	  for (unsigned int i = 0; i < name.size(); ++i) {
 		flag = find_flag(name.substr(i, 1));
 		if (!flag) {
-		  return fc::Buf("undefined bool flag -") << name[i] << " in -" << name;
+		  return fc::Buf("undefined bool flag -") << name[i] << " in -" << std::string_view(name.data(),name.size());
 		} else if (flag->type != TYPE_bool) {
-		  return fc::Buf("-") << name[i] << " is not bool in -" << name;
+		  return fc::Buf("-") << name[i] << " is not bool in -" << std::string_view(name.data(),name.size());
 		} else {
 		  *static_cast<bool*>(flag->addr) = true;
 		}
@@ -260,27 +260,24 @@ namespace edge {
 #define COMMENT_LINE_LEN 72
 	void mkconf(const fc::Buf& exe) {
 	  // Order flags by lv, file, line.  <lv, <file, <line, flag>>>
-	  std::map<int, std::map<fc::Buf, std::map<int, Edge*>>> flags;
+	  std::map<int, std::map<std::string, std::map<int, Edge*>>> flags;
 	  for (auto it = gFlags().begin(); it != gFlags().end(); ++it) {
 		Edge* f = it->second;
 		if (f->help[0] == '.' || f->help[0] == '\0') continue; // ignore hidden flags.
-		flags[f->lv][fc::Buf(f->file)][f->line] = f;
+		flags[f->lv][std::string(f->file)][f->line] = f;
 	  }
 	  fc::Buf fname(exe);
 	  if (fname.ends_with(".exe")) fname.resize(fname.size() - 4);
 	  fname << ".conf";
-#ifdef _WIN32
-	  fname = fname.substr(fname.rfind('\\') - 1); fname[0] = '.'; fname[1] = '/';
-#endif // _WIN32
 	  std::ofstream f(fname.c_str(), std::ios::trunc | std::ios::out | std::ios::binary);
 	  if (!f) {
 		std::cout << "can't open config file: " << fname << std::endl;
 		return;
 	  }
-	  f << fc::Buf(COMMENT_LINE_LEN, '#') << '\n'
+	  f << std::string(COMMENT_LINE_LEN, '#') << '\n'
 		<< "###  > # or // for comments\n"
 		<< "###  > k,m,g,t,p (case insensitive, 1k for 1024, etc.)\n"
-		<< fc::Buf(COMMENT_LINE_LEN, '#') << "\n\n\n";
+		<< std::string(COMMENT_LINE_LEN, '#') << "\n\n\n";
 	  for (auto it = flags.begin(); it != flags.end(); ++it) {
 		const auto& x = it->second;
 		for (auto xit = x.begin(); xit != x.end(); ++xit) {

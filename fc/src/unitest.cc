@@ -17,10 +17,7 @@ namespace unitest {
   };
   typedef std::map<std::string, std::vector<FailedMsg*>> CMap; // <case_name, msgs>
   typedef std::map<std::string, CMap> TMap;                   // <test_name, cases>
-  inline TMap& failed_tests() {
-	static TMap m;
-	return m;
-  }
+  inline TMap& failed_tests() { static TMap m; return m; }
   void push_failed_msg(const std::string& test_name, const std::string& case_name,
 					   const char* file, int line, const fc::Buf& msg) {
 	TMap& x = failed_tests();
@@ -28,7 +25,6 @@ namespace unitest {
   }
   void run_all_tests() {
 	fc::Time t;
-	size_t n = 0;
 	auto& tests = gTests();
 	std::vector<Test*> enabled;
 	for (Test*& test : tests) {
@@ -37,33 +33,27 @@ namespace unitest {
 	  }
 	}
 	if (enabled.empty()) { /* run all tests by default */
-	  n = tests.size();
 	  for (Test*& test : tests) {
-		std::cout << "> begin test: " << test->name() << std::endl;
+		std::cout << "> begin all test: " << test->name() << std::endl;
 		t.restart();
 		test->run();
-		std::cout << "< test " << test->name() << " done in " << t.us() << " us" << std::endl;
+		std::cout << "< All test " << test->name() << " done in " << t.us() << " us\n";
 		str::del(test);
 	  }
 	} else {
-	  n = enabled.size();
 	  for (Test*& test : enabled) {
 		std::cout << "> begin test: " << test->name() << std::endl;
 		t.restart();
 		test->run();
-		std::cout << "< test " << test->name() << " done in " << t.us() << " us" << std::endl;
+		std::cout << "< Test " << test->name() << " done in " << t.us() << " us\n";
 	  }
 	  for (Test*& test : tests) str::del(test);
 	}
 	TMap& failed = failed_tests();
 	if (failed.empty()) {
-	  if (n > 0) {
-		std::cout << color::green << "\nCongratulations! All tests passed!" << color::deflt << std::endl;
-	  } else {
-		std::cout << "No test found. Done nothing." << std::endl;
-	  }
+	  std::cout << color::green << "\nCongratulations! All tests passed!" << color::deflt << std::endl;
 	} else {
-	  std::cout << "> failed_tests : " << std::endl;
+	  std::cout << "> failed_tests : \n";
 	  size_t ntestsfailed = failed.size();
 	  size_t ncasesfailed = 0;
 	  for (TMap::iterator it = failed.begin(); it != failed.end(); ++it) {

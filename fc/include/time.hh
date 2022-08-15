@@ -9,8 +9,7 @@
   using milliseconds = duration<long long, milli>;
   using seconds      = duration<long long>;
   using minutes      = duration<int, ratio<60>>;
-  using hours        = duration<int, ratio<3600>>;
-  */
+  using hours        = duration<int, ratio<3600>>; */
 namespace fc {
   namespace sleep {
 	void h(long long h);
@@ -25,6 +24,9 @@ namespace fc {
   public:
 	Time();
 	void restart();
+	long long h() const;
+	long long m() const;
+	long long s() const;
 	long long ms() const;
 	long long us() const;
 	long long ns() const;

@@ -12,7 +12,7 @@ namespace fc {
   const fc::Buf& Res::get_header(const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
-  void Res::write(const std::string& body_part) { body << body_part; };
+  void Res::write(const std::string& body_part) { body.append(body_part.data(), body_part.size()); };
   void Res::write(const fc::Buf& body_part) { body << body_part; };
   void Res::write(const char* body_part) { body << body_part; };
   fc::Buf& Res::compress_str(char* const str, size_t len) {

@@ -6,14 +6,10 @@
 #include <map>
 #include <iostream>
 #include <fstream>
+#include <string_view>
 // co/edge is a library similar to Google's gflags.
 // A edge is in fact a global variable, and value can be passed to it
 // from command line or from a config file.
-#if _HAS_CXX17==0 || !defined(_HAS_CXX17)
-#    define string_view string
-#else
-#include <string_view>
-#endif
 namespace edge {
   // Parse command line flags and config file specified by -config.
   // Return non-edge elements.
