@@ -29,8 +29,7 @@ namespace fc {
   }
   Buf::~Buf() { if (not_null_) delete[] data_; }
   Buf& Buf::operator=(Buf&& o) {
-	delete[] data_; data_ = o.data_; end_ = o.end_; back_ = o.back_; cap_ = o.cap_;
-	o.data_ = nullptr; o.not_null_ = false; return *this;
+	std::swap(o.cap_, cap_); std::swap(o.back_, back_); std::swap(o.end_, end_); std::swap(o.data_, data_); return *this;
   }
   Buf& Buf::operator=(const Buf& o) {
 	if (&o != this) {
