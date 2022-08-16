@@ -20,7 +20,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - The fewest third-party libraries, are stored in the project in the form of source files
 - Cross platform support, (Linux and windows have been tested)
 - Minimize the allocate and release of memory, which is friendly to the hard disk and does not generate a large amount of memory fragments, so there is almost no disk IO
-- Support unit test, similar to [coost](https://coostdocs.github.io/en/co/unitest/)
+- Support unit testing. Please refer to [[coost](https://coostdocs.gitee.io/cn/co/unitest/)] for documentation
 - Support the web version of poostman, the address is 127.0.0.1:8080/test.html
 
 ## Still under development

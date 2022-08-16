@@ -2,32 +2,32 @@
 #include <utility>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
-  Buf::Buf(): data_(new char[0x3f]), end_(data_), back_(data_ + 0x3f), cap_(0x3f), not_null_(true) {}
-  Buf::Buf(Buf&& o): data_(o.data_), end_(o.end_), back_(o.back_), cap_(o.cap_), not_null_(o.not_null_) {
-	o.data_ = nullptr; o.not_null_ = false;
+  Buf::Buf(): data_(new char[0x3f]), end_(data_), back_(data_ + 0x3f), cap_(0x3f) {}
+  Buf::Buf(Buf&& o): data_(o.data_), end_(o.end_), back_(o.back_), cap_(o.cap_) {
+	o.data_ = nullptr;
   }
-  Buf::Buf(const Buf& o): data_(new char[o.cap_]), end_(data_), back_(data_ + o.cap_), cap_(o.cap_), not_null_(true) {
+  Buf::Buf(const Buf& o): data_(new char[o.cap_]), end_(data_), back_(data_ + o.cap_), cap_(o.cap_) {
 	size_t i = o.end_ - o.data_; memcpy(end_, o.data_, i); end_ += i;
   }
   Buf::Buf(unsigned int capacity)
-	: data_(new char[capacity]), end_(data_), back_(data_ + capacity), cap_(capacity), not_null_(true) {}
+	: data_(new char[capacity]), end_(data_), back_(data_ + capacity), cap_(capacity) {}
   Buf::Buf(const char* c, unsigned int capacity)
-	: data_(new char[capacity]), end_(data_), back_(data_ + capacity), cap_(capacity), not_null_(true) {
+	: data_(new char[capacity]), end_(data_), back_(data_ + capacity), cap_(capacity) {
 	memcpy(end_, c, capacity); end_ += capacity;
   }
   Buf::Buf(const char* c): cap_((unsigned int)strlen(c)),
-	data_(new char[cap_]), end_(data_), back_(data_ + cap_), not_null_(true) {
+	data_(new char[cap_]), end_(data_), back_(data_ + cap_) {
 	memcpy(end_, c, cap_); end_ += cap_;
   };
   Buf::Buf(const std::string& s):cap_((unsigned int)s.size()),
-	data_(new char[cap_]), end_(data_), back_(data_ + cap_), not_null_(true) {
+	data_(new char[cap_]), end_(data_), back_(data_ + cap_) {
 	memcpy(end_, s.c_str(), cap_); end_ += cap_;
   };
   Buf::Buf(size_t n, char c): cap_((unsigned int)n),
-	data_(new char[cap_]), end_(data_), back_(data_ + cap_), not_null_(true) {
+	data_(new char[cap_]), end_(data_), back_(data_ + cap_) {
 	memset(end_, c, n); end_ += n;
   }
-  Buf::~Buf() { if (not_null_) delete[] data_; }
+  Buf::~Buf() { if (data_) delete[] data_; }
   Buf& Buf::operator=(Buf&& o) noexcept {
 	std::swap(o.cap_, cap_); std::swap(o.back_, back_); std::swap(o.end_, end_); std::swap(o.data_, data_); return *this;
   }
@@ -40,7 +40,7 @@ namespace fc {
 	}
 	return *this;
   }
-  void Buf::clear() { if (not_null_) delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
+  void Buf::clear() { if (data_) delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
   Buf Buf::substr(unsigned int a) const {
 	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, l - a);
   }
@@ -104,10 +104,12 @@ namespace fc {
 	delete[] data_; data_ = new char[cap_]; end_ = data_; b = a + l - b;
 	back_ = data_ + cap_; memcpy(data_, c, b); end_ += b; delete[] c;
   }
-  bool Buf::ensure(unsigned int l) {
-	char* c = (char*)malloc(cap_); unsigned int size = end_ - data_; memcpy(c, data_, size);
-	cap_ += (cap_ >> 1) + l; delete[] data_; data_ = new char[cap_]; end_ = data_;
-	back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c; return true;
+  void Buf::ensure(unsigned int l) {
+	if (back_ - end_ < l) {
+	  char* c = (char*)malloc(cap_); unsigned int size = end_ - data_; memcpy(c, data_, size);
+	  cap_ += l; delete[] data_; data_ = new char[cap_]; end_ = data_;
+	  back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c;
+	}
   };
   bool Buf::reserve(unsigned int l) {
 	if (l < cap_)return false; char* c = (char*)malloc(cap_); unsigned int size = end_ - data_;

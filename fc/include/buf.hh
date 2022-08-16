@@ -64,23 +64,17 @@ namespace fc {
 	_INLINE bool operator!=(const char* c) const {
 	  size_t l = size(); if (l == strlen(c)) return false; return memcmp(data_, c, l) != 0;
 	}
-	_INLINE bool operator==(const Buf& b) const { return memcmp(data_, b.data_, size()) == 0; }
-	_INLINE bool operator!=(const Buf& b) const { return memcmp(data_, b.data_, size()) != 0; }
+	_INLINE bool operator==(const Buf& b) const { return memcmp(data_, b.data_, this->size()) == 0; }
+	_INLINE bool operator!=(const Buf& b) const { return memcmp(data_, b.data_, this->size()) != 0; }
 	_INLINE bool operator<(const Buf& b) const {
 	  size_t i = end_ - data_, l = b.end_ - b.data_;
-	  if (i < l) {
-		return memcmp(data_, b.data_, i) <= 0;
-	  } else {
-		return memcmp(data_, b.data_, l) < 0;
-	  }
+	  if (i < l) return memcmp(data_, b.data_, i) <= 0;
+	  return memcmp(data_, b.data_, l) < 0;
 	}
 	_INLINE bool operator>(const Buf& b) const {
 	  size_t i = end_ - data_, l = b.end_ - b.data_;
-	  if (i > l) {
-		return memcmp(data_, b.data_, l) >= 0;
-	  } else {
-		return memcmp(data_, b.data_, i) > 0;
-	  }
+	  if (i > l) return memcmp(data_, b.data_, l) >= 0;
+	  return memcmp(data_, b.data_, i) > 0;
 	}
 	_INLINE friend std::ostream& operator<<(std::ostream& os, const Buf& s) { return os.write(s.data_, s.size()); }
 	Buf substr(unsigned int a) const;
@@ -94,7 +88,7 @@ namespace fc {
 	unsigned int rfind(const char* sub) const;
 	Buf& append(const Buf& s);
 	void erase(unsigned int a, unsigned int b = -1);
-	bool ensure(unsigned int l);
+	void ensure(unsigned int l);
 	bool reserve(unsigned int l);
 	Buf& insert(char*& s, const char* e, const char* f);
 	Buf& assign(const char* s, const char* e);
@@ -149,8 +143,8 @@ namespace fc {
 	}
 	_INLINE Buf& operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
 	_INLINE Buf& operator<<(char v) { end_[0] = v; ++end_; return *this; }
-	_INLINE Buf& operator<<(double d) { this->ensure(8); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
-	_INLINE Buf& operator<<(float f) { this->ensure(2); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
+	_INLINE Buf& operator<<(double d) { this->ensure(6); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
+	_INLINE Buf& operator<<(float f) { this->ensure(8); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
 	_INLINE Buf& operator<<(bool b) { return operator<<(b ? RES_TURE : RES_FALSE); }
 	Buf& operator=(const char* s);
 	Buf& operator=(std::string&& s);
@@ -159,7 +153,6 @@ namespace fc {
   private:
 	char* back_;
 	unsigned int cap_;
-	bool not_null_;
   };
 }
 #endif
