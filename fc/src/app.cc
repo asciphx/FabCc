@@ -1,4 +1,6 @@
 #include <app.hh>
+#include <list>
+#include <utility>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 #ifdef _WIN32
 #define $_(_) _._Ptr
@@ -48,11 +50,23 @@ namespace fc {
   ///Process the Req and generate a Res for it
   Buf App::_print_routes() {
 	Buf b(0x1ff); int i = 0; char m;
+#ifdef __linux__
+	std::list<std::pair<std::string, VH>> aws;
+	map_.for_all_routes([this, &aws](std::string r, VH h) { aws.push_front(std::make_pair(r, h)); });
+	for (std::pair<std::string, VH>& p : aws) {
+	  std::string& r = p.first; VH& h = p.second;
+	  m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
+	  b << '(' << ++i << ')' << '[' << m2c((HTTP)m) << ']' <<
+		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
+	}
+#else
 	map_.for_all_routes([this, &b, &i, &m](std::string r, VH h) {
 	  m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
 	  b << '(' << ++i << ')' << '[' << m2c((HTTP)m) << ']' <<
 		'/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
-	  }); return b.pop_back();
+	});
+#endif // _WIN32
+	return b.pop_back();
   }
   void App::_call(HTTP& m, fc::Buf& r, Req& req, Res& res) const {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
