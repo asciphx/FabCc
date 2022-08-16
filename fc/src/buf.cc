@@ -28,7 +28,7 @@ namespace fc {
 	memset(end_, c, n); end_ += n;
   }
   Buf::~Buf() { if (not_null_) delete[] data_; }
-  Buf& Buf::operator=(Buf&& o) {
+  Buf& Buf::operator=(Buf&& o) noexcept {
 	std::swap(o.cap_, cap_); std::swap(o.back_, back_); std::swap(o.end_, end_); std::swap(o.data_, data_); return *this;
   }
   Buf& Buf::operator=(const Buf& o) {

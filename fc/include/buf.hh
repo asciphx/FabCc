@@ -24,7 +24,7 @@ namespace fc {
 	Buf(const std::string& s);
 	Buf(size_t n, char c);
 	~Buf();
-	Buf& operator=(Buf&& o);
+	Buf& operator=(Buf&& o) noexcept;
 	Buf& operator=(const Buf& o);
 	void clear();
 
