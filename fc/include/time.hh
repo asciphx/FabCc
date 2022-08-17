@@ -24,8 +24,8 @@ namespace fc {
   public:
 	Time();
 	void restart();
-	long long h() const;
-	long long m() const;
+	int h() const;
+	int m() const;
 	long long s() const;
 	long long ms() const;
 	long long us() const;

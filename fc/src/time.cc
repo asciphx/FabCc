@@ -10,10 +10,10 @@ namespace fc {
   void sleep::ns(long long ns) { std::this_thread::sleep_for(std::chrono::nanoseconds(ns)); };
   Time::Time() { start_ = std::chrono::high_resolution_clock::now(); }
   void Time::restart() { start_ = std::chrono::high_resolution_clock::now(); }
-  long long Time::h() const {
+  int Time::h() const {
 	return std::chrono::duration_cast<std::chrono::hours>(std::chrono::high_resolution_clock::now() - start_).count();
   }
-  long long Time::m() const {
+  int Time::m() const {
 	return std::chrono::duration_cast<std::chrono::minutes>(std::chrono::high_resolution_clock::now() - start_).count();
   }
   long long Time::s() const {
