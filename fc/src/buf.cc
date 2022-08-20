@@ -101,7 +101,7 @@ namespace fc {
 	if (back_ - end_ < l) {
 	  char* c = (char*)malloc(cap_); unsigned int size = end_ - data_; memcpy(c, data_, size);
 	  cap_ += (cap_ >> 1) + l; delete[] data_; data_ = new char[cap_]; end_ = data_;
-	  back_ = data_ + cap_; printf("2:%lld ", back_ - end_); memcpy(data_, c, size); end_ += size; delete[] c;
+	  back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c;
 	}
   };
   bool Buf::reserve(unsigned int l) {
@@ -174,7 +174,7 @@ namespace fc {
 	} return *this << (std::string_view(str_start, mega_buffer + 20 - str_start));
   }
   Buf& Buf::operator<<(double d) { this->ensure(8); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
-  Buf& Buf::operator<<(float f) { this->ensure(6); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
+  Buf& Buf::operator<<(float f) { this->ensure(10); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
   Buf& Buf::operator=(const char* s) {
 	unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;
 	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << (std::string_view(s, l));

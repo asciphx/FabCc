@@ -148,10 +148,12 @@ namespace json {
 	Json(double v): _h(new(xx::alloc()) _H(v)) {}
 	Json(i64 v): _h(new(xx::alloc()) _H(v)) {}
 	Json(i32 v): Json((i64)v) {}
+	Json(long v): Json((i64)v) {}
 	Json(i16 v): Json((i64)v) {}
 	Json(i8 v): Json((i64)v) {}
 	Json(u64 v): _h(new(xx::alloc()) _H(v)) {}
 	Json(u32 v): Json((u64)v) {}
+	Json(long unsigned v): Json((u64)v) {}
 	Json(u16 v): Json((u64)v) {}
 	Json(u8 v): Json((u64)v) {}
 	// for string type
@@ -339,6 +341,8 @@ namespace json {
 	bool operator==(u64 v) const { return (this->is_int() || this->is_uint()) && static_cast<u64>(_h->i) == v; }
 	bool operator==(int v) const { return this->operator==((i64)v); }
 	bool operator==(u32 v) const { return this->operator==((u64)v); }
+	bool operator==(long v) const { return this->operator==((i64)v); }
+	bool operator==(long unsigned v) const { return this->operator==((u64)v); }
 	bool operator==(const char* v) const { return this->is_string() && strcmp(_h->s, v) == 0; }
 	bool operator==(const fc::Buf& v) const { return this->is_string() && v == _h->s; }
 	bool operator==(const std::string& v) const { return this->is_string() && v == _h->s; }
@@ -348,6 +352,8 @@ namespace json {
 	bool operator!=(u64 v) const { return !this->operator==(v); }
 	bool operator!=(int v) const { return !this->operator==(v); }
 	bool operator!=(u32 v) const { return !this->operator==(v); }
+	bool operator!=(long v) const { return !this->operator==(v); }
+	bool operator!=(long unsigned v) const { return !this->operator==(v); }
 	bool operator!=(const char* v) const { return !this->operator==(v); }
 	bool operator!=(const fc::Buf& v) const { return !this->operator==(v); }
 	bool operator!=(const std::string& v) const { return !this->operator==(v); }
