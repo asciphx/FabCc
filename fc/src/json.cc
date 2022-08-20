@@ -630,7 +630,10 @@ namespace json {
 	  break;
 	}
 	case t_int:
-	  fs << (long long)_h->i;
+	  fs << (i64)_h->i;
+	  break;
+	case t_uint:
+	  fs << static_cast<u64>(_h->i);
 	  break;
 	case t_bool:
 	  fs << _h->b;

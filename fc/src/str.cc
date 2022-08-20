@@ -308,7 +308,7 @@ namespace str {
 	fc::Buf x;
 	while ((p = strstr(from, sub))) {
 	  x.append(from, p - from);
-	  x.append(to, m);
+	  x.append(to, (unsigned int)m);
 	  from = p + n;
 	  if (--maxreplace == 0) break;
 	}
@@ -323,7 +323,7 @@ namespace str {
 	size_t m = strlen(to);
 	fc::Buf x(s.size());
 	do {
-	  x.append(from, p - from).append(to, m);
+	  x.append(from, p - from).append(to, (unsigned int)m);
 	  from = p + n;
 	  if (--maxreplace == 0) break;
 	} while ((p = strstr(from, sub)));

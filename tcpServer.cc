@@ -8,9 +8,8 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/json"] = [&app](Req& req, Res& res) {
-	Json x = { { "h", -1 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
-	res.add_header("Content-Type", "application/json");
+  app["/json"] = [](Req& req, Res& res) {
+	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
 	res.write(x.dump());//json响应
   };
   app["/api"] = [&app](Req& req, Res& res) {

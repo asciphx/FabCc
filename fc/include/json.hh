@@ -1,14 +1,5 @@
 #ifndef JSON_H
 #define JSON_H
-/* MIT License
-
-Copyright (c) 2019-2022 Alvin Yih idealvin@qq.com
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 #ifdef _MSC_VER
 #pragma warning (disable:4200)
 #ifndef __thread
@@ -97,8 +88,9 @@ namespace json {
   class Json {
   public:
 	enum {
-	  t_bool = 1,
-	  t_int = 2,
+	  t_bool = 0,
+	  t_int = 1,
+	  t_uint = 2,
 	  t_double = 4,
 	  t_string = 8,
 	  t_array = 16,
@@ -109,6 +101,7 @@ namespace json {
 	struct _H {
 	  _H(bool v) noexcept: type(t_bool), b(v) {}
 	  _H(i64 v) noexcept: type(t_int), i(v) {}
+	  _H(u64 v) noexcept: type(t_uint), i(static_cast<i64>(v)) {}
 	  _H(double v) noexcept: type(t_double), d(v) {}
 	  _H(_obj_t) noexcept: type(t_object), p(0) {}
 	  _H(_arr_t) noexcept: type(t_array), p(0) {}
@@ -120,7 +113,7 @@ namespace json {
 	  u32 size;  // size of string
 	  union {
 		bool b;   // for bool
-		i64 i;  // for int
+		i64 i;  // for number
 		double d; // for double
 		char* s;  // for string
 		void* p;  // for array and object
@@ -155,8 +148,12 @@ namespace json {
 	Json(double v): _h(new(xx::alloc()) _H(v)) {}
 	Json(i64 v): _h(new(xx::alloc()) _H(v)) {}
 	Json(i32 v): Json((i64)v) {}
-	Json(u32 v): Json((i64)v) {}
-	Json(u64 v): Json((i64)v) {}
+	Json(i16 v): Json((i64)v) {}
+	Json(i8 v): Json((i64)v) {}
+	Json(u64 v): _h(new(xx::alloc()) _H(v)) {}
+	Json(u32 v): Json((u64)v) {}
+	Json(u16 v): Json((u64)v) {}
+	Json(u8 v): Json((u64)v) {}
 	// for string type
 	Json(const void* p, size_t n): _h(new(xx::alloc()) _H(p, n)) {}
 	Json(const char* s): Json(s, strlen(s)) {}
@@ -166,8 +163,9 @@ namespace json {
 	// make Json from initializer_list
 	Json(std::initializer_list<Json> v);
 	bool is_null() const { return _h == 0; }
-	bool is_bool() const { return _h && (_h->type & t_bool); }
+	bool is_bool() const { return _h && (!_h->type); }
 	bool is_int() const { return _h && (_h->type & t_int); }
+	bool is_uint() const { return _h && (_h->type & t_uint); }
 	bool is_double() const { return _h && (_h->type & t_double); }
 	bool is_string() const { return _h && (_h->type & t_string); }
 	bool is_array() const { return _h && (_h->type & t_array); }
@@ -181,6 +179,7 @@ namespace json {
 		switch (_h->type) {
 		case t_bool:   return _h->b;
 		case t_int:    return _h->i != 0;
+		case t_uint:   return _h->i != 0;
 		case t_string: return str::to_bool(_h->s);
 		case t_double: return _h->d != 0;
 		}
@@ -195,6 +194,7 @@ namespace json {
 	  if (_h) {
 		switch (_h->type) {
 		case t_int:    return _h->i;
+		case t_uint:   return static_cast<i64>((u64)_h->i);
 		case t_string: return str::to_int64(_h->s);
 		case t_double: return (i64)_h->d;
 		case t_bool:   return _h->b ? 1 : 0;
@@ -202,8 +202,42 @@ namespace json {
 	  }
 	  return 0;
 	}
-	i32 as_int32() const { return (i32)this->as_int64(); }
-	int as_int() const { return (int)this->as_int64(); }
+	u64 as_uint64() const {
+	  if (_h) {
+		switch (_h->type) {
+		case t_int:    return static_cast<u64>(_h->i);
+		case t_uint:   return static_cast<u64>(_h->i);
+		case t_string: return str::to_uint64(_h->s);
+		case t_double: return (u64)_h->d;
+		case t_bool:   return _h->b ? 1 : 0;
+		}
+	  }
+	  return 0;
+	}
+	int as_int() const {
+	  if (_h) {
+		switch (_h->type) {
+		case t_int:    return static_cast<i32>(_h->i);
+		case t_uint:   return static_cast<i32>((u64)_h->i);
+		case t_string: return str::to_int32(_h->s);
+		case t_double: return (i32)_h->d;
+		case t_bool:   return _h->b ? 1 : 0;
+		}
+	  }
+	  return 0;
+	}
+	u32 as_uint() const {
+	  if (_h) {
+		switch (_h->type) {
+		case t_int:    return static_cast<u32>(_h->i);
+		case t_uint:   return static_cast<u32>((u64)_h->i);
+		case t_string: return str::to_uint32(_h->s);
+		case t_double: return (u32)_h->d;
+		case t_bool:   return _h->b ? 1 : 0;
+		}
+	  }
+	  return 0;
+	}
 	// try to get a double value
 	//   - string or integer type, convert to double
 	//   - bool type, true -> 1, false -> 0
@@ -212,7 +246,8 @@ namespace json {
 	  if (_h) {
 		switch (_h->type) {
 		case t_double: return _h->d;
-		case t_int:    return (double)_h->i;
+		case t_int:
+		case t_uint:   return (double)_h->i;
 		case t_string: return str::to_double(_h->s);
 		case t_bool:   return _h->b ? 1 : 0;
 		}
@@ -300,19 +335,19 @@ namespace json {
 	}
 	bool operator==(bool v) const { return this->is_bool() && _h->b == v; }
 	bool operator==(double v) const { return this->is_double() && _h->d == v; }
-	bool operator==(i64 v) const { return this->is_int() && _h->i == v; }
+	bool operator==(i64 v) const { return (this->is_int() || this->is_uint()) && _h->i == v; }
+	bool operator==(u64 v) const { return (this->is_int() || this->is_uint()) && static_cast<u64>(_h->i) == v; }
 	bool operator==(int v) const { return this->operator==((i64)v); }
-	bool operator==(u32 v) const { return this->operator==((i64)v); }
-	bool operator==(u64 v) const { return this->operator==((i64)v); }
+	bool operator==(u32 v) const { return this->operator==((u64)v); }
 	bool operator==(const char* v) const { return this->is_string() && strcmp(_h->s, v) == 0; }
 	bool operator==(const fc::Buf& v) const { return this->is_string() && v == _h->s; }
 	bool operator==(const std::string& v) const { return this->is_string() && v == _h->s; }
 	bool operator!=(bool v) const { return !this->operator==(v); }
 	bool operator!=(double v) const { return !this->operator==(v); }
 	bool operator!=(i64 v) const { return !this->operator==(v); }
+	bool operator!=(u64 v) const { return !this->operator==(v); }
 	bool operator!=(int v) const { return !this->operator==(v); }
 	bool operator!=(u32 v) const { return !this->operator==(v); }
-	bool operator!=(u64 v) const { return !this->operator==(v); }
 	bool operator!=(const char* v) const { return !this->operator==(v); }
 	bool operator!=(const fc::Buf& v) const { return !this->operator==(v); }
 	bool operator!=(const std::string& v) const { return !this->operator==(v); }

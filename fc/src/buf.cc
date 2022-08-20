@@ -3,29 +3,22 @@
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
   Buf::Buf(): data_(new char[0x3f]), end_(data_), back_(data_ + 0x3f), cap_(0x3f) {}
-  Buf::Buf(Buf&& o): data_(o.data_), end_(o.end_), back_(o.back_), cap_(o.cap_) {
-	o.data_ = nullptr;
+  Buf::Buf(Buf&& o): data_(o.data_), end_(o.end_), back_(o.back_), cap_(o.cap_) { o.data_ = nullptr; }
+  Buf::Buf(const Buf& o): data_(new char[o.cap_]), end_(data_), cap_(o.cap_) {
+	size_t i = o.end_ - o.data_; memcpy(end_, o.data_, i); end_ += i; back_ = data_ + o.cap_;
   }
-  Buf::Buf(const Buf& o): data_(new char[o.cap_]), end_(data_), back_(data_ + o.cap_), cap_(o.cap_) {
-	size_t i = o.end_ - o.data_; memcpy(end_, o.data_, i); end_ += i;
+  Buf::Buf(unsigned int capacity) : data_(new char[capacity]), end_(data_), cap_(capacity) { back_ = data_ + cap_; }
+  Buf::Buf(const char* c, unsigned int capacity) : data_(new char[capacity]), end_(data_), cap_(capacity) {
+	memcpy(end_, c, cap_); end_ += cap_; back_ = data_ + cap_;
   }
-  Buf::Buf(unsigned int capacity)
-	: data_(new char[capacity]), end_(data_), back_(data_ + capacity), cap_(capacity) {}
-  Buf::Buf(const char* c, unsigned int capacity)
-	: data_(new char[capacity]), end_(data_), back_(data_ + capacity), cap_(capacity) {
-	memcpy(end_, c, capacity); end_ += capacity;
-  }
-  Buf::Buf(const char* c): cap_((unsigned int)strlen(c)),
-	data_(new char[cap_]), end_(data_), back_(data_ + cap_) {
-	memcpy(end_, c, cap_); end_ += cap_;
+  Buf::Buf(const char* c): cap_((unsigned int)strlen(c)), data_(new char[cap_]), end_(data_) {
+	memcpy(end_, c, cap_); end_ += cap_; back_ = data_ + cap_;
   };
-  Buf::Buf(const std::string& s):cap_((unsigned int)s.size()),
-	data_(new char[cap_]), end_(data_), back_(data_ + cap_) {
-	memcpy(end_, s.c_str(), cap_); end_ += cap_;
+  Buf::Buf(const std::string& s):cap_((unsigned int)s.size()), data_(new char[cap_]), end_(data_) {
+	memcpy(end_, s.c_str(), cap_); end_ += cap_; back_ = data_ + cap_;
   };
-  Buf::Buf(size_t n, char c): cap_((unsigned int)n),
-	data_(new char[cap_]), end_(data_), back_(data_ + cap_) {
-	memset(end_, c, n); end_ += n;
+  Buf::Buf(unsigned int n, char c): cap_(n), data_(new char[cap_]), end_(data_) {
+	memset(end_, c, n); end_ += n; back_ = data_ + cap_;
   }
   Buf::~Buf() { if (data_) delete[] data_; }
   Buf& Buf::operator=(Buf&& o) noexcept {
@@ -107,8 +100,8 @@ namespace fc {
   void Buf::ensure(unsigned int l) {
 	if (back_ - end_ < l) {
 	  char* c = (char*)malloc(cap_); unsigned int size = end_ - data_; memcpy(c, data_, size);
-	  cap_ += l; delete[] data_; data_ = new char[cap_]; end_ = data_;
-	  back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c;
+	  cap_ += (cap_ >> 1) + l; delete[] data_; data_ = new char[cap_]; end_ = data_;
+	  back_ = data_ + cap_; printf("2:%lld ", back_ - end_); memcpy(data_, c, size); end_ += size; delete[] c;
 	}
   };
   bool Buf::reserve(unsigned int l) {
@@ -135,7 +128,7 @@ namespace fc {
 	size_t m = strlen(to);
 	Buf s(end_ - data_);
 	do {
-	  s.append(from, p - from).append(to, m);
+	  s.append(from, p - from).append(to, (unsigned int)m);
 	  from = p + n;
 	  if (maxreplace && --maxreplace == 0) break;
 	} while ((p = strstr(from, sub)));
@@ -176,10 +169,12 @@ namespace fc {
 	memcpy(end_, b.data_, l); end_ += l; return *this;
   }
   Buf& Buf::operator<<(unsigned long long v) {
-	if (v == 0) operator<<('0'); char mega_buffer[20], * str_start = mega_buffer; for (int i = 0; v != 0; ++i) {
+	if (v == 0)return operator<<('0'); char mega_buffer[20], * str_start = mega_buffer; for (int i = 0; v != 0; ++i) {
 	  str_start = mega_buffer + 19 - i; mega_buffer[19 - i] = (v % 10) + '0'; v /= 10;
 	} return *this << (std::string_view(str_start, mega_buffer + 20 - str_start));
   }
+  Buf& Buf::operator<<(double d) { this->ensure(8); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
+  Buf& Buf::operator<<(float f) { this->ensure(6); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
   Buf& Buf::operator=(const char* s) {
 	unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;
 	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << (std::string_view(s, l));

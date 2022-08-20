@@ -21,7 +21,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - Cross platform support, (Linux and windows have been tested)
 - Minimize the allocate and release of memory, which is friendly to the hard disk and does not generate a large amount of memory fragments, so there is almost no disk IO
 - Support unit testing. Please refer to [[coost](https://coostdocs.gitee.io/cn/co/unitest/)] for documentation
-- Support the web version of poostman, the address is 127.0.0.1:8080/test.html
+- Support the web version of Postman, the address is 127.0.0.1:8080/test.html
 
 ## Still under development
 - [x] Processing of routing brace
@@ -49,9 +49,8 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//Service file interface
-  app["/json"] = [&app](Req& req, Res& res) {
+  app["/json"] = [](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
-	res.add_header(fc::RES_CT, fc::RES_AJ);
 	res.write(x.dump());//JSON response
   };
   app["/api"] = [&app](Req& req, Res& res) {

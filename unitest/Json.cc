@@ -24,7 +24,6 @@ namespace test {
 	  EXPECT_EQ(b.as_int(), 1);
 	  EXPECT_EQ(b.as_double(), 1.0);
 	  EXPECT_EQ(b.as_string(), "true");
-	  EXPECT_EQ(b.str(), "true");
 	  EXPECT_EQ(b.pretty(), "true");
 	  b = false;
 	  EXPECT_EQ(b.as_bool(), false);
@@ -32,7 +31,6 @@ namespace test {
 	  EXPECT_EQ(b.as_double(), 0);
 	  EXPECT_EQ(b.as_string(), "false");
 	  EXPECT_EQ(b.str(), "false");
-	  EXPECT_EQ(b.pretty(), "false");
 	  b.reset();
 	  EXPECT(b.is_null());
 	}
@@ -45,22 +43,42 @@ namespace test {
 	  EXPECT_EQ(i.as_bool(), false);
 	  EXPECT_EQ(i.as_double(), 0);
 	  EXPECT_EQ(i.as_string(), "0");
-	  EXPECT_EQ(i.str(), "0");
-	  EXPECT_EQ(i.pretty(), "0");
 	  i = 123;
 	  EXPECT_EQ(i.as_int(), 123);
 	  EXPECT_EQ(i.as_bool(), true);
 	  EXPECT_EQ(i.as_double(), 123.0);
 	  EXPECT_EQ(i.as_string(), "123");
-	  EXPECT_EQ(i.str(), "123");
-	  EXPECT_EQ(i.pretty(), "123");
 	  Json x = (i64)12345;
 	  EXPECT(x.is_int());
 	  EXPECT(x == (i64)12345);
 	  EXPECT_EQ(x.as_int64(), 12345);
-	  EXPECT_EQ(x.as_int64(), 12345);
+	  EXPECT_EQ(x.as_uint64(), (u64)12345);
 	  EXPECT_EQ(x.str(), "12345");
 	  EXPECT_EQ(x.pretty(), "12345");
+	  x.reset();
+	  EXPECT(x.is_null());
+	}
+	DEF_case(uint) {
+	  Json i = 0u;
+	  EXPECT(i.is_uint());
+	  EXPECT(i == 0);
+	  EXPECT(i != 1);
+	  EXPECT_EQ(i.as_uint(), 0);
+	  EXPECT_EQ(i.as_bool(), false);
+	  EXPECT_EQ(i.as_double(), 0);
+	  EXPECT_EQ(i.as_string(), "0");
+	  i = 123u;
+	  EXPECT_EQ(i.as_uint(), 123);
+	  EXPECT_EQ(i.as_bool(), true);
+	  EXPECT_EQ(i.as_double(), 123.0);
+	  EXPECT_EQ(i.as_string(), "123");
+	  Json x = UINT64_MAX;
+	  EXPECT(x.is_uint());
+	  EXPECT(x == UINT64_MAX);
+	  EXPECT_EQ(x.as_int64(), -1);
+	  EXPECT_EQ(x.as_uint64(), UINT64_MAX);
+	  EXPECT_EQ(x.str(), "18446744073709551615");
+	  EXPECT_EQ(x.pretty(), "18446744073709551615");
 	  x.reset();
 	  EXPECT(x.is_null());
 	}

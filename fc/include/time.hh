@@ -12,8 +12,8 @@
   using hours        = duration<int, ratio<3600>>; */
 namespace fc {
   namespace sleep {
-	void h(long long h);
-	void m(long long m);
+	void h(int h);
+	void m(int m);
 	void s(long long s);
 	void ms(long long ms);
 	void us(long long us);

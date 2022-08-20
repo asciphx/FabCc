@@ -21,7 +21,7 @@
 - 全平台支持，（已经测试Linux和Windows）
 - 最小化分配与释放内存，对硬盘友好，不产生大量内存碎片，因此几乎没有磁盘io
 - 支持单元测试，文档请见【[coost](https://coostdocs.gitee.io/cn/co/unitest/)】
-- 支持网页版poostman，地址是127.0.0.1:8080/test.html
+- 支持网页版Postman，地址是127.0.0.1:8080/test.html
 
 ## 仍在开发中
 - [x] 路由大括号表达式
@@ -49,9 +49,8 @@ void funk(Req& req, Res& res) {
 int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
-  app["/json"] = [&app](Req& req, Res& res) {
+  app["/json"] = [](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
-	res.add_header(fc::RES_CT, fc::RES_AJ);
 	res.write(x.dump());//json响应
   };
   app["/api"] = [&app](Req& req, Res& res) {
