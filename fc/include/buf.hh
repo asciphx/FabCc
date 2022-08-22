@@ -117,13 +117,13 @@ namespace fc {
 	Buf& operator<<(Buf&& s);
 	Buf& operator<<(unsigned long long v);
 #ifdef __linux__
-	_INLINE Buf& operator<<(long long l) { return operator<<(std::string_view(std::to_string(l))); }
-	_INLINE Buf& operator<<(int i) { return operator<<(std::string_view(std::to_string(i))); }
-	_INLINE Buf& operator<<(long i) { return operator<<(std::string_view(std::to_string(i))); }
-	_INLINE Buf& operator<<(unsigned long i) { return operator<<(std::string_view(std::to_string(i))); }
-	_INLINE Buf& operator<<(unsigned int ui) { return operator<<(std::string_view(std::to_string(ui))); }
-	_INLINE Buf& operator<<(short a) { return operator<<(std::string_view(std::to_string(a))); }
-	_INLINE Buf& operator<<(unsigned short ua) { return operator<<(std::string_view(std::to_string(ua))); }
+	_INLINE Buf& operator<<(long long l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
+	_INLINE Buf& operator<<(int l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
+	_INLINE Buf& operator<<(long l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
+	_INLINE Buf& operator<<(unsigned long l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
+	_INLINE Buf& operator<<(unsigned int l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
+	_INLINE Buf& operator<<(short l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
+	_INLINE Buf& operator<<(unsigned short l) { std::string s = std::to_string(l); return operator<<(std::string_view(s.data(), s.size())); }
 #else
 	_INLINE Buf& operator<<(std::string s) {
 	  if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
