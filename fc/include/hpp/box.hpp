@@ -5,8 +5,6 @@
 #include <memory>
 template <typename T>
 class box {
-  friend std::ostream& operator<<(std::ostream& s, box<T>& c);
-  friend std::ostream& operator<<(std::ostream& s, const box<T>& c);
   friend std::string& operator<<(std::string& s, box<T>* c) {
 	c->p == nullptr ? s += "null" : s << c->p; return s;
   };

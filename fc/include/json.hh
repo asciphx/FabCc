@@ -270,20 +270,20 @@ namespace json {
 		}
 	  }
 	}
-	template <> inline void _ref<bool>(bool& $) { $ = this->as_bool(); }
-	template <> inline void _ref<float>(float& $) { $ = static_cast<float>(this->as_double()); }
-	template <> inline void _ref<double>(double& $) { $ = this->as_double(); }
-	template <> inline void _ref<i8>(i8& $) { $ = static_cast<i8>(this->as_int64()); }
-	template <> inline void _ref<i16>(i16& $) { $ = static_cast<i16>(this->as_int64()); }
-	template <> inline void _ref<i32>(i32& $) { $ = this->as_int(); }
-	template <> inline void _ref<i64>(i64& $) { $ = this->as_int64(); }
-	template <> inline void _ref<u8>(u8& $) { $ = static_cast<u8>(this->as_uint64()); }
-	template <> inline void _ref<u16>(u16& $) { $ = static_cast<u16>(this->as_uint64()); }
-	template <> inline void _ref<u32>(u32& $) { $ = this->as_uint(); }
-	template <> inline void _ref<u64>(u64& $) { $ = this->as_uint64(); }
-	template <> inline void _ref<std::string>(std::string& $) { $ = this->as_c_str(); }
-	template <> inline void _ref<fc::Buf>(fc::Buf& $) { $ = this->as_string(); }
-	template <> inline void _ref<tm>(tm& $) {
+	inline void _ref(bool& $) { $ = this->as_bool(); }
+	inline void _ref(float& $) { $ = static_cast<float>(this->as_double()); }
+	inline void _ref(double& $) { $ = this->as_double(); }
+	inline void _ref(i8& $) { $ = static_cast<i8>(this->as_int64()); }
+	inline void _ref(i16& $) { $ = static_cast<i16>(this->as_int64()); }
+	inline void _ref(i32& $) { $ = this->as_int(); }
+	inline void _ref(i64& $) { $ = this->as_int64(); }
+	inline void _ref(u8& $) { $ = static_cast<u8>(this->as_uint64()); }
+	inline void _ref(u16& $) { $ = static_cast<u16>(this->as_uint64()); }
+	inline void _ref(u32& $) { $ = this->as_uint(); }
+	inline void _ref(u64& $) { $ = this->as_uint64(); }
+	inline void _ref(std::string& $) { $ = this->as_c_str(); }
+	inline void _ref(fc::Buf& $) { $ = this->as_string(); }
+	inline void _ref(tm& $) {
 	  const char* c = this->as_string().c_str();
 	  int year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0;
 	  if (sscanf(c, "%4d-%2d-%2d %2d:%2d:%2d", &year, &month, &day, &hour, &min, &sec) == 6) {
