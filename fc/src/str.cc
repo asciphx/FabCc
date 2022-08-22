@@ -1,14 +1,14 @@
 #include <str.hh>
 namespace fc {
-  static const char _X[] = { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
- -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,-1,
-  0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-  0xa, 0xb, 0xc, 0xd, 0xe, 0xf,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 };
+  static const char _X[] = {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+ 10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,10,10,10,10,10,10,
+  0xa, 0xb, 0xc, 0xd, 0xe, 0xf,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+  0xa, 0xb, 0xc, 0xd, 0xe, 0xf,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10 };
   // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/url_unescape.hh
   std::string DecodeURL(std::string& s) {
 	char* o = (char*)s.c_str(), * c = (char*)s.c_str();
 	const char* e = c + s.size(); while (c < e) {
-	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] != 10 && _X[c[2]] != 10) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }
@@ -18,7 +18,7 @@ namespace fc {
   std::string DecodeURL(const char*& s, size_t l) {
 	char* o = (char*)s, * c = (char*)s;
 	const char* e = c + l; while (c < e) {
-	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] != 10 && _X[c[2]] != 10) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }
@@ -28,7 +28,7 @@ namespace fc {
   std::string DecodeURL(const char* s) {
 	size_t l = strlen(s); char* o = (char*)s, * c = (char*)s;
 	const char* e = c + l; while (c < e) {
-	  if (*c == '%' && c < e - 2 && _X[c[1]] != -1 && _X[c[2]] != -1) {
+	  if (*c == '%' && c < e - 2 && _X[c[1]] != 10 && _X[c[2]] != 10) {
 		*o = (_X[c[1]] << 4) | _X[c[2]]; c += 2; ++o; ++c; continue;
 	  }
 	  if (*c == '+') { *o = ' '; ++o; ++c; continue; }

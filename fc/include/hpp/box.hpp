@@ -3,47 +3,49 @@
 #include <string>
 #include <iostream>
 #include <memory>
-namespace fc {
-  template <typename T>
-  class box {
-	T* e;
-	friend std::ostream& operator<<(std::ostream& s, box<T>& c);
-	friend std::ostream& operator<<(std::ostream& s, const box<T>& c);
-	friend std::string& operator<<(std::string& s, box<T>* c) {
-	  c->e == nullptr ? s += "null" : s << c->e; return s;
-	};
-	friend std::string& operator<<(std::string& s, const box<T>* c) {
-	  c->e == nullptr ? s += "null" : s << c->e; return s;
-	};
-	friend std::string& operator<<(std::string& s, box<T>& c) {
-	  c.e == nullptr ? s += "null" : s << c.e; return s;
-	};
-	friend std::string& operator<<(std::string& s, const box<T>& c) {
-	  c.e == nullptr ? s += "null" : s << c.e; return s;
-	};
-  public:
-	box(): e(nullptr) {}
-	box(std::nullptr_t):e(nullptr) {}
-	box(T&& _): e(new T(_)) {}
-	~box() { if (e != nullptr)delete e, e = nullptr; }
-	void operator = (T&& s) { if (e != nullptr)delete e; e = new T(std::move(s)); }
-	void operator = (T& s) { if (e != nullptr)delete e; e = new T(s); }
-	T& operator() () { return *e; }
-	const T& operator() ()const { return *e; }
-	const T* $() const { return e; }
-	void clear() { if (e != nullptr)delete e, e = nullptr; }
+template <typename T>
+class box {
+  friend std::ostream& operator<<(std::ostream& s, box<T>& c);
+  friend std::ostream& operator<<(std::ostream& s, const box<T>& c);
+  friend std::string& operator<<(std::string& s, box<T>* c) {
+	c->p == nullptr ? s += "null" : s << c->p; return s;
   };
-  template <typename T>
-  std::ostream& operator<<(std::ostream& s, box<T>& c) { return s << (c.e == nullptr ? "null" : *c.e); }
-  template <typename T>
-  std::ostream& operator<<(std::ostream& s, const box<T>& c) { return s << (c.e == nullptr ? "null" : *c.e); }
+  friend std::string& operator<<(std::string& s, const box<T>* c) {
+	c->p == nullptr ? s += "null" : s << c->p; return s;
+  };
+  friend std::string& operator<<(std::string& s, box<T>& c) {
+	c.p == nullptr ? s += "null" : s << c.p; return s;
+  };
+  friend std::string& operator<<(std::string& s, const box<T>& c) {
+	c.p == nullptr ? s += "null" : s << c.p; return s;
+  };
+public:
+  T* p;
+  box() noexcept: p(0) {}
+  box(std::nullptr_t) noexcept: p(0) {}
+  explicit box(T* p) noexcept: p(p) {}
+  box(box&& x) noexcept: p(x.p) { x.p = 0; }
+  box(box& x) noexcept: p(x.p) { x.p = 0; }
+  template<typename... U>
+  box(U... t) noexcept: p(new T(t...)) {}
+  //box(T&& _): p(new T(_)) {}
+  ~box() { if (p)delete p, p = nullptr; }
+  void operator = (T& s) { if (p)delete p; p = new T(s); }
+  void operator = (T* s) { if (p)delete p; p = s; }
+  T& operator() () { return *p; }
+  const T& operator() ()const { return *p; }
+  void clear() { if (p)delete p, p = nullptr; }
+};
+template <typename T>
+std::ostream& operator<<(std::ostream& s, box<T>& c) { return s << (c.p == nullptr ? "null" : *c.p); }
+template <typename T>
+std::ostream& operator<<(std::ostream& s, const box<T>& c) { return s << (c.p == nullptr ? "null" : *c.p); }
 
-  template<class T>
-  struct is_box: std::false_type {};
-  template<typename T>
-  struct is_box<box<T>>: std::true_type {};
-  template<typename T> struct box_pack {};
-  template<typename T> struct box_pack<box<T>> { using type = T; };
-  template<typename T> using box_pack_t = typename box_pack<T>::type;
-}
+template<class T>
+struct is_box: std::false_type {};
+template<typename T>
+struct is_box<box<T>>: std::true_type {};
+template<typename T> struct box_pack {};
+template<typename T> struct box_pack<box<T>> { using type = T; };
+template<typename T> using box_pack_t = typename box_pack<T>::type;
 #endif // BOX_H

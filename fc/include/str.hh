@@ -45,7 +45,7 @@ typedef int i32;
 typedef long long i64;
 typedef unsigned char  u8;
 typedef unsigned short u16;
-typedef uint32_t u32;
+typedef unsigned int u32;
 typedef unsigned long long u64;
 namespace str {
   template <typename T>
@@ -146,10 +146,10 @@ namespace fc {
 	return r;
   }
   constexpr unsigned long long operator""_l(const char* s, size_t /*len*/) {
-	unsigned long long r = s[0];  for (unsigned long long i = 0; ++i < 8 && s[i]; r << 8, r += s[i]); return r;
+	unsigned long long r = s[0];  for (unsigned long long i = 0; ++i < 8 && s[i]; r <<= 8, r += s[i]); return r;
   }
   constexpr int operator""_i(const char* s, size_t /*len*/) {
-	int r = s[0]; for (int i = 0; ++i < 4 && s[i]; r << 8, r += s[i]); return r;
+	int r = s[0]; for (int i = 0; ++i < 4 && s[i]; r <<= 8, r += s[i]); return r;
   }
   //You can match more strings with hackstr method, but you need to match ""_a used together
   constexpr unsigned long long operator""_a(const char* s, size_t /*len*/) {
@@ -168,9 +168,9 @@ namespace fc {
 	char* to8Str_f(unsigned long long i);
 	char* to4Str_f(int i);
 	inline unsigned long long hack8Str(const char* s) {
-	  unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r << 8, r += s[i]); return r;
+	  unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r <<= 8, r += s[i]); return r;
 	}//If only the first four digits need to be matched and there is no conflict, it is recommended to use hack4Str to improve efficiency
-	inline int hack4Str(const char* s) { int r = s[0]; for (signed char i = 0; ++i < 4 && s[i]; r << 8, r += s[i]); return r; }
+	inline int hack4Str(const char* s) { int r = s[0]; for (signed char i = 0; ++i < 4 && s[i]; r <<= 8, r += s[i]); return r; }
 	//Hack8str is downward compatible with hack4str, however, it is not compatible with the hackstr method
 	inline unsigned long long hackStr(const char* s) {
 	  unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
@@ -184,54 +184,4 @@ namespace fc {
   }  /* extern "C" */
 #endif
   }
-//Basic judgment type characters supported by ccORM (with switch(hack8Str(...)))
-#if _WIN32
-#define T_INT8 "signed char"_l
-#define T_UINT8 " char"_l
-#define T_INT16 "short"_l
-#define T_UINT16 " short"_l
-#define T_INT 'int'
-#define T_UINT " int"_l
-#define T_INT64 "__int64"_l
-#define T_UINT64 " __int64"_l
-#define T_BOOL 'bool'
-#define T_DOUBLE "double"_l
-#define T_FLOAT "float"_l
-#define T_TM "struct tm"_l
-#define T_TEXT "class text"_l
-#define T_STRING "class std::basic_string"_l
-//#elif __APPLE__
-#else
-#define T_INT8 'a'
-#define T_UINT8 'h'
-#define T_INT16 's'
-#define T_UINT16 't'
-#define T_INT 'i'
-#define T_UINT 'j'
-#define T_INT64 'x'
-#define T_UINT64 'y'
-#define T_BOOL 'b'
-#define T_DOUBLE 'd'
-#define T_FLOAT 'f'
-#define T_TM '2tm'
-#define T_TEXT "4textILt"_l
-#define T_STRING "NSt7__cx"_l
-#endif
-//Corrected type character sequence
-#define T_INT8_ 'a'
-#define T_UINT8_ 'h'
-#define T_INT16_ 's'
-#define T_UINT16_ 't'
-#define T_INT_ 'i'
-#define T_UINT_ 'j'
-#define T_INT64_ 'x'
-#define T_UINT64_ 'y'
-#define T_BOOL_ 'b'
-#define T_DOUBLE_ 'd'
-#define T_FLOAT_ 'f'
-#define T_TM_ 'm'
-#define T_TEXT_ 'e'
-#define T_STRING_ 'c'
-#define T_POINTER_ '*'
-#define T_VECTOR_ '_'
 #endif

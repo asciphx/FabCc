@@ -88,9 +88,12 @@ if(WIN32)
   add_custom_command(TARGET FabCc
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/FabCc.exe ${PROJECT_SOURCE_DIR}/FabCc.exe
 #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlib.dll ${PROJECT_SOURCE_DIR}/zlib.dll
-  )#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
+  )
   add_executable(W w.cc)
   target_link_libraries(W PUBLIC Fab)
+  add_custom_command(TARGET W
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/W.exe ${PROJECT_SOURCE_DIR}/W.exe
+  )
 else ()
   list(APPEND uv_defines _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE)
   if(NOT CMAKE_SYSTEM_NAME MATCHES "Android|OS390|QNX")
@@ -235,11 +238,14 @@ else ()
   )#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
   add_executable(W w.cc)
   target_link_libraries(W PUBLIC Fab)
+  add_custom_command(TARGET W
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/W ${PROJECT_SOURCE_DIR}/W
+  )
 endif ()
 target_link_libraries( FabCc ${FabCc_LIBRARIES} ${uv_libraries})
 
-option(BUILD_UNITEST "Build UNITEST" ON)
+option(BUILD_UNITEST "Build UNITEST" OFF)
 if(BUILD_UNITEST)
-    enable_testing()
+    #enable_testing()
     add_subdirectory(unitest)
 endif()

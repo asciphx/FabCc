@@ -22,7 +22,7 @@ namespace fc {
   }
   Buf::~Buf() { if (data_) delete[] data_; }
   Buf& Buf::operator=(Buf&& o) noexcept {
-	std::swap(o.cap_, cap_); std::swap(o.back_, back_); std::swap(o.end_, end_); std::swap(o.data_, data_); return *this;
+	delete[] data_; data_ = o.data_; end_ = o.end_; back_ = o.back_; cap_ = o.cap_; o.data_ = nullptr; return *this;
   }
   Buf& Buf::operator=(const Buf& o) {
 	if (&o != this) {
@@ -62,33 +62,26 @@ namespace fc {
   unsigned int Buf::rfind(const char c) const {
 	unsigned int s = end_ - data_; while (0 < s) { if (data_[s] == c) { return s; } --s; } return -1;
   }
-  Buf& Buf::append(const Buf& s) {
-	if (&s != this) {
-	  if (s.empty()) return *this;
-	  return *this << s;
-	} else { /* append itself */
-	  if (data_) {
-		this->reserve(end_ - data_ + 10);
-		memcpy(end_, data_, end_ - data_);
-		end_ += end_ - data_;
-	  }
-	  return *this;
-	}
-  }
   unsigned int Buf::rfind(const char* sub) const {
-	unsigned int m = (unsigned int)strlen(sub);
-	if (m == 1) return this->rfind(*sub);
-	unsigned int n = this->size();
-	if (n < m) return -1;
+	unsigned int m = (unsigned int)strlen(sub); if (m == 1) return this->rfind(*sub);
+	unsigned int n = this->size(); if (n < m) return -1;
 	unsigned int tbl[256] = { 0 };
 	for (unsigned int i = m; i > 0; --i) tbl[sub[i - 1]] = i;
 	for (unsigned int j = n - m;;) {
 	  if (memcmp(sub, data_ + j, m) == 0) return j;
 	  if (j == 0) return -1;
 	  unsigned int x = tbl[data_[j - 1]];
-	  if (x == 0) x = m + 1;
-	  if (j < x) return -1;
-	  j -= x;
+	  if (x == 0) x = m + 1; if (j < x) return -1; j -= x;
+	}
+  }
+  Buf& Buf::append(const Buf& s) {
+	if (&s != this) {
+	  if (s.empty()) return *this; return *this << s;
+	} else { /* append itself */
+	  if (data_) {
+		this->reserve(end_ - data_ + 10); memcpy(end_, data_, end_ - data_); end_ += end_ - data_;
+	  }
+	  return *this;
 	}
   }
   void Buf::erase(unsigned int a, unsigned int b) {
@@ -100,13 +93,13 @@ namespace fc {
   void Buf::ensure(unsigned int l) {
 	if (back_ - end_ < l) {
 	  char* c = (char*)malloc(cap_); unsigned int size = end_ - data_; memcpy(c, data_, size);
-	  cap_ += (cap_ >> 1) + l; delete[] data_; data_ = new char[cap_]; end_ = data_;
+	  cap_ += l; delete[] data_; data_ = new char[cap_]; end_ = data_;
 	  back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c;
 	}
   };
   bool Buf::reserve(unsigned int l) {
 	if (l < cap_)return false; char* c = (char*)malloc(cap_); unsigned int size = end_ - data_;
-	memcpy(c, data_, size); cap_ += cap_; cap_ += l; delete[] data_; data_ = new char[cap_]; end_ = data_;
+	memcpy(c, data_, size); cap_ += (cap_ >> 1) + l; delete[] data_; data_ = new char[cap_]; end_ = data_;
 	back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; delete[] c; return true;
   };
   Buf& Buf::insert(char*& s, const char* e, const char* f) {
@@ -121,11 +114,9 @@ namespace fc {
   void Buf::swap(Buf&& b) noexcept { b.swap(*this); }
   Buf& Buf::replace(const char* sub, const char* to, size_t maxreplace) {
 	if (this->empty()) return *this;
-	const char* from = this->c_str();
-	const char* p = strstr(from, sub);
+	const char* from = this->c_str(), * p = strstr(from, sub);
 	if (!p) return *this;
-	size_t n = strlen(sub);
-	size_t m = strlen(to);
+	size_t n = strlen(sub), m = strlen(to);
 	Buf s(end_ - data_);
 	do {
 	  s.append(from, p - from).append(to, (unsigned int)m);
@@ -180,8 +171,7 @@ namespace fc {
 	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << (std::string_view(s, l));
   }
   Buf& Buf::operator=(std::string&& s) {
-	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this;
-	delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_;
-	return *this << std::string_view(s.data(), s.size());
+	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
+	end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s.data(), s.size());
   }
 }

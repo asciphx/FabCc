@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <stdexcept>
+#include <buf.hh>
 namespace std {
 #if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
@@ -25,6 +26,8 @@ namespace std {
   template <> inline std::string lexical_cast<std::string>(double& f) { return std::to_string(f); }
   template <> inline std::string lexical_cast<std::string>(float& f) { return std::to_string(f); }
   template <> inline std::string lexical_cast<std::string>(long double& f) { return std::to_string(f); }
+  template <> inline std::string lexical_cast<std::string>(long unsigned& f) { return std::to_string(f); }
+  template <> inline std::string lexical_cast<std::string>(long& f) { return std::to_string(f); }
   template <> inline std::string lexical_cast<std::string>(std::string& c) { return c; }
   template <typename S, typename T> _INLINE S lexical_cast(T&& i);
   template <> inline std::string lexical_cast<std::string>(char&& i) { return std::to_string(i); }
@@ -40,6 +43,8 @@ namespace std {
   template <> inline std::string lexical_cast<std::string>(double&& f) { return std::to_string(f); }
   template <> inline std::string lexical_cast<std::string>(float&& f) { return std::to_string(f); }
   template <> inline std::string lexical_cast<std::string>(long double&& f) { return std::to_string(f); }
+  template <> inline std::string lexical_cast<std::string>(long unsigned&& f) { return std::to_string(f); }
+  template <> inline std::string lexical_cast<std::string>(long&& f) { return std::to_string(f); }
   template <> inline std::string lexical_cast<std::string>(std::string&& c) { return c; }
 
   template <typename T> T lexical_cast(const char* c);
@@ -52,6 +57,8 @@ namespace std {
   template <> [[nodiscard]] unsigned short lexical_cast<unsigned short>(const char* c);
   template <> [[nodiscard]] int lexical_cast<int>(const char* c);
   template <> [[nodiscard]] unsigned int lexical_cast<unsigned int>(const char* c);
+  template <> [[nodiscard]] long lexical_cast<long>(const char* c);
+  template <> [[nodiscard]] long unsigned lexical_cast<long unsigned>(const char* c);
   template <> [[nodiscard]] long long lexical_cast<long long>(const char* c);
   template <> [[nodiscard]] unsigned long long lexical_cast<unsigned long long>(const char* c);
   template <> [[nodiscard]] float lexical_cast<float>(const char* c);
@@ -68,11 +75,32 @@ namespace std {
   template <> [[nodiscard]] unsigned short lexical_cast<unsigned short>(std::string& s);
   template <> [[nodiscard]] int lexical_cast<int>(std::string& s);
   template <> [[nodiscard]] unsigned int lexical_cast<unsigned int>(std::string& s);
+  template <> [[nodiscard]] long lexical_cast<long>(std::string& s);
+  template <> [[nodiscard]] long unsigned lexical_cast<long unsigned>(std::string& s);
   template <> [[nodiscard]] long long lexical_cast<long long>(std::string& s);
   template <> [[nodiscard]] unsigned long long lexical_cast<unsigned long long>(std::string& s);
   template <> [[nodiscard]] float lexical_cast<float>(std::string& s);
   template <> [[nodiscard]] double lexical_cast<double>(std::string& s);
   template <> [[nodiscard]] long double lexical_cast<long double>(std::string& s);
   template <> tm lexical_cast<tm>(std::string& s);
+  
+  template <typename T> T lexical_cast(fc::Buf& s);
+  template <> std::string lexical_cast<std::string>(fc::Buf& c);
+  template <> [[nodiscard]] bool lexical_cast<bool>(fc::Buf& s);
+  template <> [[nodiscard]] char lexical_cast<char>(fc::Buf& s);
+  template <> [[nodiscard]] signed char lexical_cast<signed char>(fc::Buf& s);
+  template <> [[nodiscard]] unsigned char lexical_cast<unsigned char>(fc::Buf& s);
+  template <> [[nodiscard]] short lexical_cast<short>(fc::Buf& s);
+  template <> [[nodiscard]] unsigned short lexical_cast<unsigned short>(fc::Buf& s);
+  template <> [[nodiscard]] int lexical_cast<int>(fc::Buf& s);
+  template <> [[nodiscard]] unsigned int lexical_cast<unsigned int>(fc::Buf& s);
+  template <> [[nodiscard]] long lexical_cast<long>(fc::Buf& s);
+  template <> [[nodiscard]] long unsigned lexical_cast<long unsigned>(fc::Buf& s);
+  template <> [[nodiscard]] long long lexical_cast<long long>(fc::Buf& s);
+  template <> [[nodiscard]] unsigned long long lexical_cast<unsigned long long>(fc::Buf& s);
+  template <> [[nodiscard]] float lexical_cast<float>(fc::Buf& s);
+  template <> [[nodiscard]] double lexical_cast<double>(fc::Buf& s);
+  template <> [[nodiscard]] long double lexical_cast<long double>(fc::Buf& s);
+  template <> tm lexical_cast<tm>(fc::Buf& s);
 }
 #endif // LEXICAL_CAST_H

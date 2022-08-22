@@ -6,18 +6,29 @@
 //#include <llhttp.h>
 #include <buf.hh>
 #include <vector>
+#include <json.hh>
+struct Person;
+struct Book {
+  std::string  name = "wtf";
+  box<Person>  person;
+  Book(std::string a = "", box<Person> b = nullptr): name(a), person(b) {}
+  REG(Book, name, person)
+};
+CLASS(Book, name, person)
+struct Person {
+  std::string  name;
+  int          age;
+  box<Book>    book;
+  Person(std::string a = "", int b = 0, box<Book> c = nullptr): name(a), age(b), book(c) {}
+  REG(Person, name, age, book)
+};
+CLASS(Person, name, age, book)
 int main() {
-  fc::Buf b(15, '#');
-  // std::vector<fc::Buf> mm;
-  // mm.push_back(b);
-  // mm.push_back(b);
-  // mm.push_back(b);
-  // for (auto m : mm) {
-	 //std::cout << m << " <> ";
-  // }
-  fc::str_map mmp;
-  mmp.emplace("f", "dsgsg");
-  std::cout << mmp.find("f")->second << " <> ";
+  Json j; Person p{ "rust",14 }, v{}; Person::to_json(j, &p); std::cout << j.str();
+  Person::from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}';
+  Book b{ "ts", box<Person>{"plus",23, box<Book>{"go", box<Person>{"pro",15, box<Book>{"js"}}}} };
+  j.reset(); Book::to_json(j, &b); std::cout << j.dump();
+  return 0;
   clock_t start = clock();
   unsigned long long l;
   // double d;
@@ -34,6 +45,6 @@ int main() {
   //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
   //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
   std::cout << l;
-  fc::text<8> t("你好世界！我好！世界"); std::cout << t;
+  text<8> t("你好世界！我好！世界"); std::cout << t;
   return 0;
 }

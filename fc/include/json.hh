@@ -10,30 +10,30 @@
 #endif
 #include "str.hh"
 #include "buf.hh"
+#include "h/macros.h"
+#include "hpp/box.hpp"
+#include "hpp/tuple.hpp"
 #include <cassert>
 #include <initializer_list>
+#include <type_traits>
+#include <sstream>
+#include <iomanip>
+#include <tuple>
 // from https://github.com/idealvin/coost/blob/master/include/co/json.h
 namespace json {
+  static const std::string RES_NULL("null");
   namespace xx {
 	class Array {
 	public:
 	  typedef void* T;
-	  struct _H {
-		u32 cap;
-		u32 size;
-		T p[];
-	  };
+	  struct _H { u32 cap; u32 size; T p[]; };
 	  static const size_t N = sizeof(T);
 	  static const u32 R = sizeof(_H) / N;
 	  explicit Array(u32 cap) {
-		_h = (_H*) ::malloc(N * (R + cap));
-		_h->cap = cap;
-		_h->size = 0;
+		_h = (_H*) ::malloc(N * (R + cap)); _h->cap = cap; _h->size = 0;
 	  }
 	  Array(): Array(1024 - R) {}
-	  ~Array() {
-		::free(_h);
-	  }
+	  ~Array() { ::free(_h); }
 	  T* data() const { return _h->p; }
 	  u32 size() const { return _h->size; }
 	  bool empty() const { return this->size() == 0; }
@@ -42,26 +42,18 @@ namespace json {
 	  T& operator[](u32 i) const { return _h->p[i]; }
 	  void push_back(T v) {
 		if (_h->size == _h->cap) {
-		  const size_t n = N * _h->cap;
-		  const size_t o = sizeof(_H) + n;
-		  _h = (_H*) ::realloc(_h, o + n); assert(_h);
-		  _h->cap <<= 1;
+		  const size_t n = N * _h->cap, o = sizeof(_H) + n;
+		  _h = (_H*) ::realloc(_h, o + n); assert(_h); _h->cap <<= 1;
 		}
 		_h->p[_h->size++] = v;
 	  }
-	  void remove(u32 i) {
-		if (i != --_h->size) _h->p[i] = _h->p[_h->size];
-	  }
-
+	  void remove(u32 i) { if (i != --_h->size) _h->p[i] = _h->p[_h->size]; }
 	  void remove_pair(u32 i) {
 		if (i != (_h->size -= 2)) {
-		  _h->p[i] = _h->p[_h->size];
-		  _h->p[i + 1] = _h->p[_h->size + 1];
+		  _h->p[i] = _h->p[_h->size]; _h->p[i + 1] = _h->p[_h->size + 1];
 		}
 	  }
-	  T pop_back() {
-		return _h->p[--_h->size];
-	  }
+	  T pop_back() { return _h->p[--_h->size]; }
 	  void erase(u32 i) {
 		if (i != --_h->size) {
 		  memmove(_h->p + i, _h->p + i + 1, (_h->size - i) * N);
@@ -73,28 +65,18 @@ namespace json {
 		}
 	  }
 	  void reset() {
-		_h->size = 0;
-		if (_h->cap > 8192) {
-		  ::free(_h);
-		  new(this) Array();
-		}
+		_h->size = 0; if (_h->cap > 8192) { ::free(_h); new(this) Array(); }
 	  }
 	private:
 	  _H* _h;
 	};
-	void* alloc();
-	char* alloc_string(const void* p, size_t n);
+	void* alloc(); char* alloc_string(const void* p, size_t n);
   } // xx
   class Json {
   public:
 	enum {
-	  t_bool = 0,
-	  t_int = 1,
-	  t_uint = 2,
-	  t_double = 4,
-	  t_string = 8,
-	  t_array = 16,
-	  t_object = 32,
+	  t_bool = 0, t_int = 1, t_uint = 2, t_double = 4,
+	  t_string = 8, t_array = 16, t_object = 32
 	};
 	struct _obj_t {};
 	struct _arr_t {};
@@ -127,23 +109,12 @@ namespace json {
 	Json(const Json& v) = delete;
 	void operator=(const Json&) = delete;
 	Json& operator=(Json&& v) {
-	  if (&v != this) {
-		if (_h) this->reset();
-		_h = v._h;
-		v._h = 0;
-	  }
-	  return *this;
+	  if (&v != this) { if (_h) this->reset(); _h = v._h; v._h = 0; } return *this;
 	}
 	// after this operation, v will be moved and becomes null
-	Json& operator=(Json& v) {
-	  return this->operator=(std::move(v));
-	}
+	Json& operator=(Json& v) { return this->operator=(std::move(v)); }
 	// make a duplicate 
-	Json dup() const {
-	  Json r;
-	  r._h = (_H*)this->_dup();
-	  return r;
-	}
+	Json dup() const { Json r; r._h = (_H*)this->_dup(); return r; }
 	Json(bool v): _h(new(xx::alloc()) _H(v)) {}
 	Json(double v): _h(new(xx::alloc()) _H(v)) {}
 	Json(i64 v): _h(new(xx::alloc()) _H(v)) {}
@@ -160,6 +131,17 @@ namespace json {
 	Json(const void* p, size_t n): _h(new(xx::alloc()) _H(p, n)) {}
 	Json(const char* s): Json(s, strlen(s)) {}
 	Json(const std::string& s): Json(s.data(), s.size()) {}
+	Json(const tm& _v) {
+	  std::ostringstream os; os << std::setfill('0');
+  #ifdef _WIN32
+	  os << std::setw(4) << _v.tm_year + 1900;
+  #else
+	  int y = _v.tm_year / 100; os << std::setw(2) << 19 + y << std::setw(2) << _v.tm_year - y * 100;
+  #endif
+	  os << '-' << std::setw(2) << (_v.tm_mon + 1) << '-' << std::setw(2) << _v.tm_mday << ' ' << std::setw(2)
+		<< _v.tm_hour << ':' << std::setw(2) << _v.tm_min << ':' << std::setw(2) << _v.tm_sec;
+	  std::string s = os.str(); _h = new(xx::alloc()) _H(s.data(), s.size());
+	}
 	Json(_obj_t): _h(new(xx::alloc()) _H(_obj_t())) {}
 	Json(_arr_t): _h(new(xx::alloc()) _H(_arr_t())) {}
 	// make Json from initializer_list
@@ -258,26 +240,65 @@ namespace json {
 	}
 	// returns a c-style string, null-terminated.
 	// for non-string types, returns an empty string.
-	const char* as_c_str() const {
-	  return this->is_string() ? _h->s : "";
-	}
+	const char* as_c_str() const { return this->is_string() ? _h->s : ""; }
 	// returns a std::string.
 	// for non-string types, it is equal to Json::str().
-	fc::Buf as_string() const {
-	  return this->is_string() ? fc::Buf(_h->s, _h->size) : this->str();
-	}
+	fc::Buf as_string() const { return this->is_string() ? fc::Buf(_h->s, _h->size) : this->str(); }
 	// get Json by index or key.
 	//   - It is a read-only operation.
 	//   - If the index is not in a valid range or the key does not exist, 
-	//     the return value is a reference to a null object.
+	//     the return value is a _reference to a null object.
 	Json& get() const { return *(Json*)this; }
 	Json& get(u32 i) const;
 	Json& get(int i) const { return this->get((u32)i); }
 	Json& get(const char* key) const;
 	template <class T, class ...X>
 	inline Json& get(T&& v, X&& ... x) const {
-	  Json& r = this->get(std::forward<T>(v));
-	  return r.is_null() ? r : r.get(std::forward<X>(x)...);
+	  Json& r = this->get(std::forward<T>(v)); return r.is_null() ? r : r.get(std::forward<X>(x)...);
+	}
+	template <typename T>
+	inline void _ref(T& $) {
+	  if constexpr (is_box<T>::value) {
+		if(!_h)_h = new(xx::alloc()) _H(_obj_t());
+		switch (_h->type) {
+		case t_object: box_pack_t<T>::from_json(this, $.p);
+		}
+	  } else if constexpr (fc::is_vector<T>::value) {
+		if(!_h)_h = new(xx::alloc()) _H(_arr_t());
+		switch (_h->type) {
+		case t_array:;
+		}
+	  }
+	}
+	template <> inline void _ref<bool>(bool& $) { $ = this->as_bool(); }
+	template <> inline void _ref<float>(float& $) { $ = static_cast<float>(this->as_double()); }
+	template <> inline void _ref<double>(double& $) { $ = this->as_double(); }
+	template <> inline void _ref<i8>(i8& $) { $ = static_cast<i8>(this->as_int64()); }
+	template <> inline void _ref<i16>(i16& $) { $ = static_cast<i16>(this->as_int64()); }
+	template <> inline void _ref<i32>(i32& $) { $ = this->as_int(); }
+	template <> inline void _ref<i64>(i64& $) { $ = this->as_int64(); }
+	template <> inline void _ref<u8>(u8& $) { $ = static_cast<u8>(this->as_uint64()); }
+	template <> inline void _ref<u16>(u16& $) { $ = static_cast<u16>(this->as_uint64()); }
+	template <> inline void _ref<u32>(u32& $) { $ = this->as_uint(); }
+	template <> inline void _ref<u64>(u64& $) { $ = this->as_uint64(); }
+	template <> inline void _ref<std::string>(std::string& $) { $ = this->as_c_str(); }
+	template <> inline void _ref<fc::Buf>(fc::Buf& $) { $ = this->as_string(); }
+	template <> inline void _ref<tm>(tm& $) {
+	  const char* c = this->as_string().c_str();
+	  int year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0;
+	  if (sscanf(c, "%4d-%2d-%2d %2d:%2d:%2d", &year, &month, &day, &hour, &min, &sec) == 6) {
+		$.tm_mday = day; $.tm_hour = hour; $.tm_min = min; $.tm_sec = sec;
+	  }
+	  $.tm_year = year - 1900; $.tm_mon = month - 1;
+	}
+	template <typename T>
+	Json& operator=(const box<T>& v) {
+	  if (v.p) {
+		T* c = v.p; i8 i = -1; fc::ForEachField(v.p, [&i, c, this](auto& t){
+			this->operator[](T::$[++i]) = t;
+		});
+	  }
+	  return *this;
 	}
 	// set value for Json.
 	//   - The last parameter is the value, other parameters are index or key.
@@ -288,8 +309,7 @@ namespace json {
 	inline Json& set(T&& v) { return *this = Json(std::forward<T>(v)); }
 	template <class A, class B, class ...X>
 	inline Json& set(A&& a, B&& b, X&& ... x) {
-	  Json& r = this->_set(std::forward<A>(a));
-	  return r.set(std::forward<B>(b), std::forward<X>(x)...);
+	  Json& r = this->_set(std::forward<A>(a)); return r.set(std::forward<B>(b), std::forward<X>(x)...);
 	}
 	// push v to an array.
 	// if the Json calling this method is not an array, it will be reset to an array.
@@ -297,44 +317,27 @@ namespace json {
 	  if (_h && (_h->type & t_array)) {
 		if (unlikely(!_h->p)) new(&_h->p) xx::Array(8);
 	  } else {
-		this->reset();
-		_h = new(xx::alloc()) _H(_arr_t());
-		new(&_h->p) xx::Array(8);
+		this->reset(); _h = new(xx::alloc()) _H(_arr_t()); new(&_h->p) xx::Array(8);
 	  }
-	  _array().push_back(v._h);
-	  v._h = 0;
-	  return *this;
+	  _array().push_back(v._h); v._h = 0; return *this;
 	}
-	Json& push_back(Json& v) {
-	  return this->push_back(std::move(v));
-	}
+	Json& push_back(Json& v) { return this->push_back(std::move(v)); }
 	// remove the ith element from an array
 	// the last element will be moved to the ith place
 	void remove(u32 i) {
-	  if (this->is_array() && i < this->array_size()) {
-		((Json&)_array()[i]).reset();
-		_array().remove(i);
-	  }
+	  if (this->is_array() && i < this->array_size()) { ((Json&)_array()[i]).reset(); _array().remove(i); }
 	}
 	void remove(int i) { this->remove((u32)i); }
 	void remove(const char* key);
 	// erase the ith element from an array
 	void erase(u32 i) {
-	  if (this->is_array() && i < this->array_size()) {
-		((Json&)_array()[i]).reset();
-		_array().erase(i);
-	  }
+	  if (this->is_array() && i < this->array_size()) { ((Json&)_array()[i]).reset(); _array().erase(i); }
 	}
 	void erase(int i) { this->erase((u32)i); }
 	void erase(const char* key);
 	// it is better to use get() instead of this method.
-	Json& operator[](u32 i) const {
-	  assert(this->is_array() && !_array().empty());
-	  return (Json&)_array()[i];
-	}
-	Json& operator[](int i) const {
-	  return this->operator[]((u32)i);
-	}
+	Json& operator[](u32 i) const { assert(this->is_array() && !_array().empty()); return (Json&)_array()[i]; }
+	Json& operator[](int i) const { return this->operator[]((u32)i); }
 	bool operator==(bool v) const { return this->is_bool() && _h->b == v; }
 	bool operator==(double v) const { return this->is_double() && _h->d == v; }
 	bool operator==(i64 v) const { return (this->is_int() || this->is_uint()) && _h->i == v; }
@@ -363,12 +366,9 @@ namespace json {
 	u32 size() const {
 	  if (_h) {
 		switch (_h->type) {
-		case t_array:
-		  return _h->p ? _array().size() : 0;
-		case t_object:
-		  return _h->p ? (_array().size() >> 1) : 0;
-		case t_string:
-		  return _h->size;
+		case t_array: return _h->p ? _array().size() : 0;
+		case t_object: return _h->p ? (_array().size() >> 1) : 0;
+		case t_string: return _h->size;
 		}
 	  }
 	  return 0;
@@ -405,8 +405,7 @@ namespace json {
 	  return *this;
 	}
 	Json& add_member(const char* key, Json& v) {
-	  this->add_member(key, std::move(v));
-	  return *this;
+	  this->add_member(key, std::move(v)); return *this;
 	}
 	bool has_member(const char* key) const;
 	// it is better to use get(key) instead of this method.
@@ -481,12 +480,7 @@ namespace json {
   inline Json object() { return Json(Json::_obj_t()); }
   // make an object from initializer_list
   Json object(std::initializer_list<Json> v);
-  inline Json parse(const char* s, size_t n) {
-	Json r;
-	if (r.parse_from(s, n)) return r;
-	r.reset();
-	return r;
-  }
+  inline Json parse(const char* s, size_t n) { Json r; if (r.parse_from(s, n)) return r; r.reset(); return r; }
   inline Json parse(const char* s) { return parse(s, strlen(s)); }
   inline Json parse(const std::string& s) { return parse(s.data(), s.size()); }
   inline Json parse(const fc::Buf&& b) { return parse(b.data_, b.size()); }
@@ -494,4 +488,17 @@ namespace json {
 } // json
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
+
+#define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
+#define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_)._ref(_->__VA_ARGS_);
+#define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* value, Fn&& fn);\
+  static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\
+  static void from_json(const Json& c, __VA_ARGS_* _) { if(_){EXP(M$(FC_FROM, __VA_ARGS__))} }\
+  private: const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
+  static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
+
+#define CLASS(__VA_ARGS_,...)const u8 __VA_ARGS_::_size = NUM_ARGS(__VA_ARGS__);const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);\
+  const char* __VA_ARGS_::$[NUM_ARGS(__VA_ARGS__)] = { PROTO_N(NUM_ARGS(__VA_ARGS__),__VA_ARGS__) };\
+  std::tuple<STAR_S(__VA_ARGS_, NUM_ARGS(__VA_ARGS__),__VA_ARGS__)>__VA_ARGS_::Tuple=std::make_tuple(STARS(__VA_ARGS_, NUM_ARGS(__VA_ARGS__), __VA_ARGS__));
+
 #endif
