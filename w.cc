@@ -9,25 +9,27 @@
 #include <json.hh>
 struct Person;
 struct Book {
-  std::string  name = "wtf";
+  fc::Buf  name = "wtf";
   box<Person>  person;
-  Book(std::string a = "", box<Person> b = nullptr): name(a), person(b) {}
+  Book(fc::Buf a = "", box<Person> b = 0): name(a), person(b) {}
   REG(Book, name, person)
 };
 CLASS(Book, name, person)
 struct Person {
-  std::string  name;
+  fc::Buf  name;
   int          age;
   box<Book>    book;
-  Person(std::string a = "", int b = 0, box<Book> c = nullptr): name(a), age(b), book(c) {}
+  Person(fc::Buf a = "", int b = 0, box<Book> c = 0): name(a), age(b), book(c) {}
   REG(Person, name, age, book)
 };
 CLASS(Person, name, age, book)
 int main() {
-  Json j; Person p{ "rust",14 }, v{}; Person::to_json(j, &p); std::cout << j.str();
-  Person::from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}';
-  Book b{ "ts", box<Person>{"plus",23, box<Book>{"go", box<Person>{"pro",15, box<Book>{"js"}}}} };
-  j.reset(); Book::to_json(j, &b); std::cout << j.dump();
+  Json j; Person p{ "rust",14 }, v{}; to_json(j, &p); std::cout << j.str();
+  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}';
+  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>(v)}} }; to_json(j, &b);
+  j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump();
+  std::vector<int> vi{ 1,2,3,4,5,6 }, v1; to_json(j, &vi); std::cout << j.str();
+  j = json::array({ 6,5,4,3,2,1 }); from_json(j, &v1); to_json(j, &v1); std::cout << j.str();
   return 0;
   clock_t start = clock();
   unsigned long long l;

@@ -11,6 +11,9 @@
 //It depends on your personal situation to balance the development speed and compilation speed.
 //Do not refer to another 'lexical_cast.hh' file repeatedly
 namespace std {
+#if !defined(_NODISCARD)
+#define _NODISCARD [[nodiscard]]
+#endif
 #if defined(_MSC_VER) && !defined(_INLINE)
 #define _INLINE __forceinline
 #elif !defined(_INLINE)
@@ -96,13 +99,13 @@ namespace std {
 
   template <> _INLINE std::string lexical_cast<std::string>(const char* c) { return std::string(c); }
 
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	bool lexical_cast<bool>(const char* c) {
 	if ((c[0] == '1' && c[1] == 0) || (c[0] == 't' && c[1] == 'r' && c[2] == 'u' && c[3] == 'e' && c[4] == 0)) return true;
 	if ((c[0] == '0' && c[1] == 0) || (c[0] == 'f' && c[1] == 'a' && c[2] == 'l' && c[3] == 's' && c[4] == 'e' && c[5] == 0))
 	  return false; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]]
+  template <> _NODISCARD
 	char lexical_cast<char>(const char* c) {
 	char r; if (*c != 0x2D) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
@@ -116,7 +119,7 @@ namespace std {
 	  };
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	signed char lexical_cast<signed char>(const char* c) {
 	signed char r; if (*c != 0x2D) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
@@ -130,7 +133,7 @@ namespace std {
 	  };
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned char lexical_cast<unsigned char>(const char* c) {
 	if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); unsigned char r = *c - 0x30; char z = 0;
 	while (z != 1 && *++c) {
@@ -141,7 +144,7 @@ namespace std {
 	  r = r * 10 + *c - 0x30;
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	short lexical_cast<short>(const char* c) {
 	short r; if (*c != 0x2D) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
@@ -155,7 +158,7 @@ namespace std {
 	  };
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(const char* c) {
 	if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); unsigned short r = *c - 0x30; char z = 0;
 	while (z != 3 && *++c) {
@@ -166,7 +169,7 @@ namespace std {
 	  r = r * 10 + *c - 0x30;
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	int lexical_cast<int>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
 	  if (l < 11) {
@@ -192,7 +195,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(const char* c) {
 	size_t l = strlen(c); if (--l < 9) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
@@ -216,7 +219,7 @@ namespace std {
 	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long lexical_cast<long>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
 	  if (l < 11) {
@@ -242,7 +245,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(const char* c) {
 	size_t l = strlen(c); if (--l < 9) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
@@ -266,7 +269,7 @@ namespace std {
 	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
 	  if (l < 20) {
@@ -292,7 +295,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(const char* c) {
 	size_t l = strlen(c); if (--l < 19) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
@@ -316,15 +319,15 @@ namespace std {
 	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	float lexical_cast<float>(const char* c) {
 	char* $; const float _ = ::strtof(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	double lexical_cast<double>(const char* c) {
 	char* $; const double _ = ::strtod(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long double lexical_cast<long double>(const char* c) {
 	char* $; const long double _ = ::strtold(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
@@ -345,11 +348,11 @@ namespace std {
   //std::string
   template <typename T> inline T lexical_cast(std::string& s);
 
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	bool lexical_cast<bool>(std::string& s) {
 	if (s == "1" || s == "true")return true; if (s == "0" || s == "false")return false; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]]
+  template <> _NODISCARD
 	char lexical_cast<char>(std::string& s) {
 	const char* c = s.c_str(); char r;
 	if (*c != 0x2D) {
@@ -363,7 +366,7 @@ namespace std {
 	  r = r * 10 - *c + 0x30; if (r >= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
 	}; return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	signed char lexical_cast<signed char>(std::string& s) {
 	const char* c = s.c_str(); signed char r;
 	if (*c != 0x2D) {
@@ -377,7 +380,7 @@ namespace std {
 	  r = r * 10 - *c + 0x30; if (r >= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
 	}; return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned char lexical_cast<unsigned char>(std::string& s) {
 	const char* c = s.c_str();
 	if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); unsigned char r = *c - 0x30; char z = 0;
@@ -389,7 +392,7 @@ namespace std {
 	  r = r * 10 + *c - 0x30;
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	short lexical_cast<short>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -417,7 +420,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 4) {
@@ -445,7 +448,7 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	int lexical_cast<int>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -473,7 +476,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 9) {
@@ -501,7 +504,7 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long lexical_cast<long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -529,7 +532,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 9) {
@@ -557,7 +560,7 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -585,7 +588,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 19) {
@@ -613,17 +616,17 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	float lexical_cast<float>(std::string& s) {
 	const char* c = s.c_str();
 	char* $; const float _ = ::strtof(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	double lexical_cast<double>(std::string& s) {
 	const char* c = s.c_str();
 	char* $; const double _ = ::strtod(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long double lexical_cast<long double>(std::string& s) {
 	const char* c = s.c_str();
 	char* $; const long double _ = ::strtold(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
@@ -646,11 +649,11 @@ namespace std {
   template <typename T> inline T lexical_cast(fc::Buf& s);
   template <> _INLINE std::string lexical_cast<std::string>(fc::Buf& c){ return c.b2s(); }
   
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	bool lexical_cast<bool>(fc::Buf& s) {
 	if (s == "1" || s == "true")return true; if (s == "0" || s == "false")return false; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	char lexical_cast<char>(fc::Buf& s) {
 	const char* c = s.c_str(); char r;
 	if (*c != 0x2D) {
@@ -664,7 +667,7 @@ namespace std {
 	  r = r * 10 - *c + 0x30; if (r >= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
 	}; return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	signed char lexical_cast<signed char>(fc::Buf& s) {
 	const char* c = s.c_str(); signed char r;
 	if (*c != 0x2D) {
@@ -678,7 +681,7 @@ namespace std {
 	  r = r * 10 - *c + 0x30; if (r >= 0 || *c > 0x39 || 0x30 > *c) throw std::range_error("");
 	}; return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned char lexical_cast<unsigned char>(fc::Buf& s) {
 	const char* c = s.c_str();
 	if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); unsigned char r = *c - 0x30; char z = 0;
@@ -690,7 +693,7 @@ namespace std {
 	  r = r * 10 + *c - 0x30;
 	} return r;
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	short lexical_cast<short>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -718,7 +721,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 4) {
@@ -746,7 +749,7 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	int lexical_cast<int>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -774,7 +777,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 9) {
@@ -802,7 +805,7 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long lexical_cast<long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -830,7 +833,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 9) {
@@ -858,7 +861,7 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
@@ -886,7 +889,7 @@ namespace std {
 	  return r;
 	} throw std::out_of_range("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
 	if (--l < 19) {
@@ -914,17 +917,17 @@ namespace std {
 	  return r;
 	} throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	float lexical_cast<float>(fc::Buf& s) {
 	const char* c = s.c_str();
 	char* $; const float _ = ::strtof(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	double lexical_cast<double>(fc::Buf& s) {
 	const char* c = s.c_str();
 	char* $; const double _ = ::strtod(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");
   }
-  template <> [[nodiscard]] _INLINE
+  template <> _NODISCARD _INLINE
 	long double lexical_cast<long double>(fc::Buf& s) {
 	const char* c = s.c_str();
 	char* $; const long double _ = ::strtold(c, &$); if (*$ == 0) return _; throw std::invalid_argument("");

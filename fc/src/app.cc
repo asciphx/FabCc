@@ -94,6 +94,7 @@ namespace fc {
 	  if (!fc::is_directory(real_root))
 		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
 	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); detail::directory_ = $;
+#ifndef __linux__
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
@@ -101,6 +102,7 @@ namespace fc {
 		  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
 		}
 	  };
+#endif // !__linux__
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1;// if (_ == $) { res.write("index.html"); return;}
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
@@ -142,6 +144,15 @@ namespace fc {
 		}
 		throw err::not_found();
 	  };
+#ifdef __linux__
+	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
+		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		if (res.is_file == 0) {
+		  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
+		}
+	  };
+#endif // __linux__
 	} catch (const http_error& e) {
 	  printf("http_error[%d]: %s", e.i(), e.what());
 	}

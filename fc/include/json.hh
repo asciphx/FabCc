@@ -131,13 +131,14 @@ namespace json {
 	Json(const void* p, size_t n): _h(new(xx::alloc()) _H(p, n)) {}
 	Json(const char* s): Json(s, strlen(s)) {}
 	Json(const std::string& s): Json(s.data(), s.size()) {}
+	Json(const fc::Buf& s): Json(s.data_, s.size()) {}
 	Json(const tm& _v) {
 	  std::ostringstream os; os << std::setfill('0');
-  #ifdef _WIN32
+#ifdef _WIN32
 	  os << std::setw(4) << _v.tm_year + 1900;
-  #else
+#else
 	  int y = _v.tm_year / 100; os << std::setw(2) << 19 + y << std::setw(2) << _v.tm_year - y * 100;
-  #endif
+#endif
 	  os << '-' << std::setw(2) << (_v.tm_mon + 1) << '-' << std::setw(2) << _v.tm_mday << ' ' << std::setw(2)
 		<< _v.tm_hour << ':' << std::setw(2) << _v.tm_min << ':' << std::setw(2) << _v.tm_sec;
 	  std::string s = os.str(); _h = new(xx::alloc()) _H(s.data(), s.size());
@@ -250,7 +251,7 @@ namespace json {
 	//     the return value is a _reference to a null object.
 	Json& get() const { return *(Json*)this; }
 	Json& get(u32 i) const;
-	Json& get(int i) const { return this->get((u32)i); }
+	Json& get(int i) const { return this->get(static_cast<u32>(i)); }
 	Json& get(const char* key) const;
 	template <class T, class ...X>
 	inline Json& get(T&& v, X&& ... x) const {
@@ -259,15 +260,11 @@ namespace json {
 	template <typename T>
 	inline void _ref(T& $) {
 	  if constexpr (is_box<T>::value) {
-		if(!_h)_h = new(xx::alloc()) _H(_obj_t());
-		switch (_h->type) {
-		case t_object: box_pack_t<T>::from_json(this, $.p);
-		}
+		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
+		if (_h->type == t_object) from_json(this, $.p);
 	  } else if constexpr (fc::is_vector<T>::value) {
-		if(!_h)_h = new(xx::alloc()) _H(_arr_t());
-		switch (_h->type) {
-		case t_array:;
-		}
+		if (!_h)_h = new(xx::alloc()) _H(_arr_t());
+		if (_h->type == t_array);
 	  }
 	}
 	inline void _ref(bool& $) { $ = this->as_bool(); }
@@ -292,13 +289,12 @@ namespace json {
 	  $.tm_year = year - 1900; $.tm_mon = month - 1;
 	}
 	template <typename T>
-	Json& operator=(const box<T>& v) {
+	void operator=(const box<T>& v) {
 	  if (v.p) {
-		T* c = v.p; i8 i = -1; fc::ForEachField(v.p, [&i, c, this](auto& t){
-			this->operator[](T::$[++i]) = t;
+		T* c = v.p; i8 i = -1; fc::ForEachField(v.p, [&i, c, this](auto& t) {
+		  this->operator[](T::$[++i]) = t;
 		});
 	  }
-	  return *this;
 	}
 	// set value for Json.
 	//   - The last parameter is the value, other parameters are index or key.
@@ -337,15 +333,15 @@ namespace json {
 	void erase(const char* key);
 	// it is better to use get() instead of this method.
 	Json& operator[](u32 i) const { assert(this->is_array() && !_array().empty()); return (Json&)_array()[i]; }
-	Json& operator[](int i) const { return this->operator[]((u32)i); }
+	Json& operator[](int i) const { return this->operator[](static_cast<u32>(i)); }
 	bool operator==(bool v) const { return this->is_bool() && _h->b == v; }
 	bool operator==(double v) const { return this->is_double() && _h->d == v; }
 	bool operator==(i64 v) const { return (this->is_int() || this->is_uint()) && _h->i == v; }
 	bool operator==(u64 v) const { return (this->is_int() || this->is_uint()) && static_cast<u64>(_h->i) == v; }
-	bool operator==(int v) const { return this->operator==((i64)v); }
-	bool operator==(u32 v) const { return this->operator==((u64)v); }
-	bool operator==(long v) const { return this->operator==((i64)v); }
-	bool operator==(long unsigned v) const { return this->operator==((u64)v); }
+	bool operator==(int v) const { return this->operator==(static_cast<i64>(v)); }
+	bool operator==(u32 v) const { return this->operator==(static_cast<u64>(v)); }
+	bool operator==(long v) const { return this->operator==(static_cast<i64>(v)); }
+	bool operator==(long unsigned v) const { return this->operator==(static_cast<u64>(v)); }
 	bool operator==(const char* v) const { return this->is_string() && strcmp(_h->s, v) == 0; }
 	bool operator==(const fc::Buf& v) const { return this->is_string() && v == _h->s; }
 	bool operator==(const std::string& v) const { return this->is_string() && v == _h->s; }
@@ -483,21 +479,29 @@ namespace json {
   inline Json parse(const char* s, size_t n) { Json r; if (r.parse_from(s, n)) return r; r.reset(); return r; }
   inline Json parse(const char* s) { return parse(s, strlen(s)); }
   inline Json parse(const std::string& s) { return parse(s.data(), s.size()); }
-  inline Json parse(const fc::Buf&& b) { return parse(b.data_, b.size()); }
   inline Json parse(const fc::Buf& b) { return parse(b.data_, b.size()); }
 } // json
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
+template<typename T>
+static void to_json(json::Json& c, std::vector<T>* v) {
+  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << v->at(i) << ','; }
+  b.pop_back().append(']'); c = json::parse(b.data_, b.size());
+}
+template<typename T>
+static void from_json(json::Json& c, std::vector<T>* v) {
+  T t; for (u32 i = 0; i < c.array_size(); ++i) { c.get(i)._ref(t); v->push_back(t); }
+}
 
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
 #define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_)._ref(_->__VA_ARGS_);
 #define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* value, Fn&& fn);\
-  static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\
-  static void from_json(const Json& c, __VA_ARGS_* _) { if(_){EXP(M$(FC_FROM, __VA_ARGS__))} }\
   private: const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
   static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
 
 #define CLASS(__VA_ARGS_,...)const u8 __VA_ARGS_::_size = NUM_ARGS(__VA_ARGS__);const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);\
+  static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\
+  static void from_json(const Json& c, __VA_ARGS_* _) { if(_){EXP(M$(FC_FROM, __VA_ARGS__))} }\
   const char* __VA_ARGS_::$[NUM_ARGS(__VA_ARGS__)] = { PROTO_N(NUM_ARGS(__VA_ARGS__),__VA_ARGS__) };\
   std::tuple<STAR_S(__VA_ARGS_, NUM_ARGS(__VA_ARGS__),__VA_ARGS__)>__VA_ARGS_::Tuple=std::make_tuple(STARS(__VA_ARGS_, NUM_ARGS(__VA_ARGS__), __VA_ARGS__));
 

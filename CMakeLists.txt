@@ -244,8 +244,9 @@ else ()
 endif ()
 target_link_libraries( FabCc ${FabCc_LIBRARIES} ${uv_libraries})
 
-option(BUILD_UNITEST "Build UNITEST" OFF)
+option(BUILD_UNITEST "Build UNITEST" OFF)#cmake .. -DBUILD_UNITEST=ON 来打开
 if(BUILD_UNITEST)
-    #enable_testing()
-    add_subdirectory(unitest)
+  message(STATUS "Build UNITEST: ${BUILD_UNITEST}")
+  enable_testing()
+  add_subdirectory(unitest)
 endif()

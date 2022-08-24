@@ -8,15 +8,13 @@ namespace fc {
   using Expand = int[];
 #define Exp (void)fc::Expand
   template <typename T, typename Fn, std::size_t... I>
-  inline constexpr void ForEachTuple(const T& tuple, Fn&& fn, std::index_sequence<I...>) { Exp{ ((void)fn(std::get<I>(tuple)), 0)... }; }
+  constexpr void ForEachTuple(const T& t, Fn&& fn, std::index_sequence<I...>) { Exp{ ((void)fn(std::get<I>(t)), 0)... }; }
   template <typename T, typename Fn>
-  inline constexpr void ForEachField(T* value, Fn&& fn) {
-	ForEachTuple(T::Tuple, [value, &fn](auto field) { fn(value->*(field)); }, std::make_index_sequence<std::tuple_size_v<decltype(T::Tuple)>>{});
+  constexpr void ForEachField(T* t, Fn&& fn) {
+	ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<std::tuple_size_v<decltype(T::Tuple)>>{});
   }
   template <std::size_t I, typename T, typename Fn>
-  inline constexpr void ForEachField(T* value, Fn&& fn) {
-	ForEachTuple(T::Tuple, [value, &fn](auto field) { fn(value->*(field)); }, std::make_index_sequence<I>{});
-  }
+  constexpr void ForEachField(T* t, Fn&& fn) { ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<I>{}); }
   
   template <typename T> constexpr inline auto Tuple() { return std::make_tuple(); }
   template<typename C> struct tuple_idex {};
@@ -121,7 +119,7 @@ namespace fc {
   using tuple_remove_elements_t = typename tuple_remove_elements<T, E...>::type;
   template <typename F, size_t... I, typename... T>
   inline F tuple_map(std::tuple<T...>& t, F f, std::index_sequence<I...>) {
-	return (void)std::initializer_list<int>{((void)f(std::get<I>(t)), 0)...}, f;
+	return Exp{((void)f(std::get<I>(t)), 0)...}, f;
   }
   template <typename F, typename... T> inline void tuple_map(std::tuple<T...>& t, F f) {
 	tuple_map(t, f, std::index_sequence_for<T...>{});
@@ -157,7 +155,7 @@ namespace fc {
 	return Tuple(seq{}, t);
   }
   template <typename... E, typename F> constexpr void apply_each(F&& f, E&&... e) {
-	(void)std::initializer_list<int>{((void)f(std::forward<E>(e)), 0)...};
+	Exp{((void)f(std::forward<E>(e)), 0)...};
   }
   template <typename... E, typename F, typename R>
   constexpr auto tuple_map_reduce_impl(F&& f, R&& reduce, E&&... e) { return reduce(f(std::forward<E>(e))...); }
