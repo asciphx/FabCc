@@ -24,14 +24,12 @@ struct Person {
 };
 CLASS(Person, name, age, book)
 int main() {
-  Json j; Person p{ "rust",14 }, v{}; to_json(j, &p); std::cout << j.str();
+  Json j; Person p{ "rust",14 }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}';
-  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>(v)}} };
-  j.reset(); to_json(j, &b);
+  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>(v)}} }; to_json(j, &b);
   j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump();
-  j.reset(); std::vector<int> vi{ 1,2,3,4,5,6 }, v1; to_json(j, &vi); std::cout << j.str();
-  j = json::array({ 6,5,4,3,2,1 }); from_json(j, &v1);
-  j.reset(); to_json(j, &v1); std::cout << j.str();
+  std::vector<int> vi{ 1,2,3,4,5,6 }, v1; to_json(j, &vi); std::cout << j.str() << std::endl;
+  j = json::array({ 6,5,4,3,2,1 }); from_json(j, &v1); to_json(j, &v1); std::cout << j.str();
   return 0;
   clock_t start = clock();
   unsigned long long l;
