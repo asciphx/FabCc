@@ -133,6 +133,12 @@ namespace json {
 		<< _v.tm_hour << ':' << std::setw(2) << _v.tm_min << ':' << std::setw(2) << _v.tm_sec;
 	  std::string s = os.str(); _h = new(xx::alloc()) _H(s.data(), s.size());
 	}
+	template<typename T>
+	Json(const std::vector<T>& v): _h(new(xx::alloc()) _H(_arr_t())) {
+	  for (u32 i = 0; i < this->array_size(); ++i) { this->get(i)._ref($[i]); }
+	  Json j; fc::Buf b; b << '['; for (size_t i = 0; i < v.size(); ++i) { to_json(j, v[i]); b << j << ','; }
+	  b.pop_back().append(']'); this = json::parse(b.data_, b.size());
+	}
 	Json(_obj_t): _h(new(xx::alloc()) _H(_obj_t())) {}
 	Json(_arr_t): _h(new(xx::alloc()) _H(_arr_t())) {}
 	// make Json from initializer_list
@@ -252,6 +258,8 @@ namespace json {
 	  if constexpr (is_box<T>::value) {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
 		if (_h->type == t_object) from_json(this, $.p);
+	  } else if constexpr (fc::is_vector<T>::value) {
+		for (u32 i = 0; i < this->array_size(); ++i) { this->get(i)._ref($[i]); }
 	  } else {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, &$); return; }
 		if (_h->type == t_object) from_json(this, &$);
@@ -281,7 +289,15 @@ namespace json {
 	template <typename T>
 	void operator=(const box<T>& v) {
 	  if (v.p) {
-		T* c = v.p; i8 i = -1; fc::ForEachField(v.p, [&i, c, this](auto& t) { this->operator[](T::$[++i]) = t; });
+		i8 i = -1; fc::ForEachField(v.p, [&i, this](auto& t) { this->operator[](T::$[++i]) = t; });
+	  }
+	}
+	template <typename T>
+	void operator=(const std::vector<T>& v) {
+	  if(!v.empty()){
+		Json j; i8 i; for (const T& t : v) {
+		  i = -1; fc::ForEachField(&t, [&i, &j, this](auto& t) { j[T::$[++i]] = t; }); this->push_back(j);
+		}
 	  }
 	}
 	// set value for Json.
@@ -300,9 +316,8 @@ namespace json {
 	Json& push_back(Json&& v) {
 	  if (_h && (_h->type & t_array)) {
 		if (unlikely(!_h->p)) new(&_h->p) xx::Array(8);
-	  } else {
-		this->reset(); _h = new(xx::alloc()) _H(_arr_t()); new(&_h->p) xx::Array(8);
-	  }
+	    _array().push_back(v._h); v._h = 0; return *this;
+	  } this->reset(); _h = new(xx::alloc()) _H(_arr_t()); new(&_h->p) xx::Array(8);
 	  _array().push_back(v._h); v._h = 0; return *this;
 	}
 	Json& push_back(Json& v) { return this->push_back(std::move(v)); }
@@ -461,18 +476,18 @@ namespace json {
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
 template<typename T>
-static void to_json(json::Json& c, std::vector<T>* v) {
+static void to_json(json::Json& c, const std::vector<T>* v) {
   fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << v->at(i) << ','; }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
 template<typename T>
 static void from_json(const json::Json& c, std::vector<T>* v) {
-  T t; for (u32 i = 0; i < c.array_size(); ++i) { c.get(i)._ref(t); v->push_back(t); }
+  T t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i)._ref(t); v->push_back(t); }
 }
 
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
 #define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_)._ref(_->__VA_ARGS_);
-#define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* value, Fn&& fn);\
+#define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
   private: const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
   static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
 
