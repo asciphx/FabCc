@@ -24,10 +24,10 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
-  Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
-  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}'; j.reset();
-  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js"},std::vector<Book>{ Book{},Book{},Book{} }} }; to_json(j, &b);
-  j.get("person").get("book").get("person") = nullptr; std::cout << j.dump();
+  Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}}}, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
+  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}'; j.reset(); std::vector<Book> d{ Book{} };
+  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}},std::vector<Book>{ Book{},Book{} }} }; to_json(j, &b);
+  j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump();
   std::vector<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   j = json::array({ 6,5,4,3,2,1 }); from_json(j, &vi); to_json(j, &vi); std::cout << j.str();
   return 0;
