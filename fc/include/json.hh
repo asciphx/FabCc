@@ -135,9 +135,8 @@ namespace json {
 	}
 	template<typename T>
 	Json(const std::vector<T>& v): _h(new(xx::alloc()) _H(_arr_t())) {
-	  for (u32 i = 0; i < this->array_size(); ++i) { this->get(i)._ref($[i]); }
-	  Json j; fc::Buf b; b << '['; for (size_t i = 0; i < v.size(); ++i) { to_json(j, v[i]); b << j << ','; }
-	  b.pop_back().append(']'); this = json::parse(b.data_, b.size());
+	  Json j; fc::Buf b; b << '['; for (size_t i = 0; i < v.size(); ++i) { to_json(j, v[i]); b << j.str() << ','; }
+	  b.pop_back().append(']'); this->parse_from(b.data_, b.size());
 	}
 	Json(_obj_t): _h(new(xx::alloc()) _H(_obj_t())) {}
 	Json(_arr_t): _h(new(xx::alloc()) _H(_arr_t())) {}

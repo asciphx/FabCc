@@ -21,9 +21,11 @@ public:
   T* p;
   box() noexcept: p(0) {}
   box(std::nullptr_t) noexcept: p(0) {}
-  box(T&& _): p(new T(std::forward<T>(_))) {}
   template<typename U>
   box(box<U>&& x) noexcept: p(x.p) { x.p = 0; }
+  template<typename U>
+  box(box<U>& x) noexcept: p(x.p) { x.p = 0; }
+  box(T&& _): p(new T(_)) {}
   template<typename... U>
   box(U... t) noexcept: p(new T{t...}) {}
   ~box() { if (p)delete p, p = nullptr; }
