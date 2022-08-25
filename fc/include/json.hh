@@ -29,9 +29,7 @@ namespace json {
 	  struct _H { u32 cap; u32 size; T p[]; };
 	  static const size_t N = sizeof(T);
 	  static const u32 R = sizeof(_H) / N;
-	  explicit Array(u32 cap) {
-		_h = (_H*) ::malloc(N * (R + cap)); _h->cap = cap; _h->size = 0;
-	  }
+	  explicit Array(u32 cap) { _h = (_H*) ::malloc(N * (R + cap)); _h->cap = cap; _h->size = 0; }
 	  Array(): Array(1024 - R) {}
 	  ~Array() { ::free(_h); }
 	  T* data() const { return _h->p; }
@@ -49,24 +47,16 @@ namespace json {
 	  }
 	  void remove(u32 i) { if (i != --_h->size) _h->p[i] = _h->p[_h->size]; }
 	  void remove_pair(u32 i) {
-		if (i != (_h->size -= 2)) {
-		  _h->p[i] = _h->p[_h->size]; _h->p[i + 1] = _h->p[_h->size + 1];
-		}
+		if (i != (_h->size -= 2)) { _h->p[i] = _h->p[_h->size]; _h->p[i + 1] = _h->p[_h->size + 1]; }
 	  }
 	  T pop_back() { return _h->p[--_h->size]; }
 	  void erase(u32 i) {
-		if (i != --_h->size) {
-		  memmove(_h->p + i, _h->p + i + 1, (_h->size - i) * N);
-		}
+		if (i != --_h->size) { memmove(_h->p + i, _h->p + i + 1, (_h->size - i) * N); }
 	  }
 	  void erase_pair(u32 i) {
-		if (i != (_h->size -= 2)) {
-		  memmove(_h->p + i, _h->p + i + 2, (_h->size - i) * N);
-		}
+		if (i != (_h->size -= 2)) { memmove(_h->p + i, _h->p + i + 2, (_h->size - i) * N); }
 	  }
-	  void reset() {
-		_h->size = 0; if (_h->cap > 8192) { ::free(_h); new(this) Array(); }
-	  }
+	  void reset() { _h->size = 0; if (_h->cap > 8192) { ::free(_h); new(this) Array(); } }
 	private:
 	  _H* _h;
 	};
@@ -262,9 +252,9 @@ namespace json {
 	  if constexpr (is_box<T>::value) {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
 		if (_h->type == t_object) from_json(this, $.p);
-	  } else if constexpr (fc::is_vector<T>::value) {
-		if (!_h)_h = new(xx::alloc()) _H(_arr_t());
-		if (_h->type == t_array);
+	  } else {
+		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, &$); return; }
+		if (_h->type == t_object) from_json(this, &$);
 	  }
 	}
 	inline void _ref(bool& $) { $ = this->as_bool(); }
@@ -291,9 +281,7 @@ namespace json {
 	template <typename T>
 	void operator=(const box<T>& v) {
 	  if (v.p) {
-		T* c = v.p; i8 i = -1; fc::ForEachField(v.p, [&i, c, this](auto& t) {
-		  this->operator[](T::$[++i]) = t;
-		});
+		T* c = v.p; i8 i = -1; fc::ForEachField(v.p, [&i, c, this](auto& t) { this->operator[](T::$[++i]) = t; });
 	  }
 	}
 	// set value for Json.
@@ -371,20 +359,12 @@ namespace json {
 	}
 	bool empty() const { return this->size() == 0; }
 	u32 array_size() const {
-	  if (_h && (_h->type & t_array)) {
-		return _h->p ? _array().size() : 0;
-	  }
-	  return 0;
+	  if (_h && (_h->type & t_array)) { return _h->p ? _array().size() : 0; } return 0;
 	}
 	u32 object_size() const {
-	  if (_h && (_h->type & t_object)) {
-		return _h->p ? (_array().size() >> 1) : 0;
-	  }
-	  return 0;
+	  if (_h && (_h->type & t_object)) { return _h->p ? (_array().size() >> 1) : 0; } return 0;
 	}
-	u32 string_size() const {
-	  return (_h && (_h->type & t_string)) ? _h->size : 0;
-	}
+	u32 string_size() const { return (_h && (_h->type & t_string)) ? _h->size : 0; }
 	// push key-value to the back of an object, key may be repeated.
 	// if the Json calling this method is not an object, it will be reset to an object.
 	Json& add_member(const char* key, Json&& v) {
@@ -400,9 +380,7 @@ namespace json {
 	  v._h = 0;
 	  return *this;
 	}
-	Json& add_member(const char* key, Json& v) {
-	  this->add_member(key, std::move(v)); return *this;
-	}
+	Json& add_member(const char* key, Json& v) { this->add_member(key, std::move(v)); return *this; }
 	bool has_member(const char* key) const;
 	// it is better to use get(key) instead of this method.
 	Json& operator[](const char* key) const;
@@ -429,8 +407,7 @@ namespace json {
 	//     end iterator.
 	iterator begin() const {
 	  if (_h && _h->p && (_h->type & (t_array | t_object))) {
-		static_assert(t_array == 16 && t_object == 32, "");
-		xx::Array& a = _array();
+		static_assert(t_array == 16 && t_object == 32, ""); xx::Array& a = _array();
 		return iterator(a.data(), a.data() + a.size(), _h->type >> 4);
 	  }
 	  return iterator(0, 0, 0);
@@ -489,7 +466,7 @@ static void to_json(json::Json& c, std::vector<T>* v) {
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
 template<typename T>
-static void from_json(json::Json& c, std::vector<T>* v) {
+static void from_json(const json::Json& c, std::vector<T>* v) {
   T t; for (u32 i = 0; i < c.array_size(); ++i) { c.get(i)._ref(t); v->push_back(t); }
 }
 

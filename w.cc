@@ -9,23 +9,23 @@
 #include <json.hh>
 struct Person;
 struct Book {
-  fc::Buf  name = "wtf";
-  box<Person>  person;
+  fc::Buf name = "wtf";
+  box<Person> person;
   Book(fc::Buf a = "", box<Person> b = 0): name(a), person(b) {}
   REG(Book, name, person)
 };
 CLASS(Book, name, person)
 struct Person {
-  fc::Buf  name;
-  int          age;
-  box<Book>    book;
+  fc::Buf name;
+  int age;
+  box<Book> book;
   Person(fc::Buf a = "", int b = 0, box<Book> c = 0): name(a), age(b), book(c) {}
   REG(Person, name, age, book)
 };
 CLASS(Person, name, age, book)
 int main() {
   Json j; Person p{ "rust",14 }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
-  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}';
+  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}'; j.reset();
   Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>(v)}} }; to_json(j, &b);
   j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump();
   std::vector<int> vi{ 1,2,3,4,5,6 }, v1; to_json(j, &vi); std::cout << j.str() << std::endl;
