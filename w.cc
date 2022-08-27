@@ -5,13 +5,12 @@
 #include <str_map.hh>
 //#include <llhttp.h>
 #include <buf.hh>
-#include <vector>
 #include <json.hh>
 struct Person;
 struct Book {
   fc::Buf name = "wtf";
   box<Person> person;
-  std::vector<Person> persons;
+  vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
@@ -19,16 +18,16 @@ struct Person {
   fc::Buf name;
   int age;
   box<Book> book;
-  std::vector<Book> books;
+  vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
 int main() {
   Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}}}, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
-  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}'; j.reset(); std::vector<Book> d{ Book{} };
-  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}},std::vector<Book>{ Book{},Book{} }} }; to_json(j, &b);
+  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}'; j.reset();
+  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} }; to_json(j, &b);
   j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump();
-  std::vector<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
+  vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   j = json::array({ 6,5,4,3,2,1 }); from_json(j, &vi); to_json(j, &vi); std::cout << j.str();
   return 0;
   clock_t start = clock();

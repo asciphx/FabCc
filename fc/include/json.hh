@@ -19,6 +19,7 @@
 #include <sstream>
 #include <iomanip>
 #include <tuple>
+#include <vector>
 // from https://github.com/idealvin/coost/blob/master/include/co/json.h
 namespace json {
   static const std::string RES_NULL("null");

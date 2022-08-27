@@ -220,7 +220,7 @@ inline void GrisuRound(char* buffer, int len, uint64_t delta, uint64_t rest, uin
         rest += ten_kappa;
     }
 }
-inline unsigned CountDecimalDigit32(uint32_t n) {
+inline int CountDecimalDigit32(uint32_t n) {
     // Simple pure C++ implementation was faster than __builtin_clz version in this situation.
     if (n < 10) return 1;
     if (n < 100) return 2;
@@ -230,45 +230,51 @@ inline unsigned CountDecimalDigit32(uint32_t n) {
     if (n < 1000000) return 6;
     if (n < 10000000) return 7;
     if (n < 100000000) return 8;
-    if (n < 1000000000) return 9;
-    return 10;
+    // Will not reach 10 digits in DigitGen()
+    //if (n < 1000000000) return 9;
+    //return 10;
+    return 9;
 }
 inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buffer, int* len, int* K) {
-    static const uint32_t kPow10[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
+    static const uint64_t kPow10[] = { 1ULL, 10ULL, 100ULL, 1000ULL, 10000ULL, 100000ULL, 1000000ULL, 10000000ULL, 100000000ULL,
+                                       1000000000ULL, 10000000000ULL, 100000000000ULL, 1000000000000ULL,
+                                       10000000000000ULL, 100000000000000ULL, 1000000000000000ULL,
+                                       10000000000000000ULL, 100000000000000000ULL, 1000000000000000000ULL,
+                                       10000000000000000000ULL };
     const DiyFp one(uint64_t(1) << -Mp.e, Mp.e);
     const DiyFp wp_w = Mp - W;
     uint32_t p1 = static_cast<uint32_t>(Mp.f >> -one.e);
     uint64_t p2 = Mp.f & (one.f - 1);
-    int kappa = static_cast<int>(CountDecimalDigit32(p1));
+    int kappa = CountDecimalDigit32(p1); // kappa in [0, 9]
     *len = 0;
     while (kappa > 0) {
-        uint32_t d;
+        uint32_t d = 0;
         switch (kappa) {
-          case 10: d = p1 / 1000000000; p1 %= 1000000000; break;
-          case  9: d = p1 /  100000000; p1 %=  100000000; break;
-          case  8: d = p1 /   10000000; p1 %=   10000000; break;
-          case  7: d = p1 /    1000000; p1 %=    1000000; break;
-          case  6: d = p1 /     100000; p1 %=     100000; break;
-          case  5: d = p1 /      10000; p1 %=      10000; break;
-          case  4: d = p1 /       1000; p1 %=       1000; break;
-          case  3: d = p1 /        100; p1 %=        100; break;
-          case  2: d = p1 /         10; p1 %=         10; break;
-          case  1: d = p1;              p1 =           0; break;
-          default:
-          #if defined(_MSC_VER)
-            __assume(0);
-          #elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
-            __builtin_unreachable();
-          #else
-            d = 0;
-          #endif
+            case  9: d = p1 /  100000000; p1 %=  100000000; break;
+            case  8: d = p1 /   10000000; p1 %=   10000000; break;
+            case  7: d = p1 /    1000000; p1 %=    1000000; break;
+            case  6: d = p1 /     100000; p1 %=     100000; break;
+            case  5: d = p1 /      10000; p1 %=      10000; break;
+            case  4: d = p1 /       1000; p1 %=       1000; break;
+            case  3: d = p1 /        100; p1 %=        100; break;
+            case  2: d = p1 /         10; p1 %=         10; break;
+            case  1: d = p1;              p1 =           0; break;
+            default:
+            #if defined(_MSC_VER)
+              __assume(0);
+            #elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
+              __builtin_unreachable();
+            #else
+              d = 0;
+            #endif
         }
-        if (d || *len) buffer[(*len)++] = '0' + static_cast<char>(d);
+        if (d || *len)
+            buffer[(*len)++] = static_cast<char>('0' + static_cast<char>(d));
         kappa--;
         uint64_t tmp = (static_cast<uint64_t>(p1) << -one.e) + p2;
         if (tmp <= delta) {
             *K += kappa;
-            GrisuRound(buffer, *len, delta, tmp, static_cast<uint64_t>(kPow10[kappa]) << -one.e, wp_w.f);
+            GrisuRound(buffer, *len, delta, tmp, kPow10[kappa] << -one.e, wp_w.f);
             return;
         }
     }
@@ -277,13 +283,13 @@ inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buff
         p2 *= 10;
         delta *= 10;
         char d = static_cast<char>(p2 >> -one.e);
-        if (d || *len) buffer[(*len)++] = '0' + d;
+        if (d || *len) buffer[(*len)++] = static_cast<char>('0' + d);
         p2 &= one.f - 1;
         kappa--;
         if (p2 < delta) {
             *K += kappa;
-            const int index = -kappa;
-            GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 10 ? kPow10[index] : 0));
+            int index = -kappa;
+            GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 20 ? kPow10[index] : 0));
             return;
         }
     }

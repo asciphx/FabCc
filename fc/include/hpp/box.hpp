@@ -48,4 +48,7 @@ struct is_box<box<T>>: std::true_type {};
 template<typename T> struct box_pack {};
 template<typename T> struct box_pack<box<T>> { using type = T; };
 template<typename T> using box_pack_t = typename box_pack<T>::type;
+#include <vector>
+template<typename T>
+using vec = std::vector<T>;
 #endif // BOX_H
