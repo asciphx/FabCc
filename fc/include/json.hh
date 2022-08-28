@@ -294,7 +294,7 @@ namespace json {
 	}
 	template <typename T>
 	void operator=(const std::vector<T>& v) {
-	  if(!v.empty()){
+	  if (!v.empty()) {
 		Json j; i8 i; for (const T& t : v) {
 		  i = -1; fc::ForEachField(&t, [&i, &j, this](auto& t) { j[T::$[++i]] = t; }); this->push_back(j);
 		}
@@ -316,7 +316,7 @@ namespace json {
 	Json& push_back(Json&& v) {
 	  if (_h && (_h->type & t_array)) {
 		if (unlikely(!_h->p)) new(&_h->p) xx::Array(8);
-	    _array().push_back(v._h); v._h = 0; return *this;
+		_array().push_back(v._h); v._h = 0; return *this;
 	  } this->reset(); _h = new(xx::alloc()) _H(_arr_t()); new(&_h->p) xx::Array(8);
 	  _array().push_back(v._h); v._h = 0; return *this;
 	}
@@ -480,19 +480,22 @@ static void to_json(json::Json& c, const std::vector<T>* v) {
   fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << v->at(i) << ','; }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
-template<>
 static void to_json(json::Json& c, const std::vector<std::string>* v) {
-  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
+  fc::Buf b(128); b << '['; for (size_t i = 0; i < v->size(); ++i) {
+#ifdef _WIN32
+	  b << '"' << v->at(i) << '"' << ',';
+#else
+	  const std::string* s(&v->at(i)); b << '"' << std::string_view(s->data(), s->size()) << '"' << ',';
+#endif // _WIN32
+  }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
-template<>
 static void to_json(json::Json& c, const std::vector<fc::Buf>* v) {
-  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
+  fc::Buf b(128); b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
-template<>
 static void to_json(json::Json& c, const std::vector<tm>* v) {
-  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
+  fc::Buf b(256); b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
 template<typename T>
