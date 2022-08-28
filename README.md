@@ -22,6 +22,8 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - Minimize the allocate and release of memory, which is friendly to the hard disk and does not generate a large amount of memory fragments, so there is almost no disk IO
 - Support unit testing. Please refer to [[coost](https://coostdocs.gitee.io/cn/co/unitest/)] for documentation
 - Support the web version of Postman, the address is 127.0.0.1:8080/test.html
+- Json integrated in【[coost](https://coostdocs.gitee.io/cn/co/json/)】, and supports serialization and deserialization
+- box with design style from the rust language, so there is no need to use naked pointers
 
 ## Still under development
 - [x] Processing of routing brace

@@ -248,7 +248,7 @@ inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buff
     int kappa = CountDecimalDigit32(p1); // kappa in [0, 9]
     *len = 0;
     while (kappa > 0) {
-        uint32_t d = 0;
+        uint32_t d;
         switch (kappa) {
             case  9: d = p1 /  100000000; p1 %=  100000000; break;
             case  8: d = p1 /   10000000; p1 %=   10000000; break;

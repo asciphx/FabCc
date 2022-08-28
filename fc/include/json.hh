@@ -254,31 +254,31 @@ namespace json {
 	  Json& r = this->get(std::forward<T>(v)); return r.is_null() ? r : r.get(std::forward<X>(x)...);
 	}
 	template <typename T>
-	inline void _ref(T& $) {
+	inline void get_to(T& $) {
 	  if constexpr (is_box<T>::value) {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
 		if (_h->type == t_object) from_json(this, $.p);
 	  } else if constexpr (fc::is_vector<T>::value) {
-		for (u32 i = 0; i < this->array_size(); ++i) { this->get(i)._ref($[i]); }
+		for (u32 i = 0; i < this->array_size(); ++i) { this->get(i).get_to($[i]); }
 	  } else {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, &$); return; }
 		if (_h->type == t_object) from_json(this, &$);
 	  }
 	}
-	inline void _ref(bool& $) { $ = this->as_bool(); }
-	inline void _ref(float& $) { $ = static_cast<float>(this->as_double()); }
-	inline void _ref(double& $) { $ = this->as_double(); }
-	inline void _ref(i8& $) { $ = static_cast<i8>(this->as_int64()); }
-	inline void _ref(i16& $) { $ = static_cast<i16>(this->as_int64()); }
-	inline void _ref(i32& $) { $ = this->as_int(); }
-	inline void _ref(i64& $) { $ = this->as_int64(); }
-	inline void _ref(u8& $) { $ = static_cast<u8>(this->as_uint64()); }
-	inline void _ref(u16& $) { $ = static_cast<u16>(this->as_uint64()); }
-	inline void _ref(u32& $) { $ = this->as_uint(); }
-	inline void _ref(u64& $) { $ = this->as_uint64(); }
-	inline void _ref(std::string& $) { $ = this->as_c_str(); }
-	inline void _ref(fc::Buf& $) { $ = this->as_string(); }
-	inline void _ref(tm& $) {
+	inline void get_to(bool& $) { $ = this->as_bool(); }
+	inline void get_to(float& $) { $ = static_cast<float>(this->as_double()); }
+	inline void get_to(double& $) { $ = this->as_double(); }
+	inline void get_to(i8& $) { $ = static_cast<i8>(this->as_int64()); }
+	inline void get_to(i16& $) { $ = static_cast<i16>(this->as_int64()); }
+	inline void get_to(i32& $) { $ = this->as_int(); }
+	inline void get_to(i64& $) { $ = this->as_int64(); }
+	inline void get_to(u8& $) { $ = static_cast<u8>(this->as_uint64()); }
+	inline void get_to(u16& $) { $ = static_cast<u16>(this->as_uint64()); }
+	inline void get_to(u32& $) { $ = this->as_uint(); }
+	inline void get_to(u64& $) { $ = this->as_uint64(); }
+	inline void get_to(std::string& $) { $ = this->as_c_str(); }
+	inline void get_to(fc::Buf& $) { $ = this->as_string(); }
+	inline void get_to(tm& $) {
 	  const char* c = this->as_string().c_str();
 	  int year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0;
 	  if (sscanf(c, "%4d-%2d-%2d %2d:%2d:%2d", &year, &month, &day, &hour, &min, &sec) == 6) {
@@ -482,11 +482,11 @@ static void to_json(json::Json& c, const std::vector<T>* v) {
 }
 template<typename T>
 static void from_json(const json::Json& c, std::vector<T>* v) {
-  T t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i)._ref(t); v->push_back(t); }
+  T t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->push_back(t); }
 }
 
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
-#define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_)._ref(_->__VA_ARGS_);
+#define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_).get_to(_->__VA_ARGS_);
 #define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
   private: const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
   static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
