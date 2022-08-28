@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 #include <ostream>
+#include <sstream>
+#include <iomanip>
 #include <h/dtoa_milo.h>
 #pragma warning(disable:4244)
 #if defined(_MSC_VER) && !defined(_INLINE)
@@ -96,22 +98,20 @@ namespace fc {
 	void swap(Buf&& fs) noexcept;
 	Buf& replace(const char* sub, const char* to, size_t maxreplace = 0);
 	Buf& strip(const char* s = " \t\r\n", char d = 'b');
-	bool ends_with(const char* s) const {
+	_INLINE bool ends_with(const char* s) const {
 	  unsigned int n = (unsigned int)strlen(s); if (n == 0) return true; return n <= this->size() && memcmp(end_ - n, s, n) == 0;
 	}
-	bool starts_with(const char* s) const {
+	_INLINE bool starts_with(const char* s) const {
 	  unsigned int n = (unsigned int)strlen(s); if (n == 0) return true; return n <= this->size() && memcmp(data_, s, n) == 0;
 	}
-	unsigned int find_first_not_of(const char* s) const {
+	_INLINE unsigned int find_first_not_of(const char* s) const {
 	  if (this->empty()) return -1; unsigned int r = (unsigned int)strspn(this->c_str(), s); return data_[r] ? r : -1;
 	}
-	unsigned int find_first_not_of(const char* s, size_t pos) const {
+	_INLINE unsigned int find_first_not_of(const char* s, size_t pos) const {
 	  if (this->size() <= pos) return -1; unsigned int r = (unsigned int)strspn(this->c_str() + pos, s) + (unsigned int)pos; return data_[r] ? r : -1;
 	}
-	unsigned int find_first_not_of(char c, unsigned int pos = 0) const {
-	  if (this->size() <= pos) return -1; char s[2] = { c, '\0' };
-	  unsigned int r = (unsigned int)strspn(this->c_str() + pos, s) + pos;
-	  return data_[r] ? r : -1;
+	_INLINE unsigned int find_first_not_of(char c, unsigned int pos = 0) const {
+	  if (this->size() <= pos) return -1; char s[2] = { c, '\0' }; unsigned int r = (unsigned int)strspn(this->c_str() + pos, s) + pos; return data_[r] ? r : -1;
 	}
 	Buf& operator<<(const Buf& s);
 	Buf& operator<<(Buf&& s);
@@ -148,6 +148,7 @@ namespace fc {
 	Buf& operator<<(float f);
 	Buf& operator=(const char* s);
 	Buf& operator=(std::string&& s);
+	Buf& operator<<(const tm& _v);
 	char* data_;
 	char* end_;
   private:

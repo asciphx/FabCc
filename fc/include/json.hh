@@ -480,6 +480,21 @@ static void to_json(json::Json& c, const std::vector<T>* v) {
   fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << v->at(i) << ','; }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
+template<>
+static void to_json(json::Json& c, const std::vector<std::string>* v) {
+  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
+  b.pop_back().append(']'); c = json::parse(b.data_, b.size());
+}
+template<>
+static void to_json(json::Json& c, const std::vector<fc::Buf>* v) {
+  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
+  b.pop_back().append(']'); c = json::parse(b.data_, b.size());
+}
+template<>
+static void to_json(json::Json& c, const std::vector<tm>* v) {
+  fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
+  b.pop_back().append(']'); c = json::parse(b.data_, b.size());
+}
 template<typename T>
 static void from_json(const json::Json& c, std::vector<T>* v) {
   T t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->push_back(t); }

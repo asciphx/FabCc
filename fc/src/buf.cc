@@ -174,4 +174,17 @@ namespace fc {
 	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
 	end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s.data(), s.size());
   }
+  Buf& Buf::operator<<(const tm& _v) {
+	std::ostringstream os;
+#ifdef _WIN32
+	os << std::setfill('0') << std::setw(4) << _v.tm_year + 1900 << '-' << std::setw(2)
+	  << (_v.tm_mon + 1) << '-' << std::setw(2) << _v.tm_mday << ' ' << std::setw(2) << _v.tm_hour
+	  << ':' << std::setw(2) << _v.tm_min << ':' << std::setw(2) << _v.tm_sec; return operator<<(os.str());
+#else
+	int y = _v.tm_year / 100; os << std::setfill('0') << std::setw(2) << 19 + y << std::setw(2) << _v.tm_year - y * 100;
+	os << '-' << std::setw(2) << (_v.tm_mon + 1) << '-' << std::setw(2) << _v.tm_mday << ' ' << std::setw(2)
+	  << _v.tm_hour << ':' << std::setw(2) << _v.tm_min << ':' << std::setw(2) << _v.tm_sec;
+	std::string s = os.str(); return operator<<(std::string_view(s.data(), s.size()));
+#endif
+  }
 }

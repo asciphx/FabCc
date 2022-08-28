@@ -24,11 +24,13 @@ struct Person {
 CLASS(Person, name, age, book, books)
 int main() {
   Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}}}, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
-  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}'; j.reset();
+  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} }; to_json(j, &b);
-  j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump();
+  j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump() << std::endl;
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
-  j = json::array({ 6,5,4,3,2,1 }); from_json(j, &vi); to_json(j, &vi); std::cout << j.str();
+  from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
+  j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");
+  vs = { "www","zzzz","cc" }; to_json(j, &vs); std::cout << j.str() << std::endl;
   return 0;
   clock_t start = clock();
   unsigned long long l;
