@@ -1,4 +1,4 @@
-
+  
 #ifndef UV_ERRNO_H_
 #define UV_ERRNO_H_
 
@@ -9,11 +9,11 @@
 # define UV__ERR(x) (x)
 #endif
 
-#define UV__EOF  (-4095)
+#define UV__EOF (-4095)
 #define UV__UNKNOWN (-4094)
 
 #define UV__EAI_ADDRFAMILY (-3000)
-#define UV__EAI_AGAIN  (-3001)
+#define UV__EAI_AGAIN (-3001)
 #define UV__EAI_BADFLAGS (-3002)
 #define UV__EAI_CANCELED (-3003)
 #define UV__EAI_FAIL (-3004)
@@ -22,11 +22,11 @@
 #define UV__EAI_NODATA (-3007)
 #define UV__EAI_NONAME (-3008)
 #define UV__EAI_OVERFLOW (-3009)
-#define UV__EAI_SERVICE  (-3010)
+#define UV__EAI_SERVICE (-3010)
 #define UV__EAI_SOCKTYPE (-3011)
 #define UV__EAI_BADHINTS (-3013)
 #define UV__EAI_PROTOCOL (-3014)
-
+ 
 #if defined(E2BIG) && !defined(_WIN32)
 # define UV__E2BIG UV__ERR(E2BIG)
 #else
@@ -380,10 +380,10 @@
 #else
 # define UV__EMLINK (-4032)
 #endif
-
+ 
 #if defined(EHOSTDOWN) && !defined(_WIN32)
 # define UV__EHOSTDOWN UV__ERR(EHOSTDOWN)
-#elif defined(__APPLE__) ||  defined(__DragonFly__) ||  defined(__FreeBSD__) ||  defined(__FreeBSD_kernel__) ||  defined(__NetBSD__) ||  defined(__OpenBSD__)
+#elif defined(__APPLE__) || defined(__DragonFly__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
 
 # define UV__EHOSTDOWN (-64)
 #else

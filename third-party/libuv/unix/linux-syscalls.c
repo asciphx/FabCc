@@ -1,4 +1,4 @@
-
+  
 #include "linux-syscalls.h"
 #include <unistd.h>
 #include <signal.h>
@@ -119,56 +119,56 @@
 # define __NR_getrandom 349
 # endif
 #endif 
-struct uv__mmsghdr;int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
+ struct uv__mmsghdr; int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
 #if defined(__i386__)
- unsigned long args[4]; int rc; args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] =  0;  rc = syscall( 102, 20 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS; return rc;
+ unsigned long args[4]; int rc;  args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] = 0;  rc = syscall( 102, 20 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS;  return rc;
 #elif defined(__NR_sendmmsg)
- return syscall(__NR_sendmmsg, fd, mmsg, vlen,  0);
+ return syscall(__NR_sendmmsg, fd, mmsg, vlen, 0);
 #else
  return errno = ENOSYS, -1;
 #endif
-}int uv__recvmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
+}  int uv__recvmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
 #if defined(__i386__)
- unsigned long args[5]; int rc; args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] =  0; args[4] =  0;  rc = syscall( 102, 19 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS; return rc;
+ unsigned long args[5]; int rc;  args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] = 0; args[4] = 0;  rc = syscall( 102, 19 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS;  return rc;
 #elif defined(__NR_recvmmsg)
- return syscall(__NR_recvmmsg, fd, mmsg, vlen,  0,  0);
+ return syscall(__NR_recvmmsg, fd, mmsg, vlen, 0, 0);
 #else
  return errno = ENOSYS, -1;
 #endif
-}ssize_t uv__preadv(int fd, const struct iovec *iov, int iovcnt, int64_t offset) {
+}  ssize_t uv__preadv(int fd, const struct iovec *iov, int iovcnt, int64_t offset) {
 #if !defined(__NR_preadv) || defined(__ANDROID_API__) && __ANDROID_API__ < 24
  return errno = ENOSYS, -1;
 #else
  return syscall(__NR_preadv, fd, iov, iovcnt, (long)offset, (long)(offset >> 32));
 #endif
-}ssize_t uv__pwritev(int fd, const struct iovec *iov, int iovcnt, int64_t offset) {
+}  ssize_t uv__pwritev(int fd, const struct iovec *iov, int iovcnt, int64_t offset) {
 #if !defined(__NR_pwritev) || defined(__ANDROID_API__) && __ANDROID_API__ < 24
  return errno = ENOSYS, -1;
 #else
  return syscall(__NR_pwritev, fd, iov, iovcnt, (long)offset, (long)(offset >> 32));
 #endif
-}int uv__dup3(int oldfd, int newfd, int flags) {
+}  int uv__dup3(int oldfd, int newfd, int flags) {
 #if !defined(__NR_dup3) || defined(__ANDROID_API__) && __ANDROID_API__ < 21
  return errno = ENOSYS, -1;
 #else
  return syscall(__NR_dup3, oldfd, newfd, flags);
 #endif
-}ssize_tuv__fs_copy_file_range(int fd_in,  off_t* off_in,  int fd_out,  off_t* off_out,  size_t len,  unsigned int flags){
+}  ssize_t uv__fs_copy_file_range(int fd_in,  off_t* off_in,  int fd_out,  off_t* off_out,  size_t len,  unsigned int flags) {
 #ifdef __NR_copy_file_range
  return syscall(__NR_copy_file_range,  fd_in,  off_in,  fd_out,  off_out,  len,  flags);
 #else
  return errno = ENOSYS, -1;
 #endif
-}int uv__statx(int dirfd, const char* path, int flags, unsigned int mask, struct uv__statx* statxbuf) {
+}  int uv__statx(int dirfd, const char* path, int flags, unsigned int mask, struct uv__statx* statxbuf) {
 #if !defined(__NR_statx) || defined(__ANDROID_API__) && __ANDROID_API__ < 30
  return errno = ENOSYS, -1;
 #else
  return syscall(__NR_statx, dirfd, path, flags, mask, statxbuf);
 #endif
-}ssize_t uv__getrandom(void* buf, size_t buflen, unsigned flags) {
+}  ssize_t uv__getrandom(void* buf, size_t buflen, unsigned flags) {
 #if !defined(__NR_getrandom) || defined(__ANDROID_API__) && __ANDROID_API__ < 28
  return errno = ENOSYS, -1;
 #else
  return syscall(__NR_getrandom, buf, buflen, flags);
 #endif
-}
+} 
