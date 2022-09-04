@@ -33,19 +33,19 @@ int uv__platform_loop_init(uv_loop_t* loop) { return uv__kqueue_init(loop);}void
 #else
  *rss = kinfo.ki_rssize * page_size;
 #endif
- return 0;}int uv_uptime(double* uptime) { int r; struct timespec sp; r = clock_gettime(CLOCK_MONOTONIC, &sp); if (r) return UV__ERR(errno); *uptime = sp.tv_sec; return 0;}int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) { unsigned int ticks = (unsigned int)sysconf(_SC_CLK_TCK), multiplier = ((uint64_t)1000L / ticks), cpuspeed, maxcpus, cur = 0; uv_cpu_info_t* cpu_info; const char* maxcpus_key; const char* cptimes_key; const char* model_key; char model[512]; long* cp_times; int numcpus; size_t size; int i;
+ return 0;}int uv_uptime(double* uptime) { int r; struct timespec sp; r = clock_gettime(CLOCK_MONOTONIC, &sp); if (r) return UV__ERR(errno); *uptime = sp.tv_sec; return 0;}int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) { unsigned int ticks = (unsigned int)sysconf(_SC_CLK_TCK),  multiplier = ((uint64_t)1000L / ticks), cpuspeed, maxcpus,  cur = 0; uv_cpu_info_t* cpu_info; const char* maxcpus_key; const char* cptimes_key; const char* model_key; char model[512]; long* cp_times; int numcpus; size_t size; int i;
 #if defined(__DragonFly__)
- maxcpus_key = "hw.ncpu"; cptimes_key = "kern.cp_time";
+  maxcpus_key = "hw.ncpu"; cptimes_key = "kern.cp_time";
 #else
  maxcpus_key = "kern.smp.maxcpus"; cptimes_key = "kern.cp_times";
 #endif
 
 #if defined(__arm__) || defined(__aarch64__)
- model_key = "hw.machine"; cpuspeed = 0;
+  model_key = "hw.machine"; cpuspeed = 0;
 #else
  model_key = "hw.model"; size = sizeof(cpuspeed); if (sysctlbyname("hw.clockrate", &cpuspeed, &size, NULL, 0)) return -errno;
 #endif
- size = sizeof(model); if (sysctlbyname(model_key, &model, &size, NULL, 0)) return UV__ERR(errno); size = sizeof(numcpus); if (sysctlbyname("hw.ncpu", &numcpus, &size, NULL, 0)) return UV__ERR(errno); *cpu_infos = uv__malloc(numcpus * sizeof(**cpu_infos)); if (!(*cpu_infos)) return UV_ENOMEM; *count = numcpus; size = sizeof(maxcpus); if (sysctlbyname(maxcpus_key, &maxcpus, &size, NULL, 0)) { uv__free(*cpu_infos); return UV__ERR(errno); } size = maxcpus * CPUSTATES * sizeof(long); cp_times = uv__malloc(size); if (cp_times == NULL) { uv__free(*cpu_infos); return UV_ENOMEM; } if (sysctlbyname(cptimes_key, cp_times, &size, NULL, 0)) { uv__free(cp_times); uv__free(*cpu_infos); return UV__ERR(errno); } for (i = 0; i < numcpus; ++i) { cpu_info = &(*cpu_infos)[i]; cpu_info->cpu_times.user = (uint64_t)(cp_times[CP_USER+cur]) * multiplier; cpu_info->cpu_times.nice = (uint64_t)(cp_times[CP_NICE+cur]) * multiplier; cpu_info->cpu_times.sys = (uint64_t)(cp_times[CP_SYS+cur]) * multiplier; cpu_info->cpu_times.idle = (uint64_t)(cp_times[CP_IDLE+cur]) * multiplier; cpu_info->cpu_times.irq = (uint64_t)(cp_times[CP_INTR+cur]) * multiplier; cpu_info->model = uv__strdup(model); cpu_info->speed = cpuspeed; cur+=CPUSTATES; } uv__free(cp_times); return 0;}int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
+ size = sizeof(model); if (sysctlbyname(model_key, &model, &size, NULL, 0)) return UV__ERR(errno); size = sizeof(numcpus); if (sysctlbyname("hw.ncpu", &numcpus, &size, NULL, 0)) return UV__ERR(errno); *cpu_infos = uv__malloc(numcpus * sizeof(**cpu_infos)); if (!(*cpu_infos)) return UV_ENOMEM; *count = numcpus;  size = sizeof(maxcpus); if (sysctlbyname(maxcpus_key, &maxcpus, &size, NULL, 0)) { uv__free(*cpu_infos); return UV__ERR(errno); } size = maxcpus * CPUSTATES * sizeof(long); cp_times = uv__malloc(size); if (cp_times == NULL) { uv__free(*cpu_infos); return UV_ENOMEM; } if (sysctlbyname(cptimes_key, cp_times, &size, NULL, 0)) { uv__free(cp_times); uv__free(*cpu_infos); return UV__ERR(errno); } for (i = 0; i < numcpus; ++i) { cpu_info = &(*cpu_infos)[i]; cpu_info->cpu_times.user = (uint64_t)(cp_times[CP_USER+cur]) * multiplier; cpu_info->cpu_times.nice = (uint64_t)(cp_times[CP_NICE+cur]) * multiplier; cpu_info->cpu_times.sys = (uint64_t)(cp_times[CP_SYS+cur]) * multiplier; cpu_info->cpu_times.idle = (uint64_t)(cp_times[CP_IDLE+cur]) * multiplier; cpu_info->cpu_times.irq = (uint64_t)(cp_times[CP_INTR+cur]) * multiplier; cpu_info->model = uv__strdup(model); cpu_info->speed = cpuspeed; cur+=CPUSTATES; } uv__free(cp_times); return 0;}int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
 #if __FreeBSD__ >= 11 && !defined(__DragonFly__)
  return sendmmsg(fd, (struct mmsghdr*) mmsg, vlen, 0 );
 #else
@@ -57,7 +57,7 @@ int uv__platform_loop_init(uv_loop_t* loop) { return uv__kqueue_init(loop);}void
 #else
  return errno = ENOSYS, -1;
 #endif
-}ssize_tuv__fs_copy_file_range(int fd_in, off_t* off_in, int fd_out, off_t* off_out, size_t len, unsigned int flags){
+}ssize_tuv__fs_copy_file_range(int fd_in,  off_t* off_in,  int fd_out,  off_t* off_out,  size_t len,  unsigned int flags){
 #if __FreeBSD__ >= 13 && !defined(__DragonFly__)
  return copy_file_range(fd_in, off_in, fd_out, off_out, len, flags);
 #else

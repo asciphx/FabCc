@@ -22,28 +22,28 @@ extern "C" {
 
 #ifndef _W64
 # if !defined(__midl) && (defined(_X86_) || defined(_M_IX86)) && _MSC_VER >= 1300
-# define _W64 __w64
+#  define _W64 __w64
 # else
-# define _W64
+#  define _W64
 # endif
 #endif
 
 #if (_MSC_VER < 1300)
- typedef signed char int8_t; typedef signed short int16_t; typedef signed int int32_t; typedef unsigned char uint8_t; typedef unsigned short uint16_t; typedef unsigned int uint32_t;
+  typedef signed char  int8_t;  typedef signed short int16_t;  typedef signed int int32_t;  typedef unsigned char  uint8_t;  typedef unsigned short uint16_t;  typedef unsigned int uint32_t;
 #else
- typedef signed __int8 int8_t; typedef signed __int16 int16_t; typedef signed __int32 int32_t; typedef unsigned __int8 uint8_t; typedef unsigned __int16 uint16_t; typedef unsigned __int32 uint32_t;
+  typedef signed __int8  int8_t;  typedef signed __int16 int16_t;  typedef signed __int32 int32_t;  typedef unsigned __int8  uint8_t;  typedef unsigned __int16 uint16_t;  typedef unsigned __int32 uint32_t;
 #endif
-typedef signed __int64 int64_t;typedef unsigned __int64 uint64_t;typedef int8_t int_least8_t;typedef int16_t int_least16_t;typedef int32_t int_least32_t;typedef int64_t int_least64_t;typedef uint8_t uint_least8_t;typedef uint16_t uint_least16_t;typedef uint32_t uint_least32_t;typedef uint64_t uint_least64_t;typedef int8_t int_fast8_t;typedef int16_t int_fast16_t;typedef int32_t int_fast32_t;typedef int64_t int_fast64_t;typedef uint8_t uint_fast8_t;typedef uint16_t uint_fast16_t;typedef uint32_t uint_fast32_t;typedef uint64_t uint_fast64_t;
+typedef signed __int64  int64_t;typedef unsigned __int64  uint64_t;typedef int8_t int_least8_t;typedef int16_t  int_least16_t;typedef int32_t  int_least32_t;typedef int64_t  int_least64_t;typedef uint8_t  uint_least8_t;typedef uint16_t uint_least16_t;typedef uint32_t uint_least32_t;typedef uint64_t uint_least64_t;typedef int8_t int_fast8_t;typedef int16_t  int_fast16_t;typedef int32_t  int_fast32_t;typedef int64_t  int_fast64_t;typedef uint8_t  uint_fast8_t;typedef uint16_t uint_fast16_t;typedef uint32_t uint_fast32_t;typedef uint64_t uint_fast64_t;
 #ifdef _WIN64 
- typedef signed __int64 intptr_t; typedef unsigned __int64 uintptr_t;
+  typedef signed __int64 intptr_t;  typedef unsigned __int64 uintptr_t;
 #else 
- typedef _W64 signed int intptr_t; typedef _W64 unsigned int uintptr_t;
+  typedef _W64 signed int  intptr_t;  typedef _W64 unsigned int uintptr_t;
 #endif 
-typedef int64_t intmax_t;typedef uint64_t uintmax_t;
+typedef int64_t  intmax_t;typedef uint64_t uintmax_t;
 #if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS) 
 
-#define INT8_MIN ((int8_t)_I8_MIN)
-#define INT8_MAX _I8_MAX
+#define INT8_MIN  ((int8_t)_I8_MIN)
+#define INT8_MAX  _I8_MAX
 #define INT16_MIN ((int16_t)_I16_MIN)
 #define INT16_MAX _I16_MAX
 #define INT32_MIN ((int32_t)_I32_MIN)
@@ -51,48 +51,48 @@ typedef int64_t intmax_t;typedef uint64_t uintmax_t;
 #define INT64_MIN ((int64_t)_I64_MIN)
 #define INT64_MAX _I64_MAX
 #define UINT8_MAX _UI8_MAX
-#define UINT16_MAX _UI16_MAX
-#define UINT32_MAX _UI32_MAX
-#define UINT64_MAX _UI64_MAX
+#define UINT16_MAX  _UI16_MAX
+#define UINT32_MAX  _UI32_MAX
+#define UINT64_MAX  _UI64_MAX
 
 #define INT_LEAST8_MIN INT8_MIN
 #define INT_LEAST8_MAX INT8_MAX
-#define INT_LEAST16_MIN INT16_MIN
-#define INT_LEAST16_MAX INT16_MAX
-#define INT_LEAST32_MIN INT32_MIN
-#define INT_LEAST32_MAX INT32_MAX
-#define INT_LEAST64_MIN INT64_MIN
-#define INT_LEAST64_MAX INT64_MAX
-#define UINT_LEAST8_MAX UINT8_MAX
+#define INT_LEAST16_MIN  INT16_MIN
+#define INT_LEAST16_MAX  INT16_MAX
+#define INT_LEAST32_MIN  INT32_MIN
+#define INT_LEAST32_MAX  INT32_MAX
+#define INT_LEAST64_MIN  INT64_MIN
+#define INT_LEAST64_MAX  INT64_MAX
+#define UINT_LEAST8_MAX  UINT8_MAX
 #define UINT_LEAST16_MAX UINT16_MAX
 #define UINT_LEAST32_MAX UINT32_MAX
 #define UINT_LEAST64_MAX UINT64_MAX
 
 #define INT_FAST8_MIN INT8_MIN
 #define INT_FAST8_MAX INT8_MAX
-#define INT_FAST16_MIN INT16_MIN
-#define INT_FAST16_MAX INT16_MAX
-#define INT_FAST32_MIN INT32_MIN
-#define INT_FAST32_MAX INT32_MAX
-#define INT_FAST64_MIN INT64_MIN
-#define INT_FAST64_MAX INT64_MAX
-#define UINT_FAST8_MAX UINT8_MAX
+#define INT_FAST16_MIN  INT16_MIN
+#define INT_FAST16_MAX  INT16_MAX
+#define INT_FAST32_MIN  INT32_MIN
+#define INT_FAST32_MAX  INT32_MAX
+#define INT_FAST64_MIN  INT64_MIN
+#define INT_FAST64_MAX  INT64_MAX
+#define UINT_FAST8_MAX  UINT8_MAX
 #define UINT_FAST16_MAX UINT16_MAX
 #define UINT_FAST32_MAX UINT32_MAX
 #define UINT_FAST64_MAX UINT64_MAX
 
 #ifdef _WIN64 
-# define INTPTR_MIN INT64_MIN
-# define INTPTR_MAX INT64_MAX
+# define INTPTR_MIN  INT64_MIN
+# define INTPTR_MAX  INT64_MAX
 # define UINTPTR_MAX UINT64_MAX
 #else 
-# define INTPTR_MIN INT32_MIN
-# define INTPTR_MAX INT32_MAX
+# define INTPTR_MIN  INT32_MIN
+# define INTPTR_MAX  INT32_MAX
 # define UINTPTR_MAX UINT32_MAX
 #endif 
 
-#define INTMAX_MIN INT64_MIN
-#define INTMAX_MAX INT64_MAX
+#define INTMAX_MIN  INT64_MIN
+#define INTMAX_MAX  INT64_MAX
 #define UINTMAX_MAX UINT64_MAX
 
 #ifdef _WIN64 
@@ -108,9 +108,9 @@ typedef int64_t intmax_t;typedef uint64_t uintmax_t;
 
 #ifndef SIZE_MAX 
 # ifdef _WIN64 
-# define SIZE_MAX _UI64_MAX
+#  define SIZE_MAX _UI64_MAX
 # else 
-# define SIZE_MAX _UI32_MAX
+#  define SIZE_MAX _UI32_MAX
 # endif 
 #endif 
 
@@ -138,7 +138,7 @@ typedef int64_t intmax_t;typedef uint64_t uintmax_t;
 #define UINT32_C(val) val##ui32
 #define UINT64_C(val) val##ui64
 
-#define INTMAX_C INT64_C
+#define INTMAX_C  INT64_C
 #define UINTMAX_C UINT64_C
 
 #endif 

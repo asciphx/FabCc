@@ -63,7 +63,6 @@ typedef enum {
 #define UV_REQ_FIELDS     void* data;      uv_req_type type;      void* reserved[6];  UV_REQ_PRIVATE_FIELDS  
 
 struct uv_req_s { UV_REQ_FIELDS};
-
 UV_PRIVATE_REQ_TYPES
 UV_EXTERN int uv_shutdown(uv_shutdown_t* req, uv_stream_t* handle, uv_shutdown_cb cb);struct uv_shutdown_s { UV_REQ_FIELDS uv_stream_t* handle; uv_shutdown_cb cb; UV_SHUTDOWN_PRIVATE_FIELDS};
 #define UV_HANDLE_FIELDS    void* data;      uv_loop_t* loop;  uv_handle_type type;     uv_close_cb close_cb;   void* handle_queue[2];  union {   int fd;   void* reserved[4];  } u;  UV_HANDLE_PRIVATE_FIELDS 

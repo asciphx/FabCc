@@ -54,19 +54,23 @@
 # define UV__PATH_MAX 8192
 #endif
 
-#define ACCESS_ONCE(type, var) (*(volatile type*) &(var))
+#define ACCESS_ONCE(type, var)  (*(volatile type*) &(var))
 
-#define ROUND_UP(a, b) ((a) % (b) ? ((a) + (b)) - ((a) % (b)) : (a))
 
-#define UNREACHABLE()  do { assert(0 && "unreachable code"); abort(); }  while (0)
+#define ROUND_UP(a, b)  ((a) % (b) ? ((a) + (b)) - ((a) % (b)) : (a))
 
-#define SAVE_ERRNO(block)  do { int _saved_errno = errno;  do { block; } while (0); errno = _saved_errno;  }  while (0)
 
-#if defined(__clang__) ||  defined(__GNUC__) || defined(__INTEL_COMPILER)
+#define UNREACHABLE()   do {  assert(0 && "unreachable code");  abort();  }   while (0)
 
-# define UV_UNUSED(declaration) __attribute__((unused)) declaration
+
+#define SAVE_ERRNO(block)   do {  int _saved_errno = errno;   do { block; } while (0);  errno = _saved_errno;   }   while (0)
+
+
+#if defined(__clang__) ||   defined(__GNUC__) ||  defined(__INTEL_COMPILER)
+
+# define UV_UNUSED(declaration)  __attribute__((unused)) declaration
 #else
-# define UV_UNUSED(declaration) declaration
+# define UV_UNUSED(declaration)  declaration
 #endif
 
 #ifdef POLLRDHUP
@@ -85,8 +89,8 @@
 
 # define O_CLOEXEC 0x00100000
 #endif
-typedef struct uv__stream_queued_fds_s uv__stream_queued_fds_t;enum { UV_LOOP_BLOCK_SIGPROF = 0x1, UV_LOOP_REAP_CHILDREN = 0x2};enum { UV__EXCLUDE_IFPHYS, UV__EXCLUDE_IFADDR};typedef enum { UV_CLOCK_PRECISE = 0, UV_CLOCK_FAST = 1 } uv_clocktype_t;struct uv__stream_queued_fds_s { unsigned int size; unsigned int offset; int fds[1];};
-#if defined(_AIX) || defined(__APPLE__) || defined(__DragonFly__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__linux__) || defined(__OpenBSD__) || defined(__NetBSD__)
+typedef struct uv__stream_queued_fds_s uv__stream_queued_fds_t;enum { UV_LOOP_BLOCK_SIGPROF = 0x1, UV_LOOP_REAP_CHILDREN = 0x2};enum { UV__EXCLUDE_IFPHYS, UV__EXCLUDE_IFADDR};typedef enum { UV_CLOCK_PRECISE = 0,  UV_CLOCK_FAST = 1 } uv_clocktype_t;struct uv__stream_queued_fds_s { unsigned int size; unsigned int offset; int fds[1];};
+#if defined(_AIX) ||  defined(__APPLE__) ||  defined(__DragonFly__) ||  defined(__FreeBSD__) ||  defined(__FreeBSD_kernel__) ||  defined(__linux__) ||  defined(__OpenBSD__) ||  defined(__NetBSD__)
 
 #define uv__nonblock uv__nonblock_ioctl
 #define UV__NONBLOCK_IS_IOCTL 1
@@ -114,12 +118,12 @@ int uv__make_pipe(int fds[2], int flags);
 #if defined(__APPLE__)
 int uv__fsevents_init(uv_fs_event_t* handle);int uv__fsevents_close(uv_fs_event_t* handle);void uv__fsevents_loop_delete(uv_loop_t* loop);
 #endif 
-UV_UNUSED(static void uv__update_time(uv_loop_t* loop)) { loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;}UV_UNUSED(static char* uv__basename_r(const char* path)) { char* s; s = strrchr((char*)path, '/'); if (s == NULL) return (char*) path; return s + 1;}
+UV_UNUSED(static void uv__update_time(uv_loop_t* loop)) {  loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;}UV_UNUSED(static char* uv__basename_r(const char* path)) { char* s; s = strrchr((char*)path, '/'); if (s == NULL) return (char*) path; return s + 1;}
 #if defined(__linux__)
 int uv__inotify_fork(uv_loop_t* loop, void* old_watchers);
 #endif
 typedef int (*uv__peersockfunc)(int, struct sockaddr*, socklen_t*);int uv__getsockpeername(const uv_handle_t* handle, uv__peersockfunc func, struct sockaddr* name, int* namelen);
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) ||  defined(__DragonFly__)
+#if defined(__linux__) ||  defined(__FreeBSD__) ||  defined(__FreeBSD_kernel__)  ||   defined(__DragonFly__)
 
 #define HAVE_MMSG 1
 struct uv__mmsghdr { struct msghdr msg_hdr; unsigned int msg_len;};int uv__recvmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen);int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen);
@@ -134,7 +138,7 @@ size_t strnlen(const char* s, size_t maxlen);
 #endif
 
 #if defined(__FreeBSD__)
-ssize_tuv__fs_copy_file_range(int fd_in, off_t* off_in, int fd_out, off_t* off_out, size_t len, unsigned int flags);
+ssize_tuv__fs_copy_file_range(int fd_in,  off_t* off_in,  int fd_out,  off_t* off_out,  size_t len,  unsigned int flags);
 #endif
 
 #endif 

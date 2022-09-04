@@ -121,17 +121,17 @@
 #endif 
 struct uv__mmsghdr;int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
 #if defined(__i386__)
- unsigned long args[4]; int rc; args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] = 0; rc = syscall( 102, 20 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS; return rc;
+ unsigned long args[4]; int rc; args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] =  0;  rc = syscall( 102, 20 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS; return rc;
 #elif defined(__NR_sendmmsg)
- return syscall(__NR_sendmmsg, fd, mmsg, vlen, 0);
+ return syscall(__NR_sendmmsg, fd, mmsg, vlen,  0);
 #else
  return errno = ENOSYS, -1;
 #endif
 }int uv__recvmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned int vlen) {
 #if defined(__i386__)
- unsigned long args[5]; int rc; args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] = 0; args[4] = 0; rc = syscall( 102, 19 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS; return rc;
+ unsigned long args[5]; int rc; args[0] = (unsigned long) fd; args[1] = (unsigned long) mmsg; args[2] = (unsigned long) vlen; args[3] =  0; args[4] =  0;  rc = syscall( 102, 19 , args); if (rc == -1) if (errno == EINVAL) errno = ENOSYS; return rc;
 #elif defined(__NR_recvmmsg)
- return syscall(__NR_recvmmsg, fd, mmsg, vlen, 0, 0);
+ return syscall(__NR_recvmmsg, fd, mmsg, vlen,  0,  0);
 #else
  return errno = ENOSYS, -1;
 #endif
@@ -153,9 +153,9 @@ struct uv__mmsghdr;int uv__sendmmsg(int fd, struct uv__mmsghdr* mmsg, unsigned i
 #else
  return syscall(__NR_dup3, oldfd, newfd, flags);
 #endif
-}ssize_tuv__fs_copy_file_range(int fd_in, off_t* off_in, int fd_out, off_t* off_out, size_t len, unsigned int flags){
+}ssize_tuv__fs_copy_file_range(int fd_in,  off_t* off_in,  int fd_out,  off_t* off_out,  size_t len,  unsigned int flags){
 #ifdef __NR_copy_file_range
- return syscall(__NR_copy_file_range, fd_in, off_in, fd_out, off_out, len, flags);
+ return syscall(__NR_copy_file_range,  fd_in,  off_in,  fd_out,  off_out,  len,  flags);
 #else
  return errno = ENOSYS, -1;
 #endif

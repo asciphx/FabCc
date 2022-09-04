@@ -13,4 +13,4 @@ struct uv__sysctl_args { int* name; int nlen; void* oldval; size_t* oldlenp; voi
 #else
  { (void) &args; return UV_ENOSYS; }
 #endif
- if (n != sizeof(uuid)) return UV_EIO;  uuid[6] = uuid[14]; uuid[8] = uuid[15]; n = pe - p; if (n > 14) n = 14; memcpy(p, uuid, n); p += n; } return 0;}
+ if (n != sizeof(uuid)) return UV_EIO;   uuid[6] = uuid[14]; uuid[8] = uuid[15]; n = pe - p; if (n > 14) n = 14; memcpy(p, uuid, n); p += n; } return 0;}

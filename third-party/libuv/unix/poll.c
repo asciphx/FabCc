@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
-static void uv__poll_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) { uv_poll_t* handle; int pevents; handle = container_of(w, uv_poll_t, io_watcher); if ((events & POLLERR) && !(events & UV__POLLPRI)) { uv__io_stop(loop, w, POLLIN | POLLOUT | UV__POLLRDHUP | UV__POLLPRI); uv__handle_stop(handle); handle->poll_cb(handle, UV_EBADF, 0); return; } pevents = 0; if (events & POLLIN) pevents |= UV_READABLE; if (events & UV__POLLPRI) pevents |= UV_PRIORITIZED; if (events & POLLOUT) pevents |= UV_WRITABLE; if (events & UV__POLLRDHUP) pevents |= UV_DISCONNECT; handle->poll_cb(handle, 0, pevents);}int uv_poll_init(uv_loop_t* loop, uv_poll_t* handle, int fd) { int err; if (uv__fd_exists(loop, fd)) return UV_EEXIST; err = uv__io_check_fd(loop, fd); if (err) return err; err = uv__nonblock(fd, 1);
+static void uv__poll_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) { uv_poll_t* handle; int pevents; handle = container_of(w, uv_poll_t, io_watcher);  if ((events & POLLERR) && !(events & UV__POLLPRI)) { uv__io_stop(loop, w, POLLIN | POLLOUT | UV__POLLRDHUP | UV__POLLPRI); uv__handle_stop(handle); handle->poll_cb(handle, UV_EBADF, 0); return; } pevents = 0; if (events & POLLIN) pevents |= UV_READABLE; if (events & UV__POLLPRI) pevents |= UV_PRIORITIZED; if (events & POLLOUT) pevents |= UV_WRITABLE; if (events & UV__POLLRDHUP) pevents |= UV_DISCONNECT; handle->poll_cb(handle, 0, pevents);}int uv_poll_init(uv_loop_t* loop, uv_poll_t* handle, int fd) { int err; if (uv__fd_exists(loop, fd)) return UV_EEXIST; err = uv__io_check_fd(loop, fd); if (err) return err;  err = uv__nonblock(fd, 1);
 #if UV__NONBLOCK_IS_IOCTL
  if (err == UV_ENOTTY) err = uv__nonblock_fcntl(fd, 1);
 #endif
