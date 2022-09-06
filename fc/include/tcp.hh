@@ -1,7 +1,7 @@
 #ifndef TCP_HH
 #define TCP_HH
 #define DEFAULT_ENABLE_LOGGING 0
-#include <uv.h>
+#include <tp/uv.h>
 #include <string>
 #include <map>
 #include <stdio.h>
