@@ -43,32 +43,32 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include "uv/threadpool.h"
+#include "threadpool.h"
 
 #if defined(__linux__)
-# include "uv/linux.h"
+# include "linux.h"
 #elif defined (__MVS__)
-# include "uv/os390.h"
+# include "os390.h"
 #elif defined(__PASE__)  /* __PASE__ and _AIX are both defined on IBM i */
-# include "uv/posix.h"  /* IBM i needs uv/posix.h, not uv/aix.h */
+# include "posix.h"  /* IBM i needs uv/posix.h, not uv/aix.h */
 #elif defined(_AIX)
-# include "uv/aix.h"
+# include "aix.h"
 #elif defined(__sun)
-# include "uv/sunos.h"
+# include "sunos.h"
 #elif defined(__APPLE__)
-# include "uv/darwin.h"
+# include "darwin.h"
 #elif defined(__DragonFly__)       || \
       defined(__FreeBSD__)         || \
       defined(__FreeBSD_kernel__)  || \
       defined(__OpenBSD__)         || \
       defined(__NetBSD__)
-# include "uv/bsd.h"
+# include "bsd.h"
 #elif defined(__CYGWIN__) || \
       defined(__MSYS__)   || \
       defined(__HAIKU__)  || \
       defined(__QNX__)    || \
       defined(__GNU__)
-# include "uv/posix.h"
+# include "posix.h"
 #endif
 
 #ifndef NI_MAXHOST

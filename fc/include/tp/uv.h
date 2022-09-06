@@ -1846,5 +1846,19 @@ UV_EXTERN void uv_loop_set_data(uv_loop_t*, void* data);
 
 #ifdef __cplusplus
 }
+#ifdef _WIN32
+#if defined(_MSC_VER) && _MSC_VER < 1600
+# include "uv/stdint-msvc2008.h"
+#else
+# include <stdint.h>
+#endif
+#else
+#if defined(__APPLE__)
+int uv___stream_fd(const uv_stream_t* handle);
+#define uv__stream_fd(handle) (uv___stream_fd((const uv_stream_t*) (handle)))
+#else
+#define uv__stream_fd(handle) ((handle)->io_watcher.fd)
+#endif
+#endif
 #endif
 #endif /* UV_H */
