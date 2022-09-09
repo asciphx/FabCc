@@ -13,6 +13,7 @@
 #include <http_error.hh>
 #include <app.hh>
 #include <directory.hh>
+#include <tp/ctx.hh>
 //#include <detail.h>
 namespace fc {
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
@@ -36,6 +37,7 @@ namespace fc {
 	App* app_;
 	bool not_set_types = true;
   public:
+	context::stack_context stack_;
 	Tcp(App* app = nullptr, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
 	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);

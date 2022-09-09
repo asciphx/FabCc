@@ -2,7 +2,7 @@
 
 namespace fc {
   Conn::Conn(unsigned short milliseconds, uv_loop_t* l)
-	:loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
+	 noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
 	fs_.data = this; slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
 	sink_ = [this](const char* data, size_t size, std::function<void()> done) {
 #ifdef _WIN32

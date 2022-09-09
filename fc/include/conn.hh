@@ -32,7 +32,7 @@ namespace fc {
 	Res res_;
 	void* app_;
 	unsigned short keep_milliseconds;
-	Conn(unsigned short milliseconds, uv_loop_t* l);//
+	Conn(unsigned short milliseconds, uv_loop_t* l) noexcept;//
 	uv_buf_t rbuf, wbuf;
 	uv_loop_t* loop_;
 	uv_fs_t fs_;

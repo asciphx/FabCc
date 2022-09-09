@@ -23,7 +23,7 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   //Tcp& Tcp::home(std::string p) { RES_home = p; return *this; }
-  Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog; return *this; }
+  Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   Tcp& Tcp::thread(unsigned char n) { max_thread = n; return *this; }//?
   bool Tcp::init() {
 	if (opened)return true; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false; return true;
@@ -33,7 +33,7 @@ namespace fc {
   Tcp& Tcp::router(App& app) { app_ = &app; app_->content_types = &content_types; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
-	printf("C++ web[服务] run on http://%s:%d", ip_addr, port); int $; if (is_ipv4) {
+	std::cout << "C++ web[服务] run on http://" << ip_addr << port << std::endl; int $; if (is_ipv4) {
 	  struct sockaddr_in addr; $ = uv_ip4_addr(ip_addr, port, &addr); if ($)return false;
 	  $ = uv_tcp_bind(&_, (const struct sockaddr*)&addr, 0); is_ipv6 = false;
 	} else {
@@ -46,6 +46,7 @@ namespace fc {
 	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
+	context::fixedsize_stack cfs(max_conn < 0x10000 ? max_conn * 8 : max_conn * 4); stack_ = cfs.allocate(); if (!stack_.sp) return false;
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
@@ -93,7 +94,7 @@ namespace fc {
 	  try {
 		((App*)co->app_)->_call(req.method, req.url, req, res);
 		co->set_status(res, res.code); s << RES_http_status << co->status_;
-		//for (std::pair<const fc::Buf, fc::Buf>& kv : req.headers) std::cout << kv.first << RES_seperator << kv.second << RES_crlf;
+		//for (std::pair<const Buf, Buf>& kv : req.headers) std::cout << kv.first << RES_seperator << kv.second << RES_crlf;
 #if SHOW_SERVER_NAME
 		s << RES_server_tag << SERVER_NAME << RES_crlf;
 #endif
@@ -120,7 +121,7 @@ namespace fc {
 #endif
 			res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
-		  for (std::pair<const fc::Buf, fc::Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
+		  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
@@ -141,7 +142,7 @@ namespace fc {
 	  }
 	  //if (STR_KEY_EQ(get_header(req.headers, RES_Ex), "100-continue") &&
 	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
-	  for (std::pair<const fc::Buf, fc::Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
+	  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
 	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
 #endif

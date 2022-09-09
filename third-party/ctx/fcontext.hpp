@@ -28,7 +28,7 @@ namespace context {
   // This C++ tail of ontop_fcontext() allocates transfer_t{ from, vp }
   // on the stack.  If fn() throws a C++ exception, then the C++ runtime
   // must remove this tail's stack frame.
-  extern "C" transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
+  extern "C" inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
       return fn( transfer_t{ from, vp });
   }
 };

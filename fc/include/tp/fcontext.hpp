@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
-#ifndef FCONTEXT_HH
-#define FCONTEXT_HH
+#ifndef FCONTEXT_HPP
+#define FCONTEXT_HPP
 namespace context {
 #undef _CONTEXT_CALLDECL
 #if defined(i386) || defined(__i386__) || defined(__i386) \
@@ -28,7 +28,7 @@ namespace context {
   // This C++ tail of ontop_fcontext() allocates transfer_t{ from, vp }
   // on the stack.  If fn() throws a C++ exception, then the C++ runtime
   // must remove this tail's stack frame.
-  extern "C" transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
+  extern "C" inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
       return fn( transfer_t{ from, vp });
   }
 };
