@@ -15,8 +15,6 @@
 #include <directory.hh>
 //#include <detail.h>
 namespace fc {
-  static std::vector<context::continuation> fibers;
-  static std::vector<socket_type> fd_to_fiber_idx;
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
