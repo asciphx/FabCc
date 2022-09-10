@@ -2,7 +2,7 @@
 
 namespace fc {
   Conn::Conn(unsigned short milliseconds, uv_loop_t* l)
-	 noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
+	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
 	fs_.data = this; slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
 	sink_ = [this](const char* data, size_t size, std::function<void()> done) {
 #ifdef _WIN32
@@ -25,12 +25,23 @@ namespace fc {
 	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr;
   }
   bool Conn::write(const char* c, int i) {
-	if (!c || !i) { return true; }
+	if (!c || !i) { sink = sink.resume(); return true; }
 	const char* e = c + i; int l = ::send(id, c, e - c, 0);
 	if (l > 0) c += l; while (c != e) {
 	  if ((l < 0 && errno != EAGAIN) || l == 0) return false;
+	  sink = sink.resume();
 	  l = ::send(id, c, int(e - c), 0); if (l > 0) c += l;
 	} return true;
+  };
+  int Conn::read(char* buf, int size) {
+	int count = ::recv(id, buf, size, 0);
+	while (count <= 0) {
+	  if ((count < 0 && errno != EAGAIN) || count == 0)
+		return int(0);
+	  sink = sink.resume();
+	  count = ::recv(id, buf, size, 0);
+	}
+	return count;
   };
   //  int Conn::shut(socket_type fd, sd_type type) {
   //#if defined _WIN32

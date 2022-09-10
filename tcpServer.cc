@@ -21,6 +21,9 @@ int main() {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
   };
+  app["/jdk"] = [&app](Req& req, Res& res) {
+	res.write(json::parse(R"([{"confidence":0.974220335483551,"text":"lenovo联想","text_region":[[191,80],[672,80],[672,148],[191,148]]},{"confidence":0.6968730688095093,"text":"BY：花享湖月","text_region":[[250,866],[332,866],[332,885],[250,885]]}])").dump());
+  };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
 	res.write("主页的路由被删除！！");

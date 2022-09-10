@@ -24,7 +24,6 @@ namespace fc {
   }
   //Tcp& Tcp::home(std::string p) { RES_home = p; return *this; }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
-  Tcp& Tcp::thread(unsigned char n) { max_thread = n; return *this; }//?
   bool Tcp::init() {
 	if (opened)return true; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false; return true;
   }
@@ -168,6 +167,8 @@ namespace fc {
 	  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
 	} else if (nread < 0) {
+	  //context::continuation& fiber =((Tcp*)co->tcp_)->fd_to_fiber(co->id);
+	  //if (fiber)fiber = fiber.resume_with(std::move([](auto&& sink) {return std::move(sink);}));
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
 		uv_close((uv_handle_t*)h, on_close);
@@ -196,15 +197,22 @@ namespace fc {
 		sockaddr_in6 addrin = *((sockaddr_in6*)&t->addr_);
 		uv_ip6_name(&addrin, (char*)co->req_.ip_addr.data(), t->addr_len);
 	  }
-	  DEBUG(" %s:%d\n", co->req_.ip_addr.c_str(), ntohs(co->id));
 	}
+
 #ifdef _WIN32
 	co->id = co->slot_.socket;
 #else
 	co->id = uv__stream_fd(&t->_);
 #endif
-	++t->connection_num;
-	co->set_keep_alive(co->id, 4, 2, 2);
+	// Find a free fiber for this new connection.
+	socket_type fiber_idx = t->connection_num, socket_fd = co->id;
+	while (fiber_idx < fibers.size() && fibers[fiber_idx]) ++fiber_idx;
+	if (fiber_idx >= fibers.size()) fibers.resize((fibers.size() + 1) * 2);
+	co->set_keep_alive(co->id, 4, 2, 2); ++t->connection_num;
+	//fibers[fiber_idx] = context::callcc([this, fiber_idx, socket_fd,
+	//		  &handler](context::continuation&& sink) {
+	//			return std::move(ctx.sink);
+	//		  });
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }
 }

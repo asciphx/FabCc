@@ -13,9 +13,10 @@
 #include <http_error.hh>
 #include <app.hh>
 #include <directory.hh>
-#include <tp/ctx.hh>
 //#include <detail.h>
 namespace fc {
+  static std::vector<context::continuation> fibers;
+  static std::vector<socket_type> fd_to_fiber_idx;
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
@@ -24,8 +25,7 @@ namespace fc {
 	uv_tcp_t _;
 	uv_loop_t* loop_;
 	sockaddr_storage addr_;
-	int max_conn = 0xffff;
-	unsigned char max_thread = 1;//not use
+	int max_conn = 0xffff, fiber_idx = 0;
 	int port_ = DEFAULT_PORT;
 	int addr_len;
 	int connection_num = 0;
@@ -38,6 +38,14 @@ namespace fc {
 	bool not_set_types = true;
   public:
 	context::stack_context stack_;
+	inline context::continuation& fiber_from_fd(socket_type fd) {
+	 return fibers[fd_to_fiber_idx[fd]];
+	};
+	inline context::continuation& fd_to_fiber(socket_type fd) {
+	 socket_type fiber_idx = fd_to_fiber_idx[fd];
+	 return fibers[fiber_idx];
+	}
+
 	Tcp(App* app = nullptr, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
 	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);
@@ -53,7 +61,7 @@ namespace fc {
 	Tcp& file_type(const std::vector<std::string_view>& line = { "html","ico","css","js","json","svg","png","jpg","gif","txt","wasm" });
 	//Set max connection num
 	Tcp& maxConnection(int backlog = SOMAXCONN);
-	Tcp& thread(unsigned char n = std::thread::hardware_concurrency());//not use
+	//Tcp& thread(unsigned char n = std::thread::hardware_concurrency());//not use
 	Tcp& router(App& app);
 	void exit();
 	std::unordered_map<std::string_view, std::string_view> content_types;

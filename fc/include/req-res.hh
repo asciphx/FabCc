@@ -6,7 +6,7 @@
 #include "tp/zlib.h"
 #include <buf.hh>
 #include <h/common.h>
-#define BUF_SIZE 0x28000
+#define BUF_SIZE 0x10000
 #define BUF_MAXSIZE 256000000
 namespace fc {
   class Conn; class Tcp; struct App;

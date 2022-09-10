@@ -21,6 +21,7 @@ typedef SOCKET socket_type;
 static unsigned int RES_RCV = 4000;
 static unsigned int RES_SED = 10000;
 #endif
+#include <tp/ctx.hh>
 namespace fc {
   static int RES_KEEP_Alive = 1;//开启keepalive
   enum sd_type { _READ, _WRITE, _BOTH };
@@ -28,6 +29,7 @@ namespace fc {
   public:
 	uv_write_t _;
 	socket_type id;
+	context::continuation sink;
 	Req req_;
 	Res res_;
 	void* app_;
@@ -44,8 +46,12 @@ namespace fc {
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
 	void* tcp_;
+	
+	inline void yield() { sink = sink.resume(); }
+
 	virtual ~Conn();
 	bool write(const char* buf, int size);
+	int read(char* buf, int max_size);
 	void set_status(Res& res, uint16_t status);
     std::function<void(const char* c, size_t s, std::function<void()> f)> sink_;
 	//int shut(socket_type fd, sd_type d);
