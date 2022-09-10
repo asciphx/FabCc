@@ -45,7 +45,6 @@ namespace fc {
 	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
-	context::fixedsize_stack cfs(max_conn < 0x10000 ? max_conn * 8 : max_conn * 4); stack_ = cfs.allocate(); if (!stack_.sp) return false;
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
@@ -167,8 +166,6 @@ namespace fc {
 	  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
 	} else if (nread < 0) {
-	  //context::continuation& fiber =((Tcp*)co->tcp_)->fd_to_fiber(co->id);
-	  //if (fiber)fiber = fiber.resume_with(std::move([](auto&& sink) {return std::move(sink);}));
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
 		uv_close((uv_handle_t*)h, on_close);
@@ -204,15 +201,7 @@ namespace fc {
 #else
 	co->id = uv__stream_fd(&t->_);
 #endif
-	// Find a free fiber for this new connection.
-	socket_type fiber_idx = t->connection_num, socket_fd = co->id;
-	while (fiber_idx < fibers.size() && fibers[fiber_idx]) ++fiber_idx;
-	if (fiber_idx >= fibers.size()) fibers.resize((fibers.size() + 1) * 2);
 	co->set_keep_alive(co->id, 4, 2, 2); ++t->connection_num;
-	//fibers[fiber_idx] = context::callcc([this, fiber_idx, socket_fd,
-	//		  &handler](context::continuation&& sink) {
-	//			return std::move(ctx.sink);
-	//		  });
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
   }
 }

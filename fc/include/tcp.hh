@@ -37,14 +37,6 @@ namespace fc {
 	App* app_;
 	bool not_set_types = true;
   public:
-	context::stack_context stack_;
-	inline context::continuation& fiber_from_fd(socket_type fd) {
-	 return fibers[fd_to_fiber_idx[fd]];
-	};
-	inline context::continuation& fd_to_fiber(socket_type fd) {
-	 socket_type fiber_idx = fd_to_fiber_idx[fd];
-	 return fibers[fiber_idx];
-	}
 
 	Tcp(App* app = nullptr, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();

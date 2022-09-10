@@ -25,11 +25,10 @@ namespace fc {
 	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr;
   }
   bool Conn::write(const char* c, int i) {
-	if (!c || !i) { sink = sink.resume(); return true; }
+	if (!c || !i) { return true; }
 	const char* e = c + i; int l = ::send(id, c, e - c, 0);
 	if (l > 0) c += l; while (c != e) {
 	  if ((l < 0 && errno != EAGAIN) || l == 0) return false;
-	  sink = sink.resume();
 	  l = ::send(id, c, int(e - c), 0); if (l > 0) c += l;
 	} return true;
   };
@@ -38,7 +37,6 @@ namespace fc {
 	while (count <= 0) {
 	  if ((count < 0 && errno != EAGAIN) || count == 0)
 		return int(0);
-	  sink = sink.resume();
 	  count = ::recv(id, buf, size, 0);
 	}
 	return count;
