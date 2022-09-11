@@ -13,7 +13,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 ## Features
 - Can add, delete, modify and query the route
 - Use the global timer task to control some things, such as shutting down the server when it expires
-- Supports coroutines, similar to JS generators, and provides the yield method for pausing execution
+- Supports coroutines, similar to PYTHON generators, and provides the yield method for transfer execution
 - With an API similar to nodejs, it also looks like JS
 - Minimalist API, infinite possibilities
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL

@@ -13,7 +13,7 @@
 ## 特征
 - 可以对路由进行增删改查
 - 能够使用全局定时器任务，来控制一些事情，比如到期关闭服务器
-- 支持协程, 类似于js的生成器, 提供了yield方法用于暂停执行
+- 支持协程, 类似于python的生成器, 提供了yield方法用于转移执行
 - 拥有类似nodejs的api，写起来也像js
 - 极简的api，无限的可能
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
