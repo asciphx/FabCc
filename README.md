@@ -8,12 +8,11 @@
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
 [release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
 [release-link]: https://github.com/asciphx/FabCc/releases
-Concise, fast, practical, reactive, functional. Inspired by other well-known C++ web frameworks, which can be called the C++ version of nodejs.
-
+Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by concise, fast, practical, reactive, functional.
 ## Features
 - Can add, delete, modify and query the route
 - Use the global timer task to control some things, such as shutting down the server when it expires
-- Supports coroutines, similar to PYTHON generators, and provides the yield method for transfer execution
+- Supports asymmetric coroutines similar to stackless coroutines, such as Python's generator, and provides the yield method for transfer execution
 - With an API similar to nodejs, it also looks like JS
 - Minimalist API, infinite possibilities
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL

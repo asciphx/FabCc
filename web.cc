@@ -22,7 +22,7 @@ int main() {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
   };
-  app["/yield"] = [&app](Req& req, Res& res) {
+  app["/yield"] = [](Req& req, Res& res) {
 	Json x = { 1,2,3 };
 	co c{ [&x](co&& c) {
 	  x = json::parse(R"([{"confidence":0.974220335483551,"text":"lenovo联想","region":[[191,80],[672,80],[672,148],[191,148]]},

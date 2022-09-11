@@ -8,12 +8,12 @@
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
 [release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
 [release-link]: https://github.com/asciphx/FabCc/releases
-简洁、迅速、实用、活跃、全面。灵感来自于其他c++知名web框架, 堪称c++版的nodejs。
+灵感来自于其他c++知名web框架, FabCC的定位是一个网络框架, 其特点是简洁、迅速、实用、活跃、全面。
 
 ## 特征
 - 可以对路由进行增删改查
 - 能够使用全局定时器任务，来控制一些事情，比如到期关闭服务器
-- 支持协程, 类似于python的生成器, 提供了yield方法用于转移执行
+- 支持类似于无栈协程的非对称协程, 像python的生成器, 提供了yield方法用于转移执行
 - 拥有类似nodejs的api，写起来也像js
 - 极简的api，无限的可能
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
