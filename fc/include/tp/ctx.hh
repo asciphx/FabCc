@@ -131,15 +131,15 @@ namespace ctx {
   public:
 	continuation(fcontext_t fctx) noexcept: fctx_{ fctx } {}
 	continuation() noexcept = default;
-
+	
+	template<typename Fn, typename = std::disable_overload< continuation, Fn >>
+	continuation(Fn&& fn): continuation{ std::allocator_arg, fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
 	template<typename Fn>
-	continuation(Fn&& fn): continuation{ fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
-	template<typename Fn>
-	continuation(fixedsize_stack&& salloc, Fn&& fn) :
+	continuation(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) :
 	  fctx_{ create_context1< record< continuation, Fn > >(
 			  std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
 	template<typename Fn>
-	continuation(preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) :
+	continuation(std::allocator_arg_t, preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) :
 	  fctx_{ create_context2< record< continuation, Fn > >(
 			  palloc, std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
     //fiber

@@ -30,14 +30,13 @@ int main() {
 	data += 2;
 	f = f.yield();
 	std::cout << "entered second time: " << data << std::endl;
-	f = f.yield();
-	return f;
+	return std::move(f);
 	} };
   f = f.yield();
   std::cout << "returned first time: " << data << std::endl;
   data += 2;
   f = f.yield();
-  if (f) std::cout << "returned second time: " << data << std::endl;
+  if (!f) std::cout << "returned second time: " << data << std::endl;
   std::cout << "execution context terminated" << std::endl;
   return 0;
   Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
