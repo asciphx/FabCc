@@ -25,26 +25,22 @@ struct Person {
 CLASS(Person, name, age, book, books)
 int main() {
   int data = 1;
-  ctx::fiber f{[&data](ctx::fiber&& f) {
-			  std::cout << "entered first time: " << data << std::endl;
-			  data += 2;
-			  f = f.yield();
-			  std::cout << "entered second time: " << data << std::endl;
-			  f = f.yield();
-			  return f;
-		  } };
+  ctx::fiber f{ [&data](ctx::fiber&& f) {
+	std::cout << "entered first time: " << data << std::endl;
+	data += 2;
+	f = f.yield();
+	std::cout << "entered second time: " << data << std::endl;
+	f = f.yield();
+	return f;
+	} };
   f = f.yield();
   std::cout << "returned first time: " << data << std::endl;
   data += 2;
   f = f.yield();
-  if (f) {
-	std::cout << "returned second time: " << data << std::endl;
-  } else {
-	std::cout << "returned second time: execution context terminated" << std::endl;
-  }
-  std::cout << "main: done" << std::endl;
+  if (f) std::cout << "returned second time: " << data << std::endl;
+  std::cout << "execution context terminated" << std::endl;
   return 0;
-  Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}}}, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
+  Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} }; to_json(j, &b);
   j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump() << std::endl;
