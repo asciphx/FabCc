@@ -13,6 +13,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 ## Features
 - Can add, delete, modify and query the route
 - Use the global timer task to control some things, such as shutting down the server when it expires
+- Supports coroutines, similar to JS generators, and provides the yield method for pausing execution
 - With an API similar to nodejs, it also looks like JS
 - Minimalist API, infinite possibilities
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL
@@ -31,7 +32,7 @@ Concise, fast, practical, reactive, functional. Inspired by other well-known C++
 - [x] Body parser
 - [ ] SSL certificate support
 - [ ] WebSocket
-- [ ] coroutine
+- [x] Coroutines
 - [ ] UDP server
 - [ ] TCP client
 
@@ -65,6 +66,17 @@ int main() {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
   };
+  app["/yield"] = [&app](Req& req, Res& res) {
+	Json x = { 1,2,3 };
+	co c{ [&x](co&& c) {
+	  x = json::parse(R"([{"confidence":0.974220335483551,"text":"lenovo联想","region":[[191,80],[672,80],[672,148],[191,148]]},
+		{"confidence":0.6968730688095093,"text":"BY：花享湖月","region":[[250,866],[332,866],[332,885],[250,885]]}])");
+	  return std::move(c);
+	  } };
+	res.write(x.str());
+	c = c.yield();
+	res.write(x.dump());
+  };//co's yield function is used to ensure the execution order
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
 	res.write("The routing of the home page is delete！！");

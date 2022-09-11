@@ -13,6 +13,7 @@
 ## 特征
 - 可以对路由进行增删改查
 - 能够使用全局定时器任务，来控制一些事情，比如到期关闭服务器
+- 支持协程, 类似于js的生成器, 提供了yield方法用于暂停执行
 - 拥有类似nodejs的api，写起来也像js
 - 极简的api，无限的可能
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
@@ -31,7 +32,7 @@
 - [x] body-parser的支持
 - [ ] ssl证书
 - [ ] websocket
-- [ ] 协程
+- [x] 协程
 - [ ] udp服务端
 - [ ] tcp客户端client
 
@@ -65,6 +66,17 @@ int main() {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
   };
+  app["/yield"] = [&app](Req& req, Res& res) {
+	Json x = { 1,2,3 };
+	co c{ [&x](co&& c) {
+	  x = json::parse(R"([{"confidence":0.974220335483551,"text":"lenovo联想","region":[[191,80],[672,80],[672,148],[191,148]]},
+		{"confidence":0.6968730688095093,"text":"BY：花享湖月","region":[[250,866],[332,866],[332,885],[250,885]]}])");
+	  return std::move(c);
+	  } };
+	res.write(x.str());
+	c = c.yield();
+	res.write(x.dump());
+  };//协程, 使用co的yield函数来保证执行顺序
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
 	res.write("主页的路由被删除！！");

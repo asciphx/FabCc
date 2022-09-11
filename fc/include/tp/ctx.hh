@@ -187,6 +187,9 @@ namespace ctx {
   };
   typedef continuation fiber;
 }
+namespace fc {
+  typedef ctx::continuation co;
+}
 #if defined _MSC_VER
 # pragma warning(pop)
 #pragma pack(pop)

@@ -43,49 +43,49 @@ if(WIN32)
   else()
 	  add_subdirectory(third-party/zlib)
   endif()
-  add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
-  message(STATUS "to: ${PROJECT_SOURCE_DIR}/FabCc.exe")
+  add_executable(HttpWeb web.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
+  message(STATUS "to: ${PROJECT_SOURCE_DIR}/HttpWeb.exe")
   set( FabCc_LIBRARIES
 	Fab ${win_libraries}
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlibstatic.lib
   )
-  add_custom_command(TARGET FabCc
-	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/FabCc.exe ${PROJECT_SOURCE_DIR}/FabCc.exe
+  add_custom_command(TARGET HttpWeb
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/HttpWeb.exe ${PROJECT_SOURCE_DIR}/HttpWeb.exe
 #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlib.dll ${PROJECT_SOURCE_DIR}/zlib.dll
   )
 
-  add_executable(W w.cc)
-  target_link_libraries(W PUBLIC Fab
+  add_executable(test tests.cc)
+  target_link_libraries(test PUBLIC Fab
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib)
-  add_custom_command(TARGET W
-	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/W.exe ${PROJECT_SOURCE_DIR}/W.exe
+  add_custom_command(TARGET test
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/test.exe ${PROJECT_SOURCE_DIR}/test.exe
   )
 else()
   #添加第三方的库, 而第三方库的头文件集中复制到include/tp下使用
   add_subdirectory(third-party/libuv)
   add_subdirectory(third-party/ctx)
   add_subdirectory(third-party/zlib)
-  add_executable(FabCc tcpServer.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
-  message(STATUS "to: ${PROJECT_SOURCE_DIR}/FabCc")
+  add_executable(HttpWeb web.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
+  message(STATUS "to: ${PROJECT_SOURCE_DIR}/HttpWeb")
   set( FabCc_LIBRARIES
 	Fab
 	ctx
 	Uv
 	zlibstatic
   )
-  add_custom_command(TARGET FabCc
-	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/FabCc ${PROJECT_SOURCE_DIR}/FabCc
+  add_custom_command(TARGET HttpWeb
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/HttpWeb ${PROJECT_SOURCE_DIR}/HttpWeb
   )#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
 
-  add_executable(W w.cc)
-  target_link_libraries(W PUBLIC Fab ctx)
-  add_custom_command(TARGET W
-	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/W ${PROJECT_SOURCE_DIR}/W
+  add_executable(test tests.cc)
+  target_link_libraries(test PUBLIC Fab ctx)
+  add_custom_command(TARGET test
+	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/test ${PROJECT_SOURCE_DIR}/test
   )
 endif()
-target_link_libraries( FabCc ${FabCc_LIBRARIES})
+target_link_libraries( HttpWeb ${FabCc_LIBRARIES})
 #cmake .. -DBUILD_UNITEST=ON 来打开
 option(BUILD_UNITEST "Build UNITEST" OFF)
 if(BUILD_UNITEST)
