@@ -133,7 +133,7 @@ namespace ctx {
 	continuation() noexcept = default;
 
 	template<typename Fn>
-	continuation(Fn&& fn): fiber{ fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
+	continuation(Fn&& fn): continuation{ fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
 	template<typename Fn>
 	continuation(fixedsize_stack&& salloc, Fn&& fn) :
 	  fctx_{ create_context1< record< continuation, Fn > >(

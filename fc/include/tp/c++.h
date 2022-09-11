@@ -28,7 +28,7 @@
 #endif
 namespace std {
 #if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)
-  static_assert(_HAS_CXX17, "This file expects a C++17 compatible compiler.");
+  static_assert(__cplusplus >= 201703L, "This file expects a C++17 compatible compiler.");
 #else//__cplusplus <= 201402L
   template< typename Fn, typename ... Args >
   typename std::enable_if<

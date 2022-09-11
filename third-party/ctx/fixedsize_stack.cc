@@ -94,7 +94,7 @@ namespace {
 	return limit;
   }
 }
-namespace context {
+namespace ctx {
   bool
 	stack_traits::is_unbounded() noexcept {
 	return RLIM_INFINITY == stacksize_limit();
