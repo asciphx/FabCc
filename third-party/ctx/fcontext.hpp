@@ -4,7 +4,22 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 #ifndef FCONTEXT_HH
 #define FCONTEXT_HH
-namespace context {
+#if defined _MSC_VER
+#if defined(_M_X64)
+#  pragma pack(push,16)
+#else
+#  pragma pack(push,8)
+#endif
+#elif defined __CODEGEARC__
+#pragma nopushoptwarn
+#  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
+#elif defined __BORLANDC__
+#if __BORLANDC__ != 0x600
+#pragma nopushoptwarn
+#  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
+#endif
+#endif
+namespace ctx {
 #undef _CONTEXT_CALLDECL
 #if defined(i386) || defined(__i386__) || defined(__i386) \
      || defined(__i486__) || defined(__i586__) || defined(__i686__) \
@@ -31,5 +46,17 @@ namespace context {
   extern "C" inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
       return fn( transfer_t{ from, vp });
   }
-};
+}
+#if defined _MSC_VER
+#pragma pack(pop)
+#elif defined __CODEGEARC__
+#  pragma option pop
+#pragma nopushoptwarn
+#elif defined __BORLANDC__
+#if __BORLANDC__ != 0x600
+#  pragma option pop
+#pragma nopushoptwarn
+#endif
+#endif
+
 #endif

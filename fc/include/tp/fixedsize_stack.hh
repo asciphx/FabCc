@@ -2,11 +2,28 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
+#ifndef CONTEXT_FIXEDSIZE_H
+#define CONTEXT_FIXEDSIZE_H
 #include <cstddef>
 #include <cstdlib>
 #include <new>
 #include <assert.h>
-namespace context {
+#if defined _MSC_VER
+#if defined(_M_X64)
+#  pragma pack(push,16)
+#else
+#  pragma pack(push,8)
+#endif
+#elif defined __CODEGEARC__
+#pragma nopushoptwarn
+#  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
+#elif defined __BORLANDC__
+#if __BORLANDC__ != 0x600
+#pragma nopushoptwarn
+#  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
+#endif
+#endif
+namespace ctx {
 #if __cplusplus >= 201103L
   struct stack_context { size_t size{ 0 }; void* sp{ nullptr }; };
 #else
@@ -29,3 +46,15 @@ namespace context {
 	}
   };
 }
+#if defined _MSC_VER
+#pragma pack(pop)
+#elif defined __CODEGEARC__
+#  pragma option pop
+#pragma nopushoptwarn
+#elif defined __BORLANDC__
+#if __BORLANDC__ != 0x600
+#  pragma option pop
+#pragma nopushoptwarn
+#endif
+#endif
+#endif // CONTEXT_FIXEDSIZE_H

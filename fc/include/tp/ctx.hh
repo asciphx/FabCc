@@ -1,5 +1,6 @@
-#ifndef FCONTEXT_HH
-#define FCONTEXT_HH
+#ifndef CTX_HH
+#define CTX_HH
+#include "c++.h"
 #include "fcontext.hpp"
 #include "fixedsize_stack.hh"
 #include <ostream>
@@ -9,14 +10,24 @@
 #include <utility>
 #include <tuple>
 #include <type_traits>
-#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
-#define BOOST_UNLIKELY(x) __builtin_expect(x, 0)
-#define BOOST_LIKELY(x) __builtin_expect(x, 1)
+#if defined _MSC_VER
+#if defined(_M_X64)
+#  pragma pack(push,16)
 #else
-#define BOOST_UNLIKELY(x) x
-#define BOOST_LIKELY(x) x
+#  pragma pack(push,8)
 #endif
-namespace context {
+# pragma warning(push)
+//# pragma warning(disable: 4702)
+#elif defined __CODEGEARC__
+#pragma nopushoptwarn
+#  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
+#elif defined __BORLANDC__
+#if __BORLANDC__ != 0x600
+#pragma nopushoptwarn
+#  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
+#endif
+#endif
+namespace ctx {
   struct forced_unwind {
 	fcontext_t fctx{ nullptr }; forced_unwind() = default; forced_unwind(fcontext_t fctx_): fctx(fctx_) {}
   };
@@ -118,8 +129,20 @@ namespace context {
 	template<typename Fn>
 	friend continuation callcc(preallocated, fixedsize_stack&&, Fn&&);
   public:
-    continuation(fcontext_t fctx) noexcept: fctx_{ fctx } {}
+	continuation(fcontext_t fctx) noexcept: fctx_{ fctx } {}
 	continuation() noexcept = default;
+
+	template<typename Fn>
+	continuation(Fn&& fn): fiber{ fixedsize_stack(), std::forward< Fn >(fn) } {}
+	template<typename Fn>
+	continuation(fixedsize_stack&& salloc, Fn&& fn) :
+	  fctx_{ create_context1< record< continuation, Fn > >(
+			  std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
+	template<typename Fn>
+	continuation(preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) :
+	  fctx_{ create_context2< record< continuation, Fn > >(
+			  palloc, std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
+    //fiber
 	~continuation() {
 	  if (BOOST_UNLIKELY(nullptr != fctx_)) {
 		ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, context_unwind);
@@ -131,7 +154,7 @@ namespace context {
 	}
 	continuation(continuation const& other) noexcept = delete;
 	continuation& operator=(continuation const& other) noexcept = delete;
-	continuation resume()& { return std::move(*this).resume(); }
+	continuation yield()& { return std::move(*this).resume(); }
 	continuation resume()&& {
 	  assert(nullptr != fctx_); return { jump_fcontext(std::exchange(fctx_, nullptr), nullptr).fctx };
 	}
@@ -162,5 +185,18 @@ namespace context {
   continuation callcc(preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) {
 	return continuation{ create_context2<record<continuation, Fn>>(palloc, std::forward<fixedsize_stack>(salloc), std::forward<Fn>(fn)) }.resume();
   };
+  typedef continuation fiber;
 }
+#if defined _MSC_VER
+# pragma warning(pop)
+#pragma pack(pop)
+#elif defined __CODEGEARC__
+#  pragma option pop
+#pragma nopushoptwarn
+#elif defined __BORLANDC__
+#if __BORLANDC__ != 0x600
+#  pragma option pop
+#pragma nopushoptwarn
+#endif
+#endif
 #endif

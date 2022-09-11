@@ -57,7 +57,8 @@ if(WIN32)
   )
 
   add_executable(W w.cc)
-  target_link_libraries(W PUBLIC Fab)
+  target_link_libraries(W PUBLIC Fab
+	${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib)
   add_custom_command(TARGET W
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/W.exe ${PROJECT_SOURCE_DIR}/W.exe
   )
@@ -79,7 +80,7 @@ else()
   )#将生成的文件，拷贝到最外层目录，与static文件夹同级，那么就可以方便执行
 
   add_executable(W w.cc)
-  target_link_libraries(W PUBLIC Fab)
+  target_link_libraries(W PUBLIC Fab ctx)
   add_custom_command(TARGET W
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/W ${PROJECT_SOURCE_DIR}/W
   )
