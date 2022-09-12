@@ -43,14 +43,14 @@ if(WIN32)
   else()
 	  add_subdirectory(third-party/zlib)
   endif()
-  add_executable(HttpWeb web.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
-  message(STATUS "to: ${PROJECT_SOURCE_DIR}/HttpWeb.exe")
   set( FabCc_LIBRARIES
 	Fab ${win_libraries}
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlibstatic.lib
   )
+  add_executable(HttpWeb web.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
+  message(STATUS "to: ${PROJECT_SOURCE_DIR}/HttpWeb.exe")
   add_custom_command(TARGET HttpWeb
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/HttpWeb.exe ${PROJECT_SOURCE_DIR}/HttpWeb.exe
 #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlib.dll ${PROJECT_SOURCE_DIR}/zlib.dll

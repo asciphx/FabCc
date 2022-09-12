@@ -32,7 +32,7 @@ namespace fc {
   Tcp& Tcp::router(App& app) { app_ = &app; app_->content_types = &content_types; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
-	std::cout << "C++ web[服务] run on http://" << ip_addr << port << std::endl; int $; if (is_ipv4) {
+	std::cout << "C++ web[服务] run on http://127.0.0.1:" << port << std::endl; int $; if (is_ipv4) {
 	  struct sockaddr_in addr; $ = uv_ip4_addr(ip_addr, port, &addr); if ($)return false;
 	  $ = uv_tcp_bind(&_, (const struct sockaddr*)&addr, 0); is_ipv6 = false;
 	} else {
