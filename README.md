@@ -39,7 +39,8 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - If translated by machine, FabCc can be a wafer factory, so FabCc symbolizes the most sophisticated and minimal chip.
 - The namespace uses the uppercase hump fc of FabCc.
 - The logo hasn't been replaced yet. It's the crow logo for the time being.
-- Regex expression routing, because performance issues will be removed.
+- Principle of Coroutines
+- ![yield](./yield.gif)
 - [Demo site](http://8.129.58.72:8080/)🚀
 - ![test](./test.jpg)
 
@@ -65,7 +66,7 @@ int main() {
 	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
 	}
   };
-  app["/yield"] = [&app](Req& req, Res& res) {
+  app["/yield"] = [](Req& req, Res& res) {
 	Json x = { 1,2,3 };
 	co c{ [&x](co&& c) {
 	  x = json::parse(R"([{"confidence":0.974220335483551,"text":"lenovo联想","region":[[191,80],[672,80],[672,148],[191,148]]},
