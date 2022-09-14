@@ -23,7 +23,8 @@ namespace fc {
 	uv_tcp_t _;
 	uv_loop_t* loop_;
 	sockaddr_storage addr_;
-	int max_conn = 0xffff, fiber_idx = 0;
+	int max_conn = 0xffff;
+	char threads = 3;
 	int port_ = DEFAULT_PORT;
 	int addr_len;
 	int connection_num = 0;
@@ -51,7 +52,8 @@ namespace fc {
 	Tcp& file_type(const std::vector<std::string_view>& line = { "html","ico","css","js","json","svg","png","jpg","gif","txt","wasm" });
 	//Set max connection num
 	Tcp& maxConnection(int backlog = SOMAXCONN);
-	//Tcp& thread(unsigned char n = std::thread::hardware_concurrency());//not use
+	//Set max threads num, default 0 similar to `std::thread::hardware_concurrency()`
+	Tcp& setThread(char n = 0);
 	Tcp& router(App& app);
 	void exit();
 	std::unordered_map<std::string_view, std::string_view> content_types;

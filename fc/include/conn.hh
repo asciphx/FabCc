@@ -5,14 +5,6 @@
 #include <parser.hh>
 #include <req-res.hh>
 #include <h/config.h>
-#if defined __linux__ || defined __APPLE__
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-typedef int socket_type;
-static struct timeval RES_RCV { 4, 0 };//max{5,0},read
-static struct timeval RES_SED { 10, 0 };//write
-#endif
 #if defined _WIN32
 #include <WS2tcpip.h>
 #include <WinSock2.h>
@@ -20,11 +12,20 @@ static struct timeval RES_SED { 10, 0 };//write
 typedef SOCKET socket_type;
 static unsigned int RES_RCV = 4000;
 static unsigned int RES_SED = 10000;
+#else
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+typedef int socket_type;
+static struct timeval RES_RCV { 4, 0 };//max{5,0},read
+static struct timeval RES_SED { 10, 0 };//write
 #endif
 namespace fc {
   static int RES_KEEP_Alive = 1;//开启keepalive
   enum sd_type { _READ, _WRITE, _BOTH };
   class Conn {
+	Conn& operator=(const Conn&) = delete;
+	Conn(const Conn&) = delete;
   public:
 	uv_write_t _;
 	socket_type id;

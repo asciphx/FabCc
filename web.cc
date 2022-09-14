@@ -46,6 +46,6 @@ int main() {
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  srv.router(app).timeout(9000).setTcpNoDelay(true).Start("0.0.0.0", 8080);
+  srv.router(app).timeout(9000).setTcpNoDelay(true).setThread().Start("0.0.0.0", 8080);
   return 0;
 }

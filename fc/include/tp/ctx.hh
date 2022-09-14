@@ -125,9 +125,9 @@ namespace ctx {
 	template<typename Ctx, typename Fn> friend transfer_t context_ontop(transfer_t);
 	fcontext_t  fctx_{ nullptr };
 	template<typename Fn>
-	friend continuation callcc(fixedsize_stack&&, Fn&&);
+	friend continuation callcc(std::allocator_arg_t, fixedsize_stack&&, Fn&&);
 	template<typename Fn>
-	friend continuation callcc(preallocated, fixedsize_stack&&, Fn&&);
+	friend continuation callcc(std::allocator_arg_t, preallocated, fixedsize_stack&&, Fn&&);
   public:
 	continuation(fcontext_t fctx) noexcept: fctx_{ fctx } {}
 	continuation() noexcept = default;
@@ -176,13 +176,13 @@ namespace ctx {
 	void swap(continuation& other) noexcept { std::swap(fctx_, other.fctx_); }
   };
   template<typename Fn>
-  continuation callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack()) { return callcc(s, std::forward<Fn>(fn)); };
+  continuation callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack()) { return callcc(std::allocator_arg, s, std::forward<Fn>(fn)); };
   template<typename Fn>
-  continuation callcc(fixedsize_stack&& salloc, Fn&& fn) {
+  continuation callcc(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) {
 	return continuation{ create_context1<record<continuation, Fn>>(std::forward<fixedsize_stack>(salloc), std::forward< Fn >(fn)) }.resume();
   }
   template<typename Fn>
-  continuation callcc(preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) {
+  continuation callcc(std::allocator_arg_t, preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) {
 	return continuation{ create_context2<record<continuation, Fn>>(palloc, std::forward<fixedsize_stack>(salloc), std::forward<Fn>(fn)) }.resume();
   };
   typedef continuation fiber;
