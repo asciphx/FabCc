@@ -24,7 +24,7 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   Tcp& Tcp::setThread(char n) {
-	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 1 ? n : cpu; return *this;
+	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? cpu : 2; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   bool Tcp::init() {
@@ -35,7 +35,7 @@ namespace fc {
   Tcp& Tcp::router(App& app) { app_ = &app; app_->content_types = &content_types; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
-	std::cout << "C++<web>[" << getenv("UV_THREADPOOL_SIZE") << "]=> http://127.0.0.1:" << port << std::endl; int $; if (is_ipv4) {
+	std::cout << "C++<web>[" << getenv("UV_THREADPOOL_SIZE") << "] => http://127.0.0.1:" << port << std::endl; int $; if (is_ipv4) {
 	  struct sockaddr_in addr; $ = uv_ip4_addr(ip_addr, port, &addr); if ($)return false;
 	  $ = uv_tcp_bind(&_, (const struct sockaddr*)&addr, 0); is_ipv6 = false;
 	} else {
@@ -44,7 +44,7 @@ namespace fc {
 	} return $ ? true : false;
   }
   bool Tcp::Start(const char* ip_addr, int port, bool is_ipv4) {
-	fc::Buf b("UV_THREADPOOL_SIZE=", 19); b << (int)threads; putenv(b.c_str());
+	fc::Buf b("UV_THREADPOOL_SIZE=", 19); b << (int)threads; putenv((char*)b.c_str());
 	exit(); if (!port)port = port_; if (!init())return false; if (bind(ip_addr, port, is_ipv4))return false;
 	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
@@ -75,7 +75,7 @@ namespace fc {
 	  Req& req = co->req_; req = std::move(co->parser_.to_request());// printf("(%s,%s) ",req.url.c_str(),m2c(req.method));
 	  if (!req.url(0)) return;
 #if defined __linux__ || defined __APPLE__
-	  if (co->parser_.http_major == 1 && co->parser_.http_minor == 1 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
+	  if (co->parser_.http_minor != 0 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
 		uv_close((uv_handle_t*)h, on_close); return;
 	  }
 #endif
@@ -169,15 +169,15 @@ namespace fc {
 	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
 	  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
 #endif
-	  } else if (nread < 0) {
-		if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		  DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		  uv_close((uv_handle_t*)h, on_close);
-		} else {//UV_ENOBUFS
-		  DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		  uv_close((uv_handle_t*)h, on_close);
-		}//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
-	  }//printf("%d\n", nread);uv_read_stop(h);
+	} else if (nread < 0) {
+	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
+		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		uv_close((uv_handle_t*)h, on_close);
+	  } else {//UV_ENOBUFS
+		DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+		uv_close((uv_handle_t*)h, on_close);
+	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
+	}//printf("%d\n", nread);uv_read_stop(h);
   }
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) { Conn* c = (Conn*)h->data; *b = c->rbuf; }
   void Tcp::on_close(uv_handle_t* h) {
@@ -207,5 +207,5 @@ namespace fc {
 #endif
 	co->set_keep_alive(co->id, 4, 2, 2); ++t->connection_num;
 	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
-	  }
-	}
+  }
+}

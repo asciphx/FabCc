@@ -184,10 +184,8 @@ namespace fc {
 }
 namespace str {
   i64 to_int64(const char* s) {
-	if (!*s) return 0;
-	char* end = 0;
-	i64 x = strtoll(s, &end, 0);
-	size_t n = strlen(s);
+	if (!*s) return 0; char* end = 0;
+	i64 x = strtoll(s, &end, 0); size_t n = strlen(s);
 	if (end == s + n) return x;
 	if (end == s + n - 1) {
 	  int shift = _Shift(s[n - 1]);
@@ -202,68 +200,43 @@ namespace str {
 	return 0;
   }
   i32 to_int32(const char* s) {
-	i64 x = to_int64(s);
-	if (unlikely(x > INT32_MAX || x < INT32_MIN)) {
-	  return 0;
-	}
-	return (i32)x;
+	i64 x = to_int64(s); if (unlikely(x > INT32_MAX || x < INT32_MIN)) return 0; return (i32)x;
   }
   u64 to_uint64(const char* s) {
 	if (!*s) return 0;
-	char* end = 0;
-	u64 x = strtoull(s, &end, 0);
-	if (errno != 0) {
-	  return 0;
-	}
+	char* end = 0; u64 x = strtoull(s, &end, 0);
+	if (errno != 0) return 0;
 	size_t n = strlen(s);
 	if (end == s + n) return x;
 	if (end == s + n - 1) {
 	  int shift = _Shift(s[n - 1]);
 	  if (shift != 0) {
-		if (x == 0) return 0;
-		i64 absx = (i64)x;
+		if (x == 0) return 0; i64 absx = (i64)x;
 		if (absx < 0) absx = -absx;
-		if (absx > static_cast<i64>(UINT64_MAX >> shift)) {
-		  return 0;
-		}
+		if (absx > static_cast<i64>(UINT64_MAX >> shift)) return 0;
 		return x << shift;
 	  }
 	}
 	return 0;
   }
   u32 to_uint32(const char* s) {
-	i64 x = (i64)to_uint64(s);
-	i64 absx = x < 0 ? -x : x;
-	if (unlikely(absx > UINT32_MAX)) {
-	  return 0;
-	}
-	return (u32)x;
+	i64 x = (i64)to_uint64(s), absx = x < 0 ? -x : x; if (unlikely(absx > UINT32_MAX)) return 0; return (u32)x;
   }
   double to_double(const char* s) {
-	char* end = 0;
-	double x = strtod(s, &end);
-	if (errno != 0) {
-	  return 0;
-	}
-	if (end == s + strlen(s)) return x;
-	return 0;
+	char* end = 0; double x = strtod(s, &end); if (errno != 0) return 0;
+	if (end == s + strlen(s)) return x; return 0;
   }
   fc::Buf strip(const char* s, const char* c, char d) {
 	if (unlikely(!*s)) return fc::Buf();
-	char bs[256] = { 0 };
-	while (*c) bs[(const u8)(*c++)] = 1;
+	char bs[256] = { 0 }; while (*c) bs[(const u8)(*c++)] = 1;
 	if (d == 'l' || d == 'L') {
-	  while (bs[(u8)(*s)]) ++s;
-	  return fc::Buf(s);
+	  while (bs[(u8)(*s)]) ++s; return fc::Buf(s);
 	} else if (d == 'r' || d == 'R') {
 	  const char* e = s + strlen(s) - 1;
-	  while (e >= s && bs[(u8)(*e)]) --e;
-	  return fc::Buf(s, e + 1 - s);
+	  while (e >= s && bs[(u8)(*e)]) --e; return fc::Buf(s, e + 1 - s);
 	} else {
-	  while (bs[(u8)(*s)]) ++s;
-	  const char* e = s + strlen(s) - 1;
-	  while (e >= s && bs[(u8)(*e)]) --e;
-	  return fc::Buf(s, e + 1 - s);
+	  while (bs[(u8)(*s)]) ++s; const char* e = s + strlen(s) - 1;
+	  while (e >= s && bs[(u8)(*e)]) --e; return fc::Buf(s, e + 1 - s);
 	}
   }
   fc::Buf strip(const fc::Buf& s, const char* c, char d) {
@@ -271,64 +244,41 @@ namespace str {
 	char bs[256] = { 0 };
 	while (*c) bs[(const u8)(*c++)] = 1;
 	if (d == 'l' || d == 'L') {
-	  u32 b = 0;
-	  while (b < s.size() && bs[(u8)(s(b))]) ++b;
+	  u32 b = 0; while (b < s.size() && bs[(u8)(s(b))]) ++b;
 	  return b == 0 ? s : s.substr(b);
 	} else if (d == 'r' || d == 'R') {
-	  u32 e = s.size();
-	  while (e > 0 && bs[(u8)(s(e - 1))]) --e;
+	  u32 e = s.size(); while (e > 0 && bs[(u8)(s(e - 1))]) --e;
 	  return e == s.size() ? s : s.substr(0, e);
 	} else {
-	  u32 b = 0, e = s.size();
-	  while (b < s.size() && bs[(u8)(s(b))]) ++b;
+	  u32 b = 0, e = s.size(); while (b < s.size() && bs[(u8)(s(b))]) ++b;
 	  if (b == s.size()) return fc::Buf();
 	  while (e > 0 && bs[(u8)(s(e - 1))]) --e;
 	  return (e - b == s.size()) ? s : s.substr(b, e - b);
 	}
   }
   std::vector<fc::Buf> split(const fc::Buf& s, char c, u32 maxsplit) {
-	std::vector<fc::Buf> v;
-	v.reserve(8);
-	const char* p;
-	const char* from = s.data_;
-	const char* end = from + s.size();
-	while ((p = (const char*)memchr(from, c, end - from))) {
-	  v.push_back(fc::Buf(from, p - from));
-	  from = p + 1;
-	  if (v.size() == maxsplit) break;
+	std::vector<fc::Buf> v; v.reserve(8); const char* p, * from = s.data_;
+	while ((p = (const char*)memchr(from, c, s.end_ - from))) {
+	  v.push_back(fc::Buf(from, p - from)); from = p + 1; if (v.size() == maxsplit) break;
 	}
-	if (from < end) v.push_back(fc::Buf(from, end - from));
-	return v;
+	if (from < s.end_) v.push_back(fc::Buf(from, s.end_ - from)); return v;
   }
   fc::Buf replace(const char* s, const char* sub, const char* to, u32 maxreplace) {
-	const char* p;
-	const char* from = s;
-	size_t n = strlen(sub);
-	size_t m = strlen(to);
-	fc::Buf x;
+	const char* p, * from = s; size_t n = strlen(sub), m = strlen(to); fc::Buf x;
 	while ((p = strstr(from, sub))) {
-	  x.append(from, p - from);
-	  x.append(to, (unsigned int)m);
-	  from = p + n;
+	  x.append(from, p - from); x.append(to, (unsigned int)m); from = p + n;
 	  if (--maxreplace == 0) break;
 	}
-	if (from < s + strlen(s)) x.append(from);
-	return x;
+	if (from < s + strlen(s)) x.append(from); return x;
   }
   fc::Buf replace(const fc::Buf& s, const char* sub, const char* to, u32 maxreplace) {
-	const char* from = s.c_str();
-	const char* p = strstr(from, sub);
-	if (!p) return s;
-	size_t n = strlen(sub);
-	size_t m = strlen(to);
-	fc::Buf x(s.size());
+	const char* from = s.c_str(), * p = strstr(from, sub); if (!p) return s;
+	size_t n = strlen(sub), m = strlen(to); fc::Buf x(s.size());
 	do {
-	  x.append(from, p - from).append(to, (unsigned int)m);
-	  from = p + n;
+	  x.append(from, p - from).append(to, (unsigned int)m); from = p + n;
 	  if (--maxreplace == 0) break;
 	} while ((p = strstr(from, sub)));
-	if (from < s.data_ + s.size()) x.append(from);
-	return x;
+	if (from < s.data_ + s.size()) x.append(from); return x;
   }
 }
 #ifdef _WIN32
@@ -339,15 +289,9 @@ namespace str {
 #pragma warning(disable:4503)
 namespace color {
   inline bool ansi_color_seq_enabled() {
-	fc::Buf s(64);
-	DWORD r = GetEnvironmentVariableA("TERM", s.data_, 64);
-	s.resize(r);
-	if (r > 64) {
-	  GetEnvironmentVariableA("TERM", s.data_, r);
-	  s.resize(r - 1);
-	}
-	static const bool x = !s.empty();
-	return x;
+	fc::Buf s(64); DWORD r = GetEnvironmentVariableA("TERM", s.data_, 64); s.resize(r);
+	if (r > 64) { GetEnvironmentVariableA("TERM", s.data_, r); s.resize(r - 1); }
+	static const bool x = !s.empty(); return x;
   }
   inline HANDLE& std_handle() {
 	static HANDLE handle = []() {
@@ -358,11 +302,8 @@ namespace color {
 	return handle;
   }
   inline int get_default_color() {
-	auto h = std_handle();
-	if (!h) return 15;
-	CONSOLE_SCREEN_BUFFER_INFO buf;
-	if (!GetConsoleScreenBufferInfo(h, &buf)) return 15;
-	return buf.wAttributes & 0x0f;
+	auto h = std_handle(); if (!h) return 15; CONSOLE_SCREEN_BUFFER_INFO buf;
+	if (!GetConsoleScreenBufferInfo(h, &buf)) return 15; return buf.wAttributes & 0x0f;
   }
   const Color red("\033[38;5;1m", FOREGROUND_RED);     // 12
   const Color green("\033[38;5;2m", FOREGROUND_GREEN); // 10
@@ -375,12 +316,9 @@ namespace color {
 } // color
 std::ostream& operator<<(std::ostream& os, const color::Color& color) {
   if (color::ansi_color_seq_enabled()) {
-	os << color.s;
-	return os;
+	os << color.s; return os;
   } else {
-	auto h = color::std_handle();
-	if (h) SetConsoleTextAttribute(h, (WORD)color.i);
-	return os;
+	auto h = color::std_handle(); if (h) SetConsoleTextAttribute(h, (WORD)color.i); return os;
   }
 }
 #endif // _WIN32

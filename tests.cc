@@ -24,6 +24,24 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
+  int a;
+  ctx::continuation c = ctx::callcc(
+	  [&a](ctx::continuation&& c) {
+	  a = 0;
+	  int b = 1;
+	  for (;;) {
+		c = c.yield();
+		int next = a + b;
+		a = b;
+		b = next;
+	  }
+	  return std::move(c);
+	  });
+  for (int j = 0; j < 15; ++j) {
+	std::cout << a << " ";
+	c = c.yield();
+  }
+  std::cout << std::endl;
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
 	std::cout << "entered first time: " << data << std::endl;

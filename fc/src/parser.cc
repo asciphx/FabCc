@@ -19,13 +19,9 @@ namespace fc {
 	$->headers.emplace($->header_field, $->header_value);
 	$->header_field.reset(); $->header_value.reset(); return 0;
   }
-  static int on_headers_complete(llhttp__internal_s* _) {
-	llParser* $ = static_cast<llParser*>(_);
-	//$->keep_alive = ($->http_major == 1 && $->http_minor == 0) ?
-	//  (($->flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
-	//  (($->http_major == 1 && $->http_minor == 1) ? true : false);
-	return 0;//llhttp_should_keep_alive(_);
-  }
+ // static int on_headers_complete(llhttp__internal_s* _) {
+	//llParser* $ = static_cast<llParser*>(_); return 0;
+ // }
   static int on_body(llhttp__internal_s* _, const char* c, size_t l) {
 	llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end_, c, c + l); return 0;
   }
@@ -45,7 +41,7 @@ namespace fc {
 	  nullptr,
 	  on_header_field,
 	  on_header_value,
-	  on_headers_complete,
+	  nullptr,
 	  on_body,
 	  on_message_complete
   };

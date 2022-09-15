@@ -131,7 +131,7 @@ namespace ctx {
   public:
 	continuation(fcontext_t fctx) noexcept: fctx_{ fctx } {}
 	continuation() noexcept = default;
-	
+
 	template<typename Fn, typename = std::disable_overload< continuation, Fn >>
 	continuation(Fn&& fn): continuation{ std::allocator_arg, fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
 	template<typename Fn>
@@ -142,7 +142,7 @@ namespace ctx {
 	continuation(std::allocator_arg_t, preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) :
 	  fctx_{ create_context2< record< continuation, Fn > >(
 			  palloc, std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
-    //fiber
+	//fiber
 	~continuation() {
 	  if (BOOST_UNLIKELY(nullptr != fctx_)) {
 		ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, context_unwind);
@@ -154,7 +154,9 @@ namespace ctx {
 	}
 	continuation(continuation const& other) noexcept = delete;
 	continuation& operator=(continuation const& other) noexcept = delete;
-	continuation yield()& { return std::move(*this).resume(); }
+	inline continuation yield()& { return std::move(*this).resume(); }
+	//same as yield, but not inline
+	continuation resume()& { return std::move(*this).resume(); }
 	continuation resume()&& {
 	  assert(nullptr != fctx_); return { jump_fcontext(std::exchange(fctx_, nullptr), nullptr).fctx };
 	}
@@ -176,7 +178,9 @@ namespace ctx {
 	void swap(continuation& other) noexcept { std::swap(fctx_, other.fctx_); }
   };
   template<typename Fn>
-  continuation callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack()) { return callcc(std::allocator_arg, s, std::forward<Fn>(fn)); };
+  continuation callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(stack_traits::minimum_size())) {
+	return callcc(std::allocator_arg, std::forward<fixedsize_stack>(s), std::forward<Fn>(fn));
+  };
   template<typename Fn>
   continuation callcc(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) {
 	return continuation{ create_context1<record<continuation, Fn>>(std::forward<fixedsize_stack>(salloc), std::forward< Fn >(fn)) }.resume();
