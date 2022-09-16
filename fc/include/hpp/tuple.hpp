@@ -4,8 +4,8 @@
 #include <typeinfo>
 #include <type_traits>
 #include <vector>
-#if (defined(_HAS_CXX17) && !_HAS_CXX17) || (!defined(_WIN32) && __cplusplus <= 201402L)
 #include <tp/c++.h>
+#if (defined(_HAS_CXX17) && !_HAS_CXX17) || (!defined(_WIN32) && __cplusplus <= 201402L)
 namespace std {
   template <typename _Tp> __INLINE constexpr size_t tuple_size_v = tuple_size<_Tp>::value;
   namespace detail {
