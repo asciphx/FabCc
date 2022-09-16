@@ -8,10 +8,10 @@ else()
 endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 if (MSVC)
-	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c11 )#只有是Release才会是O2優化，否則會被覆写
+	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++14 )#只有是Release才会是O2優化，否則會被覆写
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else ()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
 	add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE)
 endif ()
 include_directories(fc/include)#添加掃描的頭文件目錄

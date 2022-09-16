@@ -4,6 +4,20 @@
 #include <typeinfo>
 #include <type_traits>
 #include <vector>
+#if __cplusplus <= 201402L
+#include <tp/c++.h>
+namespace std {
+  template <typename _Tp> __INLINE constexpr size_t tuple_size_v = tuple_size<_Tp>::value;
+  namespace detail {
+	template <class Fn, class T, std::size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, std::index_sequence<I...>) {
+	  return std::invoke(std::forward<Fn>(f), std::get<I>(std::forward<T>(t))...);
+	}
+  }
+  template <class Fn, class T> constexpr decltype(auto) apply(Fn&& f, T&& t) {
+	return detail::apply_impl(std::forward<Fn>(f), std::forward<T>(t), std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<T>>>{});
+  }
+}
+#endif
 namespace fc {
   using Expand = int[];
 #define Exp (void)fc::Expand
@@ -15,18 +29,18 @@ namespace fc {
   }
   template <std::size_t I, typename T, typename Fn>
   constexpr void ForEachField(T* t, Fn&& fn) { ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<I>{}); }
-  
+
   template <typename T> constexpr inline auto Tuple() { return std::make_tuple(); }
   template<typename C> struct tuple_idex {};
   template<template<typename ...T> class C, typename ...T>
   struct tuple_idex<C<T...>> { template<size_t i> using type = typename std::tuple_element<i, std::tuple<T...> >::type; };
-  template <class T> struct is_vector : std::false_type {};
-  template <class T> struct is_vector<T[]> : std::false_type {};
-  template <class T> struct is_vector<std::vector<T>> : std::true_type {};
+  template <class T> struct is_vector: std::false_type {};
+  template <class T> struct is_vector<T[]>: std::false_type {};
+  template <class T> struct is_vector<std::vector<T>>: std::true_type {};
   template<typename C> struct vector_pack {};
   template<template<typename, typename> class C, typename A, typename B> struct vector_pack<C<A, B>> { using type = A; };
   template<typename T> using vector_pack_t = typename vector_pack<T>::type;
-  
+
   template<typename T, typename P> constexpr const P ExP(P T::* const) {}//ExP(K)Remove tuple of this &property
   template<typename T, typename P> constexpr const P T::* ExP(P) {}//ExP<T>(K)Set tuple of this &property
   template<typename T, typename K> constexpr T ExT(K T::* const) { return T(); }//ExT(K)Get tuple of this &key
@@ -119,7 +133,7 @@ namespace fc {
   using tuple_remove_elements_t = typename tuple_remove_elements<T, E...>::type;
   template <typename F, size_t... I, typename... T>
   inline F tuple_map(std::tuple<T...>& t, F f, std::index_sequence<I...>) {
-	return Exp{((void)f(std::get<I>(t)), 0)...}, f;
+	return Exp{ ((void)f(std::get<I>(t)), 0)... }, f;
   }
   template <typename F, typename... T> inline void tuple_map(std::tuple<T...>& t, F f) {
 	tuple_map(t, f, std::index_sequence_for<T...>{});
@@ -155,7 +169,7 @@ namespace fc {
 	return Tuple(seq{}, t);
   }
   template <typename... E, typename F> constexpr void apply_each(F&& f, E&&... e) {
-	Exp{((void)f(std::forward<E>(e)), 0)...};
+	Exp{ ((void)f(std::forward<E>(e)), 0)... };
   }
   template <typename... E, typename F, typename R>
   constexpr auto tuple_map_reduce_impl(F&& f, R&& reduce, E&&... e) { return reduce(f(std::forward<E>(e))...); }
@@ -170,7 +184,7 @@ namespace fc {
 	auto fun = [&](auto... e) { return tuple_map_reduce_impl(map, reduce, e...); }; return std::apply(fun, m);
   }
   template <typename F, typename... M, typename M1> constexpr auto Tuple(M1 m1, M... m) {
-	if constexpr (std::is_same<M1, F>::value) return Tuple<F>(m...);
+	if __CONSTEXPR (std::is_same<M1, F>::value) return Tuple<F>(m...);
 	else return std::tuple_cat(std::make_tuple(m1), Tuple<F>(m...));
   }
   template <typename F, typename... M> constexpr auto tuple_filter(const std::tuple<M...>& m) {
@@ -192,6 +206,6 @@ namespace fc {
 	sizeof...(T)> {};
   template <typename T, typename E> struct typelist_embeds_any_ref_of: public std::false_type {};
   template <typename U, typename... T>
-  struct typelist_embeds_any_ref_of<typelist<T...>, U> : public typelist_embeds<typelist<std::decay_t<T>...>, std::decay_t<U>> {};
+  struct typelist_embeds_any_ref_of<typelist<T...>, U>: public typelist_embeds<typelist<std::decay_t<T>...>, std::decay_t<U>> {};
 }
 #endif // TUPLE_HPP

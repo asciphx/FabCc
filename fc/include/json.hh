@@ -489,11 +489,7 @@ static void to_json(json::Json& c, const std::vector<T>* v) {
 }
 static void to_json(json::Json& c, const std::vector<std::string>* v) {
   fc::Buf b(128); b << '['; for (size_t i = 0; i < v->size(); ++i) {
-#ifdef _WIN32
-	  b << '"' << v->at(i) << '"' << ',';
-#else
-	  const std::string* s(&v->at(i)); b << '"' << std::string_view(s->data(), s->size()) << '"' << ',';
-#endif // _WIN32
+	 b << '"' << v->at(i) << '"' << ',';
   }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }

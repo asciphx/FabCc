@@ -28,7 +28,11 @@
 #endif
 namespace std {
 #if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)
+  #define __INLINE inline
+  #define __CONSTEXPR constexpr
 #else//__cplusplus <= 201402L
+  #define __INLINE
+  #define __CONSTEXPR
   template< typename Fn, typename ... Args >
   typename std::enable_if<
 	std::is_member_pointer< typename std::decay< Fn >::type >::value,
