@@ -7,11 +7,19 @@ else()
 	message(STATUS "selected to ${CMAKE_BUILD_TYPE}")
 endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
+include(CheckIncludeFileCXX)
+check_include_file_cxx(string_view HAS_STRING_VIEW)
+if (HAS_STRING_VIEW)
+    set(STANDARD 17)
+else ()
+    set(STANDARD 14)
+endif ()
+message(STATUS "Build STANDARD: c++${STANDARD}")
 if (MSVC)
-	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++14 )#只有是Release才会是O2優化，否則會被覆写
+	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++${STANDARD} )#只有是Release才会是O2優化，否則會被覆写
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else ()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${STANDARD} -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
 	add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE)
 endif ()
 include_directories(fc/include)#添加掃描的頭文件目錄
