@@ -57,7 +57,7 @@ namespace fc {
 	  value.erase(0, f + (unsigned int)boundary.length() + 2); std::string s(64, 0); _:;
 	  if (value.size() > 2) {
 		f = value.find(boundary);
-		s = value.substr(0, f - 0xf).b2v();
+		s = value.substr(0, f - 0xf).b2s();
 		params.emplace_back(p_s(s));
 		value.erase(0, f + (unsigned int)boundary.length() + 2); goto _;
 	  }

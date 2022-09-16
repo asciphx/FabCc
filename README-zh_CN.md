@@ -25,6 +25,7 @@
 - 支持网页版Postman，地址是127.0.0.1:8080/test.html
 - Json集成于【[coost](https://coostdocs.gitee.io/cn/co/json/)】, 并支持序列化与反序列化
 - 具备设计借鉴于rust语言风格的box，因此无需使用裸指针
+- 现在最低编译器版本支持到了c++11
 
 ## 仍在开发中
 - [x] 路由大括号表达式

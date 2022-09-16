@@ -2,7 +2,7 @@
 #define LEXICAL_CAST_H
 #include <type_traits>
 #include <string>
-#include <string_view>
+#include <hpp/string_view.hpp>
 #include <stdexcept>
 #include <buf.hh>
 namespace std {

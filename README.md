@@ -24,6 +24,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - Support the web version of Postman, the address is 127.0.0.1:8080/test.html
 - Json integrated in[[coost](https://coostdocs.github.io/cn/co/json/)], and supports serialization and deserialization
 - box with design style from the rust language, so there is no need to use naked pointers
+- Now the minimum compiler supports the c++11 version
 
 ## Still under development
 - [x] Processing of routing brace

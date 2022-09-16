@@ -254,16 +254,23 @@ namespace json {
 	  Json& r = this->get(std::forward<T>(v)); return r.is_null() ? r : r.get(std::forward<X>(x)...);
 	}
 	template <typename T>
-	inline void get_to(T& $) {
-	  if constexpr (is_box<T>::value) {
+	inline void get_to(box<T>& $) {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
 		if (_h->type == t_object) from_json(this, $.p);
-	  } else if constexpr (fc::is_vector<T>::value) {
+	}
+	template <typename T>
+	inline void get_to(vec<T>& $) {
 		for (u32 i = 0; i < this->array_size(); ++i) { this->get(i).get_to($[i]); }
-	  } else {
+	}
+	template <typename T>
+	inline void get_to(T& $) {
 		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, &$); return; }
 		if (_h->type == t_object) from_json(this, &$);
-	  }
+	}
+	template <typename T>
+	inline void get_to(T* $) {
+		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $); return; }
+		if (_h->type == t_object) from_json(this, $);
 	}
 	inline void get_to(bool& $) { $ = this->as_bool(); }
 	inline void get_to(float& $) { $ = static_cast<float>(this->as_double()); }

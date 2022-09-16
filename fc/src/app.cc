@@ -72,7 +72,7 @@ namespace fc {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-	std::string g(1, static_cast<char>(m) + 0x30); g += r.b2v();
+	std::string g(1, static_cast<char>(m) + 0x30); g.append(r.c_str(), r.size());
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
 	  it->second(req, res);
 	} else throw err::not_found();
@@ -119,7 +119,7 @@ namespace fc {
 			  res.file_size = statbuf_.st_size; res.code = 200;
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
 				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
-				ss = content_types->at(extension); res.add_header(RES_CT, ss);
+				ss = content_types->at(extension).data(); res.add_header(RES_CT, ss);
 				std::shared_ptr<file_sptr> __;
 				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
 				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {

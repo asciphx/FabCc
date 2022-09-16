@@ -1,11 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <string>
-#if _HAS_CXX17==0 || !defined(_HAS_CXX17)
-#    define string_view string
-#else
-#include <string_view>
-#endif
+#include <hpp/string_view.hpp>
 #if defined(_MSC_VER) || defined(_WIN32)
 #include <locale.h>
 #define WIN32_LEAN_AND_MEAN

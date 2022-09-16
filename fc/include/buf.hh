@@ -2,7 +2,7 @@
 #define BUF_HH
 #include <cstring>
 #include <string>
-#include <string_view>
+#include <hpp/string_view.hpp>
 #include <ostream>
 #include <sstream>
 #include <iomanip>
@@ -50,7 +50,6 @@ namespace fc {
 	  if (back_ - end_ < n) reserve(cap_ + (unsigned int)n); memcpy(end_, p, n); end_ += n; return *this;
 	}
 	_INLINE std::string b2s() const { return std::string(data_, end_ - data_); };
-	_INLINE std::string_view b2v() const { return std::string_view(data_, end_ - data_); };
 	_INLINE const char* data() const { return data_; };
 	_INLINE const char* c_str() const { end_[0] = 0; return data_; };
 	_INLINE char& operator[](unsigned int i) const { return data_[i]; }

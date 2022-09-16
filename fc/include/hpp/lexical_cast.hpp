@@ -2,7 +2,7 @@
 #define LEXICAL_CAST_HPP
 #include <type_traits>
 #include <string>
-#include <string_view>
+#include <hpp/string_view.hpp>
 #include <stdexcept>
 #include <string.h>
 #include <buf.hh>
