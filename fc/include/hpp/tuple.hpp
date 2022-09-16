@@ -9,25 +9,25 @@
 namespace std {
   template <typename _Tp> __INLINE constexpr size_t tuple_size_v = tuple_size<_Tp>::value;
   namespace detail {
-	template <class Fn, class T, std::size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, std::index_sequence<I...>) {
-	  return std::invoke(std::forward<Fn>(f), std::get<I>(std::forward<T>(t))...);
+	template <class Fn, class T, size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, index_sequence<I...>) {
+	  return invoke(forward<Fn>(f), get<I>(forward<T>(t))...);
 	}
   }
   template <class Fn, class T> constexpr decltype(auto) apply(Fn&& f, T&& t) {
-	return detail::apply_impl(std::forward<Fn>(f), std::forward<T>(t), std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<T>>>{});
+	return detail::apply_impl(forward<Fn>(f), forward<T>(t), make_index_sequence<tuple_size_v<remove_reference_t<T>>>{});
   }
 }
 #endif
 namespace fc {
   using Expand = int[];
 #define Exp (void)fc::Expand
-  template <typename T, typename Fn, std::size_t... I>
+  template <typename T, typename Fn, size_t... I>
   constexpr void ForEachTuple(const T& t, Fn&& fn, std::index_sequence<I...>) { Exp{ ((void)fn(std::get<I>(t)), 0)... }; }
   template <typename T, typename Fn>
   constexpr void ForEachField(T* t, Fn&& fn) {
 	ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<std::tuple_size_v<decltype(T::Tuple)>>{});
   }
-  template <std::size_t I, typename T, typename Fn>
+  template <size_t I, typename T, typename Fn>
   constexpr void ForEachField(T* t, Fn&& fn) { ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<I>{}); }
 
   template <typename T> constexpr inline auto Tuple() { return std::make_tuple(); }
@@ -161,7 +161,7 @@ namespace fc {
 	using ret = typename tuple_filter_sequence<F, std::tuple<T...>, std::index_sequence<I...>,
 	  std::index_sequence<R...>>::ret;
   };
-  template <std::size_t... I, typename T>
+  template <size_t... I, typename T>
   decltype(auto) Tuple(std::index_sequence<I...>, T&& t) { return std::make_tuple(std::get<I>(t)...); }
   template <template <class> class F, typename T> decltype(auto) tuple_filter(T&& t) {
 	using seq = typename tuple_filter_sequence<
