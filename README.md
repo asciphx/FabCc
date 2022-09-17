@@ -10,6 +10,7 @@
 [release-link]: https://github.com/asciphx/FabCc/releases
 Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by concise, fast, practical, reactive, functional.
 ## Features
+- Now the minimum compiler supports the c++14 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
 - Can add, delete, modify and query the route
 - Use the global timer task to control some things, such as shutting down the server when it expires
 - Supports asymmetric coroutines similar to stackless coroutines, such as Python's generator, and provides the yield method for transfer execution
@@ -24,7 +25,6 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - Support the web version of Postman, the address is 127.0.0.1:8080/test.html
 - Json integrated in[[coost](https://coostdocs.github.io/cn/co/json/)], and supports serialization and deserialization
 - box with design style from the rust language, so there is no need to use naked pointers
-- Now the minimum compiler supports the c++14 version
 
 ## Still under development
 - [x] Processing of routing brace
