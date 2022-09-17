@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <fstream>
 #include <set>
 #include <h/common.h>
 #include <req-res.hh>

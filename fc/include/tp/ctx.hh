@@ -31,72 +31,48 @@ namespace ctx {
   struct forced_unwind {
 	fcontext_t fctx{ nullptr }; forced_unwind() = default; forced_unwind(fcontext_t fctx_): fctx(fctx_) {}
   };
-  inline transfer_t context_unwind(transfer_t t) { throw forced_unwind(t.fctx); return { nullptr, nullptr }; }
+  inline transfer_t ctx_unwind(transfer_t t) { throw forced_unwind(t.fctx); return { nullptr, nullptr }; }
   template< typename Rec >
-  transfer_t context_exit(transfer_t t) noexcept {
+  transfer_t ctx_exit(transfer_t t) noexcept {
 	Rec* rec = static_cast<Rec*>(t.data); rec->deallocate(); return { nullptr, nullptr }; // destroy context stack
   }
-  struct preallocated {
-	void* sp; size_t size; stack_context sctx;
-	preallocated(void* sp_, size_t size_, stack_context sctx_) noexcept: sp(sp_), size(size_), sctx(sctx_) {}
-  };
   template< typename Rec >
-  void context_entry(transfer_t t) noexcept {
+  void ctx_entry(transfer_t t) noexcept {
 	// transfer control structure to the context-stack
 	Rec* rec = static_cast<Rec*>(t.data); assert(nullptr != t.fctx); assert(nullptr != rec);
-	try {// jump back to `create_context()`
+	try {// jump back to `add_ctx()`
 	  t = jump_fcontext(t.fctx, nullptr); t.fctx = rec->run(t.fctx);// start executing
 	} catch (forced_unwind const& ex) { t = { ex.fctx, nullptr }; }
 	assert(nullptr != t.fctx); // destroy context-stack of `this`context on next context
-	ontop_fcontext(t.fctx, rec, context_exit< Rec >);
+	ontop_fcontext(t.fctx, rec, ctx_exit< Rec >);
   }
   template< typename Ctx, typename Fn >
-  transfer_t context_ontop(transfer_t t) {
+  transfer_t ctx_ontop(transfer_t t) {
 	auto p = static_cast<std::tuple< Fn > *>(t.data); assert(nullptr != p);
 	typename std::decay< Fn >::type fn = std::get< 0 >(*p); t.data = nullptr; Ctx c{ t.fctx };
 	// execute function, pass continuation via reference
 	c = fn(std::move(c)); return { std::exchange(c.fctx_, nullptr), nullptr };
   }
   template< typename Record, typename Fn >
-  fcontext_t create_context1(fixedsize_stack&& salloc, Fn&& fn) {
+  fcontext_t add_ctx(fixedsize_stack&& salloc, Fn&& fn) {
 	auto sctx = salloc.allocate();
-	// reserve space for control structure
+	// reserve space for control structure控制结构预留空间
 	void* storage = reinterpret_cast<void*>(
 			(reinterpret_cast<uintptr_t>(sctx.sp) - static_cast<uintptr_t>(sizeof(Record)))
 			& ~static_cast<uintptr_t>(0xff));
-	// placment new for control structure on context stack
+	// placment new for control structure on context stack在上下文堆栈上放置新的控件结构
 	Record* record = new (storage) Record{
 			sctx, std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn) };
-	// 64byte gab between control structure and stack top
-	// should be 16byte aligned
+	// 64byte gab between control structure and stack top控制结构和栈顶之间的64字节gab
+	// should be 16byte aligned应该16字节对齐
 	void* stack_top = reinterpret_cast<void*>(
 			reinterpret_cast<uintptr_t>(storage) - static_cast<uintptr_t>(64));
 	void* stack_bottom = reinterpret_cast<void*>(
 			reinterpret_cast<uintptr_t>(sctx.sp) - static_cast<uintptr_t>(sctx.size));
-	// create fast-context
+	// create fast-context创建快速上下文
 	const size_t size = reinterpret_cast<uintptr_t>(stack_top) - reinterpret_cast<uintptr_t>(stack_bottom);
-	const fcontext_t fctx = make_fcontext(stack_top, size, &context_entry< Record >);
-	assert(nullptr != fctx); // transfer control structure to context-stack
-	return jump_fcontext(fctx, record).fctx;
-  }
-  template< typename Record, typename Fn >
-  fcontext_t create_context2(preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) {
-	// reserve space for control structure
-	void* storage = reinterpret_cast<void*>(
-			(reinterpret_cast<uintptr_t>(palloc.sp) - static_cast<uintptr_t>(sizeof(Record)))
-			& ~static_cast<uintptr_t>(0xff));
-	// placment new for control structure on context-stack
-	Record* record = new (storage) Record{
-			palloc.sctx, std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn) };
-	// 64byte gab between control structure and stack top
-	void* stack_top = reinterpret_cast<void*>(
-			reinterpret_cast<uintptr_t>(storage) - static_cast<uintptr_t>(64));
-	void* stack_bottom = reinterpret_cast<void*>(
-			reinterpret_cast<uintptr_t>(palloc.sctx.sp) - static_cast<uintptr_t>(palloc.sctx.size));
-	// create fast-context
-	const size_t size = reinterpret_cast<uintptr_t>(stack_top) - reinterpret_cast<uintptr_t>(stack_bottom);
-	const fcontext_t fctx = make_fcontext(stack_top, size, &context_entry< Record >);
-	assert(nullptr != fctx); // transfer control structure to context-stack
+	const fcontext_t fctx = make_fcontext(stack_top, size, &ctx_entry< Record >);
+	assert(nullptr != fctx); // transfer control structure to context-stack将控制结构传输到上下文堆栈
 	return jump_fcontext(fctx, record).fctx;
   }
   template< typename Ctx, typename Fn >
@@ -119,80 +95,71 @@ namespace ctx {
 	  Ctx c{ fctx }; c = std::invoke(fn_, std::move(c)); return std::exchange(c.fctx_, nullptr);
 	}
   };
-  class continuation {
+  class co {
   private:
 	template<typename Ctx, typename Fn> friend class record;
-	template<typename Ctx, typename Fn> friend transfer_t context_ontop(transfer_t);
+	template<typename Ctx, typename Fn> friend transfer_t ctx_ontop(transfer_t);
 	fcontext_t  fctx_{ nullptr };
 	template<typename Fn>
-	friend continuation callcc(std::allocator_arg_t, fixedsize_stack&&, Fn&&);
-	template<typename Fn>
-	friend continuation callcc(std::allocator_arg_t, preallocated, fixedsize_stack&&, Fn&&);
+	friend co callcc(std::allocator_arg_t, fixedsize_stack&&, Fn&&);
   public:
-	continuation(fcontext_t fctx) noexcept: fctx_{ fctx } {}
-	continuation() noexcept = default;
-
-	template<typename Fn, typename = std::disable_overload< continuation, Fn >>
-	continuation(Fn&& fn): continuation{ std::allocator_arg, fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
+	co(fcontext_t fctx) noexcept: fctx_{ fctx } {}
+	co() noexcept = default;
+	
+	template<typename Fn, typename = std::disable_overload< co, Fn >>
+	co(fixedsize_stack& salloc): co{ std::allocator_arg, salloc } {}
+	template<typename Fn, typename = std::disable_overload< co, Fn >>
+	co(Fn&& fn): co{ std::allocator_arg, fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
 	template<typename Fn>
-	continuation(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) :
-	  fctx_{ create_context1< record< continuation, Fn > >(
-			  std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
-	template<typename Fn>
-	continuation(std::allocator_arg_t, preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) :
-	  fctx_{ create_context2< record< continuation, Fn > >(
-			  palloc, std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
+	co(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) :
+	  fctx_{ add_ctx< record< co, Fn > >(std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
 	//fiber
-	~continuation() {
+	~co() {
 	  if (BOOST_UNLIKELY(nullptr != fctx_)) {
-		ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, context_unwind);
+		ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, ctx_unwind);
 	  }
 	}
-	continuation(continuation&& other) noexcept { swap(other); }
-	continuation& operator=(continuation&& other) noexcept {
-	  if (BOOST_LIKELY(this != &other)) { continuation tmp = std::move(other); swap(tmp); } return *this;
+	co(co&& other) noexcept { swap(other); }
+	co& operator=(co&& other) noexcept {
+	  if (BOOST_LIKELY(this != &other)) { co tmp = std::move(other); swap(tmp); } return *this;
 	}
-	continuation(continuation const& other) noexcept = delete;
-	continuation& operator=(continuation const& other) noexcept = delete;
-	inline continuation yield()& { return std::move(*this).resume(); }
+	co(co const& other) noexcept = delete;
+	co& operator=(co const& other) noexcept = delete;
+	inline co yield()& { return std::move(*this).resume(); }
 	//same as yield, but not inline
-	continuation resume()& { return std::move(*this).resume(); }
-	continuation resume()&& {
+	co resume()& { return std::move(*this).resume(); }
+	co resume()&& {
 	  assert(nullptr != fctx_); return { jump_fcontext(std::exchange(fctx_, nullptr), nullptr).fctx };
 	}
 	template< typename Fn >
-	continuation resume_with(Fn&& fn)& { return std::move(*this).resume_with(std::forward< Fn >(fn)); }
+	co resume_with(Fn&& fn)& { return std::move(*this).resume_with(std::forward< Fn >(fn)); }
 	template< typename Fn >
-	continuation resume_with(Fn&& fn)&& {
+	co resume_with(Fn&& fn)&& {
 	  assert(nullptr != fctx_); auto p = std::make_tuple(std::forward< Fn >(fn));
-	  return { ontop_fcontext(std::exchange(fctx_, nullptr), &p, context_ontop< continuation, Fn >).fctx };
+	  return { ontop_fcontext(std::exchange(fctx_, nullptr), &p, ctx_ontop< co, Fn >).fctx };
 	}
 	explicit operator bool() const noexcept { return nullptr != fctx_; }
 	bool operator!() const noexcept { return nullptr == fctx_; }
-	bool operator<(continuation const& other) const noexcept { return fctx_ < other.fctx_; }
+	bool operator<(co const& other) const noexcept { return fctx_ < other.fctx_; }
 	template< typename charT, class traitsT >
 	friend std::basic_ostream< charT, traitsT >&
-	  operator<<(std::basic_ostream< charT, traitsT >& os, continuation const& other) {
+	  operator<<(std::basic_ostream< charT, traitsT >& os, co const& other) {
 	  if (nullptr != other.fctx_) { return os << other.fctx_; } else { return os << "{not-a-context}"; }
 	}
-	void swap(continuation& other) noexcept { std::swap(fctx_, other.fctx_); }
+	void swap(co& other) noexcept { std::swap(fctx_, other.fctx_); }
   };
   template<typename Fn>
-  continuation callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(stack_traits::minimum_size())) {
+  co callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(stack_traits::minimum_size())) {
 	return callcc(std::allocator_arg, std::forward<fixedsize_stack>(s), std::forward<Fn>(fn));
   };
   template<typename Fn>
-  continuation callcc(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) {
-	return continuation{ create_context1<record<continuation, Fn>>(std::forward<fixedsize_stack>(salloc), std::forward< Fn >(fn)) }.resume();
+  co callcc(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) {
+	return co{ add_ctx<record<co, Fn>>(std::forward<fixedsize_stack>(salloc), std::forward< Fn >(fn)) }.resume();
   }
-  template<typename Fn>
-  continuation callcc(std::allocator_arg_t, preallocated palloc, fixedsize_stack&& salloc, Fn&& fn) {
-	return continuation{ create_context2<record<continuation, Fn>>(palloc, std::forward<fixedsize_stack>(salloc), std::forward<Fn>(fn)) }.resume();
-  };
-  typedef continuation fiber;
+  typedef co fiber;
 }
 namespace fc {
-  typedef ctx::continuation co;
+  typedef ctx::co co;
 }
 #if defined _MSC_VER
 # pragma warning(pop)

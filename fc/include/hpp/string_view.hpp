@@ -13,8 +13,7 @@
 #include <istream>
 namespace std {
   class string_view {
-	const char* data_;
-	size_t length_;
+	const char* data_; size_t length_;
   public:
 	static constexpr size_t npos = size_t(-1);
 	constexpr string_view() noexcept: data_(nullptr), length_(0) {}
@@ -29,17 +28,14 @@ namespace std {
 	explicit operator basic_string<char, char_traits<char>, allocator<char>>() const {
 	  return basic_string<char, char_traits<char>, allocator<char>>(data_, length_);
 	}
-	const char* begin() const noexcept {  return data_; }
+	const char* begin() const noexcept { return data_; }
 	const char* end() const noexcept { return data_ + length_; }
 	size_t size() const { return length_; }
 	size_t length() const { return length_; }
 	bool empty() const noexcept { return length_ == 0; }
 	const char& operator[](size_t pos) const { return data_[pos]; }
 	const char& at(size_t pos) const {
-	  if (pos >= length_) {
-		throw out_of_range("pos exceeds length");
-	  }
-	  return data_[pos];
+	  if (pos >= length_) { throw out_of_range("pos exceeds length"); } return data_[pos];
 	}
 	const char& front() const { return data_[0]; }
 	const char& back()  const { return data_[length_ - 1]; }
@@ -58,83 +54,80 @@ namespace std {
 	  return rc != 0 ? rc : (length_ == s.length() ? 0 : length_ < s.length() ? -1 : 1);
 	}
 	friend basic_ostream<char>& operator<<(basic_ostream<char>& os, const string_view& sv) {
-	  os.write(sv.data_, sv.length_);
-	  return os;
+	  os.write(sv.data_, sv.length_); return os;
 	}
-	friend string& operator+=(string& s, const string_view& _v) {
-	  s += _v.data_; return s;
-	};
+	friend string& operator+=(string& s, const string_view& _v) { s.append(_v.data_, _v.length_); return s; };
   };
   // ==
-  inline bool operator==(const string_view& l,const string_view& r) noexcept {
+  inline bool operator==(const string_view& l, const string_view& r) noexcept {
 	return l.compare(r) == 0;
   }
-  inline bool operator==(const string_view& l,const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
+  inline bool operator==(const string_view& l, const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
 	return l.compare(r) == 0;
   }
-  inline bool operator==(const basic_string<char, char_traits<char>, allocator<char>>& l,const string_view& r) noexcept {
+  inline bool operator==(const basic_string<char, char_traits<char>, allocator<char>>& l, const string_view& r) noexcept {
 	return r.compare(l) == 0;
   }
-  inline bool operator==(const string_view& l,const char* r) noexcept {
+  inline bool operator==(const string_view& l, const char* r) noexcept {
 	return l.compare(r) == 0;
   }
-  inline bool operator==(const char* l,const string_view& r) noexcept {
+  inline bool operator==(const char* l, const string_view& r) noexcept {
 	return r.compare(l) == 0;
   }
   // !=
-  inline bool operator!=(const string_view& l,const string_view& r) noexcept {
+  inline bool operator!=(const string_view& l, const string_view& r) noexcept {
 	return l.compare(r) != 0;
   }
-  inline bool operator!=(const string_view& l,const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
+  inline bool operator!=(const string_view& l, const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
 	return l.compare(r) != 0;
   }
-  inline bool operator!=(const basic_string<char, char_traits<char>, allocator<char>>& l,const string_view& r) noexcept {
+  inline bool operator!=(const basic_string<char, char_traits<char>, allocator<char>>& l, const string_view& r) noexcept {
 	return r.compare(l) != 0;
   }
-  inline bool operator!=(const string_view& l,const char* r) noexcept {
+  inline bool operator!=(const string_view& l, const char* r) noexcept {
 	return l.compare(r) != 0;
   }
-  inline bool operator!=(const char* l,const string_view& r) noexcept {
+  inline bool operator!=(const char* l, const string_view& r) noexcept {
 	return r.compare(l) != 0;
   }
   // <=
-  inline bool operator<=(const string_view& l,const string_view& r) noexcept {
+  inline bool operator<=(const string_view& l, const string_view& r) noexcept {
 	return l.compare(r) <= 0;
   }
-  inline bool operator<=(const string_view& l,const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
+  inline bool operator<=(const string_view& l, const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
 	return l.compare(r) <= 0;
   }
-  inline bool operator<=(const basic_string<char, char_traits<char>, allocator<char>>& l,const string_view& r) noexcept {
+  inline bool operator<=(const basic_string<char, char_traits<char>, allocator<char>>& l, const string_view& r) noexcept {
 	return r.compare(l) >= 0;
   }
   // <
-  inline bool operator<(const string_view& l,const string_view& r) noexcept {
+  inline bool operator<(const string_view& l, const string_view& r) noexcept {
 	return l.compare(r) < 0;
   }
-  inline bool operator<(const string_view& l,const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
+  inline bool operator<(const string_view& l, const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
 	return l.compare(r) < 0;
   }
-  inline bool operator<(const basic_string<char, char_traits<char>, allocator<char>>& l,const string_view& r) noexcept {
+  inline bool operator<(const basic_string<char, char_traits<char>, allocator<char>>& l, const string_view& r) noexcept {
 	return r.compare(l) > 0;
   }
   // >=
-  inline bool operator>=(const string_view& l,const string_view& r) noexcept {
+  inline bool operator>=(const string_view& l, const string_view& r) noexcept {
 	return l.compare(r) >= 0;
   }
-  inline bool operator>=(const string_view& l,const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
+  inline bool operator>=(const string_view& l, const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
 	return l.compare(r) >= 0;
   }
-  inline bool operator>=(const basic_string<char, char_traits<char>, allocator<char>>& l,const string_view& r) noexcept {
+  inline bool operator>=(const basic_string<char, char_traits<char>, allocator<char>>& l, const string_view& r) noexcept {
 	return r.compare(l) <= 0;
   }
   // >
-  inline bool operator>(const string_view& l,const string_view& r) noexcept {
+  inline bool operator>(const string_view& l, const string_view& r) noexcept {
 	return l.compare(r) > 0;
   }
-  inline bool operator>(const string_view& l,const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
+  inline bool operator>(const string_view& l, const basic_string<char, char_traits<char>, allocator<char>>& r) noexcept {
 	return l.compare(r) > 0;
   }
-  inline bool operator>(const basic_string<char, char_traits<char>, allocator<char>>& l,const string_view& r) noexcept {
+  inline bool operator>(const basic_string<char, char_traits<char>, allocator<char>>& l, const string_view& r) noexcept {
 	return r.compare(l) < 0;
   }
   template<>

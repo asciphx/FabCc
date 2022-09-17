@@ -24,7 +24,7 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   Tcp& Tcp::setThread(char n) {
-	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? cpu : 2; return *this;
+	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   bool Tcp::init() {

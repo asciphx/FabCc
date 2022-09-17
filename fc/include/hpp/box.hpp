@@ -7,16 +7,16 @@ template <typename T>
 class box {
   bool b;
   friend std::string& operator<<(std::string& s, box<T>* c) {
-	c->p == nullptr ? s += "null" : s << c->p; return s;
+	c->p == nullptr ? s.append("null", 4) : s << c->p; return s;
   };
   friend std::string& operator<<(std::string& s, const box<T>* c) {
-	c->p == nullptr ? s += "null" : s << c->p; return s;
+	c->p == nullptr ? s.append("null", 4) : s << c->p; return s;
   };
   friend std::string& operator<<(std::string& s, box<T>& c) {
-	c.p == nullptr ? s += "null" : s << c.p; return s;
+	c.p == nullptr ? s.append("null", 4) : s << c.p; return s;
   };
   friend std::string& operator<<(std::string& s, const box<T>& c) {
-	c.p == nullptr ? s += "null" : s << c.p; return s;
+	c.p == nullptr ? s.append("null", 4) : s << c.p; return s;
   };
 public:
   T* p;
@@ -32,8 +32,8 @@ public:
   template<typename... U>
   box(U... t) noexcept: p(new T{ t... }), b(true) {}
   ~box() { if (b)delete p, p = nullptr; }
-  void operator = (T* s) { if (b)delete p; p = s; b=false; }
-  void operator = (T& s) { if (b)delete p; p = &s; b=false; }
+  void operator = (T* s) { if (b)delete p; p = s; b = false; }
+  void operator = (T& s) { if (b)delete p; p = &s; b = false; }
   void operator = (T&& s) { if (b)delete p; p = new T(s); }
   T& operator() () { return *p; }
   const T& operator() ()const { return *p; }

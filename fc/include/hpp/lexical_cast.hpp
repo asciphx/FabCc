@@ -105,7 +105,7 @@ namespace std {
 	if ((c[0] == '0' && c[1] == 0) || (c[0] == 'f' && c[1] == 'a' && c[2] == 'l' && c[3] == 's' && c[4] == 'e' && c[5] == 0))
 	  return false; throw std::invalid_argument("");
   }
-  template <> _NODISCARD
+  template <> _NODISCARD _INLINE
 	char lexical_cast<char>(const char* c) {
 	char r; if (*c != 0x2D) {
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument(""); r = *c - 0x30;
@@ -352,7 +352,7 @@ namespace std {
 	bool lexical_cast<bool>(std::string& s) {
 	if (s == "1" || s == "true")return true; if (s == "0" || s == "false")return false; throw std::invalid_argument("");
   }
-  template <> _NODISCARD
+  template <> _NODISCARD _INLINE
 	char lexical_cast<char>(std::string& s) {
 	const char* c = s.c_str(); char r;
 	if (*c != 0x2D) {
