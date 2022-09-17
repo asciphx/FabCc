@@ -33,8 +33,7 @@ int main() {
   op = {};
   std::cout << op.value_or("null null") << '\n';
   std::map<std::optional<int>, std::string> m = { {3, "three"}, {5, "five"}, {std::nullopt, "null"}, {1, "one"} };
-  for (const auto& p : m) std::cout << p.first.value_or(-100) << " : " << p.second << '\n';
-
+  for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << m.size() << std::endl;
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
 	std::cout << "entered first time: " << data << std::endl;
