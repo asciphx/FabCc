@@ -5,7 +5,7 @@
 #include <time.h>
 #include <iostream>
 #include <str_map.hh>
-//#include <llhttp.h>
+#include <map>
 #include <buf.hh>
 #include <json.hh>
 #include <tp/ctx.hh>
@@ -26,24 +26,15 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
-  int a;
-  ctx::continuation c = ctx::callcc(
-	  [&a](ctx::continuation&& c) {
-	  a = 0;
-	  int b = 1;
-	  for (;;) {
-		c = c.yield();
-		int next = a + b;
-		a = b;
-		b = next;
-	  }
-	  return std::move(c);
-	  });
-  for (int j = 0; j < 15; ++j) {
-	std::cout << a << " ";
-	c = c.yield();
-  }
-  std::cout << std::endl;
+  std::optional<std::string> op;
+  std::cout << op.value_or("null null") << '\n';
+  op = "Hello, world!";
+  std::cout << op.value_or("null null") << '\n';
+  op = {};
+  std::cout << op.value_or("null null") << '\n';
+  std::map<std::optional<int>, std::string> m = { {3, "three"}, {5, "five"}, {std::nullopt, "null"}, {1, "one"} };
+  for (const auto& p : m) std::cout << p.first.value_or(-100) << " : " << p.second << '\n';
+
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
 	std::cout << "entered first time: " << data << std::endl;

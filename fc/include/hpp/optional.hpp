@@ -32,6 +32,7 @@
 #endif
 #endif
 
+namespace std {
 #if (defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 9 &&              \
      !defined(__clang__))
 #define TL_OPTIONAL_GCC49
@@ -66,7 +67,6 @@
      !defined(__clang__))
 #ifndef TL_GCC_LESS_8_TRIVIALLY_COPY_CONSTRUCTIBLE_MUTEX
 #define TL_GCC_LESS_8_TRIVIALLY_COPY_CONSTRUCTIBLE_MUTEX
-namespace std {
   namespace detail {
       template<class T>
       struct is_trivially_copy_constructible : std::is_trivially_copy_constructible<T>{};
@@ -102,19 +102,12 @@ namespace std {
 #else
 #define TL_OPTIONAL_11_CONSTEXPR constexpr
 #endif
-#ifndef TL_MONOSTATE_INPLACE_MUTEX
-#define TL_MONOSTATE_INPLACE_MUTEX
 /// Used to represent an optional with no data; essentially a bool
 class monostate {};
 
 ///  A tag type to tell optional to construct its value in-place
-struct in_place_t {
-  explicit in_place_t() = default;
-};
+#include <tp/c++.h>
 /// A tag to tell optional to construct its value in-place
-static constexpr in_place_t in_place{};
-#endif
-
 template <class T> class optional;
 
 namespace detail {

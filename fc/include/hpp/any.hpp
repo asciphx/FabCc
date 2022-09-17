@@ -366,24 +366,6 @@ namespace std {
 	}
   }
 
-  struct in_place_t { // tag used to select a constructor which initializes a contained object in place
-	explicit in_place_t() = default;
-  };
-  __INLINE constexpr in_place_t in_place{};
-  template <class>
-  struct in_place_type_t { // tag that selects a type to construct in place
-	explicit in_place_type_t() = default;
-  };
-  template <class _Ty>
-  inline constexpr in_place_type_t<_Ty> in_place_type{};
-
-  template <size_t>
-  struct in_place_index_t { // tag that selects the index of a type to construct in place
-	explicit in_place_index_t() = default;
-  };
-  template <size_t _Idx>
-  inline constexpr in_place_index_t<_Idx> in_place_index{};
-
   template <class _ValueType, class... _Types>
   [[nodiscard]] any make_any(_Types&&... _Args) { // construct an any containing a _ValueType initialized with _Args...
 	return any{ in_place_type<_ValueType>, std::forward<_Types>(_Args)... };
