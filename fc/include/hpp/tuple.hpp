@@ -12,9 +12,15 @@ namespace std {
 	template <class Fn, class T, size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, index_sequence<I...>) {
 	  return invoke(forward<Fn>(f), get<I>(forward<T>(t))...);
 	}
+	template <class T, class Tuple, size_t... I>
+	constexpr T make_from_tuple_impl(Tuple&& t, index_sequence<I...>) { return T(get<I>(forward<Tuple>(t))...); }
   }
   template <class Fn, class T> constexpr decltype(auto) apply(Fn&& f, T&& t) {
 	return detail::apply_impl(forward<Fn>(f), forward<T>(t), make_index_sequence<tuple_size_v<remove_reference_t<T>>>{});
+  }
+  template <class T, class Tuple>
+  constexpr T make_from_tuple(Tuple&& t) {
+	return detail::make_from_tuple_impl<T>(forward<Tuple>(t), make_index_sequence<tuple_size_v<remove_reference_t<Tuple>>>{});
   }
 }
 #endif
@@ -184,7 +190,7 @@ namespace fc {
 	auto fun = [&](auto... e) { return tuple_map_reduce_impl(map, reduce, e...); }; return std::apply(fun, m);
   }
   template <typename F, typename... M, typename M1> constexpr auto Tuple(M1 m1, M... m) {
-	if __CONSTEXPR (std::is_same<M1, F>::value) return Tuple<F>(m...);
+	if __CONSTEXPR(std::is_same<M1, F>::value) return Tuple<F>(m...);
 	else return std::tuple_cat(std::make_tuple(m1), Tuple<F>(m...));
   }
   template <typename F, typename... M> constexpr auto tuple_filter(const std::tuple<M...>& m) {

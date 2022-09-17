@@ -1,5 +1,7 @@
 #include <lexical_cast.hh>
 #include <hpp/text.hpp>
+#include <hpp/any.hpp>
+#include <hpp/optional.hpp>
 #include <time.h>
 #include <iostream>
 #include <str_map.hh>
