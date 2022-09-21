@@ -23,6 +23,7 @@
 #include <new>
 #include <type_traits>
 #include <utility>
+#include <tp/c++.h>
 #if defined(_MSC_VER)
 #pragma warning( push )
 #pragma warning( disable: 4582 4583 )
@@ -141,32 +142,13 @@ namespace std {
 #endif
 	// std::invoke from C++17
 	// https://stackoverflow.com/questions/38288042/c11-14-invoke-workaround
-	template <typename Fn, typename... Args,
-#ifdef TL_TRAITS_LIBCXX_MEM_FN_WORKAROUND
-	  typename = enable_if_t<!(is_pointer_to_non_const_member_func<Fn>::value
-							 && is_const_or_const_ref<Args...>::value)>,
-#endif
-	  typename = enable_if_t<std::is_member_pointer<decay_t<Fn>>::value>,
-	  int = 0>
-	constexpr auto invoke(Fn&& f, Args &&... args) noexcept(
-		noexcept(std::mem_fn(f)(std::forward<Args>(args)...)))
-	  -> decltype(std::mem_fn(f)(std::forward<Args>(args)...)) {
-	  return std::mem_fn(f)(std::forward<Args>(args)...);
-	}
-	template <typename Fn, typename... Args,
-	  typename = enable_if_t<!std::is_member_pointer<decay_t<Fn>>::value>>
-	  constexpr auto invoke(Fn&& f, Args &&... args) noexcept(
-		  noexcept(std::forward<Fn>(f)(std::forward<Args>(args)...)))
-	  -> decltype(std::forward<Fn>(f)(std::forward<Args>(args)...)) {
-	  return std::forward<Fn>(f)(std::forward<Args>(args)...);
-	}
 	// std::invoke_result from C++17
 	template <class F, class, class... Us> struct invoke_result_impl;
 	template <class F, class... Us>
 	struct invoke_result_impl<
-	  F, decltype(detail::invoke(std::declval<F>(), std::declval<Us>()...), void()),
+	  F, decltype(std::invoke(std::declval<F>(), std::declval<Us>()...), void()),
 	  Us...> {
-	  using type = decltype(detail::invoke(std::declval<F>(), std::declval<Us>()...));
+	  using type = decltype(std::invoke(std::declval<F>(), std::declval<Us>()...));
 	};
 	template <class F, class... Us>
 	using invoke_result = invoke_result_impl<F, void, Us...>;
@@ -597,21 +579,21 @@ namespace std {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 	template <class F> TL_OPTIONAL_11_CONSTEXPR auto and_then(F&& f)&& {
 	  using result = detail::invoke_result_t<F, T&&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: result(nullopt);
 	}
 	template <class F> constexpr auto and_then(F&& f) const& {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
@@ -619,7 +601,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, const T&&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: result(nullopt);
 	}
 #endif
@@ -631,7 +613,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: result(nullopt);
 	}
 	template <class F>
@@ -639,7 +621,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, T&&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: result(nullopt);
 	}
 	template <class F>
@@ -647,7 +629,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
@@ -656,7 +638,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, const T&&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: result(nullopt);
 	}
 #endif
@@ -798,20 +780,20 @@ namespace std {
 #endif
 	/// Maps the stored value with `f` if there is one, otherwise returns `u`.
 	template <class F, class U> U map_or(F&& f, U&& u)& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u);
 	}
 	template <class F, class U> U map_or(F&& f, U&& u)&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u);
 	}
 	template <class F, class U> U map_or(F&& f, U&& u) const& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F, class U> U map_or(F&& f, U&& u) const&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u);
 	}
 #endif
@@ -819,23 +801,23 @@ namespace std {
 	/// `u` and returns the result.
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u)& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u)();
 	}
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u)&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u)();
 	}
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u) const& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u)();
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u) const&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u)();
 	}
 #endif
@@ -1294,42 +1276,42 @@ namespace std {
   namespace detail {
 #ifdef TL_OPTIONAL_CXX14
 	template <class Opt, class F,
-	  class Ret = decltype(detail::invoke(std::declval<F>(),
+	  class Ret = decltype(std::invoke(std::declval<F>(),
 		*std::declval<Opt>())),
 	  detail::enable_if_t<!std::is_void<Ret>::value>* = nullptr>
 	constexpr auto optional_map_impl(Opt&& opt, F&& f) {
 	  return opt.has_value()
-		? detail::invoke(std::forward<F>(f), *std::forward<Opt>(opt))
+		? std::invoke(std::forward<F>(f), *std::forward<Opt>(opt))
 		: optional<Ret>(nullopt);
 	}
 	template <class Opt, class F,
-	  class Ret = decltype(detail::invoke(std::declval<F>(),
+	  class Ret = decltype(std::invoke(std::declval<F>(),
 		*std::declval<Opt>())),
 	  detail::enable_if_t<std::is_void<Ret>::value>* = nullptr>
 	auto optional_map_impl(Opt&& opt, F&& f) {
 	  if (opt.has_value()) {
-		detail::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
+		std::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
 		return make_optional(monostate{});
 	  }
 	  return optional<monostate>(nullopt);
 	}
 #else
 	template <class Opt, class F,
-	  class Ret = decltype(detail::invoke(std::declval<F>(),
+	  class Ret = decltype(std::invoke(std::declval<F>(),
 		*std::declval<Opt>())),
 	  detail::enable_if_t<!std::is_void<Ret>::value>* = nullptr>
 	constexpr auto optional_map_impl(Opt&& opt, F&& f) -> optional<Ret> {
 	  return opt.has_value()
-		? detail::invoke(std::forward<F>(f), *std::forward<Opt>(opt))
+		? std::invoke(std::forward<F>(f), *std::forward<Opt>(opt))
 		: optional<Ret>(nullopt);
 	}
 	template <class Opt, class F,
-	  class Ret = decltype(detail::invoke(std::declval<F>(),
+	  class Ret = decltype(std::invoke(std::declval<F>(),
 		*std::declval<Opt>())),
 	  detail::enable_if_t<std::is_void<Ret>::value>* = nullptr>
 	auto optional_map_impl(Opt&& opt, F&& f) -> optional<monostate> {
 	  if (opt.has_value()) {
-		detail::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
+		std::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
 		return monostate{};
 	  }
 	  return nullopt;
@@ -1352,21 +1334,21 @@ namespace std {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 	template <class F> TL_OPTIONAL_11_CONSTEXPR auto and_then(F&& f)&& {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: result(nullopt);
 	}
 	template <class F> constexpr auto and_then(F&& f) const& {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
@@ -1374,7 +1356,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 #endif
@@ -1386,7 +1368,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 	template <class F>
@@ -1394,7 +1376,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 	template <class F>
@@ -1402,7 +1384,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
@@ -1411,7 +1393,7 @@ namespace std {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: result(nullopt);
 	}
 #endif
@@ -1555,20 +1537,20 @@ namespace std {
 #endif
 	/// Maps the stored value with `f` if there is one, otherwise returns `u`
 	template <class F, class U> U map_or(F&& f, U&& u)& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u);
 	}
 	template <class F, class U> U map_or(F&& f, U&& u)&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u);
 	}
 	template <class F, class U> U map_or(F&& f, U&& u) const& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F, class U> U map_or(F&& f, U&& u) const&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u);
 	}
 #endif
@@ -1576,23 +1558,23 @@ namespace std {
 	/// `u` and returns the result.
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u)& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u)();
 	}
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u)&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u)();
 	}
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u) const& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), **this)
+	  return has_value() ? std::invoke(std::forward<F>(f), **this)
 		: std::forward<U>(u)();
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F, class U>
 	detail::invoke_result_t<U> map_or_else(F&& f, U&& u) const&& {
-	  return has_value() ? detail::invoke(std::forward<F>(f), std::move(**this))
+	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
 		: std::forward<U>(u)();
 	}
 #endif

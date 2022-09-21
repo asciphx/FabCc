@@ -60,11 +60,8 @@ namespace fc {
   protected:
 	static void read_cb(uv_stream_t* client, ssize_t nread, const uv_buf_t* b);
 	static void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* b);
-	static void write_cb(uv_write_t* wr, int status);
 	static void on_close(uv_handle_t* handle);
 	static void on_conn(uv_stream_t* server, int status);
-	static void on_read(uv_fs_t* req);
-	static void fs_cb(uv_fs_t* req);
   };
 }
 #endif

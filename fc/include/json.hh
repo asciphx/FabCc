@@ -99,9 +99,7 @@ namespace json {
 	~Json() { if (_h) this->reset(); }
 	Json(const Json& v) = delete;
 	void operator=(const Json&) = delete;
-	Json& operator=(Json&& v) {
-	  if (&v != this) { if (_h) this->reset(); _h = v._h; v._h = 0; } return *this;
-	}
+	Json& operator=(Json&& v) { if (&v != this) { if (_h) this->reset(); _h = v._h; v._h = 0; } return *this; }
 	// after this operation, v will be moved and becomes null
 	Json& operator=(Json& v) { return this->operator=(std::move(v)); }
 	// make a duplicate 
@@ -177,7 +175,7 @@ namespace json {
 		case t_int:    return _h->i;
 		case t_uint:   return static_cast<i64>((u64)_h->i);
 		case t_string: return str::to_int64(_h->s);
-		case t_double: return (i64)_h->d;
+		case t_double: return static_cast<i64>(_h->d);
 		case t_bool:   return _h->b ? 1 : 0;
 		}
 	  }
@@ -189,7 +187,7 @@ namespace json {
 		case t_int:    return static_cast<u64>(_h->i);
 		case t_uint:   return static_cast<u64>(_h->i);
 		case t_string: return str::to_uint64(_h->s);
-		case t_double: return (u64)_h->d;
+		case t_double: return static_cast<u64>(_h->d);
 		case t_bool:   return _h->b ? 1 : 0;
 		}
 	  }
@@ -201,7 +199,7 @@ namespace json {
 		case t_int:    return static_cast<i32>(_h->i);
 		case t_uint:   return static_cast<i32>((u64)_h->i);
 		case t_string: return str::to_int32(_h->s);
-		case t_double: return (i32)_h->d;
+		case t_double: return static_cast<i32>(_h->d);
 		case t_bool:   return _h->b ? 1 : 0;
 		}
 	  }
@@ -213,7 +211,7 @@ namespace json {
 		case t_int:    return static_cast<u32>(_h->i);
 		case t_uint:   return static_cast<u32>((u64)_h->i);
 		case t_string: return str::to_uint32(_h->s);
-		case t_double: return (u32)_h->d;
+		case t_double: return static_cast<u32>(_h->d);
 		case t_bool:   return _h->b ? 1 : 0;
 		}
 	  }
@@ -227,8 +225,8 @@ namespace json {
 	  if (_h) {
 		switch (_h->type) {
 		case t_double: return _h->d;
-		case t_int:
-		case t_uint:   return (double)_h->i;
+		case t_int:    return static_cast<double>(_h->i);
+		case t_uint:   return static_cast<double>((u64)_h->i);
 		case t_string: return str::to_double(_h->s);
 		case t_bool:   return _h->b ? 1 : 0;
 		}
@@ -464,7 +462,6 @@ namespace json {
 	Json& _set(const char* key);
 	fc::Buf& _json2str(fc::Buf& fs, bool debug, int& mdp) const;
 	fc::Buf& _json2pretty(fc::Buf& fs, int& indent, int n, int& mdp) const;
-  private:
 	_H* _h;
   };
   // make an empty array
@@ -488,9 +485,7 @@ static void to_json(json::Json& c, const std::vector<T>* v) {
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
 static void to_json(json::Json& c, const std::vector<std::string>* v) {
-  fc::Buf b(128); b << '['; for (size_t i = 0; i < v->size(); ++i) {
-	 b << '"' << v->at(i) << '"' << ',';
-  }
+  fc::Buf b(128); b << '['; for (size_t i = 0; i < v->size(); ++i) { b << '"' << v->at(i) << '"' << ','; }
   b.pop_back().append(']'); c = json::parse(b.data_, b.size());
 }
 static void to_json(json::Json& c, const std::vector<fc::Buf>* v) {

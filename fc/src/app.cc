@@ -113,17 +113,13 @@ namespace fc {
 		  throw err::not_found();
 		_:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
 		  if (last_dot) {
-			std::string ss = _.substr(last_dot);
-			std::string_view extension(ss.data(), ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
+			Buf ss = _.substr(last_dot);
+			std::string_view extension(ss.data_, ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
 			if (content_types->find(extension) != content_types->end()) {
 			  res.file_size = statbuf_.st_size; res.code = 200;
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
 				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
-#if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)
 				ss = content_types->at(extension); res.add_header(RES_CT, ss);
-#else
-				ss = content_types->at(extension).data(); res.add_header(RES_CT, ss);
-#endif
 				std::shared_ptr<file_sptr> __;
 				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
 				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {

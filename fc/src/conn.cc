@@ -5,19 +5,12 @@ namespace fc {
 	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
 	fs_.data = this; slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
 	sink_ = [this](const char* data, size_t size, std::function<void()> done) {
-#ifdef _WIN32
 	  wbuf.base = const_cast<char*>(data);
 	  wbuf.len = static_cast<decltype(wbuf.len)>(size);
 	  if (wbuf.len > 0) {
 		uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL);
 		if (done != nullptr) done();
 	  }
-#else
-	  buf_ << std::string_view(data, size);
-	  if (done != nullptr) done();
-	  wbuf.base = buf_.data_; wbuf.len = buf_.size();
-	  uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL); buf_.reset();
-#endif // _WIN32
 	};
   }
   Conn::~Conn() {
@@ -26,35 +19,35 @@ namespace fc {
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
-	const char* e = c + i; int l = ::send(id, c, e - c, 0);
+	const char* e = c + i; int l = ::send(this->id, c, e - c, 0);
 	if (l > 0) c += l; while (c != e) {
 	  if ((l < 0 && errno != EAGAIN) || l == 0) return false;
-	  l = ::send(id, c, int(e - c), 0); if (l > 0) c += l;
+	  l = ::send(this->id, c, int(e - c), 0); if (l > 0) c += l;
 	} return true;
   };
   int Conn::read(char* buf, int size) {
-	int count = ::recv(id, buf, size, 0);
+	int count = ::recv(this->id, buf, size, 0);
 	while (count <= 0) {
 	  if ((count < 0 && errno != EAGAIN) || count == 0)
 		return int(0);
-	  count = ::recv(id, buf, size, 0);
+	  count = ::recv(this->id, buf, size, 0);
 	}
 	return count;
   };
-  //  int Conn::shut(socket_type fd, sd_type type) {
-  //#if defined _WIN32
-  //	return ::shutdown(fd, type);//SD_RECEIVE，SD_SEND，SD_BOTH
-  //#else
-  //	return ::shutdown(fd, type);
-  //#endif
-  //  }
-  //  int Conn::close_fd(socket_type fd) {
-  //#if defined _WIN32
-  //	closesocket(fd); WSACleanup(); return 1;
-  //#else
-  //	return close(fd);
-  //#endif
-  //  }
+//  int Conn::shut(socket_type fd, sd_type type) {
+//#if defined _WIN32
+//	return ::shutdown(fd, type);//SD_RECEIVE，SD_SEND，SD_BOTH
+//#else
+//	return ::shutdown(fd, type);
+//#endif
+//  }
+//  int Conn::close_fd(socket_type fd) {
+//#if defined _WIN32
+//	closesocket(fd); WSACleanup(); return 1;
+//#else
+//	return close(fd);
+//#endif
+//  }
   //uv__socket_sockopt, uv_poll_init, uv_poll_init_socket
   int Conn::set_keep_alive(socket_type& fd, int idle, int intvl, unsigned char probes) {
 #ifdef WIN32

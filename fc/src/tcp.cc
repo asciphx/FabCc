@@ -55,36 +55,24 @@ namespace fc {
 #endif
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(uv_default_loop(), UV_RUN_DEFAULT); uv_loop_close(loop_); return true;
   }
-  void Tcp::write_cb(uv_write_t* wr, int st) {
-	Conn* co = (Conn*)wr; if (st) { uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL); return; }
-  }
-  void Tcp::fs_cb(uv_fs_t* f) { /*reinterpret_cast<Ctx*>(f->data)->func(f);*/ }
-  void Tcp::on_read(uv_fs_t* f) {
-	Conn* co = (Conn*)f->data; co->buf_ << std::string_view(co->rbuf.base, f->result);
-	co->wbuf.base = co->buf_.data_; co->wbuf.len = co->buf_.size(); DEBUG("!%Id!", f->result);
-	uv_fs_close(co->loop_, &co->fs_, co->fd_, [](uv_fs_t* req) { uv_fs_req_cleanup(req); });
-	uv_write(&co->_, (uv_stream_t*)&co->slot_, &co->wbuf, 1, [](uv_write_t* wr, int st) {
-	  Conn* co = (Conn*)wr; if (st) { return; }//uv_shutdown(&RES_SHUT_REQ, (uv_stream_t*)&co->slot_, NULL);
-	   }); co->buf_.reset();
-  }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
-	Conn* co = (Conn*)h->data;
+	Conn* c = (Conn*)h->data;
 	if (nread > 0) {
-	  int failed = llhttp__internal_execute(&co->parser_, buf->base, buf->base + nread);
+	  int failed = llhttp__internal_execute(&c->parser_, buf->base, buf->base + nread);
 	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
-	  Req& req = co->req_; req = std::move(co->parser_.to_request());// printf("(%s,%s) ",req.url.c_str(),m2c(req.method));
+	  Req& req = c->req_; req = std::move(c->parser_.to_request());// printf("(%s,%s) ",req.url.c_str(),m2c(req.method));
 	  if (!req.url(0)) return;
 #if defined __linux__ || defined __APPLE__
-	  if (co->parser_.http_minor != 0 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
+	  if (c->parser_.http_minor != 0 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
 		uv_close((uv_handle_t*)h, on_close); return;
 	  }
 #endif
-	  Res& res = co->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// co->_.data = &res;
+	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
 	  res.timer_.setTimeout([h] {
 		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-	  }, co->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
-	  if (uv_now(co->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
-		time(&RES_TIME_T); RES_last = uv_now(co->loop_);
+	  }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
+	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
+		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
 		localtime_s(RES_NOW, &RES_TIME_T);
 #else
@@ -92,10 +80,10 @@ namespace fc {
 #endif
 		RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
 	  } //printf("<%s,%lld> ", req.params.c_str(), req.uuid);
-	  Buf& s = co->buf_;
+	  Buf& s = c->buf_;
 	  try {
-		((App*)co->app_)->_call(req.method, req.url, req, res);
-		co->set_status(res, res.code); s << RES_http_status << co->status_;
+		((App*)c->app_)->_call(req.method, req.url, req, res);
+		c->set_status(res, res.code); s << RES_http_status << c->status_;
 		//for (std::pair<const Buf, Buf>& kv : req.headers) std::cout << kv.first << RES_seperator << kv.second << RES_crlf;
 #if SHOW_SERVER_NAME
 		s << RES_server_tag << SERVER_NAME << RES_crlf;
@@ -111,16 +99,11 @@ namespace fc {
 			s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
 			s << RES_date_tag << RES_DATE_STR << RES_crlf;
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
-			int l = 0; $:l = inf.read(co->readbuf, BUF_SIZE).gcount();
-			if (l) { res.body << res.compress_str(co->readbuf, l); goto $; }
+			int l = 0; $:l = inf.read(c->readbuf, BUF_SIZE).gcount();
+			if (l) { res.body << res.compress_str(c->readbuf, l); goto $; }
 			inf.close(); s << RES_content_length_tag << res.body.size() << RES_crlf;
 			s << RES_crlf << res.body; RES_CACHE_MENU[req.uuid] = res.body;
-#ifdef _WIN32
-			co->write(s.data_, s.size()); s.reset();
-#else
-			co->wbuf.base = s.data_; co->wbuf.len = s.size();
-			uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-#endif
+			c->write(s.data_, s.size()); s.reset();
 			res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
 		  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
@@ -128,22 +111,18 @@ namespace fc {
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
 		  res.is_file = 0; res.headers.clear();
-#ifdef _WIN32
-		  if (!co->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
-		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
-#else
-		  if (res.provider) { res.provider(0, res.file_size, co->sink_); }
-#endif
-		  DEBUG("{%d}: %s\n", co->fd_, res.path_.c_str());
+		  if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
+		  if (res.provider) { res.provider(0, res.file_size, c->sink_); }
+		  DEBUG("{%d}: %s\n", c->fd_, res.path_.c_str());
 		  return;
 		}
 	  } catch (const http_error& e) {
-		s.reset(); co->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << co->status_; goto _;
+		s.reset(); c->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << c->status_; goto _;
 	  } catch (const std::exception& e) {
-		s.reset(); co->set_status(res, 500); res.body = e.what(); s << RES_http_status << co->status_; goto _;
+		s.reset(); c->set_status(res, 500); res.body = e.what(); s << RES_http_status << c->status_; goto _;
 	  }
 	  //if (STR_KEY_EQ(get_header(req.headers, RES_Ex), "100-continue") &&
-	  // co->parser_.http_major == 1 && co->parser_.http_minor == 1)s << expect_100_continue;
+	  // c->parser_.http_major == 1 && c->parser_.http_minor == 1)s << expect_100_continue;
 	  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 #ifdef AccessControlAllowCredentials
 	  s << RES_AcC << AccessControlAllowCredentials << RES_crlf;
@@ -162,13 +141,8 @@ namespace fc {
 	  s << RES_content_length_tag << res.body.size() << RES_crlf;
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
-	  DEBUG("客户端：%lld %s \n", co->id, s.c_str());
-#ifdef _WIN32
-	  co->write(s.data_, s.size()); s.reset();
-#else
-	  co->wbuf.base = s.data_; co->wbuf.len = s.size();
-	  uv_write(&co->_, h, &co->wbuf, 1, NULL); s.reset();
-#endif
+	  DEBUG("客户端：%lld %s \n", c->id, s.c_str());
+		c->write(s.data_, s.size()); s.reset();
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
@@ -185,27 +159,26 @@ namespace fc {
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
 	Tcp* t = (Tcp*)srv->data; if (t->connection_num > t->max_conn) return;
-	Conn* co = new Conn(t->keep_milliseconds, t->loop_);
-	int $ = uv_tcp_init(t->loop_, &co->slot_); if ($) { delete co; return; }
-	$ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&co->slot_);
-	if ($) { uv_close((uv_handle_t*)&co->slot_, NULL); delete co; return; }
-	co->req_.ip_addr.resize(t->addr_len); co->app_ = t->app_; co->tcp_ = t;
-	if (0 == uv_tcp_getpeername((uv_tcp_t*)&co->slot_, (sockaddr*)&t->addr_, &t->addr_len)) {
+	Conn* c = new Conn(t->keep_milliseconds, t->loop_);
+	int $ = uv_tcp_init(t->loop_, &c->slot_); if ($) { delete c; return; }
+	$ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
+	if ($) { uv_close((uv_handle_t*)&c->slot_, NULL); delete c; return; }
+	c->req_.ip_addr.resize(t->addr_len); c->app_ = t->app_; c->tcp_ = t;
+	if (0 == uv_tcp_getpeername((uv_tcp_t*)&c->slot_, (sockaddr*)&t->addr_, &t->addr_len)) {
 	  if (!t->is_ipv6) {
 		sockaddr_in addrin = *((sockaddr_in*)&t->addr_);
-		uv_ip4_name(&addrin, (char*)co->req_.ip_addr.data(), t->addr_len);
+		uv_ip4_name(&addrin, (char*)c->req_.ip_addr.data(), t->addr_len);
 	  } else {
 		sockaddr_in6 addrin = *((sockaddr_in6*)&t->addr_);
-		uv_ip6_name(&addrin, (char*)co->req_.ip_addr.data(), t->addr_len);
+		uv_ip6_name(&addrin, (char*)c->req_.ip_addr.data(), t->addr_len);
 	  }
 	}
-
 #ifdef _WIN32
-	co->id = co->slot_.socket;
+	c->id = c->slot_.socket;
 #else
-	co->id = uv__stream_fd(&t->_);
+	c->id = uv__stream_fd(&c->slot_);
 #endif
-	co->set_keep_alive(co->id, 4, 2, 2); ++t->connection_num;
-	uv_read_start((uv_stream_t*)&co->slot_, alloc_cb, read_cb);
+	c->set_keep_alive(c->id, 4, 2, 2); ++t->connection_num;
+	uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb);
   }
 }

@@ -137,6 +137,7 @@ namespace fc {
 	Buf& operator<<(float f);
 	Buf& operator=(const char* s);
 	Buf& operator=(std::string&& s);
+	Buf& operator=(std::string_view s);
 	Buf& operator<<(const tm& _v);
 	char* data_;
 	char* end_;
