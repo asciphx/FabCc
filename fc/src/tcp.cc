@@ -1,4 +1,5 @@
 #include "tcp.hh"
+#include <lexical_cast.hh>
 #pragma warning(disable: 4996)
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app) {
@@ -59,8 +60,8 @@ namespace fc {
 	Conn* c = (Conn*)h->data;
 	if (nread > 0) {
 	  int failed = llhttp__internal_execute(&c->parser_, buf->base, buf->base + nread);
-	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; }
-	  Req& req = c->req_; req = std::move(c->parser_.to_request());// printf("(%s,%s) ",req.url.c_str(),m2c(req.method));
+	  if (failed) { uv_close((uv_handle_t*)h, on_close); return; } Req& req = c->req_;
+	  req = std::move(c->parser_.to_request());// printf("(%s,%s) ",req.url.c_str(),m2c(req.method));
 	  if (!req.url(0)) return;
 #if defined __linux__ || defined __APPLE__
 	  if (c->parser_.http_minor != 0 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
@@ -83,39 +84,49 @@ namespace fc {
 	  Buf& s = c->buf_;
 	  try {
 		((App*)c->app_)->_call(req.method, req.url, req, res);
-		c->set_status(res, res.code); s << RES_http_status << c->status_;
 		//for (std::pair<const Buf, Buf>& kv : req.headers) std::cout << kv.first << RES_seperator << kv.second << RES_crlf;
-#if SHOW_SERVER_NAME
-		s << RES_server_tag << SERVER_NAME << RES_crlf;
-#endif
 		if (res.is_file > 0) {
 		  if (res.is_file == 1) {
+			c->set_status(res, res.code); s << RES_http_status << c->status_;
 			res.is_file = 0; req.uuid = hackUrl(req.url.c_str());
 			s << RES_CE << RES_seperator << RES_gzip << RES_crlf;
-			if (RES_CACHE_TIME[req.uuid] > nowStamp()) {
-			  res.body << RES_CACHE_MENU[req.uuid]; goto _;
-			}
+			if (RES_CACHE_TIME[req.uuid] > nowStamp()) { res.body << RES_CACHE_MENU[req.uuid]; goto _; }
 			RES_CACHE_TIME[req.uuid] = nowStamp(CACHE_HTML_TIME_SECOND);
-			s << RES_CT << RES_seperator << RES_Txt << RES_crlf;
-			s << RES_date_tag << RES_DATE_STR << RES_crlf;
+			s << RES_CT << RES_seperator << RES_Txt << RES_crlf; s << RES_date_tag << RES_DATE_STR << RES_crlf;
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
 			int l = 0; $:l = inf.read(c->readbuf, BUF_SIZE).gcount();
 			if (l) { res.body << res.compress_str(c->readbuf, l); goto $; }
 			inf.close(); s << RES_content_length_tag << res.body.size() << RES_crlf;
 			s << RES_crlf << res.body; RES_CACHE_MENU[req.uuid] = res.body;
-			c->write(s.data_, s.size()); s.reset();
-			res.zlib_cp_str.reset(); res.body.reset(); return;
+			c->write(s.data_, s.size()); s.reset(); res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
+		  Buf range = get_header(req.headers, RES_Range); bool is_range = false;
+		  if (range != "") { is_range = true;
+		    //if (range[6] == '0')res.code = 206; if (range[6] != '0')res.code = 206;
+		  }
+		  c->set_status(res, res.code); s << RES_http_status << c->status_;
 		  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
-		  s << RES_HaR << RES_seperator << RES_bytes << RES_crlf;
+		  s << RES_AR << RES_seperator << RES_bytes << RES_crlf;
+		  if (is_range) {
+			int64_t i{ 0 }; range = range.substr(6).pop_back(); i = std::lexical_cast<int64_t>(range);
+			s << RES_content_length_tag << std::to_string(res.file_size - i) << RES_crlf;
+			s << RES_CR << RES_seperator << RES_bytes << ' ' << i << '-' << (res.file_size - 1) << '/' << res.file_size << RES_crlf;
+			s << RES_crlf;
+			res.is_file = 0; res.headers.clear();
+			if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
+			res.provider(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
+			  if (l > 0) { c->write(s, static_cast<int>(l)); } });
+			return;
+		  }
+		  s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
 		  res.is_file = 0; res.headers.clear();
 		  if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
 		  if (res.provider) { res.provider(0, res.file_size, c->sink_); }
-		  DEBUG("{%d}: %s\n", c->fd_, res.path_.c_str());
 		  return;
 		}
+		c->set_status(res, res.code); s << RES_http_status << c->status_;
 	  } catch (const http_error& e) {
 		s.reset(); c->set_status(res, e.i()); res.body = e.what(); s << RES_http_status << c->status_; goto _;
 	  } catch (const std::exception& e) {
@@ -137,12 +148,15 @@ namespace fc {
 	  s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
 #endif
 	_:
+#if SHOW_SERVER_NAME
+	  s << RES_server_tag << SERVER_NAME << RES_crlf;
+#endif
 	  if (!res.headers.count(RES_CT)) { s << RES_CT << RES_seperator << RES_Txt << RES_crlf; }
 	  s << RES_content_length_tag << res.body.size() << RES_crlf;
 	  s << RES_date_tag << RES_DATE_STR << RES_crlf;
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
 	  DEBUG("客户端：%lld %s \n", c->id, s.c_str());
-		c->write(s.data_, s.size()); s.reset();
+	  c->write(s.data_, s.size()); s.reset();
 	} else if (nread < 0) {
 	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
 		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));

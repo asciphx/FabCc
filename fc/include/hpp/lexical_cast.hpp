@@ -172,7 +172,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	int lexical_cast<int>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
-	  if (l < 11) {
+	  if (l < 11) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		int r = STD_POW[--l] * (*c - 0x30);
 		while (--l) {
@@ -197,7 +197,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(const char* c) {
-	size_t l = strlen(c); if (--l < 9) {
+	size_t l = strlen(c); if (--l < 9) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned int r = STD_POW[l] * (*c++ - 0x30);
 	  while (--l > 1) {
@@ -222,7 +222,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	long lexical_cast<long>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
-	  if (l < 11) {
+	  if (l < 11) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		long r = STD_POW[--l] * (*c - 0x30);
 		while (--l) {
@@ -247,7 +247,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(const char* c) {
-	size_t l = strlen(c); if (--l < 9) {
+	size_t l = strlen(c); if (--l < 9) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned long r = STD_POW[l] * (*c - 0x30);
 	  while (--l > 1) {
@@ -272,7 +272,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
-	  if (l < 20) {
+	  if (l < 20) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		long long r = STD_POWS[--l] * (*c - 0x30);
 		while (--l) {
@@ -297,7 +297,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(const char* c) {
-	size_t l = strlen(c); if (--l < 19) {
+	size_t l = strlen(c); if (--l < 19) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned long long r = STD_POWS[l] * (*c++ - 0x30);
 	  while (--l > 1) {
@@ -396,7 +396,7 @@ namespace std {
 	short lexical_cast<short>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 6) {
+	  if (l < 6) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		short r = STD_PO[--l] * (*c - 0x30);
 		while (--l) {
@@ -423,7 +423,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 4) {
+	if (--l < 4) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned short r = STD_PO[l] * (*c++ - 0x30);
 	  while (--l > 1) {
@@ -452,7 +452,7 @@ namespace std {
 	int lexical_cast<int>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 11) {
+	  if (l < 11) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		int r = STD_POW[--l] * (*c - 0x30);
 		while (--l) {
@@ -479,7 +479,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) {
+	if (--l < 9) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned int r = STD_POW[l] * (*c++ - 0x30);
 	  while (--l > 1) {
@@ -508,7 +508,7 @@ namespace std {
 	long lexical_cast<long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 11) {
+	  if (l < 11) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		long r = STD_POW[--l] * (*c - 0x30);
 		while (--l) {
@@ -535,7 +535,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) {
+	if (--l < 9) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned long r = STD_POW[l] * (*c - 0x30);
 	  while (--l > 1) {
@@ -564,7 +564,7 @@ namespace std {
 	long long lexical_cast<long long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 20) {
+	  if (l < 20) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		long long r = STD_POWS[--l] * (*c - 0x30);
 		while (--l) {
@@ -591,7 +591,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(std::string& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 19) {
+	if (--l < 19) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned long long r = STD_POWS[l] * (*c++ - 0x30);
 	  while (--l > 1) {
@@ -697,7 +697,7 @@ namespace std {
 	short lexical_cast<short>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 6) {
+	  if (l < 6) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		short r = STD_PO[--l] * (*c - 0x30);
 		while (--l) {
@@ -724,7 +724,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 4) {
+	if (--l < 4) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned short r = STD_PO[l] * (*c - 0x30);
 	  while (--l > 1) {
@@ -753,7 +753,7 @@ namespace std {
 	int lexical_cast<int>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 11) {
+	  if (l < 11) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		int r = STD_POW[--l] * (*c - 0x30);
 		while (--l) {
@@ -780,7 +780,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) {
+	if (--l < 9) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned int r = STD_POW[l] * (*c - 0x30);
 	  while (--l > 1) {
@@ -809,7 +809,7 @@ namespace std {
 	long lexical_cast<long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 11) {
+	  if (l < 11) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		long r = STD_POW[--l] * (*c - 0x30);
 		while (--l) {
@@ -836,7 +836,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) {
+	if (--l < 9) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned long r = STD_POW[l] * (*c - 0x30);
 	  while (--l > 1) {
@@ -865,7 +865,7 @@ namespace std {
 	long long lexical_cast<long long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.size();
 	if (*c != 0x2D) {
-	  if (l < 20) {
+	  if (l < 20) { if (*c == 0x30) return 0;
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		long long r = STD_POWS[--l] * (*c - 0x30);
 		while (--l) {
@@ -892,7 +892,7 @@ namespace std {
   template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(fc::Buf& s) {
 	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 19) {
+	if (--l < 19) { if (*c == 0x30) return 0;
 	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 	  unsigned long long r = STD_POWS[l] * (*c - 0x30);
 	  while (--l > 1) {

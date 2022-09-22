@@ -118,7 +118,7 @@ namespace fc {
 			if (content_types->find(extension) != content_types->end()) {
 			  res.file_size = statbuf_.st_size; res.code = 200;
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
-				res.is_file = 2; res.add_header(RES_CL, std::to_string(statbuf_.st_size));
+				res.is_file = 2;
 				ss = content_types->at(extension); res.add_header(RES_CT, ss);
 				std::shared_ptr<file_sptr> __;
 				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
@@ -128,10 +128,10 @@ namespace fc {
 				  file_cache_[_] = __ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
 				}
 				if (__ && __->ptr_ != nullptr) {
-				  res.provider = [__](int64_t o, int64_t k,
-				  std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
-					//size_t l = min(BUF_MAXSIZE, (size_t)(k - o));
-					int r = __->read_chunk(o, k - o, sink); if (r < 0 && r != UV_EAGAIN) { sink(nullptr, r, nullptr); return; }
+				  res.provider = [__](int64_t o, int64_t k, std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
+					//int r = __->read_chunk(o, k - o, sink); if (r == EOF) return;
+					size_t l = min(0x280000, (size_t)(k - o));
+					int r = EOF; _:r = __->read_chunk(o, l, sink); if (r != EOF) { o += r; goto _; }
 				  };
 				}
 			  }

@@ -15,9 +15,9 @@
 #include <str.hh>
 namespace fc {
   static const fc::Buf RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), RES_empty("", 0),
-	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16),
+	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16), RES_AR("Accept-Ranges", 13),
 	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Con("Connection", 10), RES_Ex("expect", 6),
-	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5), RES_HaR("Accept-Ranges", 13);
+	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5), RES_CR("Content-Ranges", 14), RES_Range("Range", 5);
   static const fc::Buf& get_header(const str_map& headers, const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }

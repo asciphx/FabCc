@@ -3,19 +3,14 @@
 namespace fc {
   Conn::Conn(unsigned short milliseconds, uv_loop_t* l)
 	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
-	fs_.data = this; slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
+	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
 	sink_ = [this](const char* data, size_t size, std::function<void()> done) {
-	  wbuf.base = const_cast<char*>(data);
-	  wbuf.len = static_cast<decltype(wbuf.len)>(size);
-	  if (wbuf.len > 0) {
-		uv_write(&_, (uv_stream_t*)&slot_, &wbuf, 1, NULL);
-		if (done != nullptr) done();
-	  }
+	  if (size > 0) { write(data, static_cast<int>(size)); if (done != nullptr) done(); }
 	};
   }
   Conn::~Conn() {
 	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
-	tcp_ = nullptr; fs_.data = nullptr; sink_ = nullptr;
+	tcp_ = nullptr; sink_ = nullptr;
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
@@ -34,20 +29,20 @@ namespace fc {
 	}
 	return count;
   };
-//  int Conn::shut(socket_type fd, sd_type type) {
-//#if defined _WIN32
-//	return ::shutdown(fd, type);//SD_RECEIVE，SD_SEND，SD_BOTH
-//#else
-//	return ::shutdown(fd, type);
-//#endif
-//  }
-//  int Conn::close_fd(socket_type fd) {
-//#if defined _WIN32
-//	closesocket(fd); WSACleanup(); return 1;
-//#else
-//	return close(fd);
-//#endif
-//  }
+  int Conn::shut(socket_type fd, sd_type type) {
+#if defined _WIN32
+	return ::shutdown(fd, type);//SD_RECEIVE，SD_SEND，SD_BOTH
+#else
+	return ::shutdown(fd, type);
+#endif
+  }
+  int Conn::close_fd(socket_type fd) {
+#if defined _WIN32
+	closesocket(fd); WSACleanup(); return 1;
+#else
+	return close(fd);
+#endif
+  }
   //uv__socket_sockopt, uv_poll_init, uv_poll_init_socket
   int Conn::set_keep_alive(socket_type& fd, int idle, int intvl, unsigned char probes) {
 #ifdef WIN32
@@ -81,6 +76,7 @@ namespace fc {
 	case 202:status_ = "202 Accepted\r\n"; break;
 	case 203:status_ = "203 Non-Authoritative Information\r\n"; break;
 	case 204:status_ = "204 No Content\r\n"; break;
+	case 206:status_ = "206 Partial Content\r\n"; break;
 
 	case 301:status_ = "301 Moved Permanently\r\n"; break;
 	case 302:status_ = "302 Found\r\n"; break;

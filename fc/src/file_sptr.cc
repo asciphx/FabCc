@@ -24,11 +24,11 @@ namespace fc {
 	::MultiByteToWideChar(CP_UTF8, 0, psz, -1, pwsz, path_len);
 	HANDLE h_file = ::CreateFileW(pwsz, FILE_GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (h_file != INVALID_HANDLE_VALUE) {
-	  DWORD high = sizeof(length) > 4 ? (DWORD)(length >> 0x18) : 0;//32M
+	  DWORD high = sizeof(length) > 4 ? (DWORD)(length >> 0x20) : 0;//32M
 	  DWORD low = (DWORD)length;
 	  if (length == 0) {
 		low = ::GetFileSize(h_file, &high);
-		length = (static_cast<DWORD64>(high) << 0x18) | low;//32M
+		length = (static_cast<DWORD64>(high) << 0x20) | low;//32M
 	  }
 	  assert(!(sizeof(length) == 4 && high != 0));
 	  HANDLE h_map = ::CreateFileMapping(h_file, NULL, PAGE_READONLY, high, low, NULL);
@@ -70,7 +70,7 @@ namespace fc {
 	  if (size > max_size)
 		size = max_size;
 	  sink(ptr_ + offset, size, [p_this = shared_from_this()]() {});
-	  return 0;
+	  return static_cast<int>(size);
 	} else {
 	  return EOF;
 	}

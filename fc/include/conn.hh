@@ -9,7 +9,7 @@
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <mstcpip.h>
-typedef SOCKET socket_type;
+typedef UINT_PTR socket_type;
 static unsigned int RES_RCV = 4000;
 static unsigned int RES_SED = 10000;
 #else
@@ -34,10 +34,8 @@ namespace fc {
 	void* app_;
 	unsigned short keep_milliseconds;
 	Conn(unsigned short milliseconds, uv_loop_t* l) noexcept;//
-	uv_buf_t rbuf, wbuf;
+	uv_buf_t rbuf;
 	uv_loop_t* loop_;
-	uv_fs_t fs_;
-	uv_file fd_;
 	uv_tcp_t slot_;
 	bool reading_ = false;
 	char readbuf[BUF_SIZE];
@@ -51,8 +49,8 @@ namespace fc {
 	int read(char* buf, int max_size);
 	void set_status(Res& res, uint16_t status);
     std::function<void(const char* c, size_t s, std::function<void()> f)> sink_;
-	//int shut(socket_type fd, sd_type d);
-	//int close_fd(socket_type fd);
+	int shut(socket_type fd, sd_type d);
+	int close_fd(socket_type fd);
 	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
 	// keep-alive time seconds = idle + intvl * probes
 	int set_keep_alive(socket_type& fd, int idle, int intvl = 1, unsigned char probes = 10);
