@@ -7,6 +7,9 @@
 #else
 #define $_(_) _.base()
 #endif // _WIN32
+#if defined min
+#undef min
+#endif
 namespace fc {
   char c2m(const char* m) {
 	switch (hack8Str(m)) {
@@ -120,18 +123,17 @@ namespace fc {
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
 				res.is_file = 2;
 				ss = content_types->at(extension); res.add_header(RES_CT, ss);
-				std::shared_ptr<file_sptr> __;
 				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
 				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-				  __ = p->second;
+				  res.__ = p->second;
 				} else {
-				  file_cache_[_] = __ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
+				  file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
 				}
-				if (__ && __->ptr_ != nullptr) {
-				  res.provider = [__](int64_t o, int64_t k, std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
-					//int r = __->read_chunk(o, k - o, sink); if (r == EOF) return;
-					size_t l = min(0x280000, (size_t)(k - o));
-					int r = EOF; _:r = __->read_chunk(o, l, sink); if (r != EOF) { o += r; goto _; }
+				if (res.__->ptr_ != nullptr) {
+				  res.provider = [&res](int64_t o, int64_t k, std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
+					int r = res.__->read_chunk(o, k - o, sink); if (r == EOF) return;
+					//size_t l = std::min((int64_t)4194304, k - o);
+					//int r = EOF; _:r = res.__->read_chunk(o, l, sink); if (r != EOF) { o += r; goto _; }
 				  };
 				}
 			  }

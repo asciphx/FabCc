@@ -10,7 +10,7 @@ namespace fc {
 #endif
 	time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; RES_last = uv_now(loop);
 	RES_DATE_STR.resize(0x30); RES_DATE_STR.resize(strftime(&RES_DATE_STR[0], 0x2f, RES_GMT, RES_NOW));
-	if (app_ != nullptr)app_->content_types = &content_types; _.data = this;
+	if (app_ != nullptr) { app_->content_types = &content_types; } _.data = this;
   }
   Tcp& Tcp::timeout(unsigned short m) {
 	keep_milliseconds = m < 301 ? m * 1000 : m < 0x640 ? m *= 6 : m; return *this;
@@ -69,9 +69,9 @@ namespace fc {
 	  }
 #endif
 	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
-	  res.timer_.setTimeout([h] {
-		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-	  }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
+	  // res.timer_.setTimeout([h] {
+		 //uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+	  // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -101,25 +101,27 @@ namespace fc {
 			c->write(s.data_, s.size()); s.reset(); res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
 		  Buf range = get_header(req.headers, RES_Range); bool is_range = false;
-		  if (range != "") { is_range = true;
-		    //if (range[6] == '0')res.code = 206; if (range[6] != '0')res.code = 206;
-		  }
 		  c->set_status(res, res.code); s << RES_http_status << c->status_;
+		  if (range != "") {
+			is_range = true; if (range[6] == '0')res.code = 206; if (range[6] != '0')res.code = 206;
+		  }
 		  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_AR << RES_seperator << RES_bytes << RES_crlf;
-		  if (is_range) {
-			int64_t i{ 0 }; range = range.substr(6).pop_back(); i = std::lexical_cast<int64_t>(range);
+		  if (res.code == 206) {
+			long i{ 0 }; range = range.substr(6).pop_back(); i = std::lexical_cast<long>(range); std::cout << ' ' << range << ',';
 			s << RES_content_length_tag << std::to_string(res.file_size - i) << RES_crlf;
 			s << RES_CR << RES_seperator << RES_bytes << ' ' << i << '-' << (res.file_size - 1) << '/' << res.file_size << RES_crlf;
 			s << RES_crlf;
 			res.is_file = 0; res.headers.clear();
 			if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
-			res.provider(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
-			  if (l > 0) { c->write(s, static_cast<int>(l)); } });
+			if (res.__->ptr_ != nullptr) {
+			  int r = res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
+				if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } });if (r == EOF) std::cout << '#';;
+			}
 			return;
 		  }
-		  s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
-		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
+		  s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf; if (res.code == 200)
+			s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
 		  res.is_file = 0; res.headers.clear();
 		  if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();

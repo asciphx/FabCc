@@ -6,6 +6,7 @@
 #include "tp/zlib.h"
 #include <buf.hh>
 #include <h/common.h>
+#include <file_sptr.hh>
 #define BUF_SIZE 0x10000
 #define BUF_MAXSIZE 256000000
 namespace fc {
@@ -46,6 +47,7 @@ namespace fc {
 	Res();
   public:
 	uint16_t code{ 200 };// Check whether the response has a static file defined.
+	std::shared_ptr<file_sptr> __;
 	fc::Buf body;
 	void set_header(const fc::Buf& key, fc::Buf value);
 	void add_header(const fc::Buf& key, fc::Buf value);
