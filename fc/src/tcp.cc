@@ -2,7 +2,7 @@
 #include <lexical_cast.hh>
 #pragma warning(disable: 4996)
 namespace fc {
-  Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app) {
+  Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app), roundrobin_index_(128) {
 #ifdef _WIN32
 	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
 #else
@@ -25,18 +25,15 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   Tcp& Tcp::setThread(char n) {
-	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
+	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? cpu : 3; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
-  bool Tcp::init() {
-	if (opened)return true; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false; return true;
-  }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
   Tcp::~Tcp() { uv_mutex_destroy(&RES_MUTEX); exit(); }
   Tcp& Tcp::router(App& app) { app_ = &app; app_->content_types = &content_types; return *this; }
   Tcp& Tcp::setTcpNoDelay(bool enable) { uv_tcp_nodelay(&_, enable ? 1 : 0); return *this; }
   bool Tcp::bind(const char* ip_addr, int port, bool is_ipv4) {
-	std::cout << "C++<web>[" << getenv("UV_THREADPOOL_SIZE") << "] => http://127.0.0.1:" << port << std::endl; int $; if (is_ipv4) {
+	std::cout << "C++<web>[" << static_cast<int>(threads) << "] => http://127.0.0.1:" << port << std::endl; int $; if (is_ipv4) {
 	  struct sockaddr_in addr; $ = uv_ip4_addr(ip_addr, port, &addr); if ($)return false;
 	  $ = uv_tcp_bind(&_, (const struct sockaddr*)&addr, 0); is_ipv6 = false;
 	} else {
@@ -45,8 +42,21 @@ namespace fc {
 	} return $ ? true : false;
   }
   bool Tcp::Start(const char* ip_addr, int port, bool is_ipv4) {
-	fc::Buf b("UV_THREADPOOL_SIZE=", 19); b << (int)threads; putenv((char*)b.c_str());
-	exit(); if (!port)port = port_; if (!init())return false; if (bind(ip_addr, port, is_ipv4))return false;
+	if (opened)return false; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false;
+	if (!port)port = port_; int n = threads; if(async_ == nullptr) async_ = (uv_async_t**)malloc(sizeof(uv_async_t*) * n);
+	while (n--) { async_[n] = (uv_async_t*)calloc(sizeof(uv_async_t), 1); } core_ = threads - 1;
+	std::atomic<int> init_count(0); std::vector<std::future<void>> fus;
+	for (int i = 0; i < threads; ++i) {
+	  fus.push_back(std::async(std::launch::async,[this, &init_count] {
+		std::cout << '#' << ++init_count; int idex = init_count - 1; roundrobin_index_[init_count] = 0;
+		//std::cout << "client_thread::threads=[" << uv_thread_self() << "]"<<idex<<'|' << std::endl;
+		uv_loop_t* loop = (uv_loop_t*)malloc(sizeof(uv_loop_t)); uv_loop_init(loop);
+		uv_async_init(loop, async_[idex], on_async_cb); uv_run(loop, UV_RUN_DEFAULT);
+		uv_close((uv_handle_t*)(async_[idex]), on_close); uv_loop_close(loop); free(loop); free(async_[idex]);
+		}));
+	}
+	while (threads != init_count) std::this_thread::yield();
+	if (bind(ip_addr, port, is_ipv4))return false;
 	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
@@ -54,7 +64,11 @@ namespace fc {
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
 #endif
-	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false; uv_run(uv_default_loop(), UV_RUN_DEFAULT); uv_loop_close(loop_); return true;
+	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false;
+	uv_run(uv_default_loop(), UV_RUN_DEFAULT); uv_loop_close(loop_); return true;
+  }
+  void Tcp::on_async_cb(uv_async_t* srv) {
+	uv_read_start((uv_stream_t*)&static_cast<Conn*>(srv->data)->slot_, alloc_cb, read_cb);
   }
   void Tcp::read_cb(uv_stream_t* h, ssize_t nread, const uv_buf_t* buf) {
 	Conn* c = (Conn*)h->data;
@@ -69,9 +83,9 @@ namespace fc {
 	  }
 #endif
 	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
-	  // res.timer_.setTimeout([h] {
-		 //uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-	  // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
+	 // res.timer_.setTimeout([h] {
+		//uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+	 // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -115,17 +129,22 @@ namespace fc {
 			res.is_file = 0; res.headers.clear();
 			if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
 			if (res.__->ptr_ != nullptr) {
+			  //c->write(res.__->ptr_, static_cast<int>(res.file_size), 1);
 			  int r = res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
-				if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } });if (r == EOF) std::cout << '#';;
+				if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } }); if (r == EOF) c->write(nullptr, 0);
 			}
 			return;
 		  }
-		  s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf; if (res.code == 200)
-			s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
+		  s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
+		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
 		  res.is_file = 0; res.headers.clear();
 		  if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
-		  if (res.provider) { res.provider(0, res.file_size, c->sink_); }
+		  if (res.__->ptr_ != nullptr) {
+			//c->write(res.__->ptr_, static_cast<int>(res.file_size));
+			int r = res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
+			  if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } }); if (r == EOF) c->write(nullptr, 0);
+		  }
 		  return;
 		}
 		c->set_status(res, res.code); s << RES_http_status << c->status_;
@@ -174,19 +193,18 @@ namespace fc {
 	Conn* c = (Conn*)h->data; --((Tcp*)c->tcp_)->connection_num; DEBUG("{x%Id}\n", c->id); delete c;
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
-	Tcp* t = (Tcp*)srv->data; if (t->connection_num > t->max_conn) return;
-	Conn* c = new Conn(t->keep_milliseconds, t->loop_);
-	int $ = uv_tcp_init(t->loop_, &c->slot_); if ($) { delete c; return; }
-	$ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
+    Tcp* t = (Tcp*)srv->data; uint16_t idex = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[idex];
+	Conn* c = new Conn(t->keep_milliseconds, t->loop_, t->roundrobin_index_[idex]);
+	c->app_ = t->app_; c->tcp_ = t; ++t->connection_num; uv_tcp_init(t->loop_, &c->slot_);
+	int $ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
 	if ($) { uv_close((uv_handle_t*)&c->slot_, NULL); delete c; return; }
-	c->req_.ip_addr.resize(t->addr_len); c->app_ = t->app_; c->tcp_ = t;
 	if (0 == uv_tcp_getpeername((uv_tcp_t*)&c->slot_, (sockaddr*)&t->addr_, &t->addr_len)) {
-	  if (!t->is_ipv6) {
-		sockaddr_in addrin = *((sockaddr_in*)&t->addr_);
-		uv_ip4_name(&addrin, (char*)c->req_.ip_addr.data(), t->addr_len);
+	  char name[128] = {}; if (!t->is_ipv6) {
+		sockaddr_in addr = *((sockaddr_in*)&t->addr_);
+		uv_inet_ntop(addr.sin_family, &addr.sin_addr, name, sizeof(name)); c->req_.ip_addr = std::string(name, t->addr_len);
 	  } else {
-		sockaddr_in6 addrin = *((sockaddr_in6*)&t->addr_);
-		uv_ip6_name(&addrin, (char*)c->req_.ip_addr.data(), t->addr_len);
+		sockaddr_in6 addr = *((sockaddr_in6*)&t->addr_);
+		uv_inet_ntop(addr.sin6_family, &addr.sin6_addr, name, sizeof(name)); c->req_.ip_addr = std::string(name, t->addr_len);
 	  }
 	}
 #ifdef _WIN32
@@ -194,7 +212,9 @@ namespace fc {
 #else
 	c->id = uv__stream_fd(&c->slot_);
 #endif
-	c->set_keep_alive(c->id, 4, 2, 2); ++t->connection_num;
-	uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb);
+	if(t->threads == 1 || t->connection_num < 3) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
+    //c->set_keep_alive(c->id, 4, 2, 2);// std::cout << c->id << ", ";
+	t->async_[idex]->data = c; uv_async_send(t->async_[idex]);
+	//std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }
 }

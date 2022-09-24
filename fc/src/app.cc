@@ -7,9 +7,6 @@
 #else
 #define $_(_) _.base()
 #endif // _WIN32
-#if defined min
-#undef min
-#endif
 namespace fc {
   char c2m(const char* m) {
 	switch (hack8Str(m)) {
@@ -128,13 +125,6 @@ namespace fc {
 				  res.__ = p->second;
 				} else {
 				  file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
-				}
-				if (res.__->ptr_ != nullptr) {
-				  res.provider = [&res](int64_t o, int64_t k, std::function<void(const char* c, size_t l, std::function<void()> f)> sink) {
-					int r = res.__->read_chunk(o, k - o, sink); if (r == EOF) return;
-					//size_t l = std::min((int64_t)4194304, k - o);
-					//int r = EOF; _:r = res.__->read_chunk(o, l, sink); if (r != EOF) { o += r; goto _; }
-				  };
 				}
 			  }
 			  //printf("<%ld,%s>", res.file_size, _.c_str());

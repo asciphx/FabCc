@@ -596,7 +596,7 @@ namespace std {
   }
   //fc::Buf
   template <typename T> inline T lexical_cast(fc::Buf& s);
-  template <> std::string lexical_cast<std::string>(fc::Buf& c) { return c.b2s(); }
+  template <> std::string lexical_cast<std::string>(fc::Buf& c) { return std::string(c.data_, c.end_ - c.data_); }
 
   template <> [[nodiscard]]
 	bool lexical_cast<bool>(fc::Buf& s) {

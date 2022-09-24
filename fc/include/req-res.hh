@@ -43,7 +43,6 @@ namespace fc {
 	fc::Timer timer_;
 	int is_file{ 0 };
 	long file_size = 0;
-	std::function<void(int64_t o, int64_t k,std::function<void(const char* c, size_t s, std::function<void()> d)> sink)> provider;
 	Res();
   public:
 	uint16_t code{ 200 };// Check whether the response has a static file defined.
