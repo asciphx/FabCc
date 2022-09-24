@@ -21,20 +21,18 @@ namespace fc {
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
+  static unsigned short RES_idex = 0;
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
 	uv_async_t** async_;
-	uv_loop_t* loop_;
+	uv_loop_t* loop_, **loops_;
 	sockaddr_storage addr_;
 	int max_conn = 0xffff;
 	char threads = 3;
 	int port_ = DEFAULT_PORT;
 	int addr_len;
 	int connection_num = 0;
-#ifdef _WIN32
-	int win_half = 1;
-#endif
 	unsigned short keep_milliseconds = 6000;
 	bool opened;
 	bool is_ipv6;

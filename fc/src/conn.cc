@@ -1,15 +1,15 @@
 #include <conn.hh>
 
 namespace fc {
-  Conn::Conn(unsigned short milliseconds, uv_loop_t* l)
-	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
+  Conn::Conn(unsigned short milliseconds, uv_loop_t* l, std::atomic<uint16_t>& queue_length)
+	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds), queue_length_(queue_length) {
 	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
 	sink_ = [this](const char* data, size_t size, std::function<void()> done) {
 	  if (size > 0) { write(data, static_cast<int>(size)); if (done != nullptr) done(); }
 	};
   }
   Conn::~Conn() {
-	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
+	--queue_length_; free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr;
 	tcp_ = nullptr; sink_ = nullptr;
   }
   bool Conn::write(const char* c, int i, int flag) {
