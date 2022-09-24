@@ -27,7 +27,7 @@ namespace fc {
   }
   Tcp& Tcp::setThread(char n) {
 	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu);
-	if(n > roundrobin_index_.size()) n = roundrobin_index_.size(); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
+	if (n > roundrobin_index_.size()) n = (char)roundrobin_index_.size(); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
@@ -88,9 +88,9 @@ namespace fc {
 	}
 #endif
 	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
-	  // res.timer_.setTimeout([h] {
-		 //uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-	  // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
+	  res.timer_.setTimeout([h] {
+		uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+	  }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -127,16 +127,18 @@ namespace fc {
 		  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_AR << RES_seperator << RES_bytes << RES_crlf;
 		  if (res.code == 206) {
-			long i{ 0 }; range = range.substr(6).pop_back(); i = std::lexical_cast<long>(range); std::cout << ' ' << range << ',';
+			long i{ 0 }; range = range.substr(6).pop_back(); i = std::lexical_cast<long>(range); LOG_GER(' ' << range << ',');
 			s << RES_content_length_tag << std::to_string(res.file_size - i) << RES_crlf;
 			s << RES_CR << RES_seperator << RES_bytes << ' ' << i << '-' << (res.file_size - 1) << '/' << res.file_size << RES_crlf;
 			s << RES_crlf;
 			res.is_file = 0; res.headers.clear();
 			if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
 			if (res.__->ptr_ != nullptr) {
+			  long dql = res.file_size >> 19; c->queue_length_ += (u16)++dql;
 			  //c->write(res.__->ptr_, static_cast<int>(res.file_size), 1);
-			  int r = res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
-				if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } }); if (r == EOF) c->write(nullptr, 0);
+			  int r = res.__->read_chunk(0, res.file_size, [c, &dql](const char* s, size_t l, std::function<void()> d) {
+				if (l > 0) { c->write(s, static_cast<int>(l)); c->queue_length_ -= (u16)dql; if (d != nullptr) d(); } });
+				if (r == EOF) c->write(nullptr, 0);
 			}
 			return;
 		  }
@@ -146,9 +148,11 @@ namespace fc {
 		  res.is_file = 0; res.headers.clear();
 		  if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
 		  if (res.__->ptr_ != nullptr) {
+			long dql = res.file_size >> 19; c->queue_length_ += (u16)++dql;
 			//c->write(res.__->ptr_, static_cast<int>(res.file_size));
-			int r = res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
-			  if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } }); if (r == EOF) c->write(nullptr, 0);
+			int r = res.__->read_chunk(0, res.file_size, [c, &dql](const char* s, size_t l, std::function<void()> d) {
+			  if (l > 0) { c->write(s, static_cast<int>(l)); c->queue_length_ -= (u16)dql; if (d != nullptr) d(); } });
+			if (r == EOF) c->write(nullptr, 0);
 		  }
 		  return;
 		}
