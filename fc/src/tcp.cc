@@ -2,7 +2,8 @@
 #include <lexical_cast.hh>
 #pragma warning(disable: 4996)
 namespace fc {
-  Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app), roundrobin_index_(128) {
+  Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app),
+	roundrobin_index_(std::thread::hardware_concurrency() * 2) {
 #ifdef _WIN32
 	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
 #else
@@ -25,7 +26,7 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   Tcp& Tcp::setThread(char n) {
-	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? 2*cpu : 3; return *this;
+	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
@@ -47,7 +48,7 @@ namespace fc {
 	while (n--) { async_[n] = (uv_async_t*)calloc(sizeof(uv_async_t), 1); } core_ = threads - 1;
 	std::atomic<int> init_count(0); std::vector<std::future<void>> fus;
 	for (int i = 0; i < threads; ++i) {
-	  fus.push_back(std::async(std::launch::async,[this, &init_count] {
+	  fus.push_back(std::async(std::launch::async, [this, &init_count] {
 		std::cout << '#' << ++init_count; int idex = init_count - 1; roundrobin_index_[init_count] = 0;
 		//std::cout << "client_thread::threads=[" << uv_thread_self() << "]"<<idex<<'|' << std::endl;
 		uv_loop_t* loop = (uv_loop_t*)malloc(sizeof(uv_loop_t)); uv_loop_init(loop);
@@ -65,7 +66,7 @@ namespace fc {
 	signal(SIGPIPE, SIG_IGN);
 #endif
 #ifdef _WIN32
-    win_half = threads / 2;
+	win_half = threads / 2;
 #endif
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false;
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT); uv_loop_close(loop_); return true;
@@ -83,12 +84,12 @@ namespace fc {
 #if defined __linux__ || defined __APPLE__
 	  if (c->parser_.http_minor != 0 && STR_KEY_EQ(get_header(req.headers, RES_Con), "close")) {
 		uv_close((uv_handle_t*)h, on_close); return;
-	  }
+	}
 #endif
 	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
-	 // res.timer_.setTimeout([h] {
-		//uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
-	 // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
+	  // res.timer_.setTimeout([h] {
+		 //uv_shutdown(&RES_SHUT_REQ, h, NULL); uv_close((uv_handle_t*)h, on_close);
+	  // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -181,22 +182,22 @@ namespace fc {
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
 	  DEBUG("客户端：%lld %s \n", c->id, s.c_str());
 	  c->write(s.data_, s.size()); s.reset();
-	} else if (nread < 0) {
-	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
-		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_close((uv_handle_t*)h, on_close);
-	  } else {//UV_ENOBUFS
-		DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
-		uv_close((uv_handle_t*)h, on_close);
-	  }//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
-	}//printf("%d\n", nread);uv_read_stop(h);
-  }
+  } else if (nread < 0) {
+	if (nread == UV_EOF || nread == UV_ECONNRESET) {
+	  DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
+	  uv_close((uv_handle_t*)h, on_close);
+	} else {//UV_ENOBUFS
+	  DEBUG("2->%Id: %s : % s\n", nread, uv_err_name(nread), uv_strerror(nread));
+	  uv_close((uv_handle_t*)h, on_close);
+	}//if (!uv_is_active((uv_handle_t*)h))// uv_read_stop((uv_stream_t*)h);
+  }//printf("%d\n", nread);uv_read_stop(h);
+}
   void Tcp::alloc_cb(uv_handle_t* h, size_t suggested, uv_buf_t* b) { Conn* c = (Conn*)h->data; *b = c->rbuf; }
   void Tcp::on_close(uv_handle_t* h) {
 	Conn* c = (Conn*)h->data; --((Tcp*)c->tcp_)->connection_num; DEBUG("{x%Id}\n", c->id); delete c;
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
-    Tcp* t = (Tcp*)srv->data; uint16_t idex = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[idex];
+	Tcp* t = (Tcp*)srv->data; uint16_t idex = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[idex];
 	Conn* c = new Conn(t->keep_milliseconds, t->loop_, t->roundrobin_index_[idex]);
 	c->app_ = t->app_; c->tcp_ = t; ++t->connection_num; uv_tcp_init(t->loop_, &c->slot_);
 	int $ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
@@ -210,13 +211,13 @@ namespace fc {
 		uv_inet_ntop(addr.sin6_family, &addr.sin6_addr, name, sizeof(name)); c->req_.ip_addr = std::string(name, t->addr_len);
 	  }
 	}
-    c->set_keep_alive(c->id, 4, 2, 3);
+	c->set_keep_alive(c->id, 4, 2, 3);
 #ifdef _WIN32
 	c->id = c->slot_.socket;
-	if(t->threads == 1 || t->connection_num < t->win_half) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
+	if (t->threads == 1 || t->connection_num < t->win_half) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
 #else
 	c->id = uv__stream_fd(&c->slot_);
-	if(t->threads == 1) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
+	if (t->threads == 1) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
 #endif
 	t->async_[idex]->data = c; uv_async_send(t->async_[idex]);
 	//std::this_thread::sleep_for(std::chrono::nanoseconds(1));
