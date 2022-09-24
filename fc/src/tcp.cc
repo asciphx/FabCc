@@ -27,7 +27,7 @@ namespace fc {
   }
   Tcp& Tcp::setThread(char n) {
 	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu);
-	if (n > roundrobin_index_.size()) n = (char)roundrobin_index_.size(); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
+	if (n > roundrobin_index_.size()) n = (char)roundrobin_index_.size(); threads = n > 0 ? n : 2 * cpu; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
@@ -50,14 +50,14 @@ namespace fc {
 	std::atomic<int> init_count(0); std::vector<std::future<void>> fus;
 	for (int i = 0; i < threads; ++i) {
 	  fus.push_back(std::async(std::launch::async, [this, &init_count] {
-		std::cout << '#' << ++init_count; int idex = init_count - 1; roundrobin_index_[init_count] = 0;
+		int idex = init_count; std::cout << '#' << ++init_count; roundrobin_index_[idex] = 0;
 		//std::cout << "client_thread::threads=[" << uv_thread_self() << "]"<<idex<<'|' << std::endl;
 		uv_loop_t* loop = (uv_loop_t*)malloc(sizeof(uv_loop_t)); uv_loop_init(loop);
 		uv_async_init(loop, async_[idex], on_async_cb); uv_run(loop, UV_RUN_DEFAULT);
 		uv_close((uv_handle_t*)(async_[idex]), on_close); uv_loop_close(loop); free(loop); free(async_[idex]);
 		}));
 	}
-	while (threads != init_count) std::this_thread::yield();
+	while (threads != init_count) std::this_thread::yield(); std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	if (bind(ip_addr, port, is_ipv4))return false;
 	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
@@ -113,11 +113,11 @@ namespace fc {
 			RES_CACHE_TIME[req.uuid] = nowStamp(CACHE_HTML_TIME_SECOND);
 			s << RES_CT << RES_seperator << RES_Txt << RES_crlf; s << RES_date_tag << RES_DATE_STR << RES_crlf;
 			std::ifstream inf(res.path_, std::ios::in | std::ios::binary);
-			int l = 0; $:l = inf.read(c->readbuf, BUF_SIZE).gcount();
-			if (l) { res.body << res.compress_str(c->readbuf, l); goto $; }
-			inf.close(); s << RES_content_length_tag << res.body.size() << RES_crlf;
-			s << RES_crlf << res.body; RES_CACHE_MENU[req.uuid] = res.body;
-			c->write(s.data_, s.size()); s.reset(); res.zlib_cp_str.reset(); res.body.reset(); return;
+			int l = 0; $:l = inf.read(c->readbuf, sizeof(c->readbuf)).gcount();
+			if (l) { res.body << res.compress_str(c->readbuf, l); goto $; } inf.close();
+			s << RES_content_length_tag << res.body.size() << RES_crlf;
+			s << RES_crlf << res.body; c->write(s.data_, s.size()); s.reset();
+			RES_CACHE_MENU[req.uuid] = res.body; res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
 		  Buf range = get_header(req.headers, RES_Range); bool is_range = false;
 		  c->set_status(res, res.code); s << RES_http_status << c->status_;
@@ -187,7 +187,8 @@ namespace fc {
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
 	  DEBUG("客户端：%lld %s \n", c->id, s.c_str());
 	  c->write(s.data_, s.size()); s.reset();
-  } else if (nread < 0) {
+  }
+  if (nread < 0) {
 	if (nread == UV_EOF || nread == UV_ECONNRESET) {
 	  DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
 	  uv_close((uv_handle_t*)h, on_close);
@@ -216,7 +217,7 @@ namespace fc {
 		uv_inet_ntop(addr.sin6_family, &addr.sin6_addr, name, sizeof(name)); c->req_.ip_addr = std::string(name, t->addr_len);
 	  }
 	}
-	c->set_keep_alive(c->id, 4, 2, 3);
+	c->set_keep_alive(c->id, 2, 2, 3);
 #ifdef _WIN32
 	c->id = c->slot_.socket;
 	if (t->threads == 1 || t->connection_num < t->win_half) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
@@ -225,6 +226,5 @@ namespace fc {
 	if (t->threads == 1) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
 #endif
 	t->async_[idex]->data = c; uv_async_send(t->async_[idex]);
-	//std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }
 }

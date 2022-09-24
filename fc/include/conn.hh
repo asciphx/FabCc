@@ -40,7 +40,7 @@ namespace fc {
 	uv_loop_t* loop_;
 	uv_tcp_t slot_;
 	bool reading_ = false;
-	char readbuf[BUF_SIZE];
+	char readbuf[0x28000];
 	fc::Buf buf_;
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
