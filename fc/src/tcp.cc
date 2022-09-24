@@ -25,7 +25,7 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   Tcp& Tcp::setThread(char n) {
-	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? cpu : 3; return *this;
+	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? 2*cpu : 3; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
@@ -43,7 +43,7 @@ namespace fc {
   }
   bool Tcp::Start(const char* ip_addr, int port, bool is_ipv4) {
 	if (opened)return false; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false;
-	if (!port)port = port_; int n = threads; if(async_ == nullptr) async_ = (uv_async_t**)malloc(sizeof(uv_async_t*) * n);
+	if (!port)port = port_; int n = threads; async_ = (uv_async_t**)malloc(sizeof(uv_async_t*) * n);
 	while (n--) { async_[n] = (uv_async_t*)calloc(sizeof(uv_async_t), 1); } core_ = threads - 1;
 	std::atomic<int> init_count(0); std::vector<std::future<void>> fus;
 	for (int i = 0; i < threads; ++i) {
@@ -63,6 +63,9 @@ namespace fc {
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
+#endif
+#ifdef _WIN32
+    win_half = threads / 2;
 #endif
 	if (uv_listen((uv_stream_t*)&_, max_conn, on_conn))return false;
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT); uv_loop_close(loop_); return true;
@@ -210,10 +213,11 @@ namespace fc {
     c->set_keep_alive(c->id, 4, 2, 3);
 #ifdef _WIN32
 	c->id = c->slot_.socket;
+	if(t->threads == 1 || t->connection_num < t->win_half) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
 #else
 	c->id = uv__stream_fd(&c->slot_);
+	if(t->threads == 1) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
 #endif
-	if(t->threads == 1 || t->connection_num < 3) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
 	t->async_[idex]->data = c; uv_async_send(t->async_[idex]);
 	//std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }

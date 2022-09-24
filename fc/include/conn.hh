@@ -2,6 +2,7 @@
 #define CONN_HH
 #include <tp/uv.h>
 #include <string>
+#include <atomic>
 #include <parser.hh>
 #include <req-res.hh>
 #include <h/config.h>

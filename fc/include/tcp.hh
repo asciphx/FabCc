@@ -18,7 +18,7 @@
 #include <directory.hh>
 
 namespace fc {
-  static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX; static std::atomic<unsigned short> RES_IDEX = 0xff;
+  static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
   class Tcp {
@@ -32,6 +32,9 @@ namespace fc {
 	int port_ = DEFAULT_PORT;
 	int addr_len;
 	int connection_num = 0;
+#ifdef _WIN32
+	int win_half = 1;
+#endif
 	unsigned short keep_milliseconds = 6000;
 	bool opened;
 	bool is_ipv6;
