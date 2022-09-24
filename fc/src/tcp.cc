@@ -187,8 +187,7 @@ namespace fc {
 	  s << RES_crlf << res.body; res.headers.clear(); res.code = 200; res.body.reset();
 	  DEBUG("客户端：%lld %s \n", c->id, s.c_str());
 	  c->write(s.data_, s.size()); s.reset();
-  }
-  if (nread < 0) {
+  } else if (nread < 0) {
 	if (nread == UV_EOF || nread == UV_ECONNRESET) {
 	  DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
 	  uv_close((uv_handle_t*)h, on_close);
