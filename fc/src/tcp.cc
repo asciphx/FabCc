@@ -26,7 +26,8 @@ namespace fc {
 	} not_set_types = false; return *this;
   }
   Tcp& Tcp::setThread(char n) {
-	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
+	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu);
+	if(n > roundrobin_index_.size()) n = roundrobin_index_.size(); threads = n > 0 ? n : cpu > 1 ? 2 * cpu : 3; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
