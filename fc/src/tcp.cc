@@ -51,7 +51,7 @@ namespace fc {
 	for (int i = 0; i < threads; ++i) {
 	  fus.push_back(std::async(std::launch::async, [this, &init_count] {
 		int idex = init_count; std::cout << '#' << ++init_count; roundrobin_index_[idex] = 0;
-		//std::cout << "client_thread::threads=[" << uv_thread_self() << "]"<<idex<<'|' << std::endl;
+		//std::cout << "thread_id=[" << uv_thread_self() << "]"<<idex<<'|' << std::endl;
 		uv_loop_t* loop = (uv_loop_t*)malloc(sizeof(uv_loop_t)); uv_loop_init(loop);
 		uv_async_init(loop, async_[idex], on_async_cb); uv_run(loop, UV_RUN_DEFAULT);
 		uv_close((uv_handle_t*)(async_[idex]), on_close); uv_loop_close(loop); free(loop); free(async_[idex]);
