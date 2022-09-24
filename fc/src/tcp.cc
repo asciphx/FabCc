@@ -3,7 +3,7 @@
 #pragma warning(disable: 4996)
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app),
-	roundrobin_index_(std::thread::hardware_concurrency() * 2 + 1) {
+	roundrobin_index_(std::thread::hardware_concurrency() + 1) {
 #ifdef _WIN32
 	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
 #else
@@ -27,7 +27,7 @@ namespace fc {
   }
   Tcp& Tcp::setThread(char n) {
 	uv_cpu_info_t* uc; int cpu; uv_cpu_info(&uc, &cpu); uv_free_cpu_info(uc, cpu);
-	if (n > roundrobin_index_.size()) n = (char)roundrobin_index_.size(); threads = n > 0 ? n : 2 * cpu; return *this;
+	if (n > roundrobin_index_.size()) n = (char)roundrobin_index_.size(); threads = n > 0 ? n : cpu; return *this;
   }
   Tcp& Tcp::maxConnection(int backlog) { max_conn = backlog < 0 ? 1 : backlog; return *this; }
   void Tcp::exit() { if (!opened)return; opened = false; uv_close((uv_handle_t*)&_, NULL); uv_stop(loop_); }// uv_loop_close(loop_);
@@ -221,7 +221,7 @@ namespace fc {
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
 	Tcp* t = (Tcp*)srv->data;
-	if (t->connection_num < t->threads) {
+	if (t->threads == 1 || t->connection_num < t->threads) {
 	  Conn* c = new Conn(t->keep_milliseconds, t->loop_, t->roundrobin_index_[t->threads]);
 	  c->app_ = t->app_; c->tcp_ = t; uv_tcp_init(t->loop_, &c->slot_);
 	  int $ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
@@ -239,7 +239,7 @@ namespace fc {
 	  c->id = c->slot_.socket;
 	  uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return;
 	}
-    unsigned short index = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[index];
+    unsigned short index = t->pick_io_tcp(); ++t->roundrobin_index_[index];
 		t->async_[index]->idex = index; uv_async_send(t->async_[index]);
 		//uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb);
   }
