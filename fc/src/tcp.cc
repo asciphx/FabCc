@@ -207,13 +207,13 @@ namespace fc {
 		uv_inet_ntop(addr.sin6_family, &addr.sin6_addr, name, sizeof(name)); c->req_.ip_addr = std::string(name, t->addr_len);
 	  }
 	}
+    c->set_keep_alive(c->id, 4, 2, 3);
 #ifdef _WIN32
 	c->id = c->slot_.socket;
 #else
 	c->id = uv__stream_fd(&c->slot_);
 #endif
 	if(t->threads == 1 || t->connection_num < 3) { uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return; }
-    //c->set_keep_alive(c->id, 4, 2, 2);// std::cout << c->id << ", ";
 	t->async_[idex]->data = c; uv_async_send(t->async_[idex]);
 	//std::this_thread::sleep_for(std::chrono::nanoseconds(1));
   }
