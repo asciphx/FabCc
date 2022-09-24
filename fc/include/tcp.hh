@@ -21,7 +21,6 @@ namespace fc {
   static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
-  static unsigned short RES_idex = 0;
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;

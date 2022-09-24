@@ -241,8 +241,8 @@ namespace fc {
 	  uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return;
 	}
 #endif
-    RES_idex = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[RES_idex];
-	t->async_[RES_idex]->idex = RES_idex; uv_async_send(t->async_[RES_idex]);
-	//uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb);
+    unsigned short index = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[index];
+		t->async_[index]->idex = index; uv_async_send(t->async_[index]);
+		//uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb);
   }
 }

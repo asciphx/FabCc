@@ -40,6 +40,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - If translated by machine, FabCc can be a wafer factory, so FabCc symbolizes the most sophisticated and minimal chip.
 - The namespace uses the uppercase hump fc of FabCc.
 - The logo hasn't been replaced yet. It's the crow logo for the time being.
+- Before the loopback test, you need to refresh the web page several times to warm up, and then the wrk test will not crash. The specific reason is unknown.
 - Principle of Coroutines
 - ![yield](./yield.gif)
 - [Demo site](http://8.129.58.72:8080/)🚀
