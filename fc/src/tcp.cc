@@ -3,7 +3,7 @@
 #pragma warning(disable: 4996)
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app),
-	roundrobin_index_(std::thread::hardware_concurrency() * 2) {
+	roundrobin_index_(std::thread::hardware_concurrency() * 2 + 1) {
 #ifdef _WIN32
 	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
 #else
@@ -61,7 +61,7 @@ namespace fc {
 		}));
 	}
 	while (threads != init_count) std::this_thread::yield(); std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	if (bind(ip_addr, port, is_ipv4))return false;
+	if (bind(ip_addr, port, is_ipv4))return false; roundrobin_index_[threads] = 0;
 	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
 	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
@@ -221,9 +221,8 @@ namespace fc {
   }
   void Tcp::on_conn(uv_stream_t* srv, int st) {
 	Tcp* t = (Tcp*)srv->data;
-#ifdef _WIN32
-	if (t->connection_num < 3) {
-	  Conn* c = new Conn(t->keep_milliseconds, t->loop_, t->roundrobin_index_[0]);
+	if (t->connection_num < t->threads) {
+	  Conn* c = new Conn(t->keep_milliseconds, t->loop_, t->roundrobin_index_[t->threads]);
 	  c->app_ = t->app_; c->tcp_ = t; uv_tcp_init(t->loop_, &c->slot_);
 	  int $ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
 	  if ($) { uv_close((uv_handle_t*)&c->slot_, NULL); delete c; return; }
@@ -240,7 +239,6 @@ namespace fc {
 	  c->id = c->slot_.socket;
 	  uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb); return;
 	}
-#endif
     unsigned short index = t->threads == 1 ? 0 : t->pick_io_tcp(); ++t->roundrobin_index_[index];
 		t->async_[index]->idex = index; uv_async_send(t->async_[index]);
 		//uv_read_start((uv_stream_t*)&c->slot_, alloc_cb, read_cb);
