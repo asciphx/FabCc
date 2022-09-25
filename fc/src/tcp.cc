@@ -89,9 +89,9 @@ namespace fc {
 	  }
 #endif
 	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
-	 // res.timer_.setTimeout([h, c] {
-		//c->shut(c->id, _BOTH); uv_close((uv_handle_t*)h, on_close);
-	 // }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
+	  res.timer_.setTimeout([h, c] {
+		c->shut(c->id, _BOTH); uv_close((uv_handle_t*)h, on_close);
+	  }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
 #if defined(_MSC_VER) || defined(__MINGW32__)
