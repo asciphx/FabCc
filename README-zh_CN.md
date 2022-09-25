@@ -62,7 +62,7 @@ int main() {
   };
   app["/sockets"] = [&srv](Req& req, Res& res) {
 	Buf b("("); b << srv.$.size() << ")[";
-	for (std::set<u32>::iterator i = srv.$.begin(); i != srv.$.end(); ++i) b << *i << ',';
+	for (std::set<u32>::iterator i = srv.$.begin(); i != srv.$.end(); ++i) b << *i << ',', Conn::shut(*i, _READ);
 	res.write(b.pop_back() << ']');//获取所有活动的套接字id, 并且把所有套接字关闭
   };
   app["/api"] = [&app](Req& req, Res& res) {
