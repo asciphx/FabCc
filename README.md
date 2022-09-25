@@ -59,6 +59,11 @@ int main() {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
 	res.write(x.dump());//JSON response
   };
+  app["/sockets"] = [&srv](Req& req, Res& res) {
+	Buf b("("); b << srv.$.size() << ")[";
+	for (std::set<u32>::iterator i = srv.$.begin(); i != srv.$.end(); ++i) b << *i << ',';
+	res.write(b.pop_back() << ']');//Get all active socket id
+  };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//Return to routing list
   };

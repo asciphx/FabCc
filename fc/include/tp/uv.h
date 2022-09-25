@@ -865,7 +865,6 @@ UV_EXTERN int uv_idle_stop(uv_idle_t* idle);
 struct uv_async_s {
   UV_HANDLE_FIELDS
   UV_ASYNC_PRIVATE_FIELDS
-  unsigned short idex;
 };
 
 UV_EXTERN int uv_async_init(uv_loop_t*,

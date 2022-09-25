@@ -10,6 +10,7 @@
 #include <thread>
 #include <vector>
 #include <fstream>
+#include <set>
 #include <timer.hh>
 #include <conn.hh>
 #include <h/common.h>
@@ -24,8 +25,16 @@ namespace fc {
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
-	uv_async_t** async_;
-	uv_loop_t* loop_, **loops_;
+	//uv_async_t** async_; uv_loop_t** loops_;
+	//uint8_t core_{ 1 };
+	//std::vector<std::atomic<uint16_t>> roundrobin_index_;
+	//inline uint16_t pick_io_tcp() {
+	//  if (roundrobin_index_[0] == 0)return 0;
+	//  uint16_t i = 0, l = core_;
+	//  while (++i < core_ && roundrobin_index_[l] < roundrobin_index_[i])l = i;
+	//  return i;
+	//}
+	uv_loop_t* loop_;
 	sockaddr_storage addr_;
 	int max_conn = 0xffff;
 	char threads = 3;
@@ -38,14 +47,6 @@ namespace fc {
 	bool bind(const char* ip_addr, int port, bool is_ipv4 = true);
 	App* app_;
 	bool not_set_types = true;
-	uint8_t core_{ 1 };
-	std::vector<std::atomic<uint16_t>> roundrobin_index_;
-	inline uint16_t pick_io_tcp() {
-	  if (roundrobin_index_[0] == 0)return 0;
-	  uint16_t i = 0, l = core_;
-	  while (++i < core_ && roundrobin_index_[l] < roundrobin_index_[i])l = i;
-	  return i;
-	}
   public:
 	Tcp(App* app = nullptr, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
@@ -67,6 +68,8 @@ namespace fc {
 	Tcp& router(App& app);
 	void exit();
 	std::unordered_map<std::string_view, std::string_view> content_types;
+	//Save all socket id
+	std::set<unsigned int> $ = {};
   protected:
 	static void on_async_cb(uv_async_t* handle);
 	static void read_cb(uv_stream_t* client, ssize_t nread, const uv_buf_t* b);

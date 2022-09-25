@@ -35,7 +35,7 @@ namespace fc {
 	void* app_;
 	void* data;
 	unsigned short keep_milliseconds;
-	Conn(unsigned short milliseconds, uv_loop_t* l, std::atomic<uint16_t>& queue_length) noexcept;//
+	Conn(unsigned short milliseconds, uv_loop_t* l) noexcept;//
 	uv_buf_t rbuf;
 	uv_loop_t* loop_;
 	uv_tcp_t slot_;
@@ -45,12 +45,10 @@ namespace fc {
 	fc::llParser parser_;
 	const char* status_ = "404 Not Found\r\n";
 	void* tcp_;
-	std::atomic<uint16_t>& queue_length_;
 	virtual ~Conn();
-	bool write(const char* buf, int size, int flag = 0);
+	bool write(const char* buf, int size);
 	int read(char* buf, int max_size);
 	void set_status(Res& res, uint16_t status);
-    std::function<void(const char* c, size_t s, std::function<void()> f)> sink_;
 	int shut(socket_type fd, sd_type d);
 	int close_fd(socket_type fd);
 	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
