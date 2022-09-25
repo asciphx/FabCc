@@ -90,7 +90,7 @@ namespace fc {
 #endif
 	  Res& res = c->res_; LOG_GER(m2c(req.method) << " |" << res.code << "| " << req.url);// c->_.data = &res;
 	  res.timer_.setTimeout([h, c] {
-		c->shut(c->id, _BOTH); uv_close((uv_handle_t*)h, on_close);
+		c->shut(_BOTH); uv_close((uv_handle_t*)h, on_close);
 	  }, c->keep_milliseconds);// res.add_header(RES_Con, "Keep-Alive");
 	  if (uv_now(c->loop_) - RES_last > 1000) {//uv_mutex_lock(&RES_MUTEX); uv_mutex_unlock(&RES_MUTEX);
 		time(&RES_TIME_T); RES_last = uv_now(c->loop_);
@@ -208,11 +208,11 @@ namespace fc {
 	int $ = uv_accept((uv_stream_t*)&t->_, (uv_stream_t*)&c->slot_);
 	if ($) { uv_close((uv_handle_t*)&c->slot_, NULL); delete c; return; }
 	if (0 == uv_tcp_getpeername((uv_tcp_t*)&c->slot_, (sockaddr*)&t->addr_, &t->addr_len)) {
-	  char name[128] = {}; if (!t->is_ipv6) {
-		sockaddr_in addr = *((sockaddr_in*)&t->addr_);
+	  if (!t->is_ipv6) {
+		sockaddr_in addr = *((sockaddr_in*)&t->addr_); char name[16] = {};
 		uv_inet_ntop(addr.sin_family, &addr.sin_addr, name, t->addr_len); c->req_.ip_addr = std::string(name, t->addr_len);
 	  } else {
-		sockaddr_in6 addr = *((sockaddr_in6*)&t->addr_);
+		sockaddr_in6 addr = *((sockaddr_in6*)&t->addr_); char name[128] = {};
 		uv_inet_ntop(addr.sin6_family, &addr.sin6_addr, name, t->addr_len); c->req_.ip_addr = std::string(name, t->addr_len);
 	  }
 	}

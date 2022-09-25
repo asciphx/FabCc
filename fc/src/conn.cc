@@ -32,13 +32,20 @@ namespace fc {
 	return ::shutdown(fd, type);
 #endif
   }
-  int Conn::close_fd(socket_type fd) {
+  int Conn::shut(sd_type type) {
 #if defined _WIN32
-	closesocket(fd); WSACleanup(); return 1;
+	return ::shutdown(this->id, type);//SD_RECEIVE，SD_SEND，SD_BOTH
 #else
-	return close(fd);
+	return ::shutdown(this->id, type);
 #endif
   }
+//  int Conn::close_fd(socket_type fd) {
+//#if defined _WIN32
+//	closesocket(fd); WSACleanup(); return 1;
+//#else
+//	return close(fd);
+//#endif
+//  }
   //uv__socket_sockopt, uv_poll_init, uv_poll_init_socket
   int Conn::set_keep_alive(socket_type& fd, int idle, int intvl, unsigned char probes) {
 #ifdef WIN32

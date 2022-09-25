@@ -49,8 +49,9 @@ namespace fc {
 	bool write(const char* buf, int size);
 	int read(char* buf, int max_size);
 	void set_status(Res& res, uint16_t status);
-	int shut(socket_type fd, sd_type d);
-	int close_fd(socket_type fd);
+	int shut(sd_type type);
+	static int shut(socket_type fd, sd_type d);
+	//int close_fd(socket_type fd);
 	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
 	// keep-alive time seconds = idle + intvl * probes
 	int set_keep_alive(socket_type& fd, int idle, int intvl = 1, unsigned char probes = 10);
