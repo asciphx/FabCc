@@ -11,21 +11,21 @@
 灵感来自于其他c++知名web框架, FabCC的定位是一个网络框架, 其特点是简洁、迅速、实用、活跃、全面。
 
 ## 特征
+- 全平台支持，（已经测试Linux和Windows）
 - 现在最低编译器版本支持到了c++14, 目前兼容了c++17的许多特性包括any, optional, string_view, 以及部分的扩展
-- 可以对路由进行增删改查
-- 能够使用全局定时器任务，来控制一些事情，比如到期关闭服务器
-- 支持类似于无栈协程的非对称协程, 像python的生成器, 提供了yield方法用于转移执行
-- 拥有类似nodejs的api，写起来也像js
-- 极简的api，无限的可能
+- 最少的第三方库，均以源文件形式存放项目中
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
 - 难以置信的编译速度，开发速度同时也得到提升
-- 最少的第三方库，均以源文件形式存放项目中
-- 全平台支持，（已经测试Linux和Windows）
-- 最小化分配与释放内存，对硬盘友好，不产生大量内存碎片，因此几乎没有磁盘io
-- 支持单元测试，文档请见【[coost](https://coostdocs.gitee.io/cn/co/unitest/)】
 - 支持网页版Postman，地址是127.0.0.1:8080/test.html
+- 可以对路由进行增删改查，动态路由参考【[lithium](https://github.com/matt-42/lithium)】迭代而成
+- 支持类似于无栈协程的非对称协程, 像python的生成器, 协程来自【[boost](https://github.com/boostorg/context)】
+- 拥有类似nodejs的api，写起来也像js, http解析器来自【[nodejs](https://github.com/nodejs/llhttp)】
+- 字符串映射的str_map【[beast](https://github.com/boostorg/beast),[crow](https://github.com/ipkn/crow)】
+- 静态文件缓存file_sptr【[libhttp](https://github.com/neithern/libhttp)】
+- 支持单元测试，文档请见【[coost](https://coostdocs.gitee.io/cn/co/unitest/)】
 - Json集成于【[coost](https://coostdocs.gitee.io/cn/co/json/)】, 并支持序列化与反序列化
-- 具备设计借鉴于rust语言风格的box，因此无需使用裸指针
+- 设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】，因此无需使用裸指针
+- zlib压缩来自【[zlib](https://github.com/madler/zlib)】
 
 ## 仍在开发中
 - [x] 路由大括号表达式
@@ -40,8 +40,6 @@
 ## 説明
 - 如果机器翻译过来，FabCc可以是晶圆厂，所以FabCc象征着最复杂又最小化的芯片。
 - 命名空間采用FabCc的大寫駝峰fc來使用。
-- logo还没来得及更换，暂时是用的crow的logo。
-- 回环测试之前需要先刷新几次网页页面预热, 然后wrk测试就不会崩溃, 具体原因未知。
 - 协程的原理图
 - ![yield](./yield.gif)
 - [示例](http://8.129.58.72:8080/)🚀

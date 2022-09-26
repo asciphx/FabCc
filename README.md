@@ -10,21 +10,21 @@
 [release-link]: https://github.com/asciphx/FabCc/releases
 Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by concise, fast, practical, reactive, functional.
 ## Features
+- Cross platform support, (Linux and windows have been tested)
 - Now the minimum compiler supports the c++14 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
-- Can add, delete, modify and query the route
-- Use the global timer task to control some things, such as shutting down the server when it expires
-- Supports asymmetric coroutines similar to stackless coroutines, such as Python's generator, and provides the yield method for transfer execution
-- With an API similar to nodejs, it also looks like JS
-- Minimalist API, infinite possibilities
+- The fewest third-party libraries, are stored in the project in the form of source files
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL
 - Incredible compilation speed and development speed are also improved
-- The fewest third-party libraries, are stored in the project in the form of source files
-- Cross platform support, (Linux and windows have been tested)
-- Minimize the allocate and release of memory, which is friendly to the hard disk and does not generate a large amount of memory fragments, so there is almost no disk IO
-- Support unit testing. Please refer to [[coost](https://coostdocs.github.io/cn/co/unitest/)] for documentation
 - Support the web version of Postman, the address is 127.0.0.1:8080/test.html
+- Can add, delete, modify and query the route. Dynamic Route Reference【[lithium](https://github.com/matt-42/lithium)】Iterative
+- Supports asymmetric coroutines similar to stackless coroutines, such as Python's generator. Coroutine trip from【[boost](https://github.com/boostorg/context)】
+- With an API similar to nodejs, it also looks like JS, llhttp parser from【[nodejs](https://github.com/nodejs/llhttp)】
+- str_map for string mapping taken from【[beast](https://github.com/boostorg/beast)】,【[crow](https://github.com/ipkn/crow)】
+- file_sptr for Static file cache from【[libhttp](https://github.com/neithern/libhttp)】
+- Support unit testing. Please refer to [[coost](https://coostdocs.github.io/cn/co/unitest/)] for documentation
 - Json integrated in[[coost](https://coostdocs.github.io/cn/co/json/)], and supports serialization and deserialization
-- box with design style from the rust language, so there is no need to use naked pointers
+- box with design style from the Rust language【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】，so there is no need to use naked pointers
+- Zlib compression from【[zlib](https://github.com/madler/zlib)】
 
 ## Still under development
 - [x] Processing of routing brace
@@ -39,8 +39,6 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 ## Description
 - If translated by machine, FabCc can be a wafer factory, so FabCc symbolizes the most sophisticated and minimal chip.
 - The namespace uses the uppercase hump fc of FabCc.
-- The logo hasn't been replaced yet. It's the crow logo for the time being.
-- Before the loopback test, you need to refresh the web page several times to warm up, and then the wrk test will not crash. The specific reason is unknown.
 - Principle of Coroutines
 - ![yield](./yield.gif)
 - [Demo site](http://8.129.58.72:8080/)🚀
