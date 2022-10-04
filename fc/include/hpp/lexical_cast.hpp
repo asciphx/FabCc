@@ -172,21 +172,18 @@ namespace std {
   template <> _NODISCARD _INLINE
 	int lexical_cast<int>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
-	  if (l < 11) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		int r = STD_POW[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POW[l] * (*c - 0x30);
+	  if (l < 11) {
+		int r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
-	} else if (--l < 11) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  int r = STD_POW[--l] * (0x30 - *c);
-	  while (--l) {
+	}
+	if (--l < 11) {
+	  int r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POW[l] * (*c - 0x30);
 	  }
@@ -197,24 +194,19 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(const char* c) {
-	size_t l = strlen(c); if (--l < 9) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned int r = STD_POW[l] * (*c++ - 0x30);
-	  while (--l > 1) {
+	size_t l = strlen(c); if (--l < 9) {
+	  unsigned int r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c++ - 0x30);
+		r += STD_POW[l--] * (*c++ - 0x30);
 	  }
 	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 	  r += *c - 0x30; return r;
-	} else if (--l == 8) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned int r = STD_POW[l] * (*c++ - 0x30);
-	  while (--l) {
+	}
+	if (l == 9) {
+	  unsigned int r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c++ - 0x30);
+		r += STD_POW[--l] * (*c++ - 0x30);
 	  }
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c++ - 0x30;
 	  if (r > 429496729 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
 	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
@@ -222,21 +214,18 @@ namespace std {
   template <> _NODISCARD _INLINE
 	long lexical_cast<long>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
-	  if (l < 11) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		long r = STD_POW[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POW[l] * (*c - 0x30);
+	  if (l < 11) {
+		long r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
-	} else if (--l < 11) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  long r = STD_POW[--l] * (0x30 - *c);
-	  while (--l) {
+	}
+	if (--l < 11) {
+	  long r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POW[l] * (*c - 0x30);
 	  }
@@ -247,46 +236,37 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(const char* c) {
-	size_t l = strlen(c); if (--l < 9) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long r = STD_POW[l] * (*c - 0x30);
-	  while (--l > 1) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	size_t l = strlen(c); if (--l < 9) {
+	  unsigned long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[l--] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 	  r += *c - 0x30; return r;
-	} else if (--l == 8) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long r = STD_POW[l] * (*c - 0x30);
-	  while (--l) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	}
+	if (l == 9) {
+	  unsigned long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[--l] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c - 0x30;
-	  if (r > 429496729 || *++c > 0x35 || 0x30 > *c) throw std::range_error("");
+	  if (r > 429496729 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
 	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(const char* c) {
 	size_t l = strlen(c); if (*c != 0x2D) {
-	  if (l < 20) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		long long r = STD_POWS[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POWS[l] * (*c - 0x30);
+	  if (l < 20) {
+		long long r = 0; while (l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POWS[l--] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
-		r += *c - 0x30; if (r < 0) throw std::range_error("");
-		return r;
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
+		r += *c - 0x30; return r;
 	  } throw std::out_of_range("");
-	} else if (--l < 20) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  long long r = STD_POWS[--l] * (0x30 - *c);
-	  while (--l) {
+	}
+	if (--l < 20) {
+	  long long r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POWS[l] * (*c - 0x30);
 	  }
@@ -297,24 +277,19 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(const char* c) {
-	size_t l = strlen(c); if (--l < 19) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long long r = STD_POWS[l] * (*c++ - 0x30);
-	  while (--l > 1) {
+	size_t l = strlen(c); if (--l < 19) {
+	  unsigned long long r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POWS[l] * (*c++ - 0x30);
+		r += STD_POWS[l--] * (*c++ - 0x30);
 	  }
 	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 	  r += *c - 0x30; return r;
-	} else if (--l == 18) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long long r = STD_POWS[l] * (*c++ - 0x30);
-	  while (--l) {
+	}
+	if (l == 19) {
+	  unsigned long long r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POWS[l] * (*c++ - 0x30);
+		r += STD_POWS[--l] * (*c++ - 0x30);
 	  }
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c++ - 0x30;
 	  if (r > 1844674407370955161 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
 	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
@@ -394,24 +369,19 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	short lexical_cast<short>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 6) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		short r = STD_PO[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_PO[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 6) {
+		short r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_PO[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 6) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  short r = STD_PO[--l] * (0x30 - *c);
-	  while (--l) {
+	  short r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_PO[l] * (*c - 0x30);
 	  }
@@ -422,52 +392,38 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 4) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned short r = STD_PO[l] * (*c++ - 0x30);
-	  while (--l > 1) {
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 4) {
+	  unsigned short r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_PO[l] * (*c++ - 0x30);
+		r += STD_PO[l--] * (*c++ - 0x30);
 	  }
 	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 3) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned short r = STD_PO[l] * (*c++ - 0x30);
-	  while (--l) {
+	if (l == 4) {
+	  unsigned short r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_PO[l] * (*c++ - 0x30);
+		r += STD_PO[--l] * (*c++ - 0x30);
 	  }
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c++ - 0x30;
 	  if (r > 6553 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	int lexical_cast<int>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 11) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		int r = STD_POW[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 11) {
+		int r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 11) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  int r = STD_POW[--l] * (0x30 - *c);
-	  while (--l) {
+	  int r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POW[l] * (*c - 0x30);
 	  }
@@ -478,52 +434,38 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned int r = STD_POW[l] * (*c++ - 0x30);
-	  while (--l > 1) {
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 9) {
+	  unsigned int r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c++ - 0x30);
+		r += STD_POW[l--] * (*c++ - 0x30);
 	  }
 	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 8) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned int r = STD_POW[l] * (*c++ - 0x30);
-	  while (--l) {
+	if (l == 9) {
+	  unsigned int r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c++ - 0x30);
+		r += STD_POW[--l] * (*c++ - 0x30);
 	  }
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c++ - 0x30;
 	  if (r > 429496729 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	long lexical_cast<long>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 11) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		long r = STD_POW[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 11) {
+		long r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 11) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  long r = STD_POW[--l] * (0x30 - *c);
-	  while (--l) {
+	  long r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POW[l] * (*c - 0x30);
 	  }
@@ -534,52 +476,38 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long r = STD_POW[l] * (*c - 0x30);
-	  while (--l > 1) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 9) {
+	  unsigned long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[l--] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 8) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long r = STD_POW[l] * (*c - 0x30);
-	  while (--l) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	if (l == 9) {
+	  unsigned long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[--l] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c - 0x30;
-	  if (r > 429496729 || *++c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  if (r > 429496729 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 20) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		long long r = STD_POWS[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POWS[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 20) {
+		long long r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POWS[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 20) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  long long r = STD_POWS[--l] * (0x30 - *c);
-	  while (--l) {
+	  long long r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POWS[l] * (*c - 0x30);
 	  }
@@ -590,30 +518,21 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(std::string& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 19) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long long r = STD_POWS[l] * (*c++ - 0x30);
-	  while (--l > 1) {
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 19) {
+	  unsigned long long r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POWS[l] * (*c++ - 0x30);
+		r += STD_POWS[l--] * (*c++ - 0x30);
 	  }
 	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 18) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long long r = STD_POWS[l] * (*c++ - 0x30);
-	  while (--l) {
+	if (l == 19) {
+	  unsigned long long r = 0; while (l) {
 		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POWS[l] * (*c++ - 0x30);
+		r += STD_POWS[--l] * (*c++ - 0x30);
 	  }
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c++ - 0x30;
 	  if (r > 1844674407370955161 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
@@ -695,24 +614,19 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	short lexical_cast<short>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 6) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		short r = STD_PO[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_PO[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 6) {
+		short r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_PO[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 6) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  short r = STD_PO[--l] * (0x30 - *c);
-	  while (--l) {
+	  short r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_PO[l] * (*c - 0x30);
 	  }
@@ -723,52 +637,38 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned short lexical_cast<unsigned short>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 4) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned short r = STD_PO[l] * (*c - 0x30);
-	  while (--l > 1) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_PO[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 4) {
+	  unsigned short r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_PO[l--] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 3) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned short r = STD_PO[l] * (*c - 0x30);
-	  while (--l) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_PO[l] * (*c - 0x30);
+	if (l == 4) {
+	  unsigned short r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_PO[--l] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c - 0x30;
-	  if (r > 6553 || *++c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  if (r > 6553 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	int lexical_cast<int>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 11) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		int r = STD_POW[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 11) {
+		int r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 11) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  int r = STD_POW[--l] * (0x30 - *c);
-	  while (--l) {
+	  int r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POW[l] * (*c - 0x30);
 	  }
@@ -779,52 +679,38 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned int lexical_cast<unsigned int>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned int r = STD_POW[l] * (*c - 0x30);
-	  while (--l > 1) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 9) {
+	  unsigned int r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[l--] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 8) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned int r = STD_POW[l] * (*c - 0x30);
-	  while (--l) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	if (l == 9) {
+	  unsigned int r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[--l] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c - 0x30;
-	  if (r > 429496729 || *++c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  if (r > 429496729 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	long lexical_cast<long>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 11) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		long r = STD_POW[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 11) {
+		long r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POW[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 11) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  long r = STD_POW[--l] * (0x30 - *c);
-	  while (--l) {
+	  long r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POW[l] * (*c - 0x30);
 	  }
@@ -835,52 +721,38 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long lexical_cast<unsigned long>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 9) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long r = STD_POW[l] * (*c - 0x30);
-	  while (--l > 1) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 9) {
+	  unsigned long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[l--] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 8) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long r = STD_POW[l] * (*c - 0x30);
-	  while (--l) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POW[l] * (*c - 0x30);
+	if (l == 9) {
+	  unsigned long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POW[--l] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c - 0x30;
-	  if (r > 429496729 || *++c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  if (r > 429496729 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE
 	long long lexical_cast<long long>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.size();
-	if (*c != 0x2D) {
-	  if (l < 20) { if (*c == 0x30) return 0;
-		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		long long r = STD_POWS[--l] * (*c - 0x30);
-		while (--l) {
-		  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		  r += STD_POWS[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.size(); if (*c != 0x2D) {
+	  if (l < 20) {
+		long long r = 0; while (--l) {
+		  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		  r += STD_POWS[l] * (*c++ - 0x30);
 		}
-		if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
+		if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
 		r += *c - 0x30; if (r < 0) throw std::range_error("");
 		return r;
 	  } throw std::out_of_range("");
 	}
 	if (--l < 20) {
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  long long r = STD_POWS[--l] * (0x30 - *c);
-	  while (--l) {
+	  long long r = 0; while (--l) {
 		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
 		r -= STD_POWS[l] * (*c - 0x30);
 	  }
@@ -891,30 +763,21 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
 	unsigned long long lexical_cast<unsigned long long>(fc::Buf& s) {
-	const char* c = s.c_str(); size_t l = s.length();
-	if (--l < 19) { if (*c == 0x30) return 0;
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long long r = STD_POWS[l] * (*c - 0x30);
-	  while (--l > 1) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POWS[l] * (*c - 0x30);
+	const char* c = s.c_str(); size_t l = s.length(); if (--l < 19) {
+	  unsigned long long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POWS[l--] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::range_error("");
-	  r += *c - 0x30;
-	  return r;
+	  if (*c > 0x39 || 0x30 > *c) throw std::range_error("");
+	  r += *c - 0x30; return r;
 	}
-	if (--l == 18) {
-	  if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  unsigned long long r = STD_POWS[l] * (*c - 0x30);
-	  while (--l) {
-		if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-		r += STD_POWS[l] * (*c - 0x30);
+	if (l == 19) {
+	  unsigned long long r = 0; while (l) {
+		if (*c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
+		r += STD_POWS[--l] * (*c++ - 0x30);
 	  }
-	  if (*++c > 0x39 || 0x30 > *c) throw std::invalid_argument("");
-	  r += *c - 0x30;
-	  if (r > 1844674407370955161 || *++c > 0x35 || 0x30 > *c) throw std::range_error("");
-	  r = r * 10 + *c - 0x30;
-	  return r;
+	  if (r > 1844674407370955161 || *c > 0x35 || 0x30 > *c) throw std::range_error("");
+	  r = r * 10 + *c - 0x30; return r;
 	} throw std::invalid_argument("");
   }
   template <> _NODISCARD _INLINE

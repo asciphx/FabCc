@@ -12,7 +12,7 @@ namespace fc {
 	switch (hack8Str(m)) {
 	case "DELETE"_l:return static_cast<char>(HTTP::DEL);
 	case 4670804:return static_cast<char>(HTTP::GET);
-	  //case 1212498244:return static_cast<char>(HTTP::HEAD);
+	case 1212498244:return static_cast<char>(HTTP::HEAD);
 	case 1347375956:return static_cast<char>(HTTP::POST);
 	case 5264724:return static_cast<char>(HTTP::PUT);
 	  //case "PATCH"_l:return static_cast<char>(HTTP::PATCH);
@@ -26,7 +26,7 @@ namespace fc {
 	switch (m) {
 	case HTTP::DEL:return "DELETE";
 	case HTTP::GET:return "GET";
-	  //case HTTP::HEAD:return "HEAD";
+	case HTTP::HEAD:return "HEAD";
 	case HTTP::POST:return "POST";
 	case HTTP::PUT:return "PUT";
 	  //case HTTP::CONNECT:return "CONNECT";

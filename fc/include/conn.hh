@@ -23,7 +23,7 @@ static struct timeval RES_SED { 10, 0 };//write
 #endif
 namespace fc {
   static int RES_KEEP_Alive = 1;//开启keepalive
-  enum sd_type { _READ, _WRITE, _BOTH };
+  enum sd_type { _READ, _WRITE, _BOTH };//SD_RECEIVE，SD_SEND，SD_BOTH
   class Conn {
 	Conn& operator=(const Conn&) = delete;
 	Conn(const Conn&) = delete;
@@ -33,10 +33,9 @@ namespace fc {
 	Req req_;
 	Res res_;
 	void* app_;
-	void* data;
-	unsigned short keep_milliseconds;
-	Conn(unsigned short milliseconds, uv_loop_t* l) noexcept;//
-	uv_buf_t rbuf;
+	unsigned short keep_milliseconds; std::atomic<uint16_t>& roundrobin_index_;
+	Conn(unsigned short milliseconds, uv_loop_t* l, std::atomic<uint16_t>& roundrobin_index_) noexcept;//
+	uv_buf_t rbuf, wbuf;
 	uv_loop_t* loop_;
 	uv_tcp_t slot_;
 	bool reading_ = false;

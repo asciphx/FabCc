@@ -19,28 +19,27 @@
 #include <directory.hh>
 
 namespace fc {
-  static uv_shutdown_t RES_SHUT_REQ; static uv_mutex_t RES_MUTEX;
+  static uv_mutex_t RES_MUTEX;
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
   class Tcp {
 	friend Conn;
 	uv_tcp_t _;
-	//uv_async_t** async_; uv_loop_t** loops_;
-	//uint8_t core_{ 1 };
-	//std::vector<std::atomic<uint16_t>> roundrobin_index_;
-	//inline uint16_t pick_io_tcp() {
-	//  if (roundrobin_index_[0] == 0)return 0;
-	//  uint16_t i = 0, l = core_;
-	//  while (++i < core_ && roundrobin_index_[l] < roundrobin_index_[i])l = i;
-	//  return i;
-	//}
+	uv_async_t* async_;
+	uint8_t core_{ 1 };
+	std::vector<std::atomic<uint16_t>> roundrobin_index_;
+	inline uint16_t pick_io_tcp() {
+	  if (roundrobin_index_[0] == 0)return 0;
+	  uint16_t i = 0, l = core_;
+	  while (++i < core_ && roundrobin_index_[l] < roundrobin_index_[i])l = i;
+	  return i;
+	}
 	uv_loop_t* loop_;
 	sockaddr_storage addr_;
 	int max_conn = 0xffff;
 	char threads = 3;
 	int port_ = DEFAULT_PORT;
 	int addr_len;
-	int connection_num = 0;
 	unsigned short keep_milliseconds = 6000;
 	bool opened;
 	bool is_ipv6;
@@ -48,6 +47,7 @@ namespace fc {
 	App* app_;
 	bool not_set_types = true;
   public:
+	int connection_num = 0;
 	Tcp(App* app = nullptr, uv_loop_t* loop = uv_default_loop());
 	virtual ~Tcp();
 	bool Start(const char* ip_addr, int port = 0, bool is_ipv4 = true);

@@ -6,7 +6,9 @@
 #include "tp/zlib.h"
 #include <buf.hh>
 #include <h/common.h>
+#include <hpp/optional.hpp>
 #include <file_sptr.hh>
+#include <iostream>
 #define BUF_SIZE 0x10000
 #define BUF_MAXSIZE 256000000
 namespace fc {
@@ -22,7 +24,7 @@ namespace fc {
 	fc::Buf body;
 	uint64_t uuid;
 	str_map headers;
-	std::string ip_addr;
+	fc::Buf ip_addr;
 	void add_header(fc::Buf key, fc::Buf value);
   };// request
 
