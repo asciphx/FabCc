@@ -40,6 +40,25 @@ namespace std {
 	const char& front() const { return data_[0]; }
 	const char& back()  const { return data_[length_ - 1]; }
 	const char* data() const { return data_; }
+	string_view substr(size_t a) const {
+	  return string_view(a > length_ ? data_ : data_ + a, length_ - a);
+	}
+	string_view substr(size_t a, size_t b) const {
+	  return string_view(a > length_ ? data_ : data_ + a, a + b < length_ ? b : length_ - b);
+	}
+	size_t rfind(const char c) const {
+	  size_t s = length_; while (0 < s) { if (data_[s] == c) { return s; } --s; } return -1;
+	}
+	size_t rfind(const char* sub) const {
+	  size_t m = (size_t)strlen(sub); if (m == 1) return this->rfind(*sub);
+	  size_t n = this->size(); if (n < m) return -1; size_t tbl[256] = { 0 };
+	  for (size_t i = m; i > 0; --i) tbl[sub[i - 1]] = i;
+	  for (size_t j = n - m;;) {
+		if (memcmp(sub, data_ + j, m) == 0) return j;
+		if (j == 0) return -1; size_t x = tbl[data_[j - 1]];
+		if (x == 0) x = m + 1; if (j < x) return -1; j -= x;
+	  }
+	}
 	int compare(const string_view& s) const noexcept {
 	  const int rc = char_traits<char>::compare(data_, s.data_, (min)(length_, s.length_));
 	  return rc != 0 ? rc : (length_ == s.length_ ? 0 : length_ < s.length_ ? -1 : 1);

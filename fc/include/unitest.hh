@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
-// from https://github.com/idealvin/coost/blob/master/include/co/unitest.h
 namespace unitest {
   void run_all_tests();
   void push_failed_msg(

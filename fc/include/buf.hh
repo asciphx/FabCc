@@ -13,7 +13,6 @@
 #elif !defined(_INLINE)
 #define _INLINE __attribute__((always_inline))
 #endif
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
   static const std::string_view RES_TURE("true", 4), RES_FALSE("false", 5);
   struct Buf {
@@ -50,6 +49,7 @@ namespace fc {
 	  if (back_ - end_ < n) reserve(cap_ + (unsigned int)n); memcpy(end_, p, n); end_ += n; return *this;
 	}
 	_INLINE std::string b2s() const { return std::string(data_, end_ - data_); };
+	_INLINE std::string_view b2v() const { return std::string_view(data_, end_ - data_); };
 	_INLINE const char* data() const { return data_; };
 	_INLINE const char* c_str() const { end_[0] = 0; return data_; };
 	_INLINE char& operator[](unsigned int i) const { return data_[i]; }

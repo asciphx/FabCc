@@ -12,7 +12,6 @@
 // along with this software. If not, see
 // <http://creativecommons.org/publicdomain/zero/1.0/>.
 ///
-// from https://github.com/TartanLlama/optional/blob/master/include/tl/optional.hpp
 #ifndef TL_OPTIONAL_HPP
 #define TL_OPTIONAL_HPP
 #if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)

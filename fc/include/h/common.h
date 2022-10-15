@@ -21,9 +21,10 @@ namespace fc {
   static const fc::Buf& get_header(const str_map& headers, const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
-  enum class HTTP {
-	DEL = 0, GET, HEAD, POST = 3, PUT, OPTIONS = 6, /*PATCH = 28,*/ INVALID
-  };
+  enum class HTTP { INVALID, GET, POST, PUT, DEL, HEAD, OPTIONS };
+ // enum class HTTP {
+	//DEL = 0, GET, HEAD, POST = 3, PUT, OPTIONS = 6, /*PATCH = 28,*/ INVALID
+ // };
   static const std::string_view RES_server_tag("Server: ", 8), RES_content_length_tag("Content-Length: ", 16), RES_http_status("HTTP/1.1 ", 9),
 	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7), RES_oct("application/octet-stream", 24),
 	RES_AcC("Access-Control-Allow-Credentials: ", 34), RES_t("true", 4), RES_AcM("Access-Control-Allow-Methods: ", 30), RES_host("Host", 4),
@@ -32,10 +33,8 @@ namespace fc {
 	RES_AE("Accept-Encoding", 15), RES_CE("Content-Encoding", 16), RES_gzip("gzip", 4), RES_deflate("deflate", 7), RES_bytes("bytes", 5),
 	expect_100_continue("HTTP/1.1 100 Continue\r\n\r\n", 25);
   static const char RES_GMT[26] = "%a, %d %b %Y %H:%M:%S GMT";
-}
-
-namespace detail {
   static std::string directory_ = STATIC_DIRECTORY;
   static std::string upload_path_ = UPLOAD_DIRECTORY;
 }
+
 #endif // COMMON_H

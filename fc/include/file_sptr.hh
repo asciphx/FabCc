@@ -3,7 +3,6 @@
 #include <memory>
 #include <functional>
 #include <string>
-//from https://github.com/neithern/libhttp/blob/master/include/file-map.hh
 namespace fc {
   class file_sptr: public std::enable_shared_from_this<file_sptr> {
   public:

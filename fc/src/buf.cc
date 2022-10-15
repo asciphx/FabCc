@@ -1,6 +1,5 @@
 #include <buf.hh>
 #include <utility>
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
   Buf::Buf(): data_(new char[0x3f]), end_(data_), back_(data_ + 0x3f), cap_(0x3f) {}
   Buf::Buf(Buf&& o): data_(o.data_), end_(o.end_), back_(o.back_), cap_(o.cap_) { o.data_ = nullptr; }

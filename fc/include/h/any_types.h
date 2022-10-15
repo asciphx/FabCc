@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include "h/common.h"
 namespace fc {
-  static std::unordered_map<std::string_view, std::string_view>
+  static std::unordered_map<std::string_view, std::string_view> content_types,
 	content_any_types = {
 	{"3ds","image/x-3ds"},
 	{"3gp","video/3gpp"},

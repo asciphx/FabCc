@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
-//from https://github.com/neithern/libhttp/blob/master/src/file-map.cpp
 namespace fc {
   file_sptr::file_sptr(const std::string& path, size_t length, long long modified_time) {
 	const char* psz = path.c_str();

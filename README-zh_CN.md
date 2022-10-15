@@ -11,7 +11,7 @@
 灵感来自于其他c++知名web框架, FabCC的定位是一个网络框架, 其特点是简洁、迅速、实用、活跃、全面。
 
 ## 特征
-- 全平台支持，（已经测试Linux和Windows）
+- 基于epoll架构的全平台支持[windows下由wepoll实现]
 - 现在最低编译器版本支持到了c++14, 目前兼容了c++17的许多特性包括any, optional, string_view, 以及部分的扩展
 - 最少的第三方库，均以源文件形式存放项目中
 - 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL

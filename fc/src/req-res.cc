@@ -1,20 +1,47 @@
 #include <req-res.hh>
 #include <http_error.hh>
 namespace fc {
-  Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
-  Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b/*, bool keep_alive*/):
-	method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
-  void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
+ // Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
+ // Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b/*, bool keep_alive*/):
+	//method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
+ // void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
+	std::string_view Req::header(const char* k) const { return Ctx.header(k); }
+	std::string_view Req::cookie(const char* k) const {
+	  return Ctx.cookie(k);
+	  // FIXME return MHD_lookup_connection_value(mhd_connection, MHD_COOKIE_KIND, k);
+	}
+	std::string Req::ip_address() const {
+	  std::string s;
+	  switch (fiber.in_addr.sa_family) {
+	  case AF_INET: {
+		sockaddr_in* addr_in = (struct sockaddr_in*)&fiber.in_addr;
+		s.resize(INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &(addr_in->sin_addr), const_cast<PSTR>(s.data()), INET_ADDRSTRLEN);
+		break;
+	  }
+	  case AF_INET6: {
+		sockaddr_in6* addr_in6 = (struct sockaddr_in6*)&fiber.in_addr;
+		s.resize(INET6_ADDRSTRLEN);
+		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), const_cast<PSTR>(s.data()), INET6_ADDRSTRLEN);
+		break;
+	  }
+	  default:
+		return "unsuported protocol";
+		break;
+	  }
+	  return s;
+	}
+
   /******************************** ************************************/
-  Res::Res():zlib_cp_str(0x1ff), body(0xff) {};
-  void Res::set_header(const fc::Buf& key, fc::Buf value) { headers.erase(key); headers.emplace(key, std::move(value)); }
-  void Res::add_header(const fc::Buf& key, fc::Buf value) { headers.emplace(key, std::move(value)); }
+  //Res::Res():zlib_cp_str(0x1ff), body(0xff) {};
+  //void Res::set_header(const fc::Buf& key, fc::Buf value) { headers.erase(key); headers.emplace(key, std::move(value)); }
+  //void Res::add_header(const fc::Buf& key, fc::Buf value) { headers.emplace(key, std::move(value)); }
   const fc::Buf& Res::get_header(const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
-  void Res::write(const std::string& body_part) { body.append(body_part.data(), (unsigned int)body_part.size()); };
-  void Res::write(const fc::Buf& body_part) { body << body_part; };
-  void Res::write(const char* body_part) { body << body_part; };
+  void Res::write(const std::string& b) { body.append(b.data(), (unsigned int)b.size()); Ctx.respond(body); body.reset(); };
+  void Res::write(const fc::Buf& b) { Ctx.respond(b); };
+  void Res::write(const char* b) { Ctx.respond(b); };
   fc::Buf& Res::compress_str(char* const str, size_t len) {
 	// Initialize with the default values
 	if (::deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, algorithm::GZIP, 8, Z_DEFAULT_STRATEGY) == Z_OK) {

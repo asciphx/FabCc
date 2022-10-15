@@ -23,13 +23,13 @@ namespace fc {
   };
   int Socket::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }
   int Socket::shut(sd_type type) { return ::shutdown(this->id, type); }
-//  int Socket::close_fd(socket_type fd) {
-//#if defined _WIN32
-//	closesocket(fd); WSACleanup(); return 1;
-//#else
-//	return close(fd);
-//#endif
-//  }
+  int Socket::close_fd(socket_type fd) {
+#if defined _WIN32
+	return closesocket(fd);
+#else
+	return close(fd);
+#endif
+  }
   //uv__socket_sockopt, uv_poll_init, uv_poll_init_socket
   int Socket::set_keep_alive(socket_type& fd, int idle, int intvl, unsigned char probes) {
 #ifdef WIN32
@@ -53,9 +53,9 @@ namespace fc {
 #endif
 	return 0;
   }
-	bool Socket::is_open() { return uv_is_active((uv_handle_t*)&slot_); }
+	bool Socket::is_open() { return true; }
 	void Socket::close() {
-	  Conn* c = (Conn*)slot_.data; --((Tcp*)c->tcp_)->connection_num;
-	  ((Tcp*)c->tcp_)->$.erase(static_cast<unsigned int>(c->id)); delete c;
+	  //Conn* c = (Conn*)slot_.data; --((Tcp*)c->tcp_)->connection_num;
+	  //((Tcp*)c->tcp_)->$.erase(static_cast<unsigned int>(c->id)); delete c;
 	}
 }

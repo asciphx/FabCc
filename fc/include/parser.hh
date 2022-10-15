@@ -6,7 +6,6 @@
 #include <h/common.h>
 #include <req-res.hh>
 #include <buf.hh>
-// from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 namespace fc {
   struct llParser: public llhttp__internal_s {
 	llParser();

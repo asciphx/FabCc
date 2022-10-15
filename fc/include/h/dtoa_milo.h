@@ -21,7 +21,6 @@
  */
 
 // Modified by Alvin at 2020.5.8.
-// from https://github.com/miloyip/dtoa-benchmark/blob/master/src/milo/dtoa_milo.h
 #pragma once
 #include <assert.h>
 #include <math.h>

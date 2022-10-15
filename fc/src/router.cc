@@ -1,5 +1,4 @@
 #include <router.hh>
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/dynamic_routing_table.hh
 namespace fc {
   drt_node::drt_node(): v_{ nullptr } {};
   drt_node::iterator* drt_node::iterator::operator-> () { return this; }

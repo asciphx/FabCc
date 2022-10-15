@@ -6,7 +6,6 @@
 #include <regex>
 #include <h/common.h>
 #include <req-res.hh>
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/dynamic_routing_table.hh
 namespace fc {
   using VH = std::function<void(Req&, Res&)>; //class lambda [](std::string s, VH d)->void
   struct drt_node {

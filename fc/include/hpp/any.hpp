@@ -13,7 +13,6 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// from https://github.com/thelink2012/any/blob/master/any.hpp
 #ifndef LINB_ANY_HPP
 #define LINB_ANY_HPP
 #if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)

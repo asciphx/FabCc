@@ -1,6 +1,7 @@
 #include <app.hh>
 #include <list>
 #include <utility>
+#include <directory.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 #ifdef _WIN32
 #define $_(_) _._Ptr
@@ -68,11 +69,18 @@ namespace fc {
 #endif // _WIN32
 	return b.pop_back();
   }
-  void App::_call(HTTP& m, fc::Buf& r, Req& req, Res& res) const {
+  App& App::file_type(const std::vector<std::string_view>& line) {
+	for (std::vector<std::string_view>::const_iterator iter = line.cbegin(); iter != line.cend(); ++iter) {
+	  std::string_view sv; sv = content_any_types[*iter];
+	  if (sv != "") { content_types.emplace(*iter, sv); } else { content_types.emplace(*iter, RES_oct); }
+	} return *this;
+  }
+  void App::_call(char m, fc::Buf& r, Req& req, Res& res) const {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-	std::string g(1, static_cast<char>(m) + 0x30); g.append(r.c_str(), r.size());
+	std::string g(1, m + 0x30); g.append(r.c_str(), r.size()); req.url = r;
+	//std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
 	  it->second(req, res);
 	} else throw err::not_found();
@@ -93,18 +101,10 @@ namespace fc {
 		throw err::not_found(fc::Buf("serve_file error: Directory ", 28) << r << " does not exists.");
 	  if (!fc::is_directory(real_root))
 		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
-	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); detail::directory_ = $;
-#ifndef __linux__
-	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
-		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
-		if (res.is_file == 0) {
-		  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
-		}
-	  };
-#endif // !__linux__
+	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1;// if (_ == $) { res.write("index.html"); return;}
+		std::string _($); _ += req.url.c_str() + 1; if (_ == $) { res.Ctx.send_file(_.append("index.html", 10).c_str()); return; }
+		res.Ctx.send_file(_.c_str()); return;
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
 		if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
 		  std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
@@ -115,11 +115,12 @@ namespace fc {
 		  if (last_dot) {
 			Buf ss = _.substr(last_dot);
 			std::string_view extension(ss.data_, ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
-			if (content_types->find(extension) != content_types->end()) {
+			if (content_types.find(extension) != content_types.end()) {
 			  res.file_size = statbuf_.st_size; res.code = 200;
+			  ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
 				res.is_file = 2;
-				ss = content_types->at(extension); res.add_header(RES_CT, ss);
+		        res.set_header("Cache-Control", "max-age=54000,immutable");
 				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
 				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
 				  res.__ = p->second;
@@ -136,15 +137,6 @@ namespace fc {
 		}
 		throw err::not_found();
 	  };
-#ifdef __linux__
-	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";
-		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
-		if (res.is_file == 0) {
-		  res.is_file = 1; res.file_size = statbuf_.st_size; res.code = 200; res.path_ = std::move(_);
-		}
-	  };
-#endif // __linux__
 	} catch (const http_error& e) {
 	  printf("http_error[%d]: %s", e.i(), e.what());
 	}

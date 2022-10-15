@@ -1,59 +1,133 @@
 #ifndef CONN_HH
 #define CONN_HH
-#include <tp/uv.h>
-#include <string>
-#include <atomic>
-#include <parser.hh>
-#include <req-res.hh>
-#include <h/config.h>
-#if defined _WIN32
+#include <iostream>
+#include <errno.h>
+#include <fcntl.h>
+#ifndef _WIN32
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#else
 #include <WS2tcpip.h>
 #include <WinSock2.h>
-#include <mstcpip.h>
-typedef UINT_PTR socket_type;
-static unsigned int RES_RCV = 5000;
-static unsigned int RES_SED = 10000;
-#else
+#include <h/wepoll.h>
+#endif
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#if __linux__
+#include <sys/epoll.h>
+#elif __APPLE__
+#include <sys/event.h>
+#endif
+#if defined __linux__ || defined __APPLE__
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <unistd.h>
-typedef int socket_type;
-static struct timeval RES_RCV { 5, 0 };//max{5,0},read
-static struct timeval RES_SED { 10, 0 };//write
 #endif
+#include <deque>
+#include <thread>
+#include <vector>
+
+#include <h/config.h>
+#include <tp/ctx.hh>
 namespace fc {
-  static int RES_KEEP_Alive = 1;//开启keepalive
-  enum sd_type { _READ, _WRITE, _BOTH };//SD_RECEIVE，SD_SEND，SD_BOTH
+#if defined _WIN32
+  typedef UINT_PTR socket_type;
+#else
+  typedef int socket_type;
+#endif
+  inline int close_socket(socket_type sock) {
+#if defined _WIN32
+	return closesocket(sock);
+#else
+	return close(sock);
+#endif
+  }
+  static const int MAXEVENTS = 64;
+  static volatile int quit_signal_catched = 0;
+  static void shutdown_handler(int sig) { quit_signal_catched = 1; }
+  // Epoll based Reactor:
+  // Orchestrates a set of fiber (ctx::co).
+  struct fiber_exception {
+	std::string what; ctx::co c;
+	fiber_exception(fiber_exception&& e) = default;
+	fiber_exception(ctx::co&& c_, std::string const& what) : what{ what }, c{ std::move(c_) } {}
+  };
   class Conn {
-	Conn& operator=(const Conn&) = delete;
-	Conn(const Conn&) = delete;
+	inline Conn& operator=(const Conn&) = delete;
+	inline Conn(const Conn&) = delete;
   public:
-	uv_write_t _;
-	socket_type id;
-	Req req_;
-	Res res_;
-	void* app_;
-	unsigned short keep_milliseconds; std::atomic<uint16_t>& roundrobin_index_;
-	Conn(unsigned short milliseconds, uv_loop_t* l, std::atomic<uint16_t>& roundrobin_index_) noexcept;//
-	uv_buf_t rbuf, wbuf;
-	uv_loop_t* loop_;
-	uv_tcp_t slot_;
-	bool reading_ = false;
-	char readbuf[0x28000];
-	fc::Buf buf_;
-	fc::llParser parser_;
-	const char* status_ = "404 Not Found\r\n";
-	void* tcp_;
-	virtual ~Conn();
-	bool write(const char* buf, int size);
-	int read(char* buf, int max_size);
-	void set_status(Res& res, uint16_t status);
-	int shut(sd_type type);
-	static int shut(socket_type fd, sd_type d);
-	//int close_fd(socket_type fd);
-	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
-	// keep-alive time seconds = idle + intvl * probes
-	int set_keep_alive(socket_type& fd, int idle, int intvl = 1, unsigned char probes = 10);
+	typedef fiber_exception exception_type;
+	void* reactor;
+	ctx::co sink;
+	socket_type fiber_id, socket_fd;
+	sockaddr in_addr;
+	inline Conn(void* reactor, ctx::co&& sink,
+	  socket_type fiber_id, socket_type socket_fd, sockaddr in_addr)
+	  : reactor(reactor), sink(std::forward<ctx::co&&>(sink)),
+	  fiber_id(fiber_id), socket_fd(socket_fd), in_addr(in_addr) {}
+	//SSL* ssl = nullptr;
+	//inline bool ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
+	//  if (!ssl_ctx)
+	//	return false;
+	//  ssl = SSL_new(ssl_ctx->ctx);
+	//  SSL_set_fd(ssl, socket_fd);
+	//  while (int ret = SSL_accept(ssl)) {
+	//	if (ret == 1)
+	//	  return true;
+	//	int err = SSL_get_error(ssl, ret);
+	//	if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ)
+	//	  this->sink.resume();
+	//	else {
+	//	  ERR_print_errors_fp(stderr);
+	//	  return false;// throw std::runtime_error("Error during https handshake.");
+	//	}
+	//  }
+	//  return false;
+	//}
+	inline ~Conn() {
+	  //if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+	}
+	inline void epoll_add(socket_type fd, int flags);
+	inline void epoll_mod(socket_type fd, int flags);
+	inline void reassign_fd_to_this_fiber(socket_type fd);
+	inline void defer_fiber_resume(socket_type fiber_id);
+	inline void defer(const std::function<void()>& fun);
+	inline int read_impl(char* buf, int size) {
+	  //if (ssl) return SSL_read(ssl, buf, size); else
+	  return ::recv(socket_fd, buf, size, 0);
+	}
+	inline int write_impl(const char* buf, int size) {
+	  //if (ssl) return SSL_write(ssl, buf, size); else
+	  return ::send(socket_fd, buf, size, 0);
+	}
+	//
+	inline int read(char* buf, int max_size) {
+	  int count = read_impl(buf, max_size);
+	  while (count <= 0) {
+		if ((count < 0 && errno != EAGAIN) || count == 0) return int(0);
+		sink = sink.resume();	count = read_impl(buf, max_size);
+	  }
+	  return count;
+	};
+	inline bool write(const char* buf, int size) {
+	  if (!buf || !size) {
+		sink = sink.resume(); return true;
+	  }
+	  const char* end = buf + size;
+	  int count = write_impl(buf, end - buf);
+	  if (count > 0) buf += count;
+	  while (buf != end) {
+		if ((count < 0 && errno != EAGAIN) || count == 0) return false;
+		sink = sink.resume();
+		count = write_impl(buf, int(end - buf));
+		if (count > 0) buf += count;
+	  }
+	  return true;
+	};
   };
 }
 #endif // CONN_HH

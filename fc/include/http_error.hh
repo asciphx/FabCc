@@ -1,7 +1,6 @@
 #ifndef HTTP_ERROR_HH
 #define HTTP_ERROR_HH
 #include <buf.hh>
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/error.hh
 namespace fc {
   struct http_error {
 	http_error(int status, const Buf& what);

@@ -1,6 +1,8 @@
 #ifndef TIMER_HH
 #define TIMER_HH
-#include <tp/uv.h>
+#include <thread>
+#include <chrono>
+#include <atomic>
 #include <functional>
 #include <string>
 namespace fc {
@@ -12,15 +14,13 @@ namespace fc {
   static inline int64_t nowStamp(short&& i) { return RES_TIME_T + i; }
   static inline int64_t nowStamp() { return RES_TIME_T; }
   class Timer {
-	uv_timer_t* t_;
-	std::function<void()> cb_;
-	bool alive{ true };
-	static void timer_cb(uv_timer_t* handle);
+	std::atomic<bool> alive{ true };
   public:
-	Timer(uv_loop_t* loop = uv_default_loop());
-	~Timer();
 	void setTimeout(std::function<void()>&& func, uint32_t milliseconds);
-	void stop();
+	void setInterval(std::function<void()>&& func, uint32_t milliseconds);
+	void setTimeoutSec(std::function<void()>&& func, uint32_t seconds);
+	void setIntervalSec(std::function<void()>&& func, uint32_t seconds);
+	inline void stop();
   };
 }
 #endif

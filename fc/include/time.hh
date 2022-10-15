@@ -2,8 +2,6 @@
 #define TIME_HH
 #include <chrono>
 #include <thread>
-//from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/timer.hh
-//from https://github.com/idealvin/coost/blob/master/include/co/time.h
 /* using nanoseconds = duration<long long, nano>;
   using microseconds = duration<long long, micro>;
   using milliseconds = duration<long long, milli>;

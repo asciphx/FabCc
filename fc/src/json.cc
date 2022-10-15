@@ -1,5 +1,4 @@
 #include "json.hh"
-// from https://github.com/idealvin/coost/blob/master/src/json.cc
 #include <algorithm>
 namespace json {
   namespace xx {

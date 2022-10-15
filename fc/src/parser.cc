@@ -1,5 +1,4 @@
 #include <parser.hh>
-// from https://github.com/ipkn/crow/blob/master/include/crow/parser.h
 namespace fc {
   static int on_message_begin(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_); $->url.reset(); $->url_params.reset();
@@ -33,7 +32,7 @@ namespace fc {
 	return 0;//$->url_params = query_string($->url_params); handler_->handle();
   }
   Req llParser::to_request() const {
-	return Req{ static_cast<HTTP>(method), std::move(url), std::move(url_params), std::move(headers), std::move(body) };
+	return Req{ /*static_cast<HTTP>(method), std::move(url), std::move(url_params), std::move(headers), std::move(body)*/ };
   }
   const llhttp_settings_s llParser::_ = {
 	  on_message_begin,

@@ -1,6 +1,4 @@
 #include "time.hh"
-//from https://github.com/idealvin/coost/blob/master/src/time.cc
-//from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/timer.hh
 namespace fc {
   void sleep::h(int h) { std::this_thread::sleep_for(std::chrono::hours(h)); };
   void sleep::m(int m) { std::this_thread::sleep_for(std::chrono::minutes(m)); };

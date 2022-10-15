@@ -149,7 +149,7 @@ namespace ctx {
 	void swap(co& other) noexcept { std::swap(fctx_, other.fctx_); }
   };
   template<typename Fn>
-  co callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(stack_traits::minimum_size())) {
+  co callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(stack_traits::default_size())) {
 	return callcc(std::allocator_arg, std::forward<fixedsize_stack>(s), std::forward<Fn>(fn));
   };
   template<typename Fn>

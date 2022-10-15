@@ -2,8 +2,6 @@
 #define STR_MAP_H
 #include <unordered_map>
 #include <buf.hh>
-// from https://github.com/ipkn/crow/blob/master/include/crow/ci_map.h
-// from https://github.com/boostorg/beast/blob/develop/include/boost/beast/http/impl/field.ipp
 namespace fc {
   struct str_hash {
 	unsigned int operator()(const fc::Buf& z) const;

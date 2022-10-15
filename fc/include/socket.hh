@@ -1,5 +1,4 @@
 #pragma once
-#include <tp/uv.h>
 #ifdef ENABLE_SSL
 #include <boost/asio/ssl.hpp>
 #endif
@@ -7,7 +6,7 @@
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <mstcpip.h>
-typedef UINT_PTR socket_type;//SD_RECEIVE��SD_SEND��SD_BOTH
+typedef UINT_PTR socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
 static unsigned int RES_RCV = 5000;
 static unsigned int RES_SED = 10000;
 #else
@@ -19,13 +18,12 @@ static struct timeval RES_RCV { 5, 0 };//max{5,0},read
 static struct timeval RES_SED { 10, 0 };//write
 #endif
 namespace fc {
-  static int RES_KEEP_Alive = 1;//����keepalive
+  static int RES_KEEP_Alive = 1;//开启keepalive
   enum sd_type { _READ, _WRITE, _BOTH };
   class Socket {
 	Socket& operator=(const Socket&) = delete;
 	Socket(const Socket&) = delete;
   public:
-	uv_tcp_t slot_;
 	socket_type id;
 	Socket(unsigned short milliseconds) noexcept;
 	bool reading_ = false;
@@ -33,8 +31,8 @@ namespace fc {
 	int read(char* buf, int max_size);
 	int shut(sd_type type);
 	static int shut(socket_type fd, sd_type d);
-	//int close_fd(socket_type fd);
-	// idle:�״η��ͱ��ĵĵȴ�ʱ��,intvl:���ַ��ͱ��ĵļ��,probes: �������������
+	int close_fd(socket_type fd);
+	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
 	// keep-alive time seconds = idle + intvl * probes
 	int set_keep_alive(socket_type& fd, int idle, int intvl = 1, unsigned char probes = 10);
 	bool is_open();

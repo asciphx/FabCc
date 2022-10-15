@@ -1,5 +1,4 @@
 #include "unitest.hh"
-// from https://github.com/idealvin/coost/blob/master/include/co/unitest.h
 namespace unitest {
   inline std::vector<Test*>& gTests() {
 	static std::vector<Test*> tests;

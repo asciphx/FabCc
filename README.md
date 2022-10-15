@@ -10,7 +10,7 @@
 [release-link]: https://github.com/asciphx/FabCc/releases
 Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by concise, fast, practical, reactive, functional.
 ## Features
-- Cross platform support, (Linux and windows have been tested)
+- Full platform support based on epoll architecture [implemented by wepoll under windows]
 - Now the minimum compiler supports the c++14 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
 - The fewest third-party libraries, are stored in the project in the form of source files
 - Fastest API, such as lexical_cast, EncodeURL, DecodeURL

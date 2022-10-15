@@ -8,15 +8,15 @@ else()
 endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 include(CheckIncludeFileCXX)
-check_include_file_cxx(string_view HAS_STRING_VIEW)
-if (HAS_STRING_VIEW)
+check_include_file_cxx(any HAS_ANY)
+if (HAS_ANY)
     set(STANDARD 17)
 else ()
     set(STANDARD 14)
 endif ()
 message(STATUS "Build STANDARD: c++${STANDARD}")
 if (MSVC)
-	add_compile_options( /O2 /GA /Ob2 /utf-8 /std:c++${STANDARD} )#只有是Release才会是O2優化，否則會被覆写
+	add_compile_options(/O2 /GA /Ob2 /utf-8 /std:c++${STANDARD} )#只有是Release才会是O2優化，否則會被覆写
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else ()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${STANDARD} -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
@@ -25,22 +25,18 @@ endif ()
 include_directories(fc/include)#添加掃描的頭文件目錄
 aux_source_directory(fc/src cc_files)#添加需要生成庫的源cc文件目錄
 aux_source_directory(fc/src/c c_files)#添加需要生成庫的源c文件目錄
-add_library(Fab STATIC ${cc_files} ${c_files})
+if (APPLE)
+  set(libraries
+	  z
+	  iconv)
+elseif (WIN32)
+  set(libraries
+	  wsock32
+	  ws2_32)
+endif()
 #${PROJECT_SOURCE_DIR}/
 if(WIN32)
   #windows下扫描的很慢, 但是如果已经编译过的话, 这种方式就可以跳过扫描
-  if(EXISTS "${PROJECT_SOURCE_DIR}/build/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib")
-	  message(STATUS "lib: ${PROJECT_SOURCE_DIR}/build/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib")
-	  set( win_libraries
-        psapi
-        user32
-        advapi32
-        iphlpapi
-        userenv
-        ws2_32)
-  else()
-	  add_subdirectory(third-party/libuv)
-  endif()
   if(EXISTS "${PROJECT_SOURCE_DIR}/build/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib")
 	  message(STATUS "lib: ${PROJECT_SOURCE_DIR}/build/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib")
   else()
@@ -51,10 +47,9 @@ if(WIN32)
   else()
 	  add_subdirectory(third-party/zlib)
   endif()
+  add_library(Fab STATIC ${cc_files} ${c_files})
   set( FabCc_LIBRARIES
-	Fab ${win_libraries}
-	${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib
-	${CMAKE_CURRENT_BINARY_DIR}/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib
+	Fab ${libraries} ${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlibstatic.lib
   )
   add_executable(HttpWeb web.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
@@ -63,7 +58,7 @@ if(WIN32)
 	  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/HttpWeb.exe ${PROJECT_SOURCE_DIR}/HttpWeb.exe
 #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/third-party/zlib/${CMAKE_BUILD_TYPE}/zlib.dll ${PROJECT_SOURCE_DIR}/zlib.dll
   )
-
+  
   add_executable(test tests.cc)
   target_link_libraries(test PUBLIC Fab
 	${CMAKE_CURRENT_BINARY_DIR}/third-party/ctx/${CMAKE_BUILD_TYPE}/ctx.lib)
@@ -72,15 +67,14 @@ if(WIN32)
   )
 else()
   #添加第三方的库, 而第三方库的头文件集中复制到include/tp下使用
-  add_subdirectory(third-party/libuv)
   add_subdirectory(third-party/ctx)
   add_subdirectory(third-party/zlib)
   add_executable(HttpWeb web.cc)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
   message(STATUS "to: ${PROJECT_SOURCE_DIR}/HttpWeb")
+  add_library(Fab STATIC ${cc_files} ${c_files})
   set( FabCc_LIBRARIES
-	Fab
+	Fab ${libraries}
 	ctx
-	Uv
 	zlibstatic
   )
   add_custom_command(TARGET HttpWeb
