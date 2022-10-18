@@ -25,20 +25,20 @@ namespace fc {
   }
   // from http://forbeslindesay.github.io/express-route-tester
   drt_node::iterator drt_node::find(const std::string& ruby, unsigned short python) const {
-	if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };
+	if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };// std::cout<<" r:"<<ruby<<",p:"<<python;
 	if (ruby[python] == '/') ++python; // skip the first /
 	unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
 	if (i != python && i < ruby.size()) {
 	  std::string k8s(&ruby[i], python - i);
 	  std::unordered_map<const std::string, drt_node*>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
-	  if (itzy != children_.end()) {
+	  if (itzy != children_.end()) {//std::cout<<" r:"<<ruby<<",p:"<<python;
 		iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
 		if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
 		  return json;
 		} return DRT_END;
 	  }
 	  for (const std::pair<const std::string, drt_node*>& _ : children_) {
-		switch (_.first[0]) {
+		switch (_.first[0]) {//std::cout<<" {r:"<<ruby<<",p:}"<<python;
 		case'*': return iterator{ _.second->v_ != nullptr ? _.second : nullptr, ruby, _.second->v_ };
 		case':': { const char* c = _.first.c_str(); std::string param;
 		  while (*++c != '(')param.push_back(*c); if (*(_.first.end() - 1) != ')') return DRT_END;

@@ -37,15 +37,17 @@ int main() {
 	app.get() = nullptr;
 	res.write("主页的路由被删除！！");
   };
- // app["/timer"] = [&](Req&, Res& res) {
-	//t.setTimeout([&srv] {
-	//  printf("该路由已闲置1分钟，服务器即将自动关闭！！");
-	//  srv.exit();
-	//}, 60000);
-	//res.write("关闭服务计时器倒计时启动！");
-	//app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
- // };
+  app["/"] = [&](Req&, Res& res) {
+	res.write("主页!!");
+  };
+  app["/timer"] = [&](Req&, Res& res) {
+    if(t.idle()) t.setTimeout([&] {
+	  quit_signal_catched = true; t.stop();
+	}, 6000);
+	res.write("关闭服务计时器倒计时启动！");
+	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+  };
   //启动服务器
-  http_serve(app, 8080);
+  http_serve(&app, 8080);
   return 0;
 }

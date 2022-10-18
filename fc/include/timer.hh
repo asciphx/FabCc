@@ -14,13 +14,14 @@ namespace fc {
   static inline int64_t nowStamp(short&& i) { return RES_TIME_T + i; }
   static inline int64_t nowStamp() { return RES_TIME_T; }
   class Timer {
-	std::atomic<bool> alive{ true };
+	std::atomic<bool> alive{ false };
   public:
 	void setTimeout(std::function<void()>&& func, uint32_t milliseconds);
 	void setInterval(std::function<void()>&& func, uint32_t milliseconds);
 	void setTimeoutSec(std::function<void()>&& func, uint32_t seconds);
 	void setIntervalSec(std::function<void()>&& func, uint32_t seconds);
-	inline void stop();
+	bool idle();
+	void stop();
   };
 }
 #endif

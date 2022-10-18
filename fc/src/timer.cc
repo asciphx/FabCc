@@ -32,5 +32,6 @@ namespace fc {
 	  });
 	t.detach();
   };
+  bool Timer::idle() { return !alive; };
   void Timer::stop() { alive = false; }
 }

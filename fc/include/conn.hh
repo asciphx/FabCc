@@ -57,8 +57,8 @@ namespace fc {
 	fiber_exception(ctx::co&& c_, std::string const& what) : what{ what }, c{ std::move(c_) } {}
   };
   class Conn {
-	inline Conn& operator=(const Conn&) = delete;
-	inline Conn(const Conn&) = delete;
+	Conn& operator=(const Conn&) = delete;
+	Conn(const Conn&) = delete;
   public:
 	typedef fiber_exception exception_type;
 	void* reactor;
@@ -91,11 +91,11 @@ namespace fc {
 	inline ~Conn() {
 	  //if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
 	}
-	inline void epoll_add(socket_type fd, int flags);
-	inline void epoll_mod(socket_type fd, int flags);
-	inline void reassign_fd_to_this_fiber(socket_type fd);
-	inline void defer_fiber_resume(socket_type fiber_id);
-	inline void defer(const std::function<void()>& fun);
+	void epoll_add(socket_type fd, int flags);
+	void epoll_mod(socket_type fd, int flags);
+	void reassign_fd_to_this_fiber(socket_type fd);
+	void defer_fiber_resume(socket_type fiber_id);
+	void defer(const std::function<void()>& fun);
 	inline int read_impl(char* buf, int size) {
 	  //if (ssl) return SSL_read(ssl, buf, size); else
 	  return ::recv(socket_fd, buf, size, 0);
