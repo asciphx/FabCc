@@ -1,16 +1,13 @@
-#ifndef CONN_HH
-#define CONN_HH
+#pragma once
 #include <tp/uv.h>
-#include <string>
-#include <atomic>
-#include <parser.hh>
-#include <req-res.hh>
-#include <h/config.h>
+#ifdef ENABLE_SSL
+#include <boost/asio/ssl.hpp>
+#endif
 #if defined _WIN32
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <mstcpip.h>
-typedef UINT_PTR socket_type;
+typedef UINT_PTR socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
 static unsigned int RES_RCV = 5000;
 static unsigned int RES_SED = 10000;
 #else
@@ -23,37 +20,24 @@ static struct timeval RES_SED { 10, 0 };//write
 #endif
 namespace fc {
   static int RES_KEEP_Alive = 1;//开启keepalive
-  enum sd_type { _READ, _WRITE, _BOTH };//SD_RECEIVE，SD_SEND，SD_BOTH
-  class Conn {
-	Conn& operator=(const Conn&) = delete;
-	Conn(const Conn&) = delete;
+  enum sd_type { _READ, _WRITE, _BOTH };
+  class Socket {
+	Socket& operator=(const Socket&) = delete;
+	Socket(const Socket&) = delete;
   public:
-	uv_write_t _;
-	socket_type id;
-	Req req_;
-	Res res_;
-	void* app_;
-	unsigned short keep_milliseconds; std::atomic<uint16_t>& roundrobin_index_;
-	Conn(unsigned short milliseconds, uv_loop_t* l, std::atomic<uint16_t>& roundrobin_index_) noexcept;//
-	uv_buf_t rbuf, wbuf;
-	uv_loop_t* loop_;
 	uv_tcp_t slot_;
+	socket_type id;
+	Socket(unsigned short milliseconds) noexcept;
 	bool reading_ = false;
-	char readbuf[0x28000];
-	fc::Buf buf_;
-	fc::llParser parser_;
-	const char* status_ = "404 Not Found\r\n";
-	void* tcp_;
-	virtual ~Conn();
 	bool write(const char* buf, int size);
 	int read(char* buf, int max_size);
-	void set_status(Res& res, uint16_t status);
 	int shut(sd_type type);
 	static int shut(socket_type fd, sd_type d);
 	//int close_fd(socket_type fd);
 	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
 	// keep-alive time seconds = idle + intvl * probes
 	int set_keep_alive(socket_type& fd, int idle, int intvl = 1, unsigned char probes = 10);
+	bool is_open();
+	void close();
   };
 }
-#endif // CONN_HH

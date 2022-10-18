@@ -1,12 +1,12 @@
 #include <conn.hh>
 
 namespace fc {
-  Conn::Conn(unsigned short milliseconds, uv_loop_t* l)
-	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds) {
+  Conn::Conn(unsigned short milliseconds, uv_loop_t* l, std::atomic<uint16_t>& r)
+	noexcept: loop_(l), buf_(0x3ff), keep_milliseconds(milliseconds), roundrobin_index_(r) {
 	slot_.data = this; rbuf = uv_buf_init((char*)malloc(BUF_SIZE), BUF_SIZE);
   }
   Conn::~Conn() {
-	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr; tcp_ = nullptr;
+	free(rbuf.base); rbuf.base = nullptr; app_ = nullptr; loop_ = nullptr; tcp_ = nullptr; --roundrobin_index_;
   }
   bool Conn::write(const char* c, int i) {
 	if (!c || !i) { return true; }
@@ -25,28 +25,8 @@ namespace fc {
 	}
 	return count;
   };
-  int Conn::shut(socket_type fd, sd_type type) {
-#if defined _WIN32
-	return ::shutdown(fd, type);//SD_RECEIVE，SD_SEND，SD_BOTH
-#else
-	return ::shutdown(fd, type);
-#endif
-  }
-  int Conn::shut(sd_type type) {
-#if defined _WIN32
-	return ::shutdown(this->id, type);//SD_RECEIVE，SD_SEND，SD_BOTH
-#else
-	return ::shutdown(this->id, type);
-#endif
-  }
-//  int Conn::close_fd(socket_type fd) {
-//#if defined _WIN32
-//	closesocket(fd); WSACleanup(); return 1;
-//#else
-//	return close(fd);
-//#endif
-//  }
-  //uv__socket_sockopt, uv_poll_init, uv_poll_init_socket
+  int Conn::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }
+  int Conn::shut(sd_type type) { return ::shutdown(this->id, type); }
   int Conn::set_keep_alive(socket_type& fd, int idle, int intvl, unsigned char probes) {
 #ifdef WIN32
 	//if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (const char*)&idle, sizeof idle))return -1;

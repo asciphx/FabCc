@@ -8,8 +8,8 @@ else()
 endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 include(CheckIncludeFileCXX)
-check_include_file_cxx(string_view HAS_STRING_VIEW)
-if (HAS_STRING_VIEW)
+check_include_file_cxx(any HAS_ANY)
+if (HAS_ANY)
     set(STANDARD 17)
 else ()
     set(STANDARD 14)
@@ -29,15 +29,15 @@ add_library(Fab STATIC ${cc_files} ${c_files})
 #${PROJECT_SOURCE_DIR}/
 if(WIN32)
   #windows下扫描的很慢, 但是如果已经编译过的话, 这种方式就可以跳过扫描
+  set( win_libraries
+    psapi
+    user32
+    advapi32
+    iphlpapi
+    userenv
+    ws2_32)
   if(EXISTS "${PROJECT_SOURCE_DIR}/build/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib")
 	  message(STATUS "lib: ${PROJECT_SOURCE_DIR}/build/third-party/libuv/${CMAKE_BUILD_TYPE}/Uv.lib")
-	  set( win_libraries
-        psapi
-        user32
-        advapi32
-        iphlpapi
-        userenv
-        ws2_32)
   else()
 	  add_subdirectory(third-party/libuv)
   endif()

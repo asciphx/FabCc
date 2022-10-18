@@ -1,7 +1,7 @@
 #include <req-res.hh>
 #include <http_error.hh>
 namespace fc {
-  Req::Req():body(0x1ff), params(0x3f), url(0x1f) {};
+  Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
   Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b/*, bool keep_alive*/):
 	method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
   void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
