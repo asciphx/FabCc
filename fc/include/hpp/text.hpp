@@ -49,14 +49,14 @@ class text {//It is similar to a dynamic std::string_view with a fixed maximum l
   friend std::ostream& operator<<(std::ostream& s, text<I>& c) { return s << c.c_str(); };
 public:
   ~text() { delete[]_; _ = nullptr; };
-  text() { static_assert(I != 0 && I < 0x4000); _[0] = 0; };
+  text() { assert(I != 0 && I < 0x4000); _[0] = 0; };
   text(const char* s) {
-	static_assert(I != 0 && I < 0x4000); while (*s && k < I) {
+	assert(I != 0 && I < 0x4000); while (*s && k < I) {
 	  u = utf$[static_cast<unsigned char>(*s)]; while (--u) _[l] = *s++, ++l; ++k;
 	} _[l] = 0;
   };
   text(const text& str) { strcpy(_, str._); l = str.l; k = str.k; }
-  template<unsigned short L> text(const text<L>& s) { static_assert(I >= L); strcpy(_, s.c_str()); l = s.length(); k = s.u8size(); }
+  template<unsigned short L> text(const text<L>& s) { assert(I >= L); strcpy(_, s.c_str()); l = s.length(); k = s.u8size(); }
   text(const std::string& s) {
 	while (s[l] && k < I) { u = utf$[static_cast<unsigned char>(s[l])]; while (--u) { _[l] = s[l]; ++l; } ++k; } _[l] = 0;
   }

@@ -25,9 +25,9 @@ namespace fc {
   int Socket::shut(sd_type type) { return ::shutdown(this->id, type); }
   int Socket::close_fd(socket_type fd) {
 #if defined _WIN32
-	return closesocket(fd);
+	return ::closesocket(fd);
 #else
-	return close(fd);
+	return ::close(fd);
 #endif
   }
   //uv__socket_sockopt, uv_poll_init, uv_poll_init_socket

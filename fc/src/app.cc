@@ -119,7 +119,7 @@ namespace fc {
 			  ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
 			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
 				res.is_file = 2;
-		        res.set_header("Cache-Control", "max-age=54000,immutable");
+				res.set_header("Cache-Control", "max-age=54000,immutable");
 				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
 				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
 				  res.__ = p->second;
@@ -141,81 +141,80 @@ namespace fc {
 	}
 	return api;
   }
-  void http_serve(App* api, int port, int nthreads, std::string ip) {
-	std::function<void(Conn&, void*)> make_http_processor = [](Conn& fiber, void* api) {
-	  try {
-		input_buffer rb;
-		bool socket_is_valid = true;
-		Ctx ctx = Ctx(rb, fiber);
-		ctx.socket_fd = fiber.socket_fd;
-		Req rq{ ctx };
-		Res resp(ctx);
-		while (true) {
-		  ctx.is_body_read_ = false;
-		  ctx.header_lines.clear();
-		  ctx.header_lines.reserve(100);
-		  // Read until there is a complete header.
-		  int header_start = rb.cursor;
-		  int header_end = rb.cursor;
-		  assert(header_start >= 0);
-		  assert(header_end >= 0);
-		  assert(ctx.header_lines.size() == 0);
-		  ctx.add_header_line(rb.data() + header_end);
-		  assert(ctx.header_lines.size() == 1);
-		  bool complete_header = false;
-		  if (rb.empty())
-			if (!rb.read_more(fiber))
-			  return;
-		  const char* cur = rb.data() + header_end;
-		  const char* rbend = rb.data() + rb.end - 3;
-		  while (!complete_header) {
-			// Look for end of header && save header lines.
-			while ((cur - rb.data()) < rb.end - 3) {
+  static void make_http_processor(Conn& fiber, void* api) {
+	try {
+	  input_buffer rb;
+	  bool socket_is_valid = true;
+	  Ctx ctx(rb, fiber);
+	  ctx.socket_fd = fiber.socket_fd;
+	  while (true) {
+		ctx.is_body_read_ = false;
+		ctx.header_lines.clear();
+		ctx.header_lines.reserve(100);
+		// Read until there is a complete header.
+		int header_start = rb.cursor;
+		int header_end = rb.cursor;
+		assert(header_start >= 0);
+		assert(header_end >= 0);
+		assert(ctx.header_lines.size() == 0);
+		ctx.add_header_line(rb.data() + header_end);
+		assert(ctx.header_lines.size() == 1);
+		bool complete_header = false;
+		if (rb.empty())
+		  if (!rb.read_more(fiber))
+			return;
+		const char* cur = rb.data() + header_end;
+		const char* rbend = rb.data() + rb.end - 3;
+		while (!complete_header) {
+		  // Look for end of header && save header lines.
+		  while ((cur - rb.data()) < rb.end - 3) {
+			if (cur[0] == '\r' && cur[1] == '\n') {
+			  cur += 2; // skip \r\n
+			  ctx.add_header_line(cur);
+			  // If we read \r\n twice the header is complete.
 			  if (cur[0] == '\r' && cur[1] == '\n') {
+				complete_header = true;
 				cur += 2; // skip \r\n
-				ctx.add_header_line(cur);
-				// If we read \r\n twice the header is complete.
-				if (cur[0] == '\r' && cur[1] == '\n') {
-				  complete_header = true;
-				  cur += 2; // skip \r\n
-				  header_end = cur - rb.data();
-				  break;
-				}
-			  } else cur++;
-			}
-			// Read more data from the socket if the headers are not complete.
-			if (!complete_header && 0 == rb.read_more(fiber))
-			  return;
+				header_end = cur - rb.data();
+				break;
+			  }
+			} else cur++;
 		  }
-		  // Header is complete. Process it.
-		  // Run the handler.
-		  assert(rb.cursor <= rb.end);
-		  ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
-		  ctx.prepare_request();
-		  try {
-			static_cast<App*>(api)->_call(c2m(ctx.method().c_str()), ctx.url(), rq, resp);
-		  } catch (const http_error& e) {
-			ctx.set_status(e.i());
-			ctx.respond(e.what());
-		  } catch (const std::runtime_error& e) {
-			std::cerr << "INTERNAL SERVER ERROR: " << e.what() << std::endl;
-			ctx.set_status(500);
-			ctx.respond("Internal server error.");
-		  }
-		  ctx.respond_if_needed();
-
-		  assert(rb.cursor <= rb.end);
-		  // Update the cursor the beginning of the next request.
-		  ctx.prepare_next_request();
-		  // if read buffer is empty, we can flush the output buffer.
-		  if (rb.empty())
-			ctx.flush_responses();
+		  // Read more data from the socket if the headers are not complete.
+		  if (!complete_header && 0 == rb.read_more(fiber))
+			return;
 		}
-	  } catch (const std::runtime_error& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
-		return;
+		// Header is complete. Process it.
+		// Run the handler.
+		assert(rb.cursor <= rb.end);
+		ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
+		ctx.prepare_request();
+		Req req{ ctx };
+		Res res{ ctx };
+		try {
+		  static_cast<App*>(api)->_call(c2m(ctx.method().c_str()), ctx.url(), req, res);
+		} catch (const http_error& e) {
+		  ctx.set_status(e.i());
+		  ctx.respond(e.what());
+		} catch (const std::runtime_error& e) {
+		  std::cerr << "INTERNAL SERVER ERROR: " << e.what() << std::endl;
+		  ctx.set_status(500);
+		  ctx.respond("Internal server error.");
+		}
+		ctx.respond_if_needed();
+		assert(rb.cursor <= rb.end);
+		// Update the cursor the beginning of the next request.
+		ctx.prepare_next_request();
+		// if read buffer is empty, we can flush the output buffer.
+		if (rb.empty())
+		  ctx.flush_responses();
 	  }
-	};
+	} catch (const std::runtime_error& e) {
+	  std::cerr << "Error: " << e.what() << std::endl;
+	  return;
+	}
+  }
+  void http_serve(App* api, int port, int nthreads, std::string ip) {
 	std::cout << "Starting FabCc::server on port " << port << std::endl; fc::http_top_header.tick();
 	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
 		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
@@ -227,6 +226,6 @@ namespace fc {
 		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
 	// } else {
 	// }
-	start_server(api, ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
+	start_server(api, ip, port, SOCK_STREAM, nthreads, make_http_processor);//SOCK_DGRAM
   }
 } // namespace fc

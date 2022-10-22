@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#ifdef _WIN32
 #ifndef WEPOLL_EXPORT
 #define WEPOLL_EXPORT
 #endif
@@ -2251,3 +2251,4 @@ SOCKET ws_get_base_socket(SOCKET socket) {
       return_set_error(INVALID_SOCKET, error);
   }
 }
+#endif

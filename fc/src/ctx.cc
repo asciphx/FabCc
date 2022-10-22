@@ -186,8 +186,7 @@ namespace fc {
 	  char buffer[4096];
 	  nread = _fread_nolock(buffer, file_size - offset, 1, fd);
 	  this->fiber.write(buffer, file_size - (int)offset);
-	  if (!feof(fd))
-		throw err::not_found("Internal error: Could not reach the end of file.");
+	//   if (!feof(fd)) throw err::not_found("Internal error: Could not reach the end of file.");
 	  fclose(fd);
 #endif
 	  }

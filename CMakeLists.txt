@@ -10,7 +10,7 @@ endif()
 include(CheckIncludeFileCXX)
 check_include_file_cxx(any HAS_ANY)
 if (HAS_ANY)
-    set(STANDARD 17)
+    set(STANDARD 14)
 else ()
     set(STANDARD 14)
 endif ()
@@ -34,6 +34,9 @@ elseif (WIN32)
   set(libraries
 	  wsock32
 	  ws2_32)
+else ()
+  set(libraries
+	  pthread)
 endif()
 #${PROJECT_SOURCE_DIR}/
 if(WIN32)

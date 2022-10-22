@@ -7,7 +7,6 @@
 #include <tp/c++.h>
 #if (defined(_HAS_CXX17) && !_HAS_CXX17) || (!defined(_WIN32) && __cplusplus <= 201402L)
 namespace std {
-  template <typename _Tp> __INLINE constexpr size_t tuple_size_v = tuple_size<_Tp>::value;
   namespace detail {
 	template <class Fn, class T, size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, index_sequence<I...>) {
 	  return invoke(forward<Fn>(f), get<I>(forward<T>(t))...);
@@ -16,11 +15,11 @@ namespace std {
 	constexpr T make_from_tuple_impl(Tuple&& t, index_sequence<I...>) { return T(get<I>(forward<Tuple>(t))...); }
   }
   template <class Fn, class T> constexpr decltype(auto) apply(Fn&& f, T&& t) {
-	return detail::apply_impl(forward<Fn>(f), forward<T>(t), make_index_sequence<tuple_size_v<remove_reference_t<T>>>{});
+	return detail::apply_impl(forward<Fn>(f), forward<T>(t), make_index_sequence<tuple_size_V<remove_reference_t<T>>>{});
   }
   template <class T, class Tuple>
   constexpr T make_from_tuple(Tuple&& t) {
-	return detail::make_from_tuple_impl<T>(forward<Tuple>(t), make_index_sequence<tuple_size_v<remove_reference_t<Tuple>>>{});
+	return detail::make_from_tuple_impl<T>(forward<Tuple>(t), make_index_sequence<tuple_size_V<remove_reference_t<Tuple>>>{});
   }
 }
 #endif
@@ -31,7 +30,7 @@ namespace fc {
   constexpr void ForEachTuple(const T& t, Fn&& fn, std::index_sequence<I...>) { Exp{ ((void)fn(std::get<I>(t)), 0)... }; }
   template <typename T, typename Fn>
   constexpr void ForEachField(T* t, Fn&& fn) {
-	ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<std::tuple_size_v<decltype(T::Tuple)>>{});
+	ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<std::tuple_size_V<decltype(T::Tuple)>>{});
   }
   template <size_t I, typename T, typename Fn>
   constexpr void ForEachField(T* t, Fn&& fn) { ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<I>{}); }

@@ -16,13 +16,13 @@ namespace fc {
 	  case AF_INET: {
 		sockaddr_in* addr_in = (struct sockaddr_in*)&fiber.in_addr;
 		s.resize(INET_ADDRSTRLEN);
-		inet_ntop(AF_INET, &(addr_in->sin_addr), const_cast<PSTR>(s.data()), INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &(addr_in->sin_addr), const_cast<char*>(s.data()), INET_ADDRSTRLEN);
 		break;
 	  }
 	  case AF_INET6: {
 		sockaddr_in6* addr_in6 = (struct sockaddr_in6*)&fiber.in_addr;
 		s.resize(INET6_ADDRSTRLEN);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), const_cast<PSTR>(s.data()), INET6_ADDRSTRLEN);
+		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), const_cast<char*>(s.data()), INET6_ADDRSTRLEN);
 		break;
 	  }
 	  default:

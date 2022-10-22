@@ -148,7 +148,7 @@ namespace fc {
 }
 namespace std{
   template<>
-  struct std::hash<fc::Buf> {
+  struct hash<fc::Buf> {
 	[[nodiscard]] size_t operator()(const fc::Buf _) const noexcept {
 #ifdef _WIN32
 	  return std::_Hash_array_representation(_.data_, _.end_ - _.data_);

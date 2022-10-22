@@ -210,7 +210,7 @@ namespace fc {
 			// =============================================
 			// Spawn a new co to handle the connection.继续处理，延续之前未处理的
 			fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, &handler](co&& sink) {
-			  Conn c = Conn(this, std::move(sink), fiber_idx, socket_fd, *in_addr);
+			  Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr);
 			  scoped_fd sfd{ socket_fd }; // Will finally close the fd.
 			  try {
 				//if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
@@ -275,7 +275,7 @@ namespace fc {
 	socket_type server_fd = fc::create_and_bind(listen_ip, port, socktype);
 	std::vector<std::thread> ths;
 	for (int i = 0; i < nthreads; ++i) {
-	  ths.push_back(std::thread([&] {
+	  ths.push_back(std::thread([a, &server_fd, &conn_handler] {
 		Reactor reactor(a);
 		// if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
 		   //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);

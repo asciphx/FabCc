@@ -11,6 +11,7 @@
 #include <iterator>
 #include <exception>
 #include <istream>
+#include <cstring>
 namespace std {
   class string_view {
 	const char* data_; size_t length_;
