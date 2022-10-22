@@ -74,11 +74,11 @@ namespace fc {
 	  if (sv != "") { content_types.emplace(*iter, sv); } else { content_types.emplace(*iter, RES_oct); }
 	} return *this;
   }
-  void App::_call(char m, fc::Buf& r, Req& req, Res& res) const {
+  void App::_call(char m, std::string& r, Req& req, Res& res) const {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-	std::string g(1, m + 0x30); g.append(r.data_, r.size()); req.url = r;
+	std::string g(1, m + 0x30); g.append(r.data(), r.size()); req.url = r;
 	//std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
 	  it->second(req, res);
@@ -102,7 +102,7 @@ namespace fc {
 		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
 	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1;// if (_ == $) { _.append("index.html", 10); res.Ctx.send_file(_.c_str()); return; }
+		std::string _($); _ += req.url.c_str() + 1; if (_ == $) { _.append("index.html", 10); res.Ctx.send_file(_.c_str()); return; }
 		res.Ctx.send_file(_.c_str()); return;
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
 		if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
@@ -215,17 +215,26 @@ namespace fc {
 	}
   }
   void http_serve(App* api, int port, int nthreads, std::string ip) {
-	std::cout << "Starting FabCc::server on port " << port << std::endl; fc::http_top_header.tick();
-	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
-		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
-		//			  "You need to provide both the ssl_certificate option and the ssl_key option.");
-		//std::string ssl_key = options.ssl_key;
-		//std::string ssl_cert = options.ssl_certificate;
-		//std::string ssl_ciphers = get_or(options, s::ssl_ciphers, "");
-		//start_tcp_server(ip, port, SOCK_STREAM, nthreads,
-		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
-	// } else {
-	// }
-	start_server(api, ip, port, SOCK_STREAM, nthreads, make_http_processor);//SOCK_DGRAM
+	auto date_thread = std::make_shared<std::thread>([&]() {
+	  while (!quit_signal_catched) {
+		fc::http_top_header.tick(); std::this_thread::sleep_for(std::chrono::seconds(1));
+	  }
+	});
+	auto server_thread = std::make_shared<std::thread>([=] {
+	  std::cout << "Starting FabCc::server on port " << port << std::endl;// fc::http_top_header.tick();
+	  // if constexpr (has_key<decltype(options)>(s::ssl_key)) {
+		  //static_assert(has_key<decltype(options)>(s::ssl_certificate),
+		  //			  "You need to provide both the ssl_certificate option and the ssl_key option.");
+		  //std::string ssl_key = options.ssl_key;
+		  //std::string ssl_cert = options.ssl_certificate;
+		  //std::string ssl_ciphers = get_or(options, s::ssl_ciphers, "");
+		  //start_tcp_server(ip, port, SOCK_STREAM, nthreads,
+		  //				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
+	  // } else {
+	  // }
+	  start_server(api, ip, port, SOCK_STREAM, nthreads, make_http_processor);//SOCK_DGRAM
+	  date_thread->join();
+	});
+	server_thread->join();
   }
 } // namespace fc

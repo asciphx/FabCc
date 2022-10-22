@@ -31,7 +31,7 @@ namespace fc {
     std::string ip_address() const;
 
 	//Req(HTTP method, fc::Buf url, fc::Buf params, str_map headers, fc::Buf body);
-	fc::Buf url;
+	std::string url;
 	//fc::Buf params;
 	//fc::Buf body;
 	//uint64_t uuid;

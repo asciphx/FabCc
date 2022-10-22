@@ -10,10 +10,10 @@ namespace fc {
 	std::string_view Ctx::get_parameter(const char* key) {
 	  if (!url_.size()) parse_first_line(); return get_parameters_map[key];
 	}
-	fc::Buf& Ctx::url() {
+	std::string& Ctx::url() {
 	  if (!url_.size()) parse_first_line(); return url_;
 	}
-	fc::Buf& Ctx::method() {
+	std::string& Ctx::method() {
 	  if (!method_.size()) parse_first_line(); return method_;
 	}
 	std::string_view Ctx::http_version() {
@@ -167,13 +167,13 @@ namespace fc {
 	  fseek(fd, 0L, SEEK_END);
 	  // Get file size.
 	  long file_size = ftell(fd);
+	  rewind(fd);
 	  // Writing the http headers.
 	  response_written_ = true;
 	  format_top_headers(output_stream);
 	  headers_stream.flush(); // flushes to output_stream.
 	  output_stream << "Content-Length: " << file_size << "\r\n\r\n"; // Add body
 	  output_stream.flush();
-	  rewind(fd);
 	  // Read the file and write it to the socket.
 	  size_t nread = 1;
 	  size_t offset = 0;
@@ -183,9 +183,9 @@ namespace fc {
 		offset += sizeof(buffer);
 		this->fiber.write(buffer, sizeof(buffer));
 	  }
-	  char buffer[4096];
-	  nread = _fread_nolock(buffer, file_size - offset, 1, fd);
-	  this->fiber.write(buffer, file_size - (int)offset);
+	  char buffer[4096]; file_size -= (long)offset;
+	  nread = _fread_nolock(buffer, file_size, 1, fd);
+	  this->fiber.write(buffer, file_size);
 	//   if (!feof(fd)) throw err::not_found("Internal error: Could not reach the end of file.");
 	  fclose(fd);
 #endif
@@ -194,7 +194,7 @@ namespace fc {
 	const char* Ctx::last_header_line() { return header_lines.back(); }
 	// split a string, starting from cur && ending with split_char.
 	// Advance cur to the end of the split.
-	std::string_view Ctx::split(const char*& cur, const char* line_end, char split_char) {
+	std::string Ctx::split(const char*& cur, const char* line_end, char split_char) {
 	  const char* start = cur;
 	  while (start < (line_end - 1) && *start == split_char)
 		start++;
@@ -203,9 +203,9 @@ namespace fc {
 		end++;
 	  cur = end + 1;
 	  if (*end == split_char)
-		return std::string_view(start, cur - start - 1);
+		return std::string(start, cur - start - 1);
 	  else
-		return std::string_view(start, cur - start);
+		return std::string(start, cur - start);
 	}
 	void Ctx::index_headers() {
 	  for (int i = 1; i < header_lines.size() - 1; i++) {
@@ -305,8 +305,8 @@ namespace fc {
 	  rb.free(header_lines[0], body_end_);
 	  headers_stream.reset();
 	  status_ = "200 OK";
-	  method_ = std::string_view();
-	  url_ = std::string_view();
+	  method_ = "";
+	  url_ = "";
 	  http_version_ = std::string_view();
 	  content_type_ = std::string_view();
 	  header_map.clear();

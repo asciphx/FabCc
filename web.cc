@@ -41,8 +41,8 @@ int main() {
 	res.write("主页!!");
   };
   app["/timer"] = [&](Req&, Res& res) {
-    if(t.idle()) t.setTimeout([&] {
-	  quit_signal_catched = true; t.stop();
+    if(t.idle()) t.setTimeout([] {
+	  quit_signal_catched = true;
 	}, 6000);
 	res.write("关闭服务计时器倒计时启动！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);

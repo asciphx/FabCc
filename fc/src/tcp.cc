@@ -56,8 +56,8 @@ namespace fc {
 	  }
 	}
 #if _WIN32
-	u_long set_on = 1;
-	auto ret = ioctlsocket(sfd, (long)FIONBIO, &set_on);
+	u_long set_on = 1;// printf("!!!");
+	auto ret = ioctlsocket(sfd, FIONBIO, &set_on);
 	if (ret) {
 	  std::cerr << "FATAL ERROR: Cannot set socket to non blocking mode with ioctlsocket" << std::endl;
 	}
@@ -249,7 +249,7 @@ namespace fc {
 	  if (defered_functions.size()) { for (std::function<void()>& f : defered_functions) f(); defered_functions.clear(); }
 	}
 #if _WIN32
-	epoll_close(epoll_fd); exit(0);
+	epoll_close(epoll_fd);
 #else
 	close(epoll_fd);
 #endif

@@ -109,20 +109,20 @@ namespace fc {
 	  int count = read_impl(buf, max_size);
 	  while (count <= 0) {
 		if ((count < 0 && errno != EAGAIN) || count == 0) return int(0);
-		sink = sink.resume();	count = read_impl(buf, max_size);
+		sink = sink.yield();	count = read_impl(buf, max_size);
 	  }
 	  return count;
 	};
 	inline bool write(const char* buf, int size) {
 	  if (!buf || !size) {
-		sink = sink.resume(); return true;
+		sink = sink.yield(); return true;
 	  }
 	  const char* end = buf + size;
-	  int count = write_impl(buf, end - buf);
+	  int count = write_impl(buf, int(end - buf));
 	  if (count > 0) buf += count;
 	  while (buf != end) {
 		if ((count < 0 && errno != EAGAIN) || count == 0) return false;
-		sink = sink.resume();
+		sink = sink.yield();
 		count = write_impl(buf, int(end - buf));
 		if (count > 0) buf += count;
 	  }

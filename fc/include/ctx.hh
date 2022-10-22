@@ -32,18 +32,18 @@ namespace fc {
   __declspec(selectany) http_top_header_builder http_top_header;
 #endif
   struct Ctx {
-	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber), method_(2) {
+	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
 	  get_parameters_map.reserve(10); response_headers.reserve(20);
-	  output_stream = output_buffer(50 * 1024, [&](const char* d, int s) { fiber.write(d, s); });
-	  headers_stream = output_buffer(1000, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
+	  output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
+	  headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
 	}
 	Ctx& operator=(const Ctx&) = delete;
 	Ctx(const Ctx&) = delete;
 	std::string_view header(const char* key);
 	std::string_view cookie(const char* key);
 	std::string_view get_parameter(const char* key);
-	fc::Buf& url();
-	fc::Buf& method();
+	std::string& url();
+	std::string& method();
 	std::string_view http_version();
 	void format_top_headers(output_buffer& output_stream);
 	void prepare_request();
@@ -58,7 +58,7 @@ namespace fc {
 	const char* last_header_line();
 	// split a string, starting from cur && ending with split_char.
 	// Advance cur to the end of the split.
-	std::string_view split(const char*& cur, const char* line_end, char split_char);
+	std::string split(const char*& cur, const char* line_end, char split_char);
 	void index_headers();
 	void index_cookies();
 	void parse_first_line();
@@ -87,8 +87,8 @@ namespace fc {
 	input_buffer& rb;
 	int status_code_ = 200;
 	const char* status_ = "200 OK";
-	fc::Buf method_;
-	fc::Buf url_;
+	std::string method_;
+	std::string url_;
 	std::string_view http_version_;
 	std::string_view content_type_;
 	bool chunked_;
