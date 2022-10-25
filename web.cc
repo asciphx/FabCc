@@ -16,12 +16,6 @@ int main() {
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//返回路由列表
   };
- // app.post("/api") = [](Req& req, Res& res) {
-	//BP bp(req, 4096);
-	//for (auto p : bp.params) {
-	//  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
-	//}
- // };
   app["/yield"] = [](Req& req, Res& res) {
 	Json x = { 1,2,3 };
 	co c{ [&x](co&& c) {
@@ -29,9 +23,10 @@ int main() {
 		{"confidence":0.6968730688095093,"text":"BY：花享湖月","region":[[250,866],[332,866],[332,885],[250,885]]}])");
 	  return std::move(c);
 	  } };
-	res.write(x.str());
+	res.body << x;
 	c = c.yield();
-	res.write(x.dump());
+	res.body << x.dump();
+	res.write(res.body);
   };//协程, 使用co的yield函数来保证执行顺序
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
@@ -41,13 +36,11 @@ int main() {
 	res.write("主页!!");
   };
   app["/timer"] = [&](Req&, Res& res) {
-    if(t.idle()) t.setTimeout([] {
-	  quit_signal_catched = true;
-	}, 6000);
+    if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
 	res.write("关闭服务计时器倒计时启动！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  http_serve(&app, 8080);
+  http_serve(app, 8080);
   return 0;
 }

@@ -51,25 +51,14 @@ void funk(Req& req, Res& res) {
   res.write("Homepage route is replicated by std::bind！");
 };
 int main() {
-  Timer t; App app; Tcp srv;
-  app.sub_api("/", app.serve_file("static"));//Service file interface
+  Timer t; App app;
+  app.file_type().sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
 	res.write(x.dump());//JSON response
   };
-  app["/sockets"] = [&srv](Req& req, Res& res) {
-	Buf b("("); b << srv.$.size() << ")[";
-	for (std::set<u32>::iterator i = srv.$.begin(); i != srv.$.end(); ++i) b << *i << ',', Conn::shut(*i, _READ);
-	res.write(b.pop_back() << ']');//Get all active socket id, and close all sockets
-  };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//Return to routing list
-  };
-  app.post("/api") = [](Req& req, Res& res) {
-	BP bp(req, 4096);
-	for (auto p : bp.params) {
-	  res.write(p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
-	}
   };
   app["/yield"] = [](Req& req, Res& res) {
 	Json x = { 1,2,3 };
@@ -78,25 +67,25 @@ int main() {
 		{"confidence":0.6968730688095093,"text":"BY：花享湖月","region":[[250,866],[332,866],[332,885],[250,885]]}])");
 	  return std::move(c);
 	  } };
-	res.write(x.str());
+	res.body << x;
 	c = c.yield();
-	res.write(x.dump());
+	res.body << x.dump();
+	res.write(res.body);
   };//co's yield function is used to ensure the execution order
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
 	res.write("The routing of the home page is delete！！");
   };
+  app["/"] = [&](Req&, Res& res) {
+	res.write("home page!!");
+  };
   app["/timer"] = [&](Req&, Res& res) {
-	t.setTimeout([&srv] {
-	  printf("The route has been idle for 1 minute, and the server will shut down automatically！！");
-	  srv.exit();
-	}, 60000);
+    if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
 	res.write("Turn off the server timer and start the countdown！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
-  srv.router(app).timeout(6000).setTcpNoDelay(true).setThread().Start("0.0.0.0", 8080);
-  return 0;
+  http_serve(app, 8080);
 }
 ```
 

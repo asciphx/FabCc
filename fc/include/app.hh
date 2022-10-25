@@ -34,7 +34,7 @@ namespace fc {
 	void sub_api(const char* prefix, const App& subapi);
 	//Serve static directory
 	App serve_file(const char* r);
-	App& file_type(const std::vector<std::string_view>& line = { "html","ico","css","js","json","svg","png","jpg","gif","txt","wasm" });
+	App& file_type(const std::vector<std::string_view>& line = { "html","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" });
   };
-  void http_serve(App* api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");
+  void http_serve(App& api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");
 } // namespace fc

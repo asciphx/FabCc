@@ -112,7 +112,7 @@ namespace fc {
 	epoll_ctl(epoll_fd, fd, EV_ADD, flags);
 #endif
   }
-  void Reactor::event_loop(socket_type & listen_fd, std::function<void(Conn&, void*)> handler) {
+  void Reactor::event_loop(socket_type & listen_fd, std::function<void(Conn&)> handler) {
 #if __linux__
 	this->epoll_fd = epoll_create1(0);
 	epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
@@ -216,8 +216,8 @@ namespace fc {
 				//if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
 				   //std::cerr << "Error during SSL handshake" << std::endl; return std::move(c.sink);
 				//}
-				handler(c, app);
-				//epoll_del(socket_fd);
+				handler(c);
+				epoll_del(socket_fd);
 			  } catch (fiber_exception& ex) {
 				epoll_del(socket_fd); return std::move(ex.c);
 			  } catch (const std::runtime_error& e) {
@@ -254,7 +254,7 @@ namespace fc {
 	close(epoll_fd);
 #endif
   }
-  void start_server(void* a, std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&, void*)> conn_handler,
+  void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
   std::string ssl_key_path, std::string ssl_cert_path, std::string ssl_ciphers) { // Start the winsock DLL
 #ifdef _WIN32
 	system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
@@ -275,8 +275,8 @@ namespace fc {
 	socket_type server_fd = fc::create_and_bind(listen_ip, port, socktype);
 	std::vector<std::thread> ths;
 	for (int i = 0; i < nthreads; ++i) {
-	  ths.push_back(std::thread([a, &server_fd, &conn_handler] {
-		Reactor reactor(a);
+	  ths.push_back(std::thread([&] {
+		Reactor reactor;
 		// if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
 		   //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);
 		reactor.event_loop(server_fd, conn_handler);

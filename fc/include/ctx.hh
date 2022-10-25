@@ -24,6 +24,7 @@
 #include <buf.hh>
 #include <input_buffer.hh>
 #include <output_buffer.hh>
+#include <file_sptr.hh>
 namespace fc {
   static char* date_buf = nullptr; static int date_buf_size = 0;
 #ifndef _WIN32
@@ -101,7 +102,6 @@ namespace fc {
 	std::string_view get_parameters_string_;
 	// std::vector<std::string> strings_saver;
 	bool is_body_read_ = false;
-	std::string body_local_buffer_;
 	std::string_view body_;
 	std::string_view body_start;
 	const char* body_end_ = nullptr;

@@ -39,7 +39,6 @@ namespace fc {
 	}
   };
   struct Reactor {
-	void* app;
 	sockaddr_storage in_addr_storage;
 	socklen_t in_len = sizeof(sockaddr_storage);
 	sockaddr* in_addr = (sockaddr*)&in_addr_storage;
@@ -49,7 +48,6 @@ namespace fc {
 #else
 	typedef int epoll_handle_t;
 #endif
-	Reactor(void* a) : app(a) {};
 	epoll_handle_t epoll_fd;
 	std::vector<co> fibers;
 	std::vector<socket_type> fd_to_fiber_idx;
@@ -66,9 +64,9 @@ namespace fc {
 #endif
 	void epoll_del(socket_type fd);
 	void epoll_mod(socket_type fd, int flags);
-	void event_loop(socket_type& listen_fd, std::function<void(Conn&, void*)> handler);
+	void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler);
   };
-  void start_server(void* a, std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&, void*)> conn_handler,
+  void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
 	std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "");
 }
 #endif

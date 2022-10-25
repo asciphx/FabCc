@@ -109,16 +109,6 @@ namespace fc {
 	  int fd = open(path, O_RDONLY);
 	  if (fd == -1) throw err::not_found(Buf("File:", 5) << path << " not found.");
 	  size_t file_size = lseek(fd, (size_t)0, SEEK_END);
-	  // Set content type header.
-	  size_t ext_pos = std::string_view(path).rfind('.');
-	  std::string_view content_type("");
-	  if (ext_pos != std::string::npos) {
-		auto type_itr = content_types.find(std::string_view(path).substr(ext_pos + 1).data());
-		if (type_itr != content_types.end()) {
-		  content_type = type_itr->second;
-		  set_header("Content-Type", content_type);
-		}
-	  }
 	  // Writing the http headers.
 	  response_written_ = true;
 	  format_top_headers(output_stream);
@@ -152,17 +142,8 @@ namespace fc {
 	  close(fd);
 
 #else // Windows impl with basic read write.
-	  size_t ext_pos = std::string_view(path).rfind('.');
-	  std::string_view content_type;
-	  if (ext_pos != std::string::npos) {
-		auto type_itr = content_types.find(std::string_view(path).substr(ext_pos + 1).data());
-		if (type_itr != content_types.end()) {
-		  content_type = type_itr->second; set_header("Content-Type", content_type);
-		  set_header("Cache-Control", "max-age=54000,immutable");
-		}
-	  }
 	  // Open file.
-	  FILE* fd; if ((fd = fopen(path, "r")) == NULL) // C4996
+	  FILE* fd; if ((fd = fopen(path, "rb")) == NULL) // C4996
 		throw err::not_found(Buf("File:", 5) << path << " not found.");
 	  fseek(fd, 0L, SEEK_END);
 	  // Get file size.
@@ -175,18 +156,10 @@ namespace fc {
 	  output_stream << "Content-Length: " << file_size << "\r\n\r\n"; // Add body
 	  output_stream.flush();
 	  // Read the file and write it to the socket.
-	  size_t nread = 1;
-	  size_t offset = 0;
-	  while (nread != 0) {
-		char buffer[4096];
-		nread = _fread_nolock(buffer, sizeof(buffer), 1, fd);
-		offset += sizeof(buffer);
-		this->fiber.write(buffer, sizeof(buffer));
-	  }
-	  char buffer[4096]; file_size -= (long)offset;
-	  nread = _fread_nolock(buffer, file_size, 1, fd);
-	  this->fiber.write(buffer, file_size);
-	//   if (!feof(fd)) throw err::not_found("Internal error: Could not reach the end of file.");
+	  size_t nread = 1, offset = 0;
+	  __:  char buffer[4096]; nread = _fread_nolock(buffer, sizeof(buffer), 1, fd);
+	  if(nread != 0) { offset += sizeof(buffer); this->fiber.write(buffer, sizeof(buffer)); goto __; }
+	  file_size -= (long)offset; nread = _fread_nolock(buffer, file_size, 1, fd); this->fiber.write(buffer, file_size);
 	  fclose(fd);
 #endif
 	  }
