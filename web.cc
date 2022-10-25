@@ -32,9 +32,6 @@ int main() {
 	app.get() = nullptr;
 	res.write("主页的路由被删除！！");
   };
-  app["/"] = [&](Req&, Res& res) {
-	res.write("主页!!");
-  };
   app["/timer"] = [&](Req&, Res& res) {
     if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
 	res.write("关闭服务计时器倒计时启动！");
@@ -42,5 +39,4 @@ int main() {
   };
   //启动服务器
   http_serve(app, 8080);
-  return 0;
 }

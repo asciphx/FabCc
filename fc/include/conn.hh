@@ -34,6 +34,7 @@
 #include <h/config.h>
 #include <tp/ctx.hh>
 namespace fc {
+  static volatile int quit_signal_catched = 0;
 #if defined _WIN32
   typedef UINT_PTR socket_type;
 #else
@@ -46,15 +47,12 @@ namespace fc {
 	return close(sock);
 #endif
   }
-  static const int MAXEVENTS = 64;
-  static volatile int quit_signal_catched = 0;
-  static void shutdown_handler(int sig) { quit_signal_catched = 1; }
   // Epoll based Reactor:
   // Orchestrates a set of fiber (ctx::co).
   struct fiber_exception {
 	std::string what; ctx::co c;
 	fiber_exception(fiber_exception&& e) = default;
-	fiber_exception(ctx::co&& c_, std::string const& what) : what{ what }, c{ std::move(c_) } {}
+	fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
   };
   class Conn {
 	Conn& operator=(const Conn&) = delete;
@@ -105,29 +103,8 @@ namespace fc {
 	  return ::send(socket_fd, buf, size, 0);
 	}
 	//
-	inline int read(char* buf, int max_size) {
-	  int count = read_impl(buf, max_size);
-	  while (count <= 0) {
-		if ((count < 0 && errno != EAGAIN) || count == 0) return int(0);
-		sink = sink.yield();	count = read_impl(buf, max_size);
-	  }
-	  return count;
-	};
-	inline bool write(const char* buf, int size) {
-	  if (!buf || !size) {
-		sink = sink.yield(); return true;
-	  }
-	  const char* end = buf + size;
-	  int count = write_impl(buf, int(end - buf));
-	  if (count > 0) buf += count;
-	  while (buf != end) {
-		if ((count < 0 && errno != EAGAIN) || count == 0) return false;
-		sink = sink.yield();
-		count = write_impl(buf, int(end - buf));
-		if (count > 0) buf += count;
-	  }
-	  return true;
-	};
+	int read(char* buf, int max_size);
+	bool write(const char* buf, int size);
   };
 }
 #endif // CONN_HH

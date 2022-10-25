@@ -24,7 +24,6 @@
 #include <buf.hh>
 #include <input_buffer.hh>
 #include <output_buffer.hh>
-#include <file_sptr.hh>
 namespace fc {
   static char* date_buf = nullptr; static int date_buf_size = 0;
 #ifndef _WIN32

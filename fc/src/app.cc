@@ -101,8 +101,13 @@ namespace fc {
 	  if (!fc::is_directory(real_root))
 		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
 	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
+#ifndef __linux__
+	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
+		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_.c_str());
+	  };
+#endif // !__linux__
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; if (_ == $) { _.append("index.html", 10); }// std::cout << _ << "\n";
+		std::string _($); _ += req.url.c_str() + 1;// std::cout << _ << "\n";
 		std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
 		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
@@ -145,6 +150,11 @@ namespace fc {
 		}
 		throw err::not_found();
 	  };
+#ifdef __linux__
+	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
+		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_.c_str());
+	  };
+#endif // __linux__
 	} catch (const http_error& e) {
 	  printf("http_error[%d]: %s", e.i(), e.what());
 	}
@@ -229,7 +239,7 @@ namespace fc {
 		fc::http_top_header.tick(); std::this_thread::sleep_for(std::chrono::seconds(1));
 	  }
 	});
-	std::cout << "Starting FabCc::server on port " << port << std::endl;// fc::http_top_header.tick();
+	std::cout << "C++<web>[" << static_cast<int>(nthreads += (nthreads+1)/2) << "] => http://127.0.0.1:" << port << std::endl;
 	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
 		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
 		//			  "You need to provide both the ssl_certificate option and the ssl_key option.");

@@ -8,6 +8,28 @@ namespace fc {
 	static_cast<Reactor*>(reactor)->reassign_fd_to_fiber(fd, this->fiber_id);
   }
   void Conn::defer(const std::function<void()>&fun) { static_cast<Reactor*>(reactor)->defered_functions.push_back(fun); }
+  int Conn::read(char* buf, int max_size) {
+	int count = read_impl(buf, max_size);
+	while (count <= 0) {
+	  if ((count < 0 && errno != EAGAIN) || count == 0) return int(0);
+	  sink = sink.yield();
+	  count = read_impl(buf, max_size);
+	}
+	return count;
+  };
+  bool Conn::write(const char* buf, int size) {
+	//if (!buf || !size) { sink = sink.yield(); return true; }
+	const char* end = buf + size;
+	int count = write_impl(buf, int(end - buf));
+	if (count > 0) buf += count;
+	while (buf != end) {
+	  if ((count < 0 && errno != EAGAIN) || count == 0) return false;
+	  sink = sink.yield();
+	  count = write_impl(buf, int(end - buf));
+	  if (count > 0) buf += count;
+	}
+	return true;
+  };
 //  int Conn::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }
 //  int Conn::shut(sd_type type) { return ::shutdown(this->id, type); }
 //  int Conn::set_keep_alive(socket_type& fd, int idle, int intvl, unsigned char probes) {

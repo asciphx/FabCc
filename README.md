@@ -76,9 +76,6 @@ int main() {
 	app.get() = nullptr;
 	res.write("The routing of the home page is delete！！");
   };
-  app["/"] = [&](Req&, Res& res) {
-	res.write("home page!!");
-  };
   app["/timer"] = [&](Req&, Res& res) {
     if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
 	res.write("Turn off the server timer and start the countdown！");

@@ -5,6 +5,8 @@
 #include <http_error.hh>
 #pragma warning(disable: 4996)
 namespace fc {
+  static const int MAXEVENTS = 64;
+  static void shutdown_handler(int sig) { quit_signal_catched = 1; }
   socket_type create_and_bind(const char* ip, int port, int socktype) {
 	int s; socket_type sfd;
 	if (ip == nullptr) {
@@ -248,6 +250,7 @@ namespace fc {
 	  // Call && Flush the defered functions.
 	  if (defered_functions.size()) { for (std::function<void()>& f : defered_functions) f(); defered_functions.clear(); }
 	}
+	std::cout << "@";
 #if _WIN32
 	epoll_close(epoll_fd);
 #else
@@ -275,7 +278,7 @@ namespace fc {
 	socket_type server_fd = fc::create_and_bind(listen_ip, port, socktype);
 	std::vector<std::thread> ths;
 	for (int i = 0; i < nthreads; ++i) {
-	  ths.push_back(std::thread([&] {
+	  ths.push_back(std::thread([&server_fd, &conn_handler] {
 		Reactor reactor;
 		// if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
 		   //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);
