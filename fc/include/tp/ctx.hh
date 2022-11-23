@@ -9,7 +9,6 @@
 #include <memory>
 #include <utility>
 #include <tuple>
-#include <thread>
 #include <type_traits>
 #if defined _MSC_VER
 #if defined(_M_X64)
@@ -47,11 +46,10 @@ namespace ctx {
 	assert(nullptr != t.fctx); // destroy context-stack of `this`context on next context
 	ontop_fcontext(t.fctx, rec, ctx_exit< Rec >);
   }
-  class co;
-  template< typename Fn >
+  template< typename Ctx, typename Fn >
   transfer_t ctx_ontop(transfer_t t) {
 	auto p = static_cast<std::tuple< Fn > *>(t.data); assert(nullptr != p);
-	typename std::decay< Fn >::type fn = std::get< 0 >(*p); t.data = nullptr; co c{ t.fctx };
+	typename std::decay< Fn >::type fn = std::get< 0 >(*p); t.data = nullptr; Ctx c{ t.fctx };
 	// execute function, pass continuation via reference
 	c = fn(std::move(c)); return { std::exchange(c.fctx_, nullptr), nullptr };
   }
@@ -77,7 +75,7 @@ namespace ctx {
 	assert(nullptr != fctx); // transfer control structure to context-stack将控制结构传输到上下文堆栈
 	return jump_fcontext(fctx, record).fctx;
   }
-  template< typename Fn >
+  template< typename Ctx, typename Fn >
   class record {
   private:
 	stack_context                                   sctx_;
@@ -94,13 +92,13 @@ namespace ctx {
 	record(record const&) = delete; record& operator=(record const&) = delete;
 	void deallocate() noexcept { destroy(this); }
 	fcontext_t run(fcontext_t fctx) {
-	  co c{ fctx }; c = std::invoke(fn_, std::move(c)); return std::exchange(c.fctx_, nullptr);
+	  Ctx c{ fctx }; c = std::invoke(fn_, std::move(c)); return std::exchange(c.fctx_, nullptr);
 	}
   };
   class co {
   private:
-	template<typename Fn> friend class record;
-	template<typename Fn> friend transfer_t ctx_ontop(transfer_t);
+	template<typename Ctx, typename Fn> friend class record;
+	template<typename Ctx, typename Fn> friend transfer_t ctx_ontop(transfer_t);
 	fcontext_t  fctx_{ nullptr };
 	template<typename Fn>
 	friend co callcc(std::allocator_arg_t, fixedsize_stack&&, Fn&&);
@@ -114,7 +112,7 @@ namespace ctx {
 	co(Fn&& fn): co{ std::allocator_arg, fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
 	template<typename Fn>
 	co(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) :
-	  fctx_{ add_ctx< record< Fn > >(std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
+	  fctx_{ add_ctx< record< co, Fn > >(std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
 	//fiber
 	~co() {
 	  if (BOOST_UNLIKELY(nullptr != fctx_)) {
@@ -127,7 +125,7 @@ namespace ctx {
 	}
 	co(co const& other) noexcept = delete;
 	co& operator=(co const& other) noexcept = delete;
-	inline co yield()& { std::this_thread::yield(); return std::move(*this).resume(); }
+	inline co yield()& { return std::move(*this).resume(); }
 	//same as yield, but not inline
 	co resume()& { return std::move(*this).resume(); }
 	co resume()&& {
@@ -138,7 +136,7 @@ namespace ctx {
 	template< typename Fn >
 	co resume_with(Fn&& fn)&& {
 	  assert(nullptr != fctx_); auto p = std::make_tuple(std::forward< Fn >(fn));
-	  return { ontop_fcontext(std::exchange(fctx_, nullptr), &p, ctx_ontop< Fn >).fctx };
+	  return { ontop_fcontext(std::exchange(fctx_, nullptr), &p, ctx_ontop< co, Fn >).fctx };
 	}
 	explicit operator bool() const noexcept { return nullptr != fctx_; }
 	bool operator!() const noexcept { return nullptr == fctx_; }
@@ -156,7 +154,7 @@ namespace ctx {
   };
   template<typename Fn>
   co callcc(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) {
-	return co{ add_ctx<record<Fn>>(std::forward<fixedsize_stack>(salloc), std::forward< Fn >(fn)) }.resume();
+	return co{ add_ctx<record<co, Fn>>(std::forward<fixedsize_stack>(salloc), std::forward< Fn >(fn)) }.resume();
   }
   typedef co fiber;
 }

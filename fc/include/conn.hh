@@ -34,7 +34,6 @@
 #include <h/config.h>
 #include <tp/ctx.hh>
 namespace fc {
-  static volatile int quit_signal_catched = 0;
 #if defined _WIN32
   typedef UINT_PTR socket_type;
 #else

@@ -2,7 +2,6 @@
 #define REQRES_HH
 #include <functional>
 #include <string>
-#include <timer.hh>
 #include "tp/zlib.h"
 #include "tp/ctx.hh"
 #include <buf.hh>
@@ -54,7 +53,7 @@ namespace fc {
 	z_stream stream{};
 	str_map headers;
 	std::string path_;
-	fc::Timer timer_;
+	// fc::Timer timer_;
 	int is_file{ 0 };
 	long file_size = 0;
     fc::Ctx& Ctx;

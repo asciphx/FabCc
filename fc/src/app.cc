@@ -234,12 +234,12 @@ namespace fc {
 		return;
 	  }
 	};
-	auto date_thread = std::make_shared<std::thread>([]() {
+	auto date_thread = std::make_shared<std::thread>([&]() {
 	  while (!quit_signal_catched) {
 		fc::http_top_header.tick(); std::this_thread::sleep_for(std::chrono::seconds(1));
 	  }
 	});
-	std::cout << "C++<web>[" << static_cast<int>(nthreads += (nthreads+1)/2) << "] => http://127.0.0.1:" << port << std::endl;
+	std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
 		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
 		//			  "You need to provide both the ssl_certificate option and the ssl_key option.");
@@ -250,7 +250,10 @@ namespace fc {
 		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
 	// } else {
 	// }
-	start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
-	date_thread->join();
+		auto server_thread = std::make_shared<std::thread>([=] {
+			start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
+			date_thread->join();
+		});
+    server_thread->join();
   }
 } // namespace fc

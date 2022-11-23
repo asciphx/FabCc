@@ -7,7 +7,7 @@ void funk(Req& req, Res& res) {
   res.write("主页路由被std::bind复写！");
 };
 int main() {
-  Timer t; App app;
+  App app;
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
 	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
@@ -33,10 +33,12 @@ int main() {
 	res.write("主页的路由被删除！！");
   };
   app["/timer"] = [&](Req&, Res& res) {
-    if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
-	res.write("关闭服务计时器倒计时启动！");
+    // if(t.idle()) t.setTimeout([&] { exit(0); }, 6000);
+	quit_signal_catched = true;
+	res.write("关闭服务！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
   http_serve(app, 8080);
+  return 0;
 }

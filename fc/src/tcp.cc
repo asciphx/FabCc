@@ -1,6 +1,6 @@
 #include "tcp.hh"
+#include "app.hh"
 #include <lexical_cast.hh>
-#include <timer.hh>
 #include <h/common.h>
 #include <http_error.hh>
 #pragma warning(disable: 4996)
@@ -58,7 +58,7 @@ namespace fc {
 	  }
 	}
 #if _WIN32
-	u_long set_on = 1;// printf("!!!");
+	u_long set_on = 1;
 	auto ret = ioctlsocket(sfd, FIONBIO, &set_on);
 	if (ret) {
 	  std::cerr << "FATAL ERROR: Cannot set socket to non blocking mode with ioctlsocket" << std::endl;
@@ -248,9 +248,9 @@ namespace fc {
 		}
 	  }
 	  // Call && Flush the defered functions.
-	  if (defered_functions.size()) { for (std::function<void()>& f : defered_functions) f(); defered_functions.clear(); }
+	  if (defered_functions.size()) { for (auto& f : defered_functions) f(); defered_functions.clear(); }
 	}
-	std::cout << "@";
+	std::cout << "@" << std::endl;
 #if _WIN32
 	epoll_close(epoll_fd);
 #else
