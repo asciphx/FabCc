@@ -9,17 +9,18 @@ endif()
 #cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 include(CheckIncludeFileCXX)
 check_include_file_cxx(any HAS_ANY)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (HAS_ANY)
-    set(STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 else ()
-    set(STANDARD 14)
+  set(CMAKE_CXX_STANDARD 11)
 endif ()
-message(STATUS "Build STANDARD: c++${STANDARD}")
+message(STATUS "Build STANDARD: c++${CMAKE_CXX_STANDARD}")
 if (MSVC)
-	add_compile_options(/O2 /GA /Ob2 /utf-8 /std:c++${STANDARD} )#只有是Release才会是O2優化，否則會被覆写
+	add_compile_options(/O2 /GA /Ob2 /utf-8 )#只有是Release才会是O2優化，否則會被覆写
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 else ()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${STANDARD} -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
 	add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE)
 endif ()
 include_directories(fc/include)#添加掃描的頭文件目錄
