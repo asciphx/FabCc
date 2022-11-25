@@ -146,16 +146,4 @@ namespace fc {
 	unsigned int cap_;
   };
 }
-namespace std{
-  template<>
-  struct hash<fc::Buf> {
-	[[nodiscard]] size_t operator()(const fc::Buf _) const noexcept {
-#ifdef _WIN32
-	  return std::_Hash_array_representation(_.data_, _.end_ - _.data_);
-#else
-	  return std::_Hash_impl::hash(_.data_, _.end_ - _.data_);
-#endif // _WIN32
-	}
-  };
-}
 #endif
