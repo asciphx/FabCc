@@ -12,8 +12,8 @@
 #include <http_error.hh>
 #include <file_sptr.hh>
 namespace fc {
-  //static thread_local std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
-  //static thread_local std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
+  static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
+  static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
   static volatile int quit_signal_catched = 0;
   char c2m(const char* m);
   const char* m2c(HTTP m);

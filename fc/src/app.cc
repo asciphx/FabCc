@@ -209,7 +209,7 @@ namespace fc {
 		  ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
 		  ctx.prepare_request();
 		  Req req{ ctx };
-		  Res res{ ctx };
+		  Res res( ctx );
 		  try {
 			api._call(c2m(ctx.method().c_str()), ctx.url(), req, res);
 		  } catch (const http_error& e) {

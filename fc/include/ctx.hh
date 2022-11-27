@@ -25,7 +25,7 @@
 #include <input_buffer.hh>
 #include <output_buffer.hh>
 namespace fc {
-  static char* date_buf = nullptr; static int date_buf_size = 0;
+	using ::fc::content_any_types;
 #ifndef _WIN32
   http_top_header_builder http_top_header [[gnu::weak]];
 #else
