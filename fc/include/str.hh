@@ -156,6 +156,9 @@ namespace fc {
 	char* subStr_f(const char* c, int i, int e);
 	char* to8Str_f(unsigned long long i);
 	char* to4Str_f(int i);
+	inline unsigned long long hack_str(const char* s, size_t l) {
+	  unsigned long long r = s[0]; for (signed char i = 0; ++i < l && s[i]; r <<= 8, r += s[i]); return r;
+	}//Only url with string_view
 	inline unsigned long long hack8Str(const char* s) {
 	  unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r <<= 8, r += s[i]); return r;
 	}//If only the first four digits need to be matched and there is no conflict, it is recommended to use hack4Str to improve efficiency

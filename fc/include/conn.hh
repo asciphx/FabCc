@@ -46,6 +46,7 @@ namespace fc {
 	return close(sock);
 #endif
   }
+  struct Reactor;
   // Epoll based Reactor:
   // Orchestrates a set of fiber (ctx::co).
   struct fiber_exception {
@@ -58,11 +59,11 @@ namespace fc {
 	Conn(const Conn&) = delete;
   public:
 	typedef fiber_exception exception_type;
-	void* reactor;
+	Reactor* reactor;
 	ctx::co sink;
 	socket_type fiber_id, socket_fd;
 	sockaddr in_addr;
-	inline Conn(void* reactor, ctx::co&& sink,
+	inline Conn(Reactor* reactor, ctx::co&& sink,
 	  socket_type fiber_id, socket_type socket_fd, sockaddr in_addr)
 	  : reactor(reactor), sink(std::forward<ctx::co&&>(sink)),
 	  fiber_id(fiber_id), socket_fd(socket_fd), in_addr(in_addr) {}

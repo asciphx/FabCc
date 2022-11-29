@@ -10,12 +10,12 @@
 #include <buf.hh>
 #include <directory.hh>
 #include <http_error.hh>
+#include <input_buffer.hh>
 #include <file_sptr.hh>
 namespace fc {
   static std::unordered_map<uint64_t, fc::Buf> RES_CACHE_MENU = {};
   static std::unordered_map<uint64_t, int64_t> RES_CACHE_TIME = {};
-  static volatile int quit_signal_catched = 0;
-  char c2m(const char* m);
+  char c2m(const char* m, size_t l);
   const char* m2c(HTTP m);
   struct App {
 	App();

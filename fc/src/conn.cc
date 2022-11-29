@@ -1,13 +1,13 @@
 #include <conn.hh>
 #include <tcp.hh>
 namespace fc {
-  void Conn::epoll_add(socket_type fd, int flags) { static_cast<Reactor*>(reactor)->epoll_add(fd, flags, fiber_id); }
-  void Conn::epoll_mod(socket_type fd, int flags) { static_cast<Reactor*>(reactor)->epoll_mod(fd, flags); }
-  void Conn::defer_fiber_resume(socket_type fiber_id) { static_cast<Reactor*>(reactor)->defered_resume.push_back(fiber_id); }
+  void Conn::epoll_add(socket_type fd, int flags) { reactor->epoll_add(fd, flags, fiber_id); }
+  void Conn::epoll_mod(socket_type fd, int flags) { reactor->epoll_mod(fd, flags); }
+  void Conn::defer_fiber_resume(socket_type fiber_id) { reactor->defered_resume.push_back(fiber_id); }
   void Conn::reassign_fd_to_this_fiber(socket_type fd) {
-	static_cast<Reactor*>(reactor)->reassign_fd_to_fiber(fd, this->fiber_id);
+	reactor->reassign_fd_to_fiber(fd, this->fiber_id);
   }
-  void Conn::defer(const std::function<void()>&fun) { static_cast<Reactor*>(reactor)->defered_functions.push_back(fun); }
+  void Conn::defer(const std::function<void()>&fun) { reactor->defered_functions.push_back(fun); }
   int Conn::read(char* buf, int max_size) {
 	int count = read_impl(buf, max_size);
 	while (count <= 0) {

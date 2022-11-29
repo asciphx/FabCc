@@ -2,14 +2,9 @@
 #include <list>
 #include <utility>
 #include <directory.hh>
-#ifdef _WIN32
-#define $_(_) _._Ptr
-#else
-#define $_(_) _.base()
-#endif // _WIN32
 namespace fc {
-  char c2m(const char* m) {
-	switch (hack8Str(m)) {
+  char c2m(const char* m, size_t l) {
+	switch (hack_str(m, l)) {
 	case 75064423044165:return static_cast<char>(HTTP::DEL);
 	case 4670804:return static_cast<char>(HTTP::GET);
 	case 1212498244:return static_cast<char>(HTTP::HEAD);
@@ -103,56 +98,42 @@ namespace fc {
 	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_.c_str());
+		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_);
 	  };
 #endif // !__linux__
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1;// std::cout << _ << "\n";
-		std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
-		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-		throw err::not_found();
-	  _:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
-		if (last_dot) {
-		  Buf ss = _.substr(last_dot); std::string_view extension(ss.data_, ss.size());
-		  if (content_types.find(extension) != content_types.end()) {
-			ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
-			if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
-			  res.is_file = 2; res.set_header("Cache-Control", "max-age=54000,immutable");
-			}
-		  }
-		}
-		res.Ctx.send_file(_.c_str()); return;
-		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
-		if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
-		  if (last_dot) {
-			Buf ss = _.substr(last_dot);
-			std::string_view extension(ss.data_, ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
-			if (content_types.find(extension) != content_types.end()) {
-			  res.file_size = statbuf_.st_size; res.code = 200;
-			  ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
-			  if (ss[0] == 'h' && ss[1] == 't') { res.is_file = 1; } else {
-				res.is_file = 2;
-				res.set_header("Cache-Control", "max-age=54000,immutable");
-				std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
-				if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-				  res.__ = p->second;
-				} else {
-				  file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
-				}
-			  }
-			  //printf("<%ld,%s>", res.file_size, _.c_str());
-			  res.path_ = std::move(_);
-			  return;
-			}
-			throw err::not_found(Buf() << "Content-type of [" << extension << "] is not allowed!");
-		  }
-		}
-		throw err::not_found();
+		res.Ctx.send_file(_); return;
+		//struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		//if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
+		//  if (last_dot) {
+		//	Buf ss = _.substr(last_dot);
+		//	std::string_view extension(ss.data_, ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
+		//	if (content_types.find(extension) != content_types.end()) {
+		//	  res.file_size = statbuf_.st_size; res.code = 200;
+		//	  res.set_header("Content-Type", extension);
+		//	  if (extension[0] == 'h' && extension[1] == 't') { res.is_file = 1; } else {
+		//		res.is_file = 2;
+		//		res.set_header("Cache-Control", "max-age=54000,immutable");
+		//		std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
+		//		if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+		//		  res.__ = p->second;
+		//		} else {
+		//		  file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
+		//		}
+		//	  }
+		//	  //printf("<%ld,%s>", res.file_size, _.c_str());
+		//	  res.path_ = std::move(_);
+		//	  return;
+		//	}
+		//	throw err::not_found(Buf() << "Content-type of [" << extension << "] is not allowed!");
+		//  }
+		//}
+		//throw err::not_found();
 	  };
 #ifdef __linux__
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_.c_str());
+		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_);
 	  };
 #endif // __linux__
 	} catch (const http_error& e) {
@@ -209,9 +190,9 @@ namespace fc {
 		  ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
 		  ctx.prepare_request();
 		  Req req{ ctx };
-		  Res res( ctx );
+		  Res res(ctx);
 		  try {
-			api._call(c2m(ctx.method().c_str()), ctx.url(), req, res);
+			api._call(c2m(ctx.method_.data(), ctx.method_.size()), ctx.url_, req, res);
 		  } catch (const http_error& e) {
 			ctx.set_status(e.i());
 			ctx.respond(e.what());
@@ -249,10 +230,10 @@ namespace fc {
 		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
 	// } else {
 	// }
-		auto server_thread = std::make_shared<std::thread>([=] {
-			start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
-			date_thread->join();
-		});
-    server_thread->join();
+	auto server_thread = std::make_shared<std::thread>([=] {
+	  start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
+	  date_thread->join();
+	});
+	server_thread->join();
   }
 } // namespace fc

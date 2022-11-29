@@ -47,6 +47,9 @@ namespace std {
 	string_view substr(size_t a, size_t b) const {
 	  return string_view(a > length_ ? data_ : data_ + a, a + b < length_ ? b : length_ - b);
 	}
+	size_t find(const char c) const {
+	  size_t l = 0; while (l < length_) { if (data_[l] == c) { return l; } ++l; } return -1;
+	}
 	size_t rfind(const char c) const {
 	  size_t s = length_; while (0 < s) { if (data_[s] == c) { return s; } --s; } return -1;
 	}

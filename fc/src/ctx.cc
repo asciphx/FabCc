@@ -10,15 +10,6 @@ namespace fc {
   std::string_view Ctx::get_parameter(const char* key) {
 	return get_parameters_map[key];
   }
-  std::string& Ctx::url() {
-	return url_;
-  }
-  std::string& Ctx::method() {
-	return method_;
-  }
-  std::string_view Ctx::http_version() {
-	return http_version_;
-  }
   void Ctx::format_top_headers(output_buffer& output_stream) {
 	if (status_code_ == 200) output_stream << http_top_header.top_header_200();
 	else output_stream << "HTTP/1.1 " << status_ << http_top_header.top_header();
@@ -104,10 +95,24 @@ namespace fc {
 	}
   }
   // Send a file.
-  void Ctx::send_file(const char* path) {
+  void Ctx::send_file(std::string& path) {
+	std::string::iterator i = --path.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
+	if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+	if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+	throw err::not_found();
+  _:std::size_t last_dot = $_(i) - $_(path.begin()) + 1;
+	if (last_dot) {
+	  Buf ss = path.substr(last_dot); std::string_view extension(ss.data_, ss.size());
+	  if (content_types.find(extension) != content_types.end()) {
+		set_header("Content-Type", extension);
+		if (extension[0] == 'h' && extension[1] == 't') {} else {
+		  set_header("Cache-Control", "max-age=54000,immutable");
+		}
+	  }
+	}
 #ifndef _WIN32 // Linux / Macos version with sendfile
 	// Open the file in non blocking mode.
-	int fd = open(path, O_RDONLY);
+	int fd = open(path.c_str(), O_RDONLY);
 	if (fd == -1) throw err::not_found(Buf("File:", 5) << path << " not found.");
 	size_t file_size = lseek(fd, (size_t)0, SEEK_END);
 	// Writing the http headers.
@@ -140,7 +145,7 @@ namespace fc {
 	close(fd);
 #else // Windows impl with basic read write.
 	// Open file.
-	FILE* fd; if ((fd = fopen(path, "rb")) == NULL) // C4996
+	FILE* fd; if ((fd = fopen(path.c_str(), "rb")) == NULL) // C4996
 	  throw err::not_found(Buf("File:", 5) << path << " not found.");
 	fseek(fd, 0L, SEEK_END); long file_size = ftell(fd); rewind(fd);
 	// Writing the http headers.
@@ -162,14 +167,14 @@ namespace fc {
   const char* Ctx::last_header_line() { return header_lines.back(); }
   // split a string, starting from cur && ending with split_char.
   // Advance cur to the end of the split.
-  std::string Ctx::split(const char*& cur, const char* line_end, char split_char) {
+  std::string_view Ctx::split(const char*& cur, const char* line_end, char split_char) {
 	const char* start = cur;
 	while (start < (line_end - 1) && *start == split_char) ++start;
 	const char* end = start + 1;
 	while (end < (line_end - 1) && *end != split_char) ++end;
 	cur = end + 1;
-	if (*end == split_char) return std::string(start, cur - start - 1);
-	else return std::string(start, cur - start);
+	if (*end == split_char) return std::string_view(start, cur - start - 1);
+	else return std::string_view(start, cur - start);
   }
   void Ctx::index_headers() {
 	for (int i = 1; i < header_lines.size() - 1; i++) {
@@ -196,17 +201,20 @@ namespace fc {
 	}
   }
   void Ctx::parse_first_line() {
-	const char* c = header_lines[0];
-	const char* end = header_lines[1];
+	const char* c = header_lines[0], * end = header_lines[1];
 	method_ = split(c, end, ' ');
-	url_ = split(c, end, ' ');
-	if (url_[1] == 0) url_.push_back('/');
+	dumy = split(c, end, ' ');
 	http_version_ = split(c, end, '\r');
 	// url get parameters.
-	c = url_.data();
-	end = c + url_.size();
-	url_ = split(c, end, '?');
-	get_parameters_string_ = std::string_view(c, end - c);
+	c = dumy.data();
+	end = c + dumy.size();
+	if (dumy.size() == 1) { url_.append(dumy.data(), dumy.size()); url_[1] = '/'; return; }
+	size_t l = dumy.find('?');
+	if (l == -1) url_ += dumy; else {
+	  url_ += dumy.substr(0, l);
+	  get_parameters_string_ = dumy.substr(++l);
+	}
+	//std::cout << url_ << '^' << get_parameters_string_ << std::endl;
   }
   std::string_view Ctx::get_parameters_string() {
 	return get_parameters_string_;
@@ -263,7 +271,7 @@ namespace fc {
 	rb.free(header_lines[0], body_end_);
 	headers_stream.reset();
 	status_ = "200 OK";
-	method_ = "";
+	method_ = std::string_view();
 	url_ = "";
 	http_version_ = std::string_view();
 	content_type_ = std::string_view();
