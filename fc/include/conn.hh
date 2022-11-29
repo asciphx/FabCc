@@ -55,8 +55,8 @@ namespace fc {
 	fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
   };
   class Conn {
-	Conn& operator=(const Conn&) = delete;
-	Conn(const Conn&) = delete;
+	//Conn& operator=(const Conn&) = delete;
+	//Conn(const Conn&) = delete;
   public:
 	typedef fiber_exception exception_type;
 	Reactor* reactor;

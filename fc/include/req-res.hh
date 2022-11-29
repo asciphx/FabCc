@@ -68,6 +68,7 @@ namespace fc {
 	//void add_header(const fc::Buf& key, fc::Buf value);
 	const fc::Buf& get_header(const fc::Buf& key);
 	void write(const std::string& body_part);
+	void write(const std::string_view& body_part);
 	void write(const fc::Buf& body_part);
 	void write(const char* body_part);
 	inline void set_status(int s) { Ctx.set_status(s); }

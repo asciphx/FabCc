@@ -164,7 +164,7 @@ namespace fc {
 			  // =============================================
 			  // Spawn a new co to handle the connection.继续处理，延续之前未处理的
 			  fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, &handler](co&& sink) {
-				Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr);
+			    Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr);
 				scoped_fd sfd{ socket_fd }; // Will finally close the fd.
 				try {
 				  //if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
@@ -227,9 +227,6 @@ namespace fc {
 	sigaction(SIGINT, &act, 0); sigaction(SIGTERM, &act, 0); sigaction(SIGQUIT, &act, 0);
 	// Ignore sigpipe signal. Otherwise sendfile causes crashes if the
 	// client closes the connection during the response transfer.
-#endif
-#if __linux__
-	signal(SIGPIPE, SIG_IGN);
 #endif
 	// Start the server threads.
 	const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;

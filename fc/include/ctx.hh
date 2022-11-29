@@ -41,14 +41,14 @@ namespace fc {
 	  output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
 	  headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
 	}
-	Ctx& operator=(const Ctx&) = delete;
-	Ctx(const Ctx&) = delete;
+	//Ctx& operator=(const Ctx&) = delete;
+	//Ctx(const Ctx&) = delete;
 	std::string_view header(const char* key);
 	std::string_view cookie(const char* key);
 	std::string_view get_parameter(const char* key);
 	void format_top_headers(output_buffer& output_stream);
 	void prepare_request();
-	void respond(const fc::Buf& s);
+	void respond(const std::string_view& s);
 	void respond_if_needed();
 	void set_header(std::string_view k, std::string_view v);
 	void set_cookie(std::string_view k, std::string_view v);

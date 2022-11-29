@@ -32,11 +32,11 @@ namespace fc {
 	void _call(char m, std::string& r, Req& request, Res& response) const;
 	DRT map_;
 	std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
-    //std::unordered_map<std::string_view, std::string_view> content_types;
+    std::unordered_map<std::string_view, std::string_view> content_types;
 	void sub_api(const char* prefix, const App& subapi);
 	//Serve static directory
 	App serve_file(const char* r);
-	App& file_type(const std::vector<std::string_view>& line = { "html","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" });
+	App& file_type(const std::vector<std::string_view>& line = { "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" });
   };
   void http_serve(App& api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");
 } // namespace fc

@@ -102,7 +102,21 @@ namespace fc {
 	  };
 #endif // !__linux__
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1;// std::cout << _ << "\n";
+		std::string _($); _ += req.url.c_str() + 1;// std::cout << _ << "#\n";
+		std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
+		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
+		throw err::not_found();
+	  _:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
+		if (last_dot) {
+		  fc::Buf ss = _.substr(last_dot); std::string_view extension(ss.data(), ss.size());
+		  if (content_types.find(extension) != content_types.end()) {
+			ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
+			if (extension[0] == 'h' && extension[1] == 't') {} else {
+			  res.set_header("Cache-Control", "max-age=54000,immutable");
+			}
+		  }
+		}
 		res.Ctx.send_file(_); return;
 		//struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
 		//if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
@@ -145,7 +159,7 @@ namespace fc {
 	std::function<void(Conn&)> make_http_processor = [&api](Conn& fiber) {
 	  try {
 		input_buffer rb;
-		Ctx ctx(rb, fiber);
+		Ctx ctx = Ctx(rb, fiber);
 		ctx.socket_fd = fiber.socket_fd;
 		while (true) {
 		  ctx.is_body_read_ = false;
@@ -219,7 +233,11 @@ namespace fc {
 		fc::http_top_header.tick(); std::this_thread::sleep_for(std::chrono::seconds(1));
 	  }
 	});
-	std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
+	auto server_thread = std::make_shared<std::thread>([=] {
+	  std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
+	  start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
+	  date_thread->join();
+	});
 	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
 		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
 		//			  "You need to provide both the ssl_certificate option and the ssl_key option.");
@@ -230,10 +248,6 @@ namespace fc {
 		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
 	// } else {
 	// }
-	auto server_thread = std::make_shared<std::thread>([=] {
-	  start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
-	  date_thread->join();
-	});
 	server_thread->join();
   }
 } // namespace fc

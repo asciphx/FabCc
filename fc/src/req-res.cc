@@ -39,8 +39,9 @@ namespace fc {
   const fc::Buf& Res::get_header(const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
-  void Res::write(const std::string& b) { body.append(b.data(), (unsigned int)b.size()); Ctx.respond(body); body.reset(); };
-  void Res::write(const fc::Buf& b) { Ctx.respond(b); };
+  void Res::write(const std::string& b) { std::string_view sv(b.data(), b.size()); Ctx.respond(sv); };
+  void Res::write(const std::string_view& b) { Ctx.respond(b); };
+  void Res::write(const fc::Buf& b) { std::string_view sv(b.data(), b.size()); Ctx.respond(sv); };
   void Res::write(const char* b) { Ctx.respond(b); };
   fc::Buf& Res::compress_str(char* const str, size_t len) {
 	// Initialize with the default values

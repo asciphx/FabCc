@@ -40,11 +40,11 @@ namespace fc {
 	  }
 	}
   }
-  void Ctx::respond(const fc::Buf& s) {
+  void Ctx::respond(const std::string_view& s) {
 	response_written_ = true;
 	format_top_headers(output_stream);
 	headers_stream.flush();                                             // flushes to output_stream.
-	output_stream << "Content-Length: " << s.size() << "\r\n\r\n" << s.b2v(); // Add body
+	output_stream << "Content-Length: " << s.size() << "\r\n\r\n" << s; // Add body
 	//std::cout << output_stream.to_string_view() << "$\n";
   }
   void Ctx::respond_if_needed() {
@@ -96,20 +96,6 @@ namespace fc {
   }
   // Send a file.
   void Ctx::send_file(std::string& path) {
-	std::string::iterator i = --path.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
-	if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-	if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-	throw err::not_found();
-  _:std::size_t last_dot = $_(i) - $_(path.begin()) + 1;
-	if (last_dot) {
-	  Buf ss = path.substr(last_dot); std::string_view extension(ss.data_, ss.size());
-	  if (content_types.find(extension) != content_types.end()) {
-		set_header("Content-Type", extension);
-		if (extension[0] == 'h' && extension[1] == 't') {} else {
-		  set_header("Cache-Control", "max-age=54000,immutable");
-		}
-	  }
-	}
 #ifndef _WIN32 // Linux / Macos version with sendfile
 	// Open the file in non blocking mode.
 	int fd = open(path.c_str(), O_RDONLY);
