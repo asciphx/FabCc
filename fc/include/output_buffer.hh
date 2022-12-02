@@ -48,6 +48,13 @@ namespace fc {
 	  cursor_ += s.size();
 	  return *this;
 	}
+	output_buffer& operator<<(std::string& s) {
+	  if (cursor_ + s.size() >= end_) flush();
+	  assert(cursor_ + s.size() < end_);
+	  memcpy(cursor_, s.data(), s.size());
+	  cursor_ += s.size();
+	  return *this;
+	}
 	output_buffer& operator<<(const char* s) { return operator<<(std::string_view(s, strlen(s))); }
 	output_buffer& operator<<(char v) {
 	  cursor_[0] = v;
@@ -70,7 +77,7 @@ namespace fc {
 	}
 	template <typename I>
 	output_buffer& operator<<(I v) {
-	  std::string s(std::lexical_cast<std::string>(v)); return operator<<(std::string_view(s.data(), s.size()));
+	  std::string s(std::lexical_cast<std::string>(v)); return operator<<(s);
 	}
 	std::string_view to_string_view() { return std::string_view(buffer_, cursor_ - buffer_); }
 	char* buffer_;
