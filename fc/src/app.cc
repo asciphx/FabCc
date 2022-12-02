@@ -159,7 +159,7 @@ namespace fc {
 	std::function<void(Conn&)> make_http_processor = [&api](Conn& fiber) {
 	  try {
 		input_buffer rb;
-		Ctx ctx = Ctx(rb, fiber);
+		Ctx ctx(rb, fiber);
 		ctx.socket_fd = fiber.socket_fd;
 		while (true) {
 		  ctx.is_body_read_ = false;
@@ -233,11 +233,9 @@ namespace fc {
 		fc::http_top_header.tick(); std::this_thread::sleep_for(std::chrono::seconds(1));
 	  }
 	});
-	auto server_thread = std::make_shared<std::thread>([=] {
-	  std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
-	  start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
-	  date_thread->join();
-	});
+	std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
+	start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
+	date_thread->join();
 	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
 		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
 		//			  "You need to provide both the ssl_certificate option and the ssl_key option.");
@@ -248,6 +246,5 @@ namespace fc {
 		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
 	// } else {
 	// }
-	server_thread->join();
   }
 } // namespace fc

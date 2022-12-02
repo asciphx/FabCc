@@ -38,11 +38,11 @@ namespace fc {
   struct Ctx {
 	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
 	  get_parameters_map.reserve(10); response_headers.reserve(20);
-	  output_stream = output_buffer(51200, [&](const char* d, int s) { fiber.write(d, s); });
+	  output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
 	  headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
 	}
-	//Ctx& operator=(const Ctx&) = delete;
-	//Ctx(const Ctx&) = delete;
+	Ctx& operator=(const Ctx&) = delete;
+	Ctx(const Ctx&) = delete;
 	std::string_view header(const char* key);
 	std::string_view cookie(const char* key);
 	std::string_view get_parameter(const char* key);

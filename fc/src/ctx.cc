@@ -141,7 +141,7 @@ namespace fc {
 	output_stream << "Content-Length: " << file_size << "\r\n\r\n"; // Add body
 	output_stream.flush();
 	// Read the file and write it to the socket.
-	size_t nread = 1, offset = 0; char buffer[16384];
+	size_t nread = 1, offset = 0; char buffer[65536];
 	while (nread = _fread_nolock(buffer, sizeof(buffer), 1, fd) != 0) {
 	  offset += sizeof(buffer); this->fiber.write(buffer, sizeof(buffer));
 	}
