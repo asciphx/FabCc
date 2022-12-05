@@ -202,11 +202,11 @@ namespace fc {
 		// Call && Flush the defered functions.
 		if (defered_functions.size()) { for (auto& f : defered_functions) f(); defered_functions.clear(); }
 	  }
-	  std::cout << "@" << std::endl;
+	  std::cout << "@";
 #if _WIN32
 	  epoll_close(epoll_fd);
 #else
-	  close(epoll_fd);
+    fc::close_socket(epoll_fd);
 #endif
 	}
   };
@@ -241,7 +241,7 @@ namespace fc {
 		}));
 	}
 	for (auto& t : ths) t.join();
-	fc::close_socket(server_fd);
+	fc::close_socket(server_fd); std::cout << std::endl;
   }
 }
 #endif

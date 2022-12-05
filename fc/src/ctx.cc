@@ -122,7 +122,7 @@ namespace fc {
 		  continue; // this->fiber.sink.yield();
 		}
 	  } else if (errno == EAGAIN) {
-		this->fiber.sink.yield();
+		this->fiber.sink = this->fiber.sink.yield();
 	  } else {
 		close(fd); std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
 		throw err::not_found("Internal error: sendfile failed.");
@@ -145,7 +145,7 @@ namespace fc {
 	while (nread = _fread_nolock(buffer, sizeof(buffer), 1, fd) != 0) {
 	  offset += sizeof(buffer); this->fiber.write(buffer, sizeof(buffer));
 	}
-	file_size -= (long)offset; nread = _fread_nolock(buffer, file_size, 1, fd);
+	file_size -= (long)offset; nread = fread(buffer, file_size, 1, fd);
 	this->fiber.write(buffer, file_size); fclose(fd);
 #endif
   }
