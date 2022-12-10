@@ -26,14 +26,14 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
-  std::optional<std::string> op;
-  std::cout << op.value_or("null null") << '\n';
+  box<std::string> op("AOP");//optional
+  std::cout << op.value_or("null") << '\n';
   op = "Hello, world!";
-  std::cout << op.value_or("null null") << '\n';
+  std::cout << op.value_or("null") << '\n';
   op = {};
-  std::cout << op.value_or("null null") << '\n';
-  std::map<std::optional<int>, std::string> m = { {3, "three"}, {5, "five"}, {std::nullopt, "null"}, {1, "one"} };
-  for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << m.size() << std::endl;
+  std::cout << op.value_or("null") << '\n';
+  std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
+  for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n';
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
 	std::cout << "entered first time: " << data << std::endl;
@@ -48,6 +48,7 @@ int main() {
   f = f.yield();
   if (!f) std::cout << "returned second time: " << data << std::endl;
   std::cout << "execution context terminated" << std::endl;
+  return 0;
   Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} }; to_json(j, &b);

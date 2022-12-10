@@ -91,8 +91,6 @@ namespace std {
 #else
 #define TL_OPTIONAL_11_CONSTEXPR constexpr
 #endif
-/// Used to represent an optional with no data; essentially a bool
-  class monostate {};
   ///  A tag type to tell optional to construct its value in-place
 #include <tp/c++.h>
 /// A tag to tell optional to construct its value in-place
@@ -538,13 +536,6 @@ namespace std {
 	};
   } // namespace detail
   /// A tag type to represent an empty optional
-  struct nullopt_t {
-	struct do_not_use {};
-	constexpr explicit nullopt_t(do_not_use, do_not_use) noexcept {}
-  };
-  /// Represents an empty optional
-  static constexpr nullopt_t nullopt{ nullopt_t::do_not_use{},
-									 nullopt_t::do_not_use{} };
   class bad_optional_access: public std::exception {
   public:
 	bad_optional_access() = default;
@@ -563,8 +554,8 @@ namespace std {
 	using base = detail::optional_move_assign_base<T>;
 	static_assert(!std::is_same<T, in_place_t>::value,
 				  "instantiation of optional with in_place_t is ill-formed");
-	static_assert(!std::is_same<detail::decay_t<T>, nullopt_t>::value,
-				  "instantiation of optional with nullopt_t is ill-formed");
+	static_assert(!std::is_same<detail::decay_t<T>, nullptr_t>::value,
+				  "instantiation of optional with nullptr_t is ill-formed");
   public:
 	// The different versions for C++14 and 11 are needed because deduced return
 	// types are not SFINAE-safe. This provides better support for things like
@@ -579,21 +570,21 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F> TL_OPTIONAL_11_CONSTEXPR auto and_then(F&& f)&& {
 	  using result = detail::invoke_result_t<F, T&&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F> constexpr auto and_then(F&& f) const& {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F> constexpr auto and_then(F&& f) const&& {
@@ -601,7 +592,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
-		: result(nullopt);
+		: result(nullptr);
 	}
 #endif
 #else
@@ -613,7 +604,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F>
 	TL_OPTIONAL_11_CONSTEXPR detail::invoke_result_t<F, T&&> and_then(F&& f)&& {
@@ -621,7 +612,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F>
 	constexpr detail::invoke_result_t<F, const T&> and_then(F&& f) const& {
@@ -629,7 +620,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F>
@@ -638,7 +629,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
-		: result(nullopt);
+		: result(nullptr);
 	}
 #endif
 #endif
@@ -736,7 +727,7 @@ namespace std {
 	  if (has_value())
 		return *this;
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> TL_OPTIONAL_11_CONSTEXPR or_else(F&& f)& {
@@ -747,7 +738,7 @@ namespace std {
 	  if (has_value())
 		return std::move(*this);
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> TL_OPTIONAL_11_CONSTEXPR or_else(F&& f)&& {
@@ -758,7 +749,7 @@ namespace std {
 	  if (has_value())
 		return *this;
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> TL_OPTIONAL_11_CONSTEXPR or_else(F&& f) const& {
@@ -770,7 +761,7 @@ namespace std {
 	  if (has_value())
 		return std::move(*this);
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> or_else(F&& f) const&& {
@@ -824,7 +815,7 @@ namespace std {
 	template <class U>
 	constexpr optional<typename std::decay<U>::type> conjunction(U&& u) const {
 	  using result = optional<detail::decay_t<U>>;
-	  return has_value() ? result{ u } : result{ nullopt };
+	  return has_value() ? result{ u } : result{ nullptr };
 	}
 	/// Returns `rhs` if `*this` is empty, otherwise the current value.
 	TL_OPTIONAL_11_CONSTEXPR optional disjunction(const optional& rhs)& {
@@ -864,7 +855,7 @@ namespace std {
 	using value_type = T;
 	/// Constructs an optional that does not contain a value.
 	constexpr optional() noexcept = default;
-	constexpr optional(nullopt_t) noexcept {}
+	constexpr optional(nullptr_t) noexcept {}
 	/// Copy constructor
 	///
 	/// If `rhs` contains a value, the stored value is direct-initialized with
@@ -939,7 +930,7 @@ namespace std {
 	/// Assignment to empty.
 	///
 	/// Destroys the current value if there is one.
-	optional& operator=(nullopt_t) noexcept {
+	optional& operator=(nullptr_t) noexcept {
 	  if (has_value()) {
 		this->m_value.~T();
 		this->m_has_value = false;
@@ -1010,7 +1001,7 @@ namespace std {
 	template <class... Args> T& emplace(Args &&... args) {
 	  static_assert(std::is_constructible<T, Args &&...>::value,
 					"T must be constructible with Args");
-	  *this = nullopt;
+	  *this = nullptr;
 	  this->construct(std::forward<Args>(args)...);
 	  return value();
 	}
@@ -1019,7 +1010,7 @@ namespace std {
 	  std::is_constructible<T, std::initializer_list<U>&, Args &&...>::value,
 	  T&>
 	  emplace(std::initializer_list<U> il, Args &&... args) {
-	  *this = nullopt;
+	  *this = nullptr;
 	  this->construct(il, std::forward<Args>(args)...);
 	  return value();
 	}
@@ -1144,53 +1135,53 @@ namespace std {
 								   const optional<U>& rhs) {
 	return !rhs.has_value() || (lhs.has_value() && *lhs >= *rhs);
   }
-  /// Compares an optional to a `nullopt`
+  /// Compares an optional to a `nullptr`
   template <class T>
-  inline constexpr bool operator==(const optional<T>& lhs, nullopt_t) noexcept {
+  inline constexpr bool operator==(const optional<T>& lhs, nullptr_t) noexcept {
 	return !lhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator==(nullopt_t, const optional<T>& rhs) noexcept {
+  inline constexpr bool operator==(nullptr_t, const optional<T>& rhs) noexcept {
 	return !rhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator!=(const optional<T>& lhs, nullopt_t) noexcept {
+  inline constexpr bool operator!=(const optional<T>& lhs, nullptr_t) noexcept {
 	return lhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator!=(nullopt_t, const optional<T>& rhs) noexcept {
+  inline constexpr bool operator!=(nullptr_t, const optional<T>& rhs) noexcept {
 	return rhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator<(const optional<T>&, nullopt_t) noexcept {
+  inline constexpr bool operator<(const optional<T>&, nullptr_t) noexcept {
 	return false;
   }
   template <class T>
-  inline constexpr bool operator<(nullopt_t, const optional<T>& rhs) noexcept {
+  inline constexpr bool operator<(nullptr_t, const optional<T>& rhs) noexcept {
 	return rhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator<=(const optional<T>& lhs, nullopt_t) noexcept {
+  inline constexpr bool operator<=(const optional<T>& lhs, nullptr_t) noexcept {
 	return !lhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator<=(nullopt_t, const optional<T>&) noexcept {
+  inline constexpr bool operator<=(nullptr_t, const optional<T>&) noexcept {
 	return true;
   }
   template <class T>
-  inline constexpr bool operator>(const optional<T>& lhs, nullopt_t) noexcept {
+  inline constexpr bool operator>(const optional<T>& lhs, nullptr_t) noexcept {
 	return lhs.has_value();
   }
   template <class T>
-  inline constexpr bool operator>(nullopt_t, const optional<T>&) noexcept {
+  inline constexpr bool operator>(nullptr_t, const optional<T>&) noexcept {
 	return false;
   }
   template <class T>
-  inline constexpr bool operator>=(const optional<T>&, nullopt_t) noexcept {
+  inline constexpr bool operator>=(const optional<T>&, nullptr_t) noexcept {
 	return true;
   }
   template <class T>
-  inline constexpr bool operator>=(nullopt_t, const optional<T>& rhs) noexcept {
+  inline constexpr bool operator>=(nullptr_t, const optional<T>& rhs) noexcept {
 	return !rhs.has_value();
   }
   /// Compares the optional with a value.
@@ -1281,7 +1272,7 @@ namespace std {
 	constexpr auto optional_map_impl(Opt&& opt, F&& f) {
 	  return opt.has_value()
 		? std::invoke(std::forward<F>(f), *std::forward<Opt>(opt))
-		: optional<Ret>(nullopt);
+		: optional<Ret>(nullptr);
 	}
 	template <class Opt, class F,
 	  class Ret = decltype(std::invoke(std::declval<F>(),
@@ -1292,7 +1283,7 @@ namespace std {
 		std::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
 		return make_optional(monostate{});
 	  }
-	  return optional<monostate>(nullopt);
+	  return optional<monostate>(nullptr);
 	}
 #else
 	template <class Opt, class F,
@@ -1302,7 +1293,7 @@ namespace std {
 	constexpr auto optional_map_impl(Opt&& opt, F&& f) -> optional<Ret> {
 	  return opt.has_value()
 		? std::invoke(std::forward<F>(f), *std::forward<Opt>(opt))
-		: optional<Ret>(nullopt);
+		: optional<Ret>(nullptr);
 	}
 	template <class Opt, class F,
 	  class Ret = decltype(std::invoke(std::declval<F>(),
@@ -1313,7 +1304,7 @@ namespace std {
 		std::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
 		return monostate{};
 	  }
-	  return nullopt;
+	  return nullptr;
 	}
 #endif
   } // namespace detail
@@ -1334,21 +1325,21 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F> TL_OPTIONAL_11_CONSTEXPR auto and_then(F&& f)&& {
 	  using result = detail::invoke_result_t<F, T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), std::move(**this))
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F> constexpr auto and_then(F&& f) const& {
 	  using result = detail::invoke_result_t<F, const T&>;
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F> constexpr auto and_then(F&& f) const&& {
@@ -1356,7 +1347,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 #endif
 #else
@@ -1368,7 +1359,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F>
 	TL_OPTIONAL_11_CONSTEXPR detail::invoke_result_t<F, T&> and_then(F&& f)&& {
@@ -1376,7 +1367,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 	template <class F>
 	constexpr detail::invoke_result_t<F, const T&> and_then(F&& f) const& {
@@ -1384,7 +1375,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 #ifndef TL_OPTIONAL_NO_CONSTRR
 	template <class F>
@@ -1393,7 +1384,7 @@ namespace std {
 	  static_assert(detail::is_optional<result>::value,
 					"F must return an optional");
 	  return has_value() ? std::invoke(std::forward<F>(f), **this)
-		: result(nullopt);
+		: result(nullptr);
 	}
 #endif
 #endif
@@ -1493,7 +1484,7 @@ namespace std {
 	  if (has_value())
 		return *this;
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> TL_OPTIONAL_11_CONSTEXPR or_else(F&& f)& {
@@ -1504,7 +1495,7 @@ namespace std {
 	  if (has_value())
 		return std::move(*this);
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> TL_OPTIONAL_11_CONSTEXPR or_else(F&& f)&& {
@@ -1515,7 +1506,7 @@ namespace std {
 	  if (has_value())
 		return *this;
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> TL_OPTIONAL_11_CONSTEXPR or_else(F&& f) const& {
@@ -1527,7 +1518,7 @@ namespace std {
 	  if (has_value())
 		return std::move(*this);
 	  std::forward<F>(f)();
-	  return nullopt;
+	  return nullptr;
 	}
 	template <class F, detail::disable_if_ret_void<F>* = nullptr>
 	optional<T> or_else(F&& f) const&& {
@@ -1581,7 +1572,7 @@ namespace std {
 	template <class U>
 	constexpr optional<typename std::decay<U>::type> conjunction(U&& u) const {
 	  using result = optional<detail::decay_t<U>>;
-	  return has_value() ? result{ u } : result{ nullopt };
+	  return has_value() ? result{ u } : result{ nullptr };
 	}
 	/// Returns `rhs` if `*this` is empty, otherwise the current value.
 	TL_OPTIONAL_11_CONSTEXPR optional disjunction(const optional& rhs)& {
@@ -1621,7 +1612,7 @@ namespace std {
 	using value_type = T&;
 	/// Constructs an optional that does not contain a value.
 	constexpr optional() noexcept: m_value(nullptr) {}
-	constexpr optional(nullopt_t) noexcept: m_value(nullptr) {}
+	constexpr optional(nullptr_t) noexcept: m_value(nullptr) {}
 	/// Copy constructor
 	///
 	/// If `rhs` contains a value, the stored value is direct-initialized with
@@ -1646,7 +1637,7 @@ namespace std {
 	/// Assignment to empty.
 	///
 	/// Destroys the current value if there is one.
-	optional& operator=(nullopt_t) noexcept {
+	optional& operator=(nullptr_t) noexcept {
 	  m_value = nullptr;
 	  return *this;
 	}

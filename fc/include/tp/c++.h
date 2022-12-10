@@ -46,7 +46,8 @@ namespace std {
   };
   template <class _Ty>
   constexpr in_place_type_t<_Ty> in_place_type{};
-
+/// Used to represent an optional with no data; essentially a bool
+  class monostate {};
 #endif
 // http://ericniebler.com/2013/08/07/universal-references-and-the-copy-constructo/
   template< typename X, typename Y >
