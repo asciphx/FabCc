@@ -23,7 +23,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - file_sptr for Static file cache from[[libhttp](https://github.com/neithern/libhttp)]
 - Support unit testing. Please refer to [[coost](https://coostdocs.github.io/cn/co/unitest/)] for documentation
 - Json integrated in[[coost](https://coostdocs.github.io/cn/co/json/)], and supports serialization and deserialization
-- box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)]锛宻o there is no need to use naked pointers
+- box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)], so there is no need to use naked pointers
 - Zlib compression from[[zlib](https://github.com/madler/zlib)]
 
 ## Still under development
@@ -41,7 +41,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - The namespace uses the uppercase hump fc of FabCc.
 - Principle of Coroutines
 - ![yield](./yield.gif)
-- [Demo site](http://8.129.58.72:8080/)馃殌
+- [Demo site](http://8.129.58.72:8080/)🚀
 - ![test](./test.jpg)
 
 ## example
