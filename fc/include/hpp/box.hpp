@@ -18,7 +18,7 @@ public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   template<typename U>
-  box(box<U>&& x) noexcept: p(x.p), b(true) { x.p = 0; x.hide(); }
+  box(box<U>&& x) noexcept: p(x.p), b(true) { x.p = 0; x.b = false; }
   template<typename U>
   box(box<U>& x) noexcept: p(x.p), b(false) {}
 #ifdef _WIN32
@@ -78,8 +78,6 @@ public:
 #endif // _WIN32
 }
   void reset() noexcept { if (b) { b = false; delete p; } }
-private:
-  void hide() { this->b = false; }
 };
 namespace std {
   template <class T> struct hash<box<T>> {
@@ -89,10 +87,10 @@ namespace std {
   };
 }
 template <class T, class... K>
-inline constexpr box<T> make_box(K &&... k) { return box<T>(in_place, std::forward<K>(k)...); }
+inline constexpr box<T> make_box(K &&... k) { return box<T>(std::in_place, std::forward<K>(k)...); }
 template <class T, class U, class... K>
 inline constexpr box<T> make_box(std::initializer_list<U> i, K &&... k) {
-  return box<T>(in_place, i, std::forward<K>(k)...);
+  return box<T>(std::in_place, i, std::forward<K>(k)...);
 }
 template <typename T>
 std::ostream& operator<<(std::ostream& s, box<T>& c) { return s << (c.p == nullptr ? "null" : *c.p); }
