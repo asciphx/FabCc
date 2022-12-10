@@ -200,6 +200,7 @@ namespace fc {
 	  url_ += dumy.substr(0, l);
 	  get_parameters_string_ = dumy.substr(++l);
 	}
+	url_ = DecodeURL(url_);
 	//std::cout << url_ << '^' << get_parameters_string_ << std::endl;
   }
   std::string_view Ctx::get_parameters_string() {
