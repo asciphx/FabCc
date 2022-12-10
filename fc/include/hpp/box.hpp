@@ -22,9 +22,9 @@ public:
   template<typename U>
   box(box<U>& x) noexcept: p(x.p), b(false) {}
 #ifdef _WIN32
-  box(T&& _) : p(new T(std::move(_))), b(true) {}
+  box(T&& _) : p(new T{ std::move(_) }), b(true) {}
 #else
-  box(T&& _) : p(new T(std::move(_))), b(false) {}
+  box(T&& _) : p(new T{ std::move(_) }), b(false) {}
 #endif // _WIN32
   box(T& _): p(&_), b(false) {}
   explicit box(T* t) noexcept: p(t), b(false) {}
@@ -44,12 +44,12 @@ public:
 	if (b) *p = u, b = false; else { p = new T(u); b = true; }
   }
   T** operator&() { return &p; }
-  __CONSTEXPR const T* operator->() const { return this->p; }
+  constexpr const T* operator->() const { return this->p; }
   T* operator->() { return this->p; }
   T& operator() () & noexcept { return *p; }
-  __CONSTEXPR const T& operator() () const& noexcept { return *p; }
+  constexpr const T& operator() () const& noexcept { return *p; }
   T& operator*() & noexcept { return *p; }
-  __CONSTEXPR const T& operator*() const& noexcept { return *p; }
+  constexpr const T& operator*() const& noexcept { return *p; }
   __CONSTEXPR T value_or(T&& u) const {
 	if __CONSTEXPR(!std::is_class<T>::value)
 #ifdef _WIN32
@@ -57,7 +57,7 @@ public:
 #else
 	  * ((bool*)(this)) = true;
 #endif // _WIN32
-	return this->p ? *std::addressof(*this->operator->()) : u;
+	return this->p ? *this->operator->() : u;
   }
   __CONSTEXPR T value_or(T& u) const {
 	if __CONSTEXPR(!std::is_class<T>::value)
@@ -66,7 +66,7 @@ public:
 #else
 	  * ((bool*)(this)) = true;
 #endif // _WIN32
-	return this->p ? **&this->operator->() : u;
+	return this->p ? *this->operator->() : u;
   }
   //if in the any container, eg:std::map{ { box<T>, U } } , and not used value_or
   void clear() const noexcept {

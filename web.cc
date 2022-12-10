@@ -1,11 +1,10 @@
 #include <app.hh>
 //#include <hpp/body_parser.hpp>
 #include <json.hh>
-#include <tp/ctx.hh>
 #include <timer.hh>
 struct Person;
 struct Book {
-  fc::Buf name = "wtf";
+  fc::Buf name = "Hello, world!";
   box<Person> person;
   vec<Person> persons;
   REG(Book, name, person, persons)

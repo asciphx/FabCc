@@ -11,7 +11,7 @@
 #include <tp/ctx.hh>
 struct Person;
 struct Book {
-  fc::Buf name = "wtf";
+  fc::Buf name = "Hello, world!";
   box<Person> person;
   vec<Person> persons;
   REG(Book, name, person, persons)
@@ -33,7 +33,7 @@ int main() {
   op = {};
   std::cout << op.value_or("null") << '\n';
   std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
-  for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n';
+  fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
 	std::cout << "entered first time: " << data << std::endl;
