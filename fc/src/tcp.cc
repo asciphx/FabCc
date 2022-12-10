@@ -18,7 +18,7 @@ namespace fc {
 	keep_milliseconds = m < 301 ? m * 1000 : m < 0x640 ? m *= 6 : m; return *this;
   }
   Tcp& Tcp::upload_path(std::string p) {
-	if (p.back() != '\\' && p.back() != '/') p += '/'; detail::upload_path_ = p; return *this;
+	if (p.back() != '\\' && p.back() != '/') p += '/'; fc::upload_path_ = p; return *this;
   }
   Tcp& Tcp::file_type(const std::vector<std::string_view>& line) {
 	for (std::vector<std::string_view>::const_iterator iter = line.cbegin(); iter != line.cend(); ++iter) {
@@ -48,8 +48,8 @@ namespace fc {
 	if (opened)return false; opened = true; if (!loop_)return false; if (uv_tcp_init(loop_, &_)) return false;
 	if (!port)port = port_; core_ = threads - 1; async_ = (uv_async_t*)malloc(sizeof(uv_async_t));
 	if (bind(ip_addr, port, is_ipv4))return false;
-	if (!is_directory(detail::directory_)) create_directory(detail::directory_); uv_mutex_init_recursive(&RES_MUTEX);
-	std::string s(detail::directory_ + detail::upload_path_); if (!is_directory(s)) create_directory(s);
+	if (!is_directory(fc::directory_)) create_directory(fc::directory_); uv_mutex_init_recursive(&RES_MUTEX);
+	std::string s(fc::directory_ + fc::upload_path_); if (!is_directory(s)) create_directory(s);
 	if (not_set_types) content_types = content_any_types, not_set_types = false;
 	//if (not_set_types)file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt" }), not_set_types = false;
 #ifdef SIGPIPE

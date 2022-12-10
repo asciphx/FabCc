@@ -13,7 +13,6 @@
 #elif !defined(_INLINE)
 #define _INLINE __attribute__((always_inline))
 #endif
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
   static const std::string_view RES_TURE("true", 4), RES_FALSE("false", 5);
   struct Buf {
@@ -144,18 +143,6 @@ namespace fc {
   private:
 	char* back_;
 	unsigned int cap_;
-  };
-}
-namespace std {
-  template<>
-  struct std::hash<fc::Buf> {
-	[[nodiscard]] size_t operator()(const fc::Buf _) const noexcept {
-#ifdef _WIN32
-	  return std::_Hash_array_representation(_.data_, _.end_ - _.data_);
-#else
-	  return std::_Hash_impl::hash(_.data_, _.end_ - _.data_);
-#endif // _WIN32
-	}
   };
 }
 #endif

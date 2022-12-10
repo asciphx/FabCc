@@ -8,7 +8,6 @@
 #include <req-res.hh>
 #include <directory.hh>
 #include <http_error.hh>
-//from https://github.com/asciphx/Crow/blob/master/include/cc/body_parser.h
 namespace fc {
   using namespace std;
   static std::set<const char*> RES_menu = {};
@@ -17,15 +16,15 @@ namespace fc {
   struct BP {
 	const str_map* headers; string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
 	~BP() { headers = nullptr; }
-	BP(Req& req, const char* m, unsigned short kb = 256): headers(&(req.headers)), menu(detail::upload_path_), L(kb),
+	BP(Req& req, const char* m, unsigned short kb = 256): headers(&(req.headers)), menu(fc::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
 	  menu += m; if (RES_menu.find(m) == RES_menu.end()) {
-		if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(detail::directory_); ss += menu;
+		if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(fc::directory_); ss += menu;
 		RES_menu.insert(m); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
 	  }
 	  p_b(req.body);
 	}
-	BP(Req& req, unsigned short kb = 256): headers(&(req.headers)), menu(detail::upload_path_), L(kb),
+	BP(Req& req, unsigned short kb = 256): headers(&(req.headers)), menu(fc::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
 	  p_b(req.body);
 	}
@@ -107,7 +106,7 @@ namespace fc {
 		//f = h.find(':');
 		//p.type = h.substr(f + 2);
 		p.size = p.value.length();
-		h = detail::directory_ + p.filename;
+		h = fc::directory_ + p.filename;
 		struct stat ps;
 		int ret = stat(h.c_str(), &ps);
 		if (!ret && ps.st_mode & S_IFREG) {

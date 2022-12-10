@@ -8,18 +8,18 @@
 #define $_(_) _.base()
 #endif // _WIN32
 namespace fc {
-  char c2m(const char* m) {
-	switch (hack8Str(m)) {
-	case "DELETE"_l:return static_cast<char>(HTTP::DEL);
+  char c2m(const char* m, size_t l) {
+	switch (hack_str(m, l)) {
+	case 75064423044165:return static_cast<char>(HTTP::DEL);
 	case 4670804:return static_cast<char>(HTTP::GET);
 	case 1212498244:return static_cast<char>(HTTP::HEAD);
 	case 1347375956:return static_cast<char>(HTTP::POST);
 	case 5264724:return static_cast<char>(HTTP::PUT);
-	  //case "PATCH"_l:return static_cast<char>(HTTP::PATCH);
-	case "OPTIONS"_l:return static_cast<char>(HTTP::OPTIONS);
-	  //case "CONNECT"_l:return static_cast<char>(HTTP::CONNECT);
-	  //case "TRACE"_l:return static_cast<char>(HTTP::TRACE);
-	  //case "PURGE"_l:return static_cast<char>(HTTP::PURGE);
+	  //case 344693424968:return static_cast<char>(HTTP::PATCH);
+	case 22324846097550931:return static_cast<char>(HTTP::OPTIONS);
+	  //case 18946021178819412:return static_cast<char>(HTTP::CONNECT);
+	  //case 362157261637:return static_cast<char>(HTTP::TRACE);
+	  //case 345028839237:return static_cast<char>(HTTP::PURGE);
 	} return static_cast<char>(HTTP::INVALID);
   }
   const char* m2c(HTTP m) {
@@ -93,7 +93,7 @@ namespace fc {
 		throw err::not_found(fc::Buf("serve_file error: Directory ", 28) << r << " does not exists.");
 	  if (!fc::is_directory(real_root))
 		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
-	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); detail::directory_ = $;
+	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1; _ += "index.html";

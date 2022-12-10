@@ -13,7 +13,7 @@
 #include <file_sptr.hh>
 // from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/api.hh
 namespace fc {
-  char c2m(const char* m);
+  char c2m(const char* m, size_t l);
   const char* m2c(HTTP m);
   struct App {
 	App();

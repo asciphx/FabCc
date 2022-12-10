@@ -32,10 +32,8 @@ namespace fc {
 	RES_AE("Accept-Encoding", 15), RES_CE("Content-Encoding", 16), RES_gzip("gzip", 4), RES_deflate("deflate", 7), RES_bytes("bytes", 5),
 	expect_100_continue("HTTP/1.1 100 Continue\r\n\r\n", 25);
   static const char RES_GMT[26] = "%a, %d %b %Y %H:%M:%S GMT";
-}
-
-namespace detail {
   static std::string directory_ = STATIC_DIRECTORY;
   static std::string upload_path_ = UPLOAD_DIRECTORY;
 }
+
 #endif // COMMON_H

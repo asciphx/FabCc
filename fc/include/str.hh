@@ -145,17 +145,6 @@ namespace fc {
 #endif
 	return r;
   }
-  constexpr unsigned long long operator""_l(const char* s, size_t /*len*/) {
-	unsigned long long r = s[0];  for (unsigned long long i = 0; ++i < 8 && s[i]; r <<= 8, r += s[i]); return r;
-  }
-  constexpr int operator""_i(const char* s, size_t /*len*/) {
-	int r = s[0]; for (int i = 0; ++i < 4 && s[i]; r <<= 8, r += s[i]); return r;
-  }
-  //You can match more strings with hackstr method, but you need to match ""_a used together
-  constexpr unsigned long long operator""_a(const char* s, size_t /*len*/) {
-	unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;
-	for (unsigned long long i = 0; s[++i]; r *= 0x17, r += s[i] > 0x5c ? s[i] - 0x5d : s[i] - 0x12); return r;
-  }
 #ifdef __cplusplus
   extern "C" {
 #endif
@@ -167,6 +156,9 @@ namespace fc {
 	char* subStr_f(const char* c, int i, int e);
 	char* to8Str_f(unsigned long long i);
 	char* to4Str_f(int i);
+	inline unsigned long long hack_str(const char* s, size_t l) {
+	  unsigned long long r = s[0]; for (signed char i = 0; ++i < l && s[i]; r <<= 8, r += s[i]); return r;
+	}//Only url with string_view
 	inline unsigned long long hack8Str(const char* s) {
 	  unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r <<= 8, r += s[i]); return r;
 	}//If only the first four digits need to be matched and there is no conflict, it is recommended to use hack4Str to improve efficiency

@@ -26,14 +26,14 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
-  std::optional<std::string> op;
+  box<std::string> op;
   std::cout << op.value_or("null null") << '\n';
   op = "Hello, world!";
   std::cout << op.value_or("null null") << '\n';
   op = {};
   std::cout << op.value_or("null null") << '\n';
-  std::map<std::optional<int>, std::string> m = { {3, "three"}, {5, "five"}, {std::nullopt, "null"}, {1, "one"} };
-  for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << m.size() << std::endl;
+  std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
+  fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
 	std::cout << "entered first time: " << data << std::endl;

@@ -1,6 +1,5 @@
 #include <buf.hh>
 #include <utility>
-// from https://github.com/matt-42/lithium/blob/master/libraries/http_server/http_server/output_buffer.hh
 namespace fc {
   Buf::Buf(): data_(new char[0x3f]), end_(data_), back_(data_ + 0x3f), cap_(0x3f) {}
   Buf::Buf(Buf&& o): data_(o.data_), end_(o.end_), back_(o.back_), cap_(o.cap_) { o.data_ = nullptr; }
@@ -176,7 +175,7 @@ namespace fc {
   }
   Buf& Buf::operator=(std::string_view s) {
 	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
-	end_ = data_; back_ = data_ + cap_; return *this << s;
+	end_ = data_; back_ = data_ + cap_; memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
   }
   Buf& Buf::operator<<(const tm& _v) {
 	std::ostringstream os;
