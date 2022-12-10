@@ -3,8 +3,7 @@
 #pragma warning(disable: 4996)
 namespace fc {
   Tcp::Tcp(App* app, uv_loop_t* loop):opened(false), loop_(loop), addr_len(16), app_(app)
-	, roundrobin_index_(std::thread::hardware_concurrency())
-	{
+	, roundrobin_index_(std::thread::hardware_concurrency()) {
 #ifdef _WIN32
 	::system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8");
 #else
@@ -105,8 +104,8 @@ namespace fc {
 			s << RES_crlf << res.body; c->write(s.data_, s.size()); s.reset();
 			RES_CACHE_MENU[req.uuid] = res.body; res.zlib_cp_str.reset(); res.body.reset(); return;
 		  }
-		  Buf range = get_header(req.headers, RES_Range);
-		  if (range != "") res.code = 206;//wait fix 206, not support...
+		  Buf range = get_header(req.headers, RES_Range); res.is_file = 0;
+		  if (range != "") { res.code = 206; }//wait fix 206, not support...
 		  c->set_status(res, res.code); s << RES_http_status << c->status_; s.append("ID: ", 4) << c->id << RES_crlf;
 		  for (std::pair<const Buf, Buf>& kv : res.headers) s << kv.first << RES_seperator << kv.second << RES_crlf;
 		  s << RES_AR << RES_seperator << RES_bytes << RES_crlf;
@@ -125,16 +124,16 @@ namespace fc {
 			}
 			return;
 		  }
+		  //std::cout << '{' << ((Conn*)h->data)->id << '}';
 		  s << RES_content_length_tag << std::to_string(res.file_size) << RES_crlf;
 		  s << RES_Ca << RES_seperator << FILE_TIME << RES_crlf << RES_Xc << RES_seperator << RES_No << RES_crlf;
 		  s << RES_crlf;
-		  res.is_file = 0; res.headers.clear();
+		  res.headers.clear();
 		  if (!c->write(s.data_, s.size())) { s.reset(); return; }; s.reset();
 		  if (res.__->ptr_ != nullptr) {
 			//c->write(res.__->ptr_, static_cast<int>(res.file_size));
-			int r = res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
+			res.__->read_chunk(0, res.file_size, [c](const char* s, size_t l, std::function<void()> d) {
 			  if (l > 0) { c->write(s, static_cast<int>(l)); if (d != nullptr) d(); } });
-			if (r == EOF) c->write(nullptr, 0);
 		  }
 		  return;
 		}
@@ -159,7 +158,7 @@ namespace fc {
 #ifdef AccessControlAllowOrigin
 	  s << RES_AcO << AccessControlAllowOrigin << RES_crlf;
 #endif
-      s.append("ID: ", 4) << c->id << RES_crlf;
+	  s.append("ID: ", 4) << c->id << RES_crlf;
 	_:
 #if SHOW_SERVER_NAME
 	  s << RES_server_tag << SERVER_NAME << RES_crlf;
@@ -171,7 +170,10 @@ namespace fc {
 	  DEBUG("客户端：%lld %s \n", c->id, s.c_str());
 	  c->write(s.data_, s.size()); s.reset();
 	} else if (nread < 0) {
-	  if (nread == UV_EOF || nread == UV_ECONNRESET) {
+	  if (nread == UV_ECONNRESET) {
+		uv_close((uv_handle_t*)h, on_close);
+		//std::cout << c->code << '[' << ((Conn*)h->data)->id << ']';
+	  } else if (nread == UV_EOF) {
 		DEBUG("1->%Id: %s : %s\n", nread, uv_err_name(nread), uv_strerror(nread));
 		uv_close((uv_handle_t*)h, on_close);
 	  } else {//UV_ENOBUFS

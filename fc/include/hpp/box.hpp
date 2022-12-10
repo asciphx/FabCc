@@ -18,7 +18,7 @@ public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   template<typename U>
-  box(box<U>&& x) noexcept: p(x.p), b(true) { x.p = 0; x.hide(); }
+  box(box<U>&& x) noexcept: p(x.p), b(true) { x.p = 0; x.b = false; }
   template<typename U>
   box(box<U>& x) noexcept: p(x.p), b(false) {}
 #ifdef _WIN32
@@ -78,8 +78,6 @@ public:
 #endif // _WIN32
 }
   void reset() noexcept { if (b) { b = false; delete p; } }
-private:
-  void hide() { this->b = false; }
 };
 namespace std {
   template <class T> struct hash<box<T>> {

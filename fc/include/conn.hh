@@ -38,7 +38,6 @@ namespace fc {
 	uv_buf_t rbuf, wbuf;
 	uv_loop_t* loop_;
 	uv_tcp_t slot_;
-	bool reading_ = false;
 	char readbuf[0x28000];
 	fc::Buf buf_;
 	fc::llParser parser_;
