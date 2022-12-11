@@ -27,7 +27,7 @@ int main() {
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
 	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} };
-	to_json(x, &b); x.get("person").get("book").get("person").get("book") = box<Book>(b);
+	to_json(x, &b); x["person"]["book"]["person"]["book"] = box<Book>(b);
 	res.write(res.body << x.dump());//json响应
   };
   app["/api"] = [&app](Req& req, Res& res) {
