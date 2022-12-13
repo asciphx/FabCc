@@ -14,7 +14,8 @@ namespace fc {
   struct param { size_t size = 0; string key; string value; string filename; /*string type;*/ };
   ///The parsed multipart Req/Res (Length[ kb ]),(Bool is_file)//MD5?
   struct BP {
-	const str_map* headers; string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
+	const std::unordered_map<std::string_view, std::string_view>* headers;
+	string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
 	~BP() { headers = nullptr; }
 	BP(Req& req, const char* m, unsigned short kb = 256): headers(&(req.headers)), menu(fc::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {

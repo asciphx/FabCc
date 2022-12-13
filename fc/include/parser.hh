@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <h/llhttp.h>
 #include <h/common.h>
+#include <str_map.hh>
 #include <req-res.hh>
 #include <buf.hh>
 namespace fc {

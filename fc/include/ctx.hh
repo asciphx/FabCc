@@ -20,7 +20,6 @@
 #include <http_error.hh>
 #include <tcp.hh>
 #include <input_buffer.hh>
-#include <str_map.hh>
 #include <h/any_types.h>
 #include <http_top_header_builder.hh>
 #include <buf.hh>
@@ -92,8 +91,8 @@ namespace fc {
 	std::string_view content_type_;
 	bool chunked_;
 	int content_length_;
-	str_map headers;
 	std::unordered_map<std::string_view, std::string_view> cookie_map;
+	std::unordered_map<std::string_view, std::string_view> headers;
 	std::vector<std::pair<std::string_view, std::string_view>> response_headers;
 	std::string_view get_parameters_string_;
 	bool is_body_read_ = false;

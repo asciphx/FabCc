@@ -2,7 +2,7 @@
 
 namespace fc {
   std::string_view Ctx::header(const char* key) {
-	return headers.find(key)->second;
+	return headers[key];
   }
   std::string_view Ctx::cookie(const char* key) {
 	return cookie_map[key];

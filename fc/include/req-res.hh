@@ -34,7 +34,7 @@ namespace fc {
 	//fc::Buf params;
 	//fc::Buf body;
 	//uint64_t uuid;
-	str_map& headers;
+	std::unordered_map<std::string_view, std::string_view>& headers;
 	fc::Buf ip_addr;
 	fc::Ctx& Ctx;
 	Conn& fiber;
