@@ -23,6 +23,7 @@ namespace fc {
 	Buf(const char* c, unsigned int capacity);
 	Buf(const char* c);
 	Buf(const std::string& s);
+	Buf(const std::string_view& s);
 	Buf(unsigned int n, char c);
 	~Buf();
 	Buf& operator=(Buf&& o) noexcept;

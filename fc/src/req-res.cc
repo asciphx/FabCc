@@ -36,9 +36,6 @@ namespace fc {
   //Res::Res():zlib_cp_str(0x1ff), body(0xff) {};
   //void Res::set_header(const fc::Buf& key, fc::Buf value) { headers.erase(key); headers.emplace(key, std::move(value)); }
   //void Res::add_header(const fc::Buf& key, fc::Buf value) { headers.emplace(key, std::move(value)); }
-  const fc::Buf& Res::get_header(const fc::Buf& key) {
-	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
-  }
   void Res::write(const std::string& b) { std::string_view sv(b.data(), b.size()); Ctx.respond(sv); };
   void Res::write(const std::string_view& b) { Ctx.respond(b); };
   void Res::write(const fc::Buf& b) { std::string_view sv(b.data(), b.size()); Ctx.respond(sv); };

@@ -2,13 +2,10 @@
 
 namespace fc {
   std::string_view Ctx::header(const char* key) {
-	if (!header_map.size()) index_headers(); return header_map[key];
+	return headers.find(key)->first;
   }
   std::string_view Ctx::cookie(const char* key) {
-	if (!cookie_map.size()) index_cookies(); return cookie_map[key];
-  }
-  std::string_view Ctx::get_parameter(const char* key) {
-	return get_parameters_map[key];
+	return cookie_map[key];
   }
   void Ctx::format_top_headers(output_buffer& output_stream) {
 	if (status_code_ == 200) output_stream << http_top_header.top_header_200();
@@ -16,7 +13,9 @@ namespace fc {
   }
   void Ctx::prepare_request() {
 	// parse_first_line();
-	if (!url_.size()) parse_first_line();
+	if (!url_.size()) {
+	  parse_first_line(); index_headers(); index_cookies();
+	}
 	response_headers.clear();
 	content_length_ = 0;
 	chunked_ = 0;
@@ -126,8 +125,8 @@ namespace fc {
 	  } else {
 		close(fd); std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
 		throw err::not_found("Internal error: sendfile failed.");
-	  }
-	}
+  }
+}
 	close(fd);
 #else // Windows impl with basic read write.
 	// Open file.
@@ -169,8 +168,8 @@ namespace fc {
 	  std::string_view key = split(cur, line_end, ':');
 	  std::string_view value = split(cur, line_end, '\r');
 	  while (value[0] == ' ') value = std::string_view(value.data() + 1, value.size() - 1);
-	  header_map[key] = value;
-	  // std::cout << key << " -> " << value << std::endl;
+	  headers.emplace(key, value);
+	  //std::cout << key << " -> " << value << std::endl;
 	}
   }
   void Ctx::index_cookies() {
@@ -213,6 +212,7 @@ namespace fc {
 	  return std::string_view(); // No body.
 	}
 	if (content_length_) {
+	  //std::cout << '[' << content_length_ << ']';
 	  body_ = rb.read_n(fiber, body_start.data(), content_length_);
 	  body_end_ = body_.data() + content_length_;
 	} else if (chunked_) {
@@ -241,18 +241,6 @@ namespace fc {
 	is_body_read_ = true;
 	return body_;
   }
-  // Read post parameters in the body.
-  std::unordered_map<std::string_view, std::string_view> Ctx::post_parameters() {
-	if (content_type_ == "application/x-www-form-urlencoded") {
-	  if (!is_body_read_)
-		read_whole_body();
-	  url_decode_parameters(body_, [&](auto key, auto value) { post_parameters_map[key] = value; });
-	  return post_parameters_map;
-	} else {
-	  // fixme: return bad request here.
-	}
-	return post_parameters_map;
-  }
   void Ctx::prepare_next_request() {
 	if (!is_body_read_) read_whole_body();
 	rb.free(header_lines[0], body_end_);
@@ -262,11 +250,9 @@ namespace fc {
 	url_ = "";
 	http_version_ = std::string_view();
 	content_type_ = std::string_view();
-	header_map.clear();
+	headers.clear();
 	cookie_map.clear();
 	response_headers.clear();
-	get_parameters_map.clear();
-	post_parameters_map.clear();
 	get_parameters_string_ = std::string_view();
 	response_written_ = false;
   }

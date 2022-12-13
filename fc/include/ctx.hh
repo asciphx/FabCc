@@ -20,6 +20,7 @@
 #include <http_error.hh>
 #include <tcp.hh>
 #include <input_buffer.hh>
+#include <str_map.hh>
 #include <h/any_types.h>
 #include <http_top_header_builder.hh>
 #include <buf.hh>
@@ -37,7 +38,7 @@ namespace fc {
 #endif
   struct Ctx {
 	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
-	  get_parameters_map.reserve(10); response_headers.reserve(20);
+	  response_headers.reserve(20);
 	  output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
 	  headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
 	}
@@ -45,7 +46,6 @@ namespace fc {
 	Ctx(const Ctx&) = delete;
 	std::string_view header(const char* key);
 	std::string_view cookie(const char* key);
-	std::string_view get_parameter(const char* key);
 	void format_top_headers(output_buffer& output_stream);
 	void prepare_request();
 	void respond(const std::string_view& s);
@@ -65,8 +65,6 @@ namespace fc {
 	void parse_first_line();
 	std::string_view get_parameters_string();
 	std::string_view read_whole_body();
-	// Read post parameters in the body.
-	std::unordered_map<std::string_view, std::string_view> post_parameters();
 	void prepare_next_request();
 	void flush_responses();
 	template <typename C> void url_decode_parameters(std::string_view content, C kv_callback) {
@@ -94,13 +92,10 @@ namespace fc {
 	std::string_view content_type_;
 	bool chunked_;
 	int content_length_;
-	std::unordered_map<std::string_view, std::string_view> header_map;
+	str_map headers;
 	std::unordered_map<std::string_view, std::string_view> cookie_map;
 	std::vector<std::pair<std::string_view, std::string_view>> response_headers;
-	std::unordered_map<std::string_view, std::string_view> get_parameters_map;
-	std::unordered_map<std::string_view, std::string_view> post_parameters_map;
 	std::string_view get_parameters_string_;
-	// std::vector<std::string> strings_saver;
 	bool is_body_read_ = false;
 	std::string_view body_;
 	std::string_view body_start;

@@ -22,19 +22,19 @@ namespace fc {
 		if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(fc::directory_); ss += menu;
 		RES_menu.insert(m); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
 	  }
-	  p_b(req.body);
+	  p_b(Buf{ req.Ctx.read_whole_body() });
 	}
 	BP(Req& req, unsigned short kb = 256): headers(&(req.headers)), menu(fc::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
-	  p_b(req.body);
+	  p_b(Buf{ req.Ctx.read_whole_body() });
 	}
   private: //get_boundary
-	string g_b(const Buf& h) const {
+	std::string_view g_b(const std::string_view& h) const {
 	  //std::cout << "<" << h << ">" << h.size() << std::endl;
-	  unsigned int f = h.find("=----"); if (f != -1) return h.substr(f + 0xe).b2s(); return h.b2s();//raw
+	  size_t f = h.find("=----"); if (f != -1) return h.substr(f + 0xe); return h;//raw
 	}
 	//parse_body
-	void p_b(Buf& value) {//std::cout<<boundary<<std::endl;
+	void p_b(Buf&& value) {//std::cout<<boundary<<std::endl;
 	  if (boundary[0xc] == 'j') {//application/json
 		// json j = json::parse(value);
 		throw err::not_extended(value);

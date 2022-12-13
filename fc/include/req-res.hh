@@ -24,7 +24,7 @@ namespace fc {
 	HTTP method;
   public:
 	Req();
-    Req(fc::Ctx& Ctx) : Ctx(Ctx), fiber(Ctx.fiber) {}
+    Req(fc::Ctx& Ctx) : Ctx(Ctx), fiber(Ctx.fiber), headers(Ctx.headers) {}
     std::string_view header(const char* k) const;
     std::string_view cookie(const char* k) const;
     std::string ip_address() const;
@@ -34,7 +34,7 @@ namespace fc {
 	//fc::Buf params;
 	//fc::Buf body;
 	//uint64_t uuid;
-	//str_map headers;
+	str_map& headers;
 	fc::Buf ip_addr;
 	fc::Ctx& Ctx;
 	Conn& fiber;
@@ -51,7 +51,6 @@ namespace fc {
 	fc::Buf zlib_cp_str;
 	char buffer[8192];
 	z_stream stream{};
-	str_map headers;
 	std::string path_;
 	// fc::Timer timer_;
 	int is_file{ 0 };
@@ -66,7 +65,6 @@ namespace fc {
 	fc::Buf body;
 	//void set_header(const fc::Buf& key, fc::Buf value);
 	//void add_header(const fc::Buf& key, fc::Buf value);
-	const fc::Buf& get_header(const fc::Buf& key);
 	void write(const std::string& body_part);
 	void write(const std::string_view& body_part);
 	void write(const fc::Buf& body_part);

@@ -61,18 +61,13 @@ int main() {
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//返回路由列表
   };
-  app["/yield"] = [](Req& req, Res& res) {
-	Json x = { 1,2,3 };
-	co c{ [&x](co&& c) {
-	  x = json::parse(R"([{"confidence":0.974220335483551,"text":"lenovo联想","region":[[191,80],[672,80],[672,148],[191,148]]},
-		{"confidence":0.6968730688095093,"text":"BY：花享湖月","region":[[250,866],[332,866],[332,885],[250,885]]}])");
-	  return std::move(c);
-	  } };
-	res.body << x;
-	c = c.yield();
-	res.body << x.dump();
+  app.post("/api") = [](Req& req, Res& res) {
+	BP bp(req, 50);
+	for (auto p : bp.params) {
+	  res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+	}
 	res.write(res.body);
-  };//协程, 使用co的yield函数来保证执行顺序
+  };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
 	res.write("主页的路由被删除！！");

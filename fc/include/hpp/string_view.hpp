@@ -50,6 +50,16 @@ namespace std {
 	size_t find(const char c) const {
 	  size_t l = 0; while (l < length_) { if (data_[l] == c) { return l; } ++l; } return -1;
 	}
+	size_t find(const char* c) const {
+	  size_t l = 0, L = strlen(c), s = length_, a = 0; while (l < s) {
+		if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
+	  } return -1;
+	}
+	size_t find(const char* c, size_t L) const {
+	  size_t l = 0, s = length_, a = 0; while (l < s) {
+		if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
+	  } return -1;
+	}
 	size_t rfind(const char c) const {
 	  size_t s = length_; while (0 < s) { if (data_[s] == c) { return s; } --s; } return -1;
 	}
