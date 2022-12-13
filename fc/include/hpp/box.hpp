@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <new>
 #include <tp/c++.h>
+
 template <typename T> class box;
 template <class T> struct is_box_impl: std::false_type {};
 template <class T> struct is_box_impl<box<T>>: std::true_type {};
@@ -43,9 +44,9 @@ public:
   void operator=(U& _) {
 	if (b) *p = _, b = false; else { p = new T(_); b = true; }
   }
-	void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
-	constexpr bool has_value() const noexcept { return this->p != nullptr; }
-	constexpr explicit operator bool() const noexcept { return this->p != nullptr; }
+  void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
+  constexpr bool has_value() const noexcept { return this->p != nullptr; }
+  constexpr explicit operator bool() const noexcept { return this->p != nullptr; }
   constexpr const T* operator->() const { return this->p; }
   T* operator->() { return this->p; }
   T& operator() () & noexcept { return *p; }
