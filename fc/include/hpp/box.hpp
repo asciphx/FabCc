@@ -18,55 +18,57 @@ public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   template<typename U>
-  box(box<U>&& x) noexcept: p(x.p), b(true) { x.p = 0; x.b = false; }
+  box(box<U>&& _) noexcept: p(_.p), b(true) { _.p = 0; _.b = false; }
   template<typename U>
-  box(box<U>& x) noexcept: p(x.p), b(false) {}
+  box(box<U>& _) noexcept: p(_.p), b(false) {}
 #ifdef _WIN32
   box(T&& _) : p(new T{ std::move(_) }), b(true) {}
 #else
   box(T&& _) : p(new T{ std::move(_) }), b(false) {}
 #endif // _WIN32
   box(T& _): p(&_), b(false) {}
-  explicit box(T* t) noexcept: p(t), b(false) {}
+  explicit box(T* _) noexcept: p(_), b(false) {}
   template<typename... U>
-  box(U&&... t) noexcept: p(new T{ std::move(t)... }), b(true) {}
+  box(U&&... _) noexcept: p(new T{ std::move(_)... }), b(true) {}
   template<typename... U>
-  box(U&... t) noexcept: p(new T{ t... }), b(true) {}
+  box(U&... _) noexcept: p(new T{ _... }), b(true) {}
   ~box() { if (b) { delete p; } }
   void operator = (T* s) { if (b)delete p; p = s; b = false; }
   void operator = (T& s) { if (b)delete p; p = &s; b = false; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
-  void operator=(U&& u) {
-	if (b) *p = std::move(u); else { p = new T(std::move(u)); b = true; }
+  void operator=(U&& _) {
+	if (b) *p = std::move(_); else { p = new T(std::move(_)); b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
-  void operator=(U& u) {
-	if (b) *p = u, b = false; else { p = new T(u); b = true; }
+  void operator=(U& _) {
+	if (b) *p = _, b = false; else { p = new T(_); b = true; }
   }
-  T** operator&() { return &p; }
+	void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
+	constexpr bool has_value() const noexcept { return this->p != nullptr; }
+	constexpr explicit operator bool() const noexcept { return this->p != nullptr; }
   constexpr const T* operator->() const { return this->p; }
   T* operator->() { return this->p; }
   T& operator() () & noexcept { return *p; }
   constexpr const T& operator() () const& noexcept { return *p; }
   T& operator*() & noexcept { return *p; }
   constexpr const T& operator*() const& noexcept { return *p; }
-  __CONSTEXPR T value_or(T&& u) const {
+  __CONSTEXPR T value_or(T&& _) const {
 	if __CONSTEXPR(!std::is_class<T>::value)
 #ifdef _WIN32
 	  * ((bool*)(this)) = false;
 #else
 	  * ((bool*)(this)) = true;
 #endif // _WIN32
-	return this->p ? *this->operator->() : u;
+	return this->p ? *this->operator->() : _;
   }
-  __CONSTEXPR T value_or(T& u) const {
+  __CONSTEXPR T value_or(T& _) const {
 	if __CONSTEXPR(!std::is_class<T>::value)
 #ifdef _WIN32
 	  * ((bool*)(this)) = false;
 #else
 	  * ((bool*)(this)) = true;
 #endif // _WIN32
-	return this->p ? *this->operator->() : u;
+	return this->p ? *this->operator->() : _;
   }
   //if in the any container, eg:std::map{ { box<T>, U } } , and not used value_or
   void clear() const noexcept {
@@ -93,9 +95,9 @@ inline constexpr box<T> make_box(std::initializer_list<U> i, K &&... k) {
   return box<T>(std::in_place, i, std::forward<K>(k)...);
 }
 template <typename T>
-std::ostream& operator<<(std::ostream& s, box<T>& c) { return s << (c.p == nullptr ? "null" : *c.p); }
+std::ostream& operator<<(std::ostream& s, box<T>& b) { return s << (b.p == nullptr ? "null" : *b.p); }
 template <typename T>
-std::ostream& operator<<(std::ostream& s, const box<T>& c) { return s << (c.p == nullptr ? "null" : *c.p); }
+std::ostream& operator<<(std::ostream& s, const box<T>& b) { return s << (b.p == nullptr ? "null" : *b.p); }
 template <class T, class U>
 inline constexpr bool operator==(const box<T>& l, const box<U>& r) { return l.p == r.p; }
 template <class T, class U>
