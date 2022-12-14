@@ -37,10 +37,10 @@ namespace fc {
   }
   void Buf::clear() { if (data_) delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; }
   Buf Buf::substr(unsigned int a) const {
-	unsigned int l = end_ - data_; if (a >= l) { return Buf(1); }  return Buf(data_ + a, l - a);
+	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, l - a);
   }
   Buf Buf::substr(unsigned int a, unsigned int b) const {
-	unsigned int l = end_ - data_; if (a >= l || b >= l) { return Buf(1); } return Buf(data_ + a, a + b < l ? b : l);
+	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, a + b < l ? b : l);
   }
   unsigned int Buf::find(const char* c) const {
 	unsigned int l = 0, L = (unsigned int)strlen(c), s = end_ - data_, a = 0; while (l < s) {
