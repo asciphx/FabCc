@@ -19,7 +19,7 @@ static struct timeval RES_SED { 10, 0 };//write
 #endif
 namespace fc {
   static int RES_KEEP_Alive = 1;//开启keepalive
-  enum sd_type { _READ, _WRITE, _BOTH };
+  enum send_type { S_READ, S_WRITE, S_BOTH };
   class Socket {
 	Socket& operator=(const Socket&) = delete;
 	Socket(const Socket&) = delete;
@@ -29,8 +29,8 @@ namespace fc {
 	bool reading_ = false;
 	bool write(const char* buf, int size);
 	int read(char* buf, int max_size);
-	int shut(sd_type type);
-	static int shut(socket_type fd, sd_type d);
+	int shut(send_type type);
+	static int shut(socket_type fd, send_type d);
 	int close_fd(socket_type fd);
 	// idle:首次发送报文的等待时间,intvl:保持发送报文的间隔,probes: 报文侦测间隔次数
 	// keep-alive time seconds = idle + intvl * probes

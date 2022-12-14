@@ -20,8 +20,8 @@ namespace fc {
 	}
 	return count;
   };
-  int Socket::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }
-  int Socket::shut(sd_type type) { return ::shutdown(this->id, type); }
+  int Socket::shut(socket_type fd, send_type type) { return ::shutdown(fd, type); }
+  int Socket::shut(send_type type) { return ::shutdown(this->id, type); }
   int Socket::close_fd(socket_type fd) {
 #if defined _WIN32
 	return ::closesocket(fd);

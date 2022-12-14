@@ -11,6 +11,7 @@
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <h/wepoll.h>
+#include <mstcpip.h>
 #endif
 #include <signal.h>
 #include <stdio.h>
@@ -34,10 +35,16 @@
 #include <h/config.h>
 #include <tp/ctx.hh>
 namespace fc {
+  enum sd_type { _READ, _WRITE, _BOTH };
 #if defined _WIN32
-  typedef UINT_PTR socket_type;
+  typedef UINT_PTR socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
+  static unsigned int RES_RCV = 5000;
+  static unsigned int RES_SED = 10000;
 #else
+  static int RES_KEEP_Ai = 1;//keepalive
   typedef int socket_type;
+  static struct timeval RES_RCV { 5, 0 };//max{5,0},read
+  static struct timeval RES_SED { 10, 0 };//write
 #endif
   inline int close_socket(socket_type sock) {
 #if defined _WIN32
@@ -105,6 +112,9 @@ namespace fc {
 	//
 	int read(char* buf, int max_size);
 	bool write(const char* buf, int size);
+	int shut(socket_type fd, sd_type type);
+	int shut(sd_type type);
+	int set_keep_alive(socket_type fd, int idle, int intvl = 1, unsigned char probes = 10);
   };
 }
 #endif // CONN_HH

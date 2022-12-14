@@ -164,7 +164,7 @@ namespace fc {
 			  // =============================================
 			  // Spawn a new co to handle the connection.继续处理，延续之前未处理的
 			  fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, &handler](co&& sink) {
-			    Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr);
+				Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr); c.set_keep_alive(socket_fd, 4, 3, 2);
 				scoped_fd sfd{ socket_fd }; // Will finally close the fd.
 				try {
 				  //if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
@@ -191,25 +191,25 @@ namespace fc {
 #endif
 			  co& fiber = fd_to_fiber(event_fd); if (fiber) fiber = fiber.resume();
 			} else std::cerr << "Epoll returned a file descriptor that we did not register: " << event_fd << std::endl;
-		  }
+			}
 		  // Wakeup fibers if needed. 唤醒功能
 		  while (defered_resume.size()) {
 			socket_type fiber_id = defered_resume.front(); defered_resume.pop_front();
 			assert(fiber_id < fibers.size());
 			co& fiber = fibers[fiber_id]; if (fiber) fiber = fiber.resume();
 		  }
-		}
+		  }
 		// Call && Flush the defered functions.
 		if (defered_functions.size()) { for (auto& f : defered_functions) f(); defered_functions.clear(); }
-	  }
+		  }
 	  std::cout << "@";
 #if _WIN32
 	  epoll_close(epoll_fd);
 #else
-    fc::close_socket(epoll_fd);
+	  fc::close_socket(epoll_fd);
 #endif
-	}
-  };
+		}
+	  };
   static void shutdown_handler(int sig) {
 	quit_signal_catched = 1;
   }
@@ -246,5 +246,5 @@ namespace fc {
 	for (auto& t : ths) t.join();
 	fc::close_socket(server_fd); std::cout << std::endl;
   }
-}
+	}
 #endif
