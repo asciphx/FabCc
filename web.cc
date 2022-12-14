@@ -5,16 +5,14 @@
 struct Person;
 struct Book {
   fc::Buf name = "Hello, world!";
-  box<Person> person;
-  vec<Person> persons;
+  box<Person> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
   fc::Buf name;
   int age;
-  box<Book> book;
-  vec<Book> books;
+  box<Book> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
