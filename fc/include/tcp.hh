@@ -228,6 +228,9 @@ namespace fc {
 	// Ignore sigpipe signal. Otherwise sendfile causes crashes if the
 	// client closes the connection during the response transfer.
 #endif
+#if __linux__
+	signal(SIGPIPE, SIG_IGN);
+#endif
 	// Start the server threads.
 	const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
 	socket_type server_fd = fc::create_and_bind(listen_ip, port, socktype);
