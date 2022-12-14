@@ -40,7 +40,7 @@ namespace fc {
 	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, l - a);
   }
   Buf Buf::substr(unsigned int a, unsigned int b) const {
-	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, a + b < l ? b : l);
+	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, a + b > l ? 0 : b);
   }
   unsigned int Buf::find(const char* c) const {
 	unsigned int l = 0, L = (unsigned int)strlen(c), s = end_ - data_, a = 0; while (l < s) {
