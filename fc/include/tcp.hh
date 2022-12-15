@@ -41,9 +41,6 @@ namespace fc {
 	}
   };
   struct Reactor {
-	sockaddr_storage in_addr_storage;
-	socklen_t in_len = sizeof(sockaddr_storage);
-	sockaddr* in_addr = (sockaddr*)&in_addr_storage;
 #if defined _WIN32
 	typedef HANDLE epoll_handle_t;
 	u_long iMode = 0;
@@ -53,8 +50,6 @@ namespace fc {
 	epoll_handle_t epoll_fd;
 	std::vector<co> fibers;
 	std::vector<socket_type> fd_to_fiber_idx;
-	std::vector<std::function<void()>> defered_functions;
-	std::deque<socket_type> defered_resume;
 	//std::unique_ptr<ssl_context> ssl_ctx = nullptr;
 	co& fd_to_fiber(socket_type fd);
 	void reassign_fd_to_fiber(socket_type fd, socket_type fiber_idx);
@@ -138,6 +133,9 @@ namespace fc {
 #ifndef  _WIN32
 			while (true) {
 #endif
+			  sockaddr_storage in_addr_storage;
+			  socklen_t in_len = sizeof(sockaddr_storage);
+			  sockaddr* in_addr = (sockaddr*)&in_addr_storage;
 			  socket_type socket_fd = accept(listen_fd, in_addr, &in_len);
 #ifdef _WIN32
 			  if (socket_fd == INVALID_SOCKET) { break; }
@@ -163,7 +161,7 @@ namespace fc {
 #endif
 			  // =============================================
 			  // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-			  fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, &handler](co&& sink) {
+			  fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, in_addr, &handler](co&& sink) {
 				Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr); c.set_keep_alive(socket_fd, 4, 3, 2);
 				scoped_fd sfd{ socket_fd }; // Will finally close the fd.
 				try {
@@ -192,15 +190,7 @@ namespace fc {
 			  co& fiber = fd_to_fiber(event_fd); if (fiber) fiber = fiber.resume();
 			} else std::cerr << "Epoll returned a file descriptor that we did not register: " << event_fd << std::endl;
 			}
-		  // Wakeup fibers if needed. 唤醒功能
-		  while (defered_resume.size()) {
-			socket_type fiber_id = defered_resume.front(); defered_resume.pop_front();
-			assert(fiber_id < fibers.size());
-			co& fiber = fibers[fiber_id]; if (fiber) fiber = fiber.resume();
 		  }
-		  }
-		// Call && Flush the defered functions.
-		if (defered_functions.size()) { for (auto& f : defered_functions) f(); defered_functions.clear(); }
 		  }
 	  std::cout << "@";
 #if _WIN32

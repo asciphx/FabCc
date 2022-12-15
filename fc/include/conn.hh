@@ -99,8 +99,6 @@ namespace fc {
 	void epoll_add(socket_type fd, int flags);
 	void epoll_mod(socket_type fd, int flags);
 	void reassign_fd_to_this_fiber(socket_type fd);
-	void defer_fiber_resume(socket_type fiber_id);
-	void defer(const std::function<void()>& fun);
 	inline int read_impl(char* buf, int size) {
 	  //if (ssl) return SSL_read(ssl, buf, size); else
 	  return ::recv(socket_fd, buf, size, 0);

@@ -3,11 +3,9 @@
 namespace fc {
   void Conn::epoll_add(socket_type fd, int flags) { reactor->epoll_add(fd, flags, fiber_id); }
   void Conn::epoll_mod(socket_type fd, int flags) { reactor->epoll_mod(fd, flags); }
-  void Conn::defer_fiber_resume(socket_type fiber_id) { reactor->defered_resume.push_back(fiber_id); }
   void Conn::reassign_fd_to_this_fiber(socket_type fd) {
 	reactor->reassign_fd_to_fiber(fd, this->fiber_id);
   }
-  void Conn::defer(const std::function<void()>&fun) { reactor->defered_functions.push_back(fun); }
   int Conn::read(char* buf, int max_size) {
 	int count = read_impl(buf, max_size);
 	while (count <= 0) {
@@ -18,7 +16,7 @@ namespace fc {
 	return count;
   };
   bool Conn::write(const char* buf, int size) {
-	//if (!buf || !size) { sink = sink.yield(); return true; }
+	if (!buf || !size) { sink = sink.yield(); return true; }
 	const char* end = buf + size;
 	int count = write_impl(buf, int(end - buf));
 	if (count > 0) buf += count;
