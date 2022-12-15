@@ -13,7 +13,6 @@
 #include <conn.hh>
 #include <buf.hh>
 namespace fc {
-  static const int MAXEVENTS = 64;//64
   static volatile int quit_signal_catched = 0;
   /**
    * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)
@@ -48,6 +47,9 @@ namespace fc {
 	typedef int epoll_handle_t;
 #endif
 	epoll_handle_t epoll_fd;
+	sockaddr_storage in_addr_storage;
+	socklen_t in_len = sizeof(sockaddr_storage);
+	sockaddr* in_addr = (sockaddr*)&in_addr_storage;
 	std::vector<co> fibers;
 	std::vector<socket_type> fd_to_fiber_idx;
 	//std::unique_ptr<ssl_context> ssl_ctx = nullptr;
@@ -62,6 +64,7 @@ namespace fc {
 	void epoll_del(socket_type fd);
 	void epoll_mod(socket_type fd, int flags);
 	void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler) {
+      const int MAXEVENTS = 64;
 #if __linux__
 	  this->epoll_fd = epoll_create1(0);
 	  epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
@@ -133,9 +136,6 @@ namespace fc {
 #ifndef  _WIN32
 			while (true) {
 #endif
-			  sockaddr_storage in_addr_storage;
-			  socklen_t in_len = sizeof(sockaddr_storage);
-			  sockaddr* in_addr = (sockaddr*)&in_addr_storage;
 			  socket_type socket_fd = accept(listen_fd, in_addr, &in_len);
 #ifdef _WIN32
 			  if (socket_fd == INVALID_SOCKET) { break; }
@@ -161,8 +161,9 @@ namespace fc {
 #endif
 			  // =============================================
 			  // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-			  fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, in_addr, &handler](co&& sink) {
-				Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr); c.set_keep_alive(socket_fd, 4, 3, 2);
+			  fibers[fiber_idx] = ctx::callcc([this, socket_fd, fiber_idx, &handler](co&& sink) {
+				Conn c(this, std::move(sink), fiber_idx, socket_fd, *in_addr);
+				c.set_keep_alive(socket_fd, 4, 3, 2);
 				scoped_fd sfd{ socket_fd }; // Will finally close the fd.
 				try {
 				  //if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
