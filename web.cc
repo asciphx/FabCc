@@ -6,16 +6,14 @@ using namespace fc;
 struct Person;
 struct Book {
   fc::Buf name = "Hello, world!";
-  box<Person> person;
-  vec<Person> persons;
+  box<Person> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
   fc::Buf name;
   int age;
-  box<Book> book;
-  vec<Book> books;
+  box<Book> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
@@ -23,8 +21,8 @@ int main() {
   Timer t; App app; Tcp srv;
   app.sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} };
-	to_json(x, &b); x.get("person").get("book").get("person").get("book") = box<Book>(b);
+	Json x; box<Book> b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} };
+	to_json(x, &b); x["person"]["book"]["person"]["book"] = box<Book>(b);
 	res.write(x.dump());//json响应
   };
   app["/sockets"] = [&srv](Req& req, Res& res) {

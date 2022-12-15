@@ -16,6 +16,9 @@ namespace fc {
   Buf::Buf(const std::string& s):cap_((unsigned int)s.size()), data_(new char[(unsigned int)s.size()]), end_(data_) {
 	memcpy(end_, s.c_str(), cap_); end_ += cap_; back_ = data_ + cap_;
   };
+  Buf::Buf(const std::string_view& s):cap_((unsigned int)s.size()), data_(new char[(unsigned int)s.size()]), end_(data_) {
+	memcpy(end_, s.data(), cap_); end_ += cap_; back_ = data_ + cap_;
+  };
   Buf::Buf(unsigned int n, char c): cap_(n), data_(new char[n]), end_(data_) {
 	memset(end_, c, n); end_ += n; back_ = data_ + cap_;
   }
@@ -37,7 +40,7 @@ namespace fc {
 	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, l - a);
   }
   Buf Buf::substr(unsigned int a, unsigned int b) const {
-	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, a + b < l ? b : l - b);
+	unsigned int l = end_ - data_; return Buf(a > l ? data_ : data_ + a, a + b > l ? 0 : b);
   }
   unsigned int Buf::find(const char* c) const {
 	unsigned int l = 0, L = (unsigned int)strlen(c), s = end_ - data_, a = 0; while (l < s) {

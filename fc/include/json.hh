@@ -479,6 +479,8 @@ namespace json {
 } // json
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
+template<typename T> static void to_json(json::Json& c, const T* v) { c = v ? Json{ *v } : Json{ nullptr }; }
+template<typename T> static void to_json(json::Json& c, const box<T>* v) { if(!c.empty())c.reset(); to_json(c, v->p); }
 template<typename T>
 static void to_json(json::Json& c, const std::vector<T>* v) {
   fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << v->at(i) << ','; }

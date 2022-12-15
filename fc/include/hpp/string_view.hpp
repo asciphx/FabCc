@@ -42,13 +42,23 @@ namespace std {
 	const char& back()  const { return data_[length_ - 1]; }
 	const char* data() const { return data_; }
 	string_view substr(size_t a) const {
-	  return string_view(a > length_ ? data_ : data_ + a, length_ - a);
+	  if (a >= length_) { return string_view(); } return string_view(data_ + a, length_ - a);
 	}
 	string_view substr(size_t a, size_t b) const {
-	  return string_view(a > length_ ? data_ : data_ + a, a + b < length_ ? b : length_ - b);
+	  if (a >= length_) { return string_view(); } return string_view(data_ + a, a + b > length_ ? 0 : b);
 	}
 	size_t find(const char c) const {
 	  size_t l = 0; while (l < length_) { if (data_[l] == c) { return l; } ++l; } return -1;
+	}
+	size_t find(const char* c) const {
+	  size_t l = 0, L = strlen(c), a = 0; while (l < length_) {
+		if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
+	  } return -1;
+	}
+	size_t find(const char* c, size_t L) const {
+	  size_t l = 0, a = 0; while (l < length_) {
+		if (data_[l] != c[a])a = 0; ++l; ++a; if (a == L) { return l - L; }
+	  } return -1;
 	}
 	size_t rfind(const char c) const {
 	  size_t s = length_; while (0 < s) { if (data_[s] == c) { return s; } --s; } return -1;
@@ -63,16 +73,16 @@ namespace std {
 		if (x == 0) x = m + 1; if (j < x) return -1; j -= x;
 	  }
 	}
-	int compare(const string_view& s) const noexcept {
+	[[nodiscard]] int compare(const string_view& s) const noexcept {
 	  const int rc = char_traits<char>::compare(data_, s.data_, (min)(length_, s.length_));
 	  return rc != 0 ? rc : (length_ == s.length_ ? 0 : length_ < s.length_ ? -1 : 1);
 	}
-	int compare(const char* data) const noexcept {
+	[[nodiscard]] int compare(const char* data) const noexcept {
 	  const size_t l = char_traits<char>::length(data);
 	  const int rc = char_traits<char>::compare(data_, data, (min)(length_, l));
 	  return rc != 0 ? rc : (length_ == l ? 0 : length_ < l ? -1 : 1);
 	}
-	int compare(const basic_string<char, char_traits<char>, allocator<char>>& s) const noexcept {
+	[[nodiscard]] int compare(const basic_string<char, char_traits<char>, allocator<char>>& s) const noexcept {
 	  const int rc = char_traits<char>::compare(data_, s.data(), (min)(length_, s.length()));
 	  return rc != 0 ? rc : (length_ == s.length() ? 0 : length_ < s.length() ? -1 : 1);
 	}
