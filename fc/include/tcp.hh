@@ -64,7 +64,7 @@ namespace fc {
 	void epoll_del(socket_type fd);
 	void epoll_mod(socket_type fd, int flags);
 	void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler) {
-      const int MAXEVENTS = 64;
+	  const int MAXEVENTS = 64;
 #if __linux__
 	  this->epoll_fd = epoll_create1(0);
 	  epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
@@ -190,17 +190,17 @@ namespace fc {
 #endif
 			  co& fiber = fd_to_fiber(event_fd); if (fiber) fiber = fiber.resume();
 			} else std::cerr << "Epoll returned a file descriptor that we did not register: " << event_fd << std::endl;
-			}
 		  }
-		  }
+		}
+	  }
 	  std::cout << "@";
 #if _WIN32
 	  epoll_close(epoll_fd);
 #else
 	  fc::close_socket(epoll_fd);
 #endif
-		}
-	  };
+	}
+  };
   static void shutdown_handler(int sig) {
 	quit_signal_catched = 1;
   }
@@ -237,5 +237,5 @@ namespace fc {
 	for (auto& t : ths) t.join();
 	fc::close_socket(server_fd); std::cout << std::endl;
   }
-	}
+}
 #endif
