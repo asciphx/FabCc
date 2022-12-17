@@ -31,12 +31,103 @@ namespace fc {
 	Buf _print_routes();
 	void _call(char m, std::string& r, Req& request, Res& response) const;
 	DRT map_;
-	std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
+	//std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
     std::unordered_map<std::string_view, std::string_view> content_types;
 	void sub_api(const char* prefix, const App& subapi);
 	//Serve static directory
 	App serve_file(const char* r);
 	App& file_type(const std::vector<std::string_view>& line = { "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" });
   };
-  void http_serve(App& api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");
+  inline void http_serve(App& api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "") {
+	std::function<void(Conn&)> make_http_processor = [&api](Conn& fiber) {
+	  try {
+		input_buffer rb;
+		Ctx ctx(rb, fiber);
+		ctx.socket_fd = fiber.socket_fd;
+		while (true) {
+		  ctx.is_body_read_ = false;
+		  ctx.header_lines.clear();
+		  ctx.header_lines.reserve(100);
+		  // Read until there is a complete header.
+		  int header_start = rb.cursor;
+		  int header_end = rb.cursor;
+		  assert(header_start >= 0);
+		  assert(header_end >= 0);
+		  assert(ctx.header_lines.size() == 0);
+		  ctx.add_header_line(rb.data() + header_end);
+		  assert(ctx.header_lines.size() == 1);
+		  bool complete_header = false;
+		  if (rb.empty())
+			if (!rb.read_more(fiber))
+			  return;
+		  const char* cur = rb.data() + header_end;
+		  const char* rbend = rb.data() + rb.end - 3;
+		  while (!complete_header) {
+			// Look for end of header && save header lines.
+			while ((cur - rb.data()) < rb.end - 3) {
+			  if (cur[0] == '\r' && cur[1] == '\n') {
+				cur += 2; // skip \r\n
+				ctx.add_header_line(cur);
+				// If we read \r\n twice the header is complete.
+				if (cur[0] == '\r' && cur[1] == '\n') {
+				  complete_header = true;
+				  cur += 2; // skip \r\n
+				  header_end = cur - rb.data();
+				  break;
+				}
+			  } else cur++;
+			}
+			// Read more data from the socket if the headers are not complete.
+			if (!complete_header && 0 == rb.read_more(fiber))
+			  return;
+		  }
+		  // Header is complete. Process it.
+		  // Run the handler.
+		  assert(rb.cursor <= rb.end);
+		  ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
+		  ctx.prepare_request();
+		  Req req{ ctx };
+		  Res res(ctx);
+		  try {
+			api._call(c2m(ctx.method_.data(), ctx.method_.size()), ctx.url_, req, res);
+		  } catch (const http_error& e) {
+			ctx.set_status(e.i());
+			ctx.respond(e.what());
+		  } catch (const std::runtime_error& e) {
+			std::cerr << "INTERNAL SERVER ERROR: " << e.what() << std::endl;
+			ctx.set_status(500);
+			ctx.respond("Internal server error.");
+		  }
+		  ctx.respond_if_needed();
+		  assert(rb.cursor <= rb.end);
+		  // Update the cursor the beginning of the next request.
+		  ctx.prepare_next_request();
+		  // if read buffer is empty, we can flush the output buffer.
+		  if (rb.empty())
+			ctx.flush_responses();
+		}
+	  } catch (const std::runtime_error& e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		return;
+	  }
+	};
+	auto date_thread = std::make_shared<std::thread>([&]() {
+	  while (!quit_signal_catched) {
+		fc::http_top_header.tick(); std::this_thread::sleep_for(std::chrono::seconds(1));
+	  }
+	});
+	std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
+	start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
+	date_thread->join();
+	// if constexpr (has_key<decltype(options)>(s::ssl_key)) {
+		//static_assert(has_key<decltype(options)>(s::ssl_certificate),
+		//			  "You need to provide both the ssl_certificate option and the ssl_key option.");
+		//std::string ssl_key = options.ssl_key;
+		//std::string ssl_cert = options.ssl_certificate;
+		//std::string ssl_ciphers = get_or(options, s::ssl_ciphers, "");
+		//start_tcp_server(ip, port, SOCK_STREAM, nthreads,
+		//				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
+	// } else {
+	// }
+  }
 } // namespace fc

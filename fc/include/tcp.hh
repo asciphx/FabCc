@@ -13,6 +13,7 @@
 #include <conn.hh>
 #include <buf.hh>
 namespace fc {
+  static const int MAXEVENTS = 64;
   static volatile int quit_signal_catched = 0;
   /**
    * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)
@@ -64,7 +65,6 @@ namespace fc {
 	void epoll_del(socket_type fd);
 	void epoll_mod(socket_type fd, int flags);
 	void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler) {
-	  const int MAXEVENTS = 64;
 #if __linux__
 	  this->epoll_fd = epoll_create1(0);
 	  epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
