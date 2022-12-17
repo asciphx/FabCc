@@ -95,40 +95,6 @@ namespace fc {
   }
   // Send a file.
   void Ctx::send_file(std::string& path) {
-#ifndef _WIN32 // Linux / Macos version with sendfile
-	// Open the file in non blocking mode.
-	int fd = open(path.c_str(), O_RDONLY);
-	if (fd == -1) throw err::not_found(Buf("File:", 5) << path << " not found.");
-	size_t file_size = lseek(fd, (size_t)0, SEEK_END);
-	// Writing the http headers.
-	response_written_ = true;
-	format_top_headers(output_stream);
-	headers_stream.flush(); // flushes headers to output_stream.
-	output_stream << "Content-Length: " << file_size << "\r\n\r\n";
-	output_stream.flush();
-	off_t offset = 0; lseek(fd, (size_t)0, 0);
-	while (offset < file_size) {
-#if __APPLE__ // sendfile on macos is slightly different...
-	  off_t nwritten = 0;
-	  int ret = ::sendfile(fd, socket_fd, offset, &nwritten, nullptr, 0);
-	  offset += nwritten;
-	  if (ret == 0 && nwritten == 0) break; // end of file.
-#else
-	  int ret = ::sendfile(socket_fd, fd, &offset, file_size - offset);
-#endif
-	  if (ret != -1) {
-		if (offset < file_size) {
-		  continue; // this->fiber.sink.yield();
-		}
-	  } else if (errno == EAGAIN) {
-		this->fiber.sink = this->fiber.sink.yield();
-	  } else {
-		close(fd); std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
-		throw err::not_found("Internal error: sendfile failed.");
-  }
-}
-	close(fd);
-#else // Windows impl with basic read write.
 	// Open file.
 	FILE* fd; if ((fd = fopen(path.c_str(), "rb")) == NULL) // C4996
 	  throw err::not_found(Buf("File:", 5) << path << " not found.");
@@ -141,12 +107,11 @@ namespace fc {
 	output_stream.flush();
 	// Read the file and write it to the socket.
 	size_t nread = 1, offset = 0; char buffer[65536];
-	while (nread = _fread_nolock(buffer, sizeof(buffer), 1, fd) != 0) {
+	while (nread = fread(buffer, sizeof(buffer), 1, fd) != 0) {
 	  offset += sizeof(buffer); this->fiber.write(buffer, sizeof(buffer));
 	}
 	file_size -= (long)offset; nread = fread(buffer, file_size, 1, fd);
 	this->fiber.write(buffer, file_size); fclose(fd);
-#endif
   }
   void Ctx::add_header_line(const char* l) { header_lines.push_back(l); }
   const char* Ctx::last_header_line() { return header_lines.back(); }
