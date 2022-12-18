@@ -151,7 +151,19 @@ namespace fc {
 	  };
 #ifdef __linux__
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_);
+		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10);
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		if (res.is_file == 0) {
+		  res.file_size = statbuf_.st_size;
+		  res.set_header("Content-Type", "text/html");
+		  std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
+		  if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+			res.__ = p->second;
+		  } else {
+			file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
+		  }
+		  res.Ctx.send_file(res.__);
+		}
 	  };
 #endif // __linux__
 	} catch (const http_error& e) {
