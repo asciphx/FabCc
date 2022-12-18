@@ -150,7 +150,7 @@ namespace fc {
 		throw err::not_found();
 	  };
 #ifdef __linux__
-	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
+	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
 		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10);
 		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
 		if (res.is_file == 0) {
