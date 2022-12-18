@@ -151,6 +151,7 @@ namespace fc {
 	c = dumy.data();
 	end = c + dumy.size();
 	if (dumy.size() == 1) { url_.append(dumy.data(), dumy.size()); url_[1] = '/'; return; }
+	if (dumy == "/tmUnblock.cgi") { return; }
 	size_t l = dumy.find('?');
 	if (l == -1) url_ += dumy; else {
 		if(l==dumy.size()) url_ += dumy;
