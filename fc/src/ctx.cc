@@ -2,10 +2,10 @@
 
 namespace fc {
   std::string_view Ctx::header(const char* key) {
-	if(!headers.size())index_headers(); return headers[key];
+	return headers[key];
   }
   std::string_view Ctx::cookie(const char* key) {
-	if(!cookie_map.size())index_cookies(); return cookie_map[key];
+	if (!cookie_map.size())index_cookies(); return cookie_map[key];
   }
   void Ctx::format_top_headers(output_buffer& output_stream) {
 	if (status_code_ == 200) output_stream << http_top_header.top_header_200();
@@ -16,6 +16,7 @@ namespace fc {
 	if (!url_.size()) {
 	  parse_first_line();
 	}
+	if (!headers.size())index_headers();
 	response_headers.clear();
 	content_length_ = 0;
 	chunked_ = 0;
