@@ -22,7 +22,8 @@ void funk(Req& req, Res& res) {
 };
 int main() {
   App app; Timer t;
-  app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
+  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
+	.sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
 	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} };
 	to_json(x, &b); x["person"]["book"]["person"]["book"] = box<Book>(b);
