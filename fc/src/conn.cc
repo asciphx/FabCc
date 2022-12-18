@@ -16,7 +16,6 @@ namespace fc {
 	return count;
   };
   bool Conn::write(const char* buf, int size) {
-	if (!buf || !size) { sink = sink.yield(); return true; }
 	const char* end = buf + size;
 	int count = write_impl(buf, int(end - buf));
 	if (count > 0) buf += count;

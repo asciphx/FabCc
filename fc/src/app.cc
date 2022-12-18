@@ -97,8 +97,20 @@ namespace fc {
 		throw err::internal_server_error(fc::Buf("serve_file error: ", 18) << real_root << " is not a directory.");
 	  std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
-	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {
-		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10); res.Ctx.send_file(_);
+	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
+		std::string _($); _ += req.url.c_str() + 1; _.append("index.html", 10);
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		if (res.is_file == 0) {
+		  res.file_size = statbuf_.st_size;
+		  res.set_header("Content-Type", "text/html");
+		  std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
+		  if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+			res.__ = p->second;
+		  } else {
+			file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
+		  }
+		  res.Ctx.send_file(res.__);
+		}
 	  };
 #endif // !__linux__
 	  api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
@@ -108,16 +120,34 @@ namespace fc {
 		if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
 		throw err::not_found();
 	  _:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
-		if (last_dot) {
-		  fc::Buf ss = _.substr(last_dot); std::string_view extension(ss.data(), ss.size());
-		  if (content_types.find(extension) != content_types.end()) {
-			ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
-			if (extension[0] == 'h' && extension[1] == 't') {} else {
-			  res.set_header("Cache-Control", "max-age=54000,immutable");
+		struct stat statbuf_; res.is_file = stat(_.c_str(), &statbuf_);
+		if (res.is_file == 0 && statbuf_.st_size < BUF_MAXSIZE) {
+		  if (last_dot) {
+			Buf ss = _.substr(last_dot);
+			std::string_view extension(ss.data_, ss.size());// printf("<%d,%s>", res.is_file, _.c_str());
+			if (content_types.find(extension) != content_types.end()) {
+			  res.file_size = statbuf_.st_size; res.code = 200;
+			  ss = content_types.at(extension); res.set_header("Content-Type", ss.b2v());
+			  if (extension[0] == 'h' && extension[1] == 't') { res.is_file = 1; } else {
+				res.is_file = 2;
+				res.set_header("Cache-Control", "max-age=54000,immutable");
+			  }
+			  std::unordered_map<const std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
+			  if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+				res.__ = p->second;
+			  } else {
+				file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
+			  }
+			  if (res.__->ptr_ != nullptr) {
+				res.Ctx.send_file(res.__);
+			  }
+			  //res.path_ = std::move(_);
+			  return;
 			}
+			throw err::not_found(Buf() << "Content-type of [" << extension << "] is not allowed!");
 		  }
 		}
-		res.Ctx.send_file(_); return;
+		throw err::not_found();
 	  };
 #ifdef __linux__
 	  api.map_.add("/", static_cast<char>(HTTP::GET)) = [$](Req& req, Res& res) {

@@ -2,10 +2,10 @@
 
 namespace fc {
   std::string_view Ctx::header(const char* key) {
-	return headers[key];
+	if(!headers.size())index_headers(); return headers[key];
   }
   std::string_view Ctx::cookie(const char* key) {
-	return cookie_map[key];
+	if(!cookie_map.size())index_cookies(); return cookie_map[key];
   }
   void Ctx::format_top_headers(output_buffer& output_stream) {
 	if (status_code_ == 200) output_stream << http_top_header.top_header_200();
@@ -14,7 +14,7 @@ namespace fc {
   void Ctx::prepare_request() {
 	// parse_first_line();
 	if (!url_.size()) {
-	  parse_first_line(); index_headers(); index_cookies();
+	  parse_first_line();
 	}
 	response_headers.clear();
 	content_length_ = 0;
@@ -94,24 +94,15 @@ namespace fc {
 	}
   }
   // Send a file.
-  void Ctx::send_file(std::string& path) {
-	// Open file.
-	FILE* fd; if ((fd = fopen(path.c_str(), "rb")) == NULL) // C4996
-	  throw err::not_found(Buf("File:", 5) << path << " not found.");
-	fseek(fd, 0L, SEEK_END); long file_size = ftell(fd); rewind(fd);
-	// Writing the http headers.
+  void Ctx::send_file(std::shared_ptr<fc::file_sptr>& __) {
 	response_written_ = true;
 	format_top_headers(output_stream);
 	headers_stream.flush(); // flushes to output_stream.
-	output_stream << "Content-Length: " << file_size << "\r\n\r\n"; // Add body
+	output_stream << "Content-Length: " << __->size_ << "\r\n\r\n"; // Add body
 	output_stream.flush();
-	// Read the file and write it to the socket.
-	size_t nread = 1, offset = 0; char buffer[65536];
-	while (nread = fread(buffer, sizeof(buffer), 1, fd) != 0) {
-	  offset += sizeof(buffer); this->fiber.write(buffer, sizeof(buffer));
-	}
-	file_size -= (long)offset; nread = fread(buffer, file_size, 1, fd);
-	this->fiber.write(buffer, file_size); fclose(fd);
+	int r = __->read_chunk(0, __->size_, [this](const char* s, size_t l, std::function<void()> d) {
+	  if (l > 0) { this->fiber.write(s, static_cast<int>(l)); if (d != nullptr) d(); } });
+	if (r == EOF) this->fiber.write(nullptr, 0);
   }
   void Ctx::add_header_line(const char* l) { header_lines.push_back(l); }
   const char* Ctx::last_header_line() { return header_lines.back(); }

@@ -24,6 +24,7 @@
 #include <http_top_header_builder.hh>
 #include <buf.hh>
 #include <output_buffer.hh>
+#include <file_sptr.hh>
 #ifdef _WIN32
 #define $_(_) _._Ptr
 #else
@@ -53,7 +54,7 @@ namespace fc {
 	void set_cookie(std::string_view k, std::string_view v);
 	void set_status(int status);
 	// Send a file.
-	void send_file(std::string& path);
+	void send_file(std::shared_ptr<fc::file_sptr>& path);
 	void add_header_line(const char* l);
 	const char* last_header_line();
 	// split a string, starting from cur && ending with split_char.

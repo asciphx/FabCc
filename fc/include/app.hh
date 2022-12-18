@@ -31,7 +31,7 @@ namespace fc {
 	Buf _print_routes();
 	void _call(char m, std::string& r, Req& request, Res& response) const;
 	DRT map_;
-	//std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
+	std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
     std::unordered_map<std::string_view, std::string_view> content_types;
 	void sub_api(const char* prefix, const App& subapi);
 	//Serve static directory
