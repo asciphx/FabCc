@@ -144,6 +144,7 @@ namespace fc {
   }
   void Ctx::parse_first_line() {
 	const char* c = header_lines[0], * end = header_lines[1];
+	std::cout << c << '^' << std::endl;
 	method_ = split(c, end, ' ');
 	dumy = split(c, end, ' ');
 	http_version_ = split(c, end, '\r');
@@ -151,14 +152,10 @@ namespace fc {
 	c = dumy.data();
 	end = c + dumy.size();
 	if (dumy.size() == 1) { url_.append(dumy.data(), dumy.size()); url_[1] = '/'; return; }
-	if (dumy == "/tmUnblock.cgi") { return; }
 	size_t l = dumy.find('?');
 	if (l == -1) url_ += dumy; else {
-		if(l==dumy.size()) url_ += dumy;
-		else {
-			url_ += dumy.substr(0, l);
-			get_parameters_string_ = dumy.substr(++l);
-		}
+	  url_ += dumy.substr(0, l);
+	  get_parameters_string_ = dumy.substr(++l);
 	}
 	url_ = DecodeURL(url_);
 	//std::cout << url_ << '^' << get_parameters_string_ << std::endl;
