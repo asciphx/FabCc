@@ -55,7 +55,7 @@ namespace fc {
 	// fc::Timer timer_;
 	int is_file{ 0 };
 	long file_size = 0;
-    Ctx& Ctx;
+    fc::Ctx& Ctx;
 	inline void set_header(std::string_view k, std::string_view v) { Ctx.set_header(k, v); }
 	inline void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
   public:
