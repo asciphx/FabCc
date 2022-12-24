@@ -5,9 +5,9 @@
 #include <h/llhttp.h>
 #include <h/common.h>
 #include <str_map.hh>
-#include <req-res.hh>
 #include <buf.hh>
 namespace fc {
+  class Conn;
   struct llParser: public llhttp__internal_s {
 	llParser();
 	void set_type(llhttp_type t = llhttp_type::HTTP_REQUEST);
@@ -20,7 +20,10 @@ namespace fc {
 	//fc::query_string url_params;
 	//bool keep_alive;
 	const static llhttp_settings_s _;
-	Req to_request() const;
+	template<typename R>
+	R to_request(Conn& fib) {
+	  return R{ static_cast<HTTP>(method), url, url_params, headers, body, fib };
+	}
   };
 }
 #endif // PARSER_HH

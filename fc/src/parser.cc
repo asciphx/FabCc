@@ -1,4 +1,5 @@
 #include <parser.hh>
+#include <iostream>
 namespace fc {
   static int on_message_begin(llhttp__internal_s* _) {
 	llParser* $ = static_cast<llParser*>(_); $->url.reset(); $->url_params.reset();
@@ -30,9 +31,6 @@ namespace fc {
 	  $->url << $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
 	} else { $->url << $->url_params; }
 	return 0;//$->url_params = query_string($->url_params); handler_->handle();
-  }
-  Req llParser::to_request() const {
-	return Req{ /*static_cast<HTTP>(method), std::move(url), std::move(url_params), std::move(headers), std::move(body)*/ };
   }
   const llhttp_settings_s llParser::_ = {
 	  on_message_begin,

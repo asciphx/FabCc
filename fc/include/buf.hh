@@ -28,6 +28,7 @@ namespace fc {
 	~Buf();
 	Buf& operator=(Buf&& o) noexcept;
 	Buf& operator=(const Buf& o);
+	friend std::string& operator+=(std::string& s, const Buf& _v) { s.append(_v.data_, _v.end_); return s; };
 	void clear();
 
 	_INLINE void push_back(const char c) { end_[0] = c; ++end_; }// not safe, but fast

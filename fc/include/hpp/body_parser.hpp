@@ -14,8 +14,7 @@ namespace fc {
   struct param { size_t size = 0; string key; string value; string filename; /*string type;*/ };
   ///The parsed multipart Req/Res (Length[ kb ]),(Bool is_file)//MD5?
   struct BP {
-	const std::unordered_map<std::string_view, std::string_view>* headers;
-	string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
+	const str_map* headers; string boundary, menu; vector<param> params; unsigned short L;//string content_type = "multipart/form-data";
 	~BP() { headers = nullptr; }
 	BP(Req& req, const char* m, unsigned short kb = 256): headers(&(req.headers)), menu(fc::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
@@ -23,19 +22,19 @@ namespace fc {
 		if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(fc::directory_); ss += menu;
 		RES_menu.insert(m); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
 	  }
-	  p_b(Buf{ req.Ctx.read_whole_body() });
+	  p_b(req.body);
 	}
 	BP(Req& req, unsigned short kb = 256): headers(&(req.headers)), menu(fc::upload_path_), L(kb),
 	  boundary(g_b(fc::get_header(*headers, RES_CT))) {
-	  p_b(Buf{ req.Ctx.read_whole_body() });
+	  p_b(req.body);
 	}
   private: //get_boundary
-	std::string_view g_b(const std::string_view& h) const {
+	string g_b(const Buf& h) const {
 	  //std::cout << "<" << h << ">" << h.size() << std::endl;
-	  size_t f = h.find("=----"); if (f != -1) return h.substr(f + 0xe); return h;//raw
+	  unsigned int f = h.find("=----"); if (f != -1) return h.substr(f + 0xe).b2s(); return h.b2s();//raw
 	}
 	//parse_body
-	void p_b(Buf&& value) {//std::cout<<boundary<<std::endl;
+	void p_b(Buf& value) {//std::cout<<boundary<<std::endl;
 	  if (boundary[0xc] == 'j') {//application/json
 		// json j = json::parse(value);
 		throw err::not_extended(value);

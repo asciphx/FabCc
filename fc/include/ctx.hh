@@ -25,6 +25,7 @@
 #include <buf.hh>
 #include <output_buffer.hh>
 #include <file_sptr.hh>
+#include <parser.hh>
 #ifdef _WIN32
 #define $_(_) _._Ptr
 #else
@@ -44,8 +45,6 @@ namespace fc {
 	}
 	Ctx& operator=(const Ctx&) = delete;
 	Ctx(const Ctx&) = delete;
-	std::string_view header(const char* key);
-	std::string_view cookie(const char* key);
 	void format_top_headers(output_buffer& output_stream);
 	void prepare_request();
 	void respond(const std::string_view& s);
@@ -60,10 +59,6 @@ namespace fc {
 	// split a string, starting from cur && ending with split_char.
 	// Advance cur to the end of the split.
 	std::string_view split(const char*& cur, const char* line_end, char split_char);
-	void index_headers();
-	void index_cookies();
-	void parse_first_line();
-	std::string_view get_parameters_string();
 	std::string_view read_whole_body();
 	void prepare_next_request();
 	void flush_responses();
@@ -79,23 +74,17 @@ namespace fc {
 		}
 	  }
 	}
-	template <typename F> void parse_get_parameters(F processor) {
-	  url_decode_parameters(get_parameters_string(), processor);
-	}
 	fc::socket_type socket_fd;
 	input_buffer& rb;
 	int status_code_ = 200;
 	const char* status_ = "200 OK";
-	std::string_view method_;
+	fc::llParser parser_;
+	
 	std::string url_;
-	std::string_view http_version_;
 	std::string_view content_type_;
 	bool chunked_;
 	int content_length_;
-	std::unordered_map<std::string_view, std::string_view> cookie_map;
-	std::unordered_map<std::string_view, std::string_view> headers;
 	std::vector<std::pair<std::string_view, std::string_view>> response_headers;
-	std::string_view get_parameters_string_;
 	bool is_body_read_ = false;
 	std::string_view body_;
 	std::string_view body_start;
@@ -105,7 +94,6 @@ namespace fc {
 	output_buffer headers_stream;
 	bool response_written_ = false;
 	output_buffer output_stream;
-  private: std::string_view dumy;
   };
 
 } // namespace fc

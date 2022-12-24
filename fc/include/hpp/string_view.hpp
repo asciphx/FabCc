@@ -24,7 +24,7 @@ namespace std {
 	string_view(const basic_string<char, char_traits<char>, allocator<char>>& s) noexcept
 	  : data_(s.data()), length_(s.length()) {}
 	string_view& operator=(const string_view& view) noexcept {
-	  data_ = view.data(); length_ = view.length(); return *this;
+	  data_ = view.data(); length_ = view.size(); return *this;
 	}
 	explicit operator basic_string<char, char_traits<char>, allocator<char>>() const {
 	  return basic_string<char, char_traits<char>, allocator<char>>(data_, length_);
@@ -32,7 +32,6 @@ namespace std {
 	const char* begin() const noexcept { return data_; }
 	const char* end() const noexcept { return data_ + length_; }
 	size_t size() const { return length_; }
-	size_t length() const { return length_; }
 	bool empty() const noexcept { return length_ == 0; }
 	const char& operator[](size_t pos) const { return data_[pos]; }
 	const char& at(size_t pos) const {

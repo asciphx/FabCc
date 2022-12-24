@@ -1,7 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <string>
-#include <unordered_map>
 #include <hpp/string_view.hpp>
 #if defined(_MSC_VER) || defined(_WIN32)
 #include <locale.h>
@@ -11,21 +10,20 @@
 #define _INLINE __attribute__((always_inline))
 #endif
 #define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
+#include <str_map.hh>
 #include <h/config.h>
 #include <str.hh>
 namespace fc {
-  static const std::string_view RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), RES_empty("", 0),
+  static const fc::Buf RES_CT("Content-Type", 12), RES_CL("Content-Length", 14), RES_CALLBACK("CB", 2), RES_empty("", 0),
 	RES_Loc("Location", 8), RES_Ca("Cache-Control", 13), RES_Cookie("Cookie", 6), RES_AJ("application/json", 16), RES_AR("Accept-Ranges", 13),
 	RES_No("nosniff", 7), RES_Txt("text/html;charset=UTF-8", 23), RES_Con("Connection", 10), RES_Ex("expect", 6),
 	RES_Xc("X-Content-Type-Options", 22), RES_Allow("Allow", 5), RES_CR("Content-Ranges", 14), RES_Range("Range", 5);
-  static const std::string_view& get_header(const std::unordered_map<std::string_view, std::string_view>& headers,
-  const std::string_view& key) {
+  static const fc::Buf& get_header(const str_map& headers, const fc::Buf& key) {
 	if (headers.count(key)) { return headers.find(key)->second; } return RES_empty;
   }
-  enum class HTTP { INVALID, GET, POST, PUT, DEL, HEAD, OPTIONS };
- // enum class HTTP {
-	//DEL = 0, GET, HEAD, POST = 3, PUT, OPTIONS = 6, /*PATCH = 28,*/ INVALID
- // };
+  enum class HTTP {
+	DEL = 0, GET, HEAD, POST = 3, PUT, OPTIONS = 6, /*PATCH = 28,*/ INVALID
+  };
   static const std::string_view RES_server_tag("Server: ", 8), RES_content_length_tag("Content-Length: ", 16), RES_http_status("HTTP/1.1 ", 9),
 	RES_con("connection", 10), RES_S_C("Set-Cookie", 10), RES_upgrade("upgrade", 7), RES_oct("application/octet-stream", 24),
 	RES_AcC("Access-Control-Allow-Credentials: ", 34), RES_t("true", 4), RES_AcM("Access-Control-Allow-Methods: ", 30), RES_host("Host", 4),

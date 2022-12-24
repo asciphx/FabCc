@@ -1,37 +1,57 @@
 #include <req-res.hh>
 #include <http_error.hh>
 namespace fc {
- // Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
- // Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b/*, bool keep_alive*/):
-	//method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
- // void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
-	std::string_view Req::header(const char* k) const { return Ctx.header(k); }
-	std::string_view Req::cookie(const char* k) const {
-	  return Ctx.cookie(k);
-	  // FIXME return MHD_lookup_connection_value(mhd_connection, MHD_COOKIE_KIND, k);
+  // Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
+  Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b, Conn& fib): fiber(fib),
+	method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
+  // void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
+  fc::Buf Req::header(const char* k) const { return headers.find(k)->second; }
+   std::string_view Req::cookie(const char* k) {
+	if (!cookie_map.size())index_cookies(); return cookie_map[k];
+   }
+  std::string Req::ip_address() const {
+	std::string s;
+	switch (fiber.in_addr.sa_family) {
+	case AF_INET: {
+	  sockaddr_in* addr_in = (struct sockaddr_in*)&fiber.in_addr;
+	  s.resize(INET_ADDRSTRLEN);
+	  inet_ntop(AF_INET, &(addr_in->sin_addr), const_cast<char*>(s.data()), INET_ADDRSTRLEN);
+	  break;
 	}
-	std::string Req::ip_address() const {
-	  std::string s;
-	  switch (fiber.in_addr.sa_family) {
-	  case AF_INET: {
-		sockaddr_in* addr_in = (struct sockaddr_in*)&fiber.in_addr;
-		s.resize(INET_ADDRSTRLEN);
-		inet_ntop(AF_INET, &(addr_in->sin_addr), const_cast<char*>(s.data()), INET_ADDRSTRLEN);
-		break;
-	  }
-	  case AF_INET6: {
-		sockaddr_in6* addr_in6 = (struct sockaddr_in6*)&fiber.in_addr;
-		s.resize(INET6_ADDRSTRLEN);
-		inet_ntop(AF_INET6, &(addr_in6->sin6_addr), const_cast<char*>(s.data()), INET6_ADDRSTRLEN);
-		break;
-	  }
-	  default:
-		return "unsuported protocol";
-		break;
-	  }
-	  return s;
+	case AF_INET6: {
+	  sockaddr_in6* addr_in6 = (struct sockaddr_in6*)&fiber.in_addr;
+	  s.resize(INET6_ADDRSTRLEN);
+	  inet_ntop(AF_INET6, &(addr_in6->sin6_addr), const_cast<char*>(s.data()), INET6_ADDRSTRLEN);
+	  break;
 	}
-
+	default:
+	  return "unsuported protocol";
+	  break;
+	}
+	return s;
+  }
+  void Req::index_cookies() {
+	fc::Buf cookies = header("Cookie");
+	if (!cookies.data()) return;
+	const char* line_end = &cookies.back() + 1;
+	const char* cur = &cookies.front();
+	while (cur < line_end) {
+	  std::string_view key = split(cur, line_end, '=');
+	  std::string_view value = split(cur, line_end, ';');
+	  while (key[0] == ' ')
+		key = std::string_view(key.data() + 1, key.size() - 1);
+	  cookie_map[key] = value;
+	}
+  }
+  std::string_view Req::split(const char*& cur, const char* line_end, char split_char) {
+	const char* start = cur;
+	while (start < (line_end - 1) && *start == split_char) ++start;
+	const char* end = start + 1;
+	while (end < (line_end - 1) && *end != split_char) ++end;
+	cur = end + 1;
+	if (*end == split_char) return std::string_view(start, cur - start - 1);
+	else return std::string_view(start, cur - start);
+  }
   /******************************** ************************************/
   //Res::Res():zlib_cp_str(0x1ff), body(0xff) {};
   //void Res::set_header(const fc::Buf& key, fc::Buf value) { headers.erase(key); headers.emplace(key, std::move(value)); }

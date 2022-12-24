@@ -1,22 +1,11 @@
 #include <ctx.hh>
 
 namespace fc {
-  std::string_view Ctx::header(const char* key) {
-	return headers[key];
-  }
-  std::string_view Ctx::cookie(const char* key) {
-	if (!cookie_map.size())index_cookies(); return cookie_map[key];
-  }
   void Ctx::format_top_headers(output_buffer& output_stream) {
 	if (status_code_ == 200) output_stream << http_top_header.top_header_200();
 	else output_stream << "HTTP/1.1 " << status_ << http_top_header.top_header();
   }
   void Ctx::prepare_request() {
-	// parse_first_line();
-	if (!url_.size()) {
-	  parse_first_line();
-	}
-	if (!headers.size())index_headers();
 	response_headers.clear();
 	content_length_ = 0;
 	chunked_ = 0;
@@ -118,51 +107,6 @@ namespace fc {
 	if (*end == split_char) return std::string_view(start, cur - start - 1);
 	else return std::string_view(start, cur - start);
   }
-  void Ctx::index_headers() {
-	for (int i = 1; i < header_lines.size() - 1; i++) {
-	  const char* line_end = header_lines[i + 1]; // last line is just an empty line.
-	  const char* cur = header_lines[i];
-	  std::string_view key = split(cur, line_end, ':');
-	  std::string_view value = split(cur, line_end, '\r');
-	  while (value[0] == ' ') value = std::string_view(value.data() + 1, value.size() - 1);
-	  headers.emplace(key, value);
-	  //std::cout << key << " -> " << value << std::endl;
-	}
-  }
-  void Ctx::index_cookies() {
-	std::string_view cookies = header("Cookie");
-	if (!cookies.data()) return;
-	const char* line_end = &cookies.back() + 1;
-	const char* cur = &cookies.front();
-	while (cur < line_end) {
-	  std::string_view key = split(cur, line_end, '=');
-	  std::string_view value = split(cur, line_end, ';');
-	  while (key[0] == ' ')
-		key = std::string_view(key.data() + 1, key.size() - 1);
-	  cookie_map[key] = value;
-	}
-  }
-  void Ctx::parse_first_line() {
-	const char* c = header_lines[0], * end = header_lines[1];
-	std::cout << c << '^' << std::endl;
-	method_ = split(c, end, ' ');
-	dumy = split(c, end, ' ');
-	http_version_ = split(c, end, '\r');
-	// url get parameters.
-	c = dumy.data();
-	end = c + dumy.size();
-	if (dumy.size() == 1) { url_.append(dumy.data(), dumy.size()); url_[1] = '/'; return; }
-	size_t l = dumy.find('?');
-	if (l == -1) url_ += dumy; else {
-	  url_ += dumy.substr(0, l);
-	  get_parameters_string_ = dumy.substr(++l);
-	}
-	url_ = DecodeURL(url_);
-	//std::cout << url_ << '^' << get_parameters_string_ << std::endl;
-  }
-  std::string_view Ctx::get_parameters_string() {
-	return get_parameters_string_;
-  }
   std::string_view Ctx::read_whole_body() {
 	if (!chunked_ && !content_length_) {
 	  is_body_read_ = true;
@@ -171,6 +115,8 @@ namespace fc {
 	}
 	if (content_length_) {
 	  //std::cout << '[' << content_length_ << ']';
+	  const char* c = header_lines[0], * end = header_lines[1];
+	  split(c, end, ' '); url_ += split(c, end, ' ');
 	  body_ = rb.read_n(fiber, body_start.data(), content_length_);
 	  body_end_ = body_.data() + content_length_;
 	} else if (chunked_) {
@@ -204,14 +150,9 @@ namespace fc {
 	rb.free(header_lines[0], body_end_);
 	headers_stream.reset();
 	status_ = "200 OK";
-	method_ = std::string_view();
 	url_ = "";
-	http_version_ = std::string_view();
 	content_type_ = std::string_view();
-	headers.clear();
-	cookie_map.clear();
 	response_headers.clear();
-	get_parameters_string_ = std::string_view();
 	response_written_ = false;
   }
   void Ctx::flush_responses() { output_stream.flush(); }

@@ -10,6 +10,7 @@
 #include <h/common.h>
 #include <hpp/optional.hpp>
 #include <file_sptr.hh>
+#include <str_map.hh>
 #include <iostream>
 #if defined(_MSC_VER)
 #include <io.h>
@@ -22,22 +23,21 @@ namespace fc {
   struct App;
   class Req {
 	HTTP method;
+	void index_cookies();
+	std::string_view split(const char*& cur, const char* line_end, char split_char);
   public:
-	Req();
-    Req(fc::Ctx& Ctx) : Ctx(Ctx), fiber(Ctx.fiber), headers(Ctx.headers) {}
-    std::string_view header(const char* k) const;
-    std::string_view cookie(const char* k) const;
+    fc::Buf header(const char* k) const;
+    std::string_view cookie(const char* k);
     std::string ip_address() const;
-
-	//Req(HTTP method, fc::Buf url, fc::Buf params, str_map headers, fc::Buf body);
-	std::string url;
-	//fc::Buf params;
-	//fc::Buf body;
+	Req(HTTP method, fc::Buf url, fc::Buf params, str_map headers, fc::Buf body, Conn& fib);
+	fc::Buf url;
+	fc::Buf params;
+	fc::Buf body;
 	//uint64_t uuid;
-	std::unordered_map<std::string_view, std::string_view>& headers;
+	str_map headers;
 	fc::Buf ip_addr;
-	fc::Ctx& Ctx;
 	Conn& fiber;
+	std::unordered_map<std::string_view, std::string_view> cookie_map;
   };// request
 
   class Res {
@@ -55,7 +55,7 @@ namespace fc {
 	// fc::Timer timer_;
 	int is_file{ 0 };
 	long file_size = 0;
-    fc::Ctx& Ctx;
+    Ctx& Ctx;
 	inline void set_header(std::string_view k, std::string_view v) { Ctx.set_header(k, v); }
 	inline void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
   public:
