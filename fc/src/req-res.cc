@@ -2,8 +2,8 @@
 #include <http_error.hh>
 namespace fc {
   // Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
-  Req::Req(HTTP m, fc::Buf u, fc::Buf p, str_map h, fc::Buf b, Conn& fib): fiber(fib),
-	method(m), url(std::move(u)), params(std::move(p)), headers(std::move(h)), body(std::move(b)) {}
+  Req::Req(HTTP m, fc::Buf& u, fc::Buf& p, str_map& h, fc::Buf& b, Conn& fib): fiber(fib),
+	method(m), url(u), params(p), headers(h), body(b) {}
   // void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
   fc::Buf Req::header(const char* k) const { return headers.find(k)->second; }
    std::string_view Req::cookie(const char* k) {

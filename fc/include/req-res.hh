@@ -29,12 +29,12 @@ namespace fc {
     fc::Buf header(const char* k) const;
     std::string_view cookie(const char* k);
     std::string ip_address() const;
-	Req(HTTP method, fc::Buf url, fc::Buf params, str_map headers, fc::Buf body, Conn& fib);
-	fc::Buf url;
-	fc::Buf params;
-	fc::Buf body;
+	Req(HTTP method, fc::Buf& url, fc::Buf& params, str_map& headers, fc::Buf& body, Conn& fib);
+	fc::Buf& url;
+	fc::Buf& params;
+	fc::Buf& body;
 	//uint64_t uuid;
-	str_map headers;
+	str_map& headers;
 	fc::Buf ip_addr;
 	Conn& fiber;
 	std::unordered_map<std::string_view, std::string_view> cookie_map;
