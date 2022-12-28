@@ -109,7 +109,7 @@ namespace ctx {
 	template<typename Fn, typename = std::disable_overload< co, Fn >>
 	co(fixedsize_stack& salloc): co{ std::allocator_arg, salloc } {}
 	template<typename Fn, typename = std::disable_overload< co, Fn >>
-	co(Fn&& fn): co{ std::allocator_arg, fixedsize_stack(stack_traits::default_size()), std::forward< Fn >(fn) } {}
+	co(Fn&& fn): co{ std::allocator_arg, fixedsize_stack(stack_traits::minimum_size()), std::forward< Fn >(fn) } {}
 	template<typename Fn>
 	co(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) :
 	  fctx_{ add_ctx< record< co, Fn > >(std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
