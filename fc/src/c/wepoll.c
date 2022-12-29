@@ -88,7 +88,7 @@ struct epoll_event {
 extern "C" {
 #endif
 
-WEPOLL_EXPORT HANDLE epoll_create(int size);
+WEPOLL_EXPORT HANDLE epoll_create();
 WEPOLL_EXPORT HANDLE epoll_create1(int flags);
 
 WEPOLL_EXPORT int epoll_close(HANDLE ephnd);
@@ -552,40 +552,22 @@ int epoll_global_init(void) {
   return 0;
 }
 
-static HANDLE epoll__create(void) {
+HANDLE epoll_create(void) {
   port_state_t* port_state;
   HANDLE ephnd;
   ts_tree_node_t* tree_node;
-
   if (init() < 0)
     return NULL;
-
   port_state = port_new(&ephnd);
   if (port_state == NULL)
     return NULL;
-
   tree_node = port_state_to_handle_tree_node(port_state);
-  if (ts_tree_add(&epoll__handle_tree, tree_node, (uintptr_t) ephnd) < 0) {
-    /* This should never happen. */
-    port_delete(port_state);
-    return_set_error(NULL, ERROR_ALREADY_EXISTS);
-  }
-
+  ts_tree_add(&epoll__handle_tree, tree_node, (uintptr_t) ephnd);
+  //if (ts_tree_add(&epoll__handle_tree, tree_node, (uintptr_t) ephnd) < 0) {
+  //  port_delete(port_state);/* This should never happen. */
+  //  return_set_error(NULL, ERROR_ALREADY_EXISTS);
+  //}
   return ephnd;
-}
-
-HANDLE epoll_create(int size) {
-  if (size <= 0)
-    return_set_error(NULL, ERROR_INVALID_PARAMETER);
-
-  return epoll__create();
-}
-
-HANDLE epoll_create1(int flags) {
-  if (flags != 0)
-    return_set_error(NULL, ERROR_INVALID_PARAMETER);
-
-  return epoll__create();
 }
 
 int epoll_close(HANDLE ephnd) {
@@ -652,10 +634,7 @@ int epoll_wait(HANDLE ephnd,
   ts_tree_node_t* tree_node;
   port_state_t* port_state;
   int num_events;
-
-  if (maxevents <= 0)
-    return_set_error(-1, ERROR_INVALID_PARAMETER);
-
+  //if (maxevents <= 0) return_set_error(-1, ERROR_INVALID_PARAMETER);
   if (init() < 0)
     return -1;
 

@@ -70,7 +70,7 @@ namespace fc {
 	  epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
 	  epoll_event events[MAXEVENTS];
 #elif  _WIN32
-	  this->epoll_fd = epoll_create1(0);
+	  this->epoll_fd = epoll_create();
 	  epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN);
 	  epoll_event events[MAXEVENTS];
 #elif __APPLE__

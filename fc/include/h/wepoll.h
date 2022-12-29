@@ -91,8 +91,7 @@ struct epoll_event {
 extern "C" {
 #endif
 
-WEPOLL_EXPORT HANDLE epoll_create(int size);
-WEPOLL_EXPORT HANDLE epoll_create1(int flags);
+WEPOLL_EXPORT HANDLE epoll_create();
 
 WEPOLL_EXPORT int epoll_close(HANDLE ephnd);
 
