@@ -72,8 +72,7 @@ namespace fc {
 	//if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
 	//std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
 	//  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-	std::string g(1, m + 0x30); g.append(r.data(), r.size()); req.url = r;
-	//std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
+	std::string g(1, m + 0x30); g.append(r.data_, r.size());// std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
 	fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
 	  it->second(req, res);
 	} else throw err::not_found();
@@ -227,7 +226,7 @@ namespace fc {
 		  } catch (const http_error& e) {
 			ctx.set_status(e.i());
 			ctx.respond(e.what());
-		  } catch (const std::runtime_error& e) {
+		  } catch (const std::exception& e) {
 			std::cerr << "INTERNAL SERVER ERROR: " << e.what() << std::endl;
 			ctx.set_status(500);
 			ctx.respond("Internal server error.");

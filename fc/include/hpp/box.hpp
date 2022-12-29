@@ -27,7 +27,7 @@ public:
 #else
   box(T&& _) : p(new T{ std::move(_) }), b(false) {}
 #endif // _WIN32
-  box(T& _): p(&_), b(false) {}
+  box(T& _) : p(&_), b(false) {}
   explicit box(T* _) noexcept: p(_), b(false) {}
   template<typename... U>
   box(U&&... _) noexcept: p(new T{ std::move(_)... }), b(true) {}
@@ -79,8 +79,8 @@ public:
 #else
 	  * ((bool*)(this)) = true;
 #endif // _WIN32
-}
-  void reset() noexcept { if (b) { b = false; delete p; } }
+  }
+  void reset() noexcept { if (b) { b = false; delete p; } p = nullptr; }
 };
 namespace std {
   template <class T> struct hash<box<T>> {
