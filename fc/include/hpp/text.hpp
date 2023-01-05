@@ -1,4 +1,4 @@
-﻿#ifndef TEXT_HPP
+#ifndef TEXT_HPP
 #define TEXT_HPP
 #include <string.h>
 #include <assert.h>
@@ -35,16 +35,16 @@ class text {//It is similar to a dynamic std::string_view with a fixed maximum l
   template<unsigned short D> friend text<D> operator+(text<D>& t, const char* c);
   template<unsigned short E> friend text<E> operator+(text<E>& t, const std::string& $);
   friend std::string& operator<<(std::string& s, text<I>* c) {
-	s.push_back('"'); s += c->c_str(); s.push_back('"'); return s;
+	s.push_back('"'); s.append(c->_, c->l); s.push_back('"'); return s;
   };
   friend std::string& operator<<(std::string& s, const text<I>* c) {
-	s.push_back('"'); s += c->c_str(); s.push_back('"'); return s;
+	s.push_back('"'); s.append(c->_, c->l); s.push_back('"'); return s;
   };
   friend std::string& operator<<(std::string& s, text<I>& c) {
-	s.push_back('"'); s += c.c_str(); s.push_back('"'); return s;
+	s.push_back('"'); s.append(c._, c.l); s.push_back('"'); return s;
   };
   friend std::string& operator<<(std::string& s, const text<I>& c) {
-	s.push_back('"'); s += c.c_str(); s.push_back('"'); return s;
+	s.push_back('"'); s.append(c._, c.l); s.push_back('"'); return s;
   };
   friend std::ostream& operator<<(std::ostream& s, text<I>& c) { return s << c.c_str(); };
 public:

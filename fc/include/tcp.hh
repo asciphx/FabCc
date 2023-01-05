@@ -10,6 +10,7 @@
 #include <vector>
 #include <fstream>
 #include <set>
+#include <parser.hh>
 #include <conn.hh>
 #include <buf.hh>
 namespace fc {
@@ -37,10 +38,11 @@ namespace fc {
   struct scoped_fd {
 	socket_type fd;
 	~scoped_fd() {
-	  if (0 != fc::close_socket(fd)) std::cerr << "Error when closing file descriptor " << fd << ": " << strerror(errno) << std::endl;
+	  if (0 != close_socket(fd)) std::cerr << "Error when closing file descriptor " << fd << ": " << strerror(errno) << std::endl;
 	}
   };
   struct Reactor {
+	llParser parser_;
 #if defined _WIN32
 	typedef HANDLE epoll_handle_t;
 	u_long iMode = 0;
@@ -62,7 +64,6 @@ namespace fc {
 #elif __linux__ || __APPLE__
 	void epoll_add(socket_type new_fd, int flags, socket_type fiber_idx = -1);
 #endif
-	void epoll_del(socket_type fd);
 	void epoll_mod(socket_type fd, int flags);
 	void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler) {
 #if __linux__
@@ -170,11 +171,12 @@ namespace fc {
 					 //std::cerr << "Error during SSL handshake" << std::endl; return std::move(c.sink);
 				  //}
 				  handler(c);
-				  epoll_del(socket_fd);
+				  epoll_ctl(epoll_fd, socket_fd, EPOLL_CTL_DEL, 0);
 				} catch (fiber_exception& ex) {
-				  epoll_del(socket_fd); return std::move(ex.c);
+				  epoll_ctl(epoll_fd, socket_fd, EPOLL_CTL_DEL, 0); return std::move(ex.c);
 				} catch (const std::runtime_error& e) {
-				  epoll_del(socket_fd); std::cerr << "Exception in fiber: " << e.what() << std::endl; return std::move(c.sink);
+				  epoll_ctl(epoll_fd, socket_fd, EPOLL_CTL_DEL, 0);
+				  std::cerr << "Exception in fiber: " << e.what() << std::endl; return std::move(c.sink);
 				}
 				return std::move(c.sink);
 				});
@@ -197,7 +199,7 @@ namespace fc {
 #if _WIN32
 	  epoll_close(epoll_fd);
 #else
-	  fc::close_socket(epoll_fd);
+	  close_socket(epoll_fd);
 #endif
 	}
   };
@@ -224,7 +226,7 @@ namespace fc {
 #endif
 	// Start the server threads.
 	const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
-	socket_type server_fd = fc::create_and_bind(listen_ip, port, socktype);
+	socket_type server_fd = create_and_bind(listen_ip, port, socktype);
 	std::vector<std::thread> ths;
 	for (int i = 0; i < nthreads; ++i) {
 	  ths.push_back(std::thread([&] {
@@ -235,7 +237,7 @@ namespace fc {
 		}));
 	}
 	for (auto& t : ths) t.join();
-	fc::close_socket(server_fd); std::cout << std::endl;
+	close_socket(server_fd); std::cout << std::endl;
   }
 }
 #endif

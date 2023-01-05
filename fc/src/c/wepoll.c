@@ -89,7 +89,6 @@ extern "C" {
 #endif
 
 WEPOLL_EXPORT HANDLE epoll_create();
-WEPOLL_EXPORT HANDLE epoll_create1(int flags);
 
 WEPOLL_EXPORT int epoll_close(HANDLE ephnd);
 

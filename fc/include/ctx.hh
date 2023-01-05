@@ -25,7 +25,6 @@
 #include <buf.hh>
 #include <output_buffer.hh>
 #include <file_sptr.hh>
-#include <parser.hh>
 #ifdef _WIN32
 #define $_(_) _._Ptr
 #else
@@ -38,7 +37,7 @@ namespace fc {
   __declspec(selectany) http_top_header_builder http_top_header;
 #endif
   struct Ctx {
-	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
+	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber), parser_(_fiber.parser_) {
 	  response_headers.reserve(20);
 	  output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
 	  headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
@@ -53,7 +52,7 @@ namespace fc {
 	void set_cookie(std::string_view k, std::string_view v);
 	void set_status(int status);
 	// Send a file.
-	void send_file(std::shared_ptr<fc::file_sptr>& path);
+	void send_file(std::shared_ptr<file_sptr>& path);
 	void add_header_line(const char* l);
 	const char* last_header_line();
 	// split a string, starting from cur && ending with split_char.
@@ -74,11 +73,11 @@ namespace fc {
 		}
 	  }
 	}
-	fc::socket_type socket_fd;
+	socket_type socket_fd;
 	input_buffer& rb;
 	int status_code_ = 200;
 	const char* status_ = "200 OK";
-	fc::llParser parser_;
+	llParser& parser_;
 	
 	std::string url_;
 	std::string_view content_type_;
@@ -90,7 +89,7 @@ namespace fc {
 	std::string_view body_start;
 	const char* body_end_ = nullptr;
 	std::vector<const char*> header_lines;
-	fc::Conn& fiber;
+	Conn& fiber;
 	output_buffer headers_stream;
 	bool response_written_ = false;
 	output_buffer output_stream;

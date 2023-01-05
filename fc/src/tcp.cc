@@ -102,14 +102,11 @@ namespace fc {
 	if (fd_to_fiber_idx.size() < new_fd + 1) fd_to_fiber_idx.resize((new_fd + 1) * 2, -1);
 	fd_to_fiber_idx[new_fd] = fiber_idx;
   }
-  void Reactor::epoll_del(socket_type fd) {
-	epoll_ctl(epoll_fd, fd, EPOLL_CTL_DEL, 0);
-  }
   void Reactor::epoll_mod(socket_type fd, int flags) {
 #if __linux__ || _WIN32
 	epoll_ctl(epoll_fd, fd, EPOLL_CTL_MOD, flags);
 #elif __APPLE__
-	epoll_ctl(epoll_fd, fd, EV_ADD, flags);
+	epoll_ctl(epoll_fd, fd, 2, flags);
 #endif
   }
 }
