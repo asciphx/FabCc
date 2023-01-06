@@ -505,8 +505,8 @@ static void from_json(const json::Json& c, std::vector<T>* v) {
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
 #define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_).get_to(_->__VA_ARGS_);
 #define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
-  private: const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
-  static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
+  static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;\
+  private: const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;
 
 #define CLASS(__VA_ARGS_,...)const u8 __VA_ARGS_::_size = NUM_ARGS(__VA_ARGS__);const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);\
   static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\

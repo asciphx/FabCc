@@ -34,7 +34,23 @@ namespace fc {
   }
   template <size_t I, typename T, typename Fn>
   constexpr void ForEachField(T* t, Fn&& fn) { ForEachTuple(T::Tuple, [t, &fn](auto f) { fn(t->*(f)); }, std::make_index_sequence<I>{}); }
-
+#if (defined(_HAS_CXX17) && !_HAS_CXX17) || (!defined(_WIN32) && __cplusplus <= 201402L)
+  template <class T, size_t I = 0, size_t E = std::tuple_size_V<T::Tuple>, typename Fn>//range index of tuple
+  constexpr void ForRangeTuple(T* t, Fn&& fn) {
+	char i = 0; ForEachTuple(T::Tuple, [&i, t, &fn](auto f) { if (++i > I) fn(f); }, std::make_index_sequence<E>{});
+  };
+#else
+  template <class T, size_t I = 0, size_t E = std::tuple_size_V<T::Tuple>, typename Fn>//range index of tuple
+  constexpr void ForRangeTuple(const T* t, Fn&& fn) {
+	if constexpr (I < E - 1) { ForSectionTuple<T, I, E - 1>(t, fn); (void)fn(std::get<E - 1>(T::Tuple)); } else (void)fn(std::get<I>(T::Tuple));
+  };
+#endif
+  template <size_t I = 0, size_t E, class T, typename Fn>
+  constexpr void ForRangeField(T* t, Fn&& fn) { ForRangeTuple<T, I, E>(t, [t, &fn](auto f) { fn(t->*(f)); }); };
+  template <size_t I = 0, class T, typename Fn>
+  constexpr void ForRangeField(T* t, Fn&& fn) {
+	ForRangeTuple<T, I, std::tuple_size_V<decltype(T::Tuple)>>(t, [t, &fn](auto f) { fn(t->*(f)); });
+  };//range index to iterate over the Field
   template <typename T> constexpr inline auto Tuple() { return std::make_tuple(); }
   template<typename C> struct tuple_idex {};
   template<template<typename ...T> class C, typename ...T>

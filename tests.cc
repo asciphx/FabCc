@@ -2,6 +2,7 @@
 #include <hpp/text.hpp>
 #include <hpp/any.hpp>
 #include <hpp/optional.hpp>
+#include <hpp/tuple.hpp>
 #include <time.h>
 #include <iostream>
 #include <str_map.hh>
@@ -12,16 +13,14 @@
 struct Person;
 struct Book {
   fc::Buf name = "Hello, world!";
-  box<Person> person;
-  vec<Person> persons;
+  box<Person> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
   fc::Buf name;
   int age;
-  box<Book> book;
-  vec<Book> books;
+  box<Book> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
@@ -48,8 +47,12 @@ int main() {
   f = f.yield();
   if (!f) std::cout << "returned second time: " << data << std::endl;
   std::cout << "execution context terminated" << std::endl;
-  return 0;
   Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
+  fc::ForRangeField<2, 4>(&p, [](auto& _) { std::cout << typeid(_).name() << std::endl; });//2nd, 3rd index of tuple
+  fc::ForRangeTuple<Person, 0, 2>(&p, [&p](auto& _) {
+	std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
+  });
+  return 0;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} }; to_json(j, &b);
   j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump() << std::endl;
