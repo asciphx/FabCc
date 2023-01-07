@@ -24,7 +24,8 @@
 - 静态文件缓存file_sptr【[libhttp](https://github.com/neithern/libhttp)】
 - 支持单元测试，文档请见【[coost](https://coostdocs.gitee.io/cn/co/unitest/)】
 - Json集成于【[coost](https://coostdocs.gitee.io/cn/co/json/)】, 并支持序列化与反序列化
-- 设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】，因此无需使用裸指针
+- 设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】
+  ，因此不需要使用原始指针，C++也可以用与Java相同的OOP方式编写
 - zlib压缩来自【[zlib](https://github.com/madler/zlib)】
 
 ## 仍在开发中
@@ -55,7 +56,9 @@ int main() {
   Timer t; App app;
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
+	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js"}, vec<Book>{ Book{},Book{} }} };
+	b.person->book->person = Person{ "ds" };//面向对象地写C++
+	to_json(x, &b); x["person"]["book"]["person"]["book"] = b;
 	res.write(x.dump());//json响应
   };
   app["/api"] = [&app](Req& req, Res& res) {

@@ -18,19 +18,20 @@ struct Person {
 CLASS(Person, name, age, book, books)
 using namespace fc;
 void funk(Req& req, Res& res) {
-  res.write("主页路由被std::bind复写！");
+  res.write("Homepage route is replicated by std::bind！");
 };
 int main() {
   App app; Timer t;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
-	.sub_api("/", app.serve_file("static"));//服务文件接口
+	.sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} };
-	to_json(x, &b); x["person"]["book"]["person"]["book"] = box<Book>(b);
-	res.write(x.dump());//json响应
+	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js"}, vec<Book>{ Book{},Book{} }} };
+	b.person->book->person = Person{ "ds" };//Write C++ like java.
+	to_json(x, &b); x["person"]["book"]["person"]["book"] = b;
+	res.write(x.dump());//JSON response
   };
   app["/api"] = [&app](Req& req, Res& res) {
-	res.write(app._print_routes());//返回路由列表
+	res.write(app._print_routes());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {
 	BP bp(req, 50);
@@ -41,13 +42,13 @@ int main() {
   };
   app["/del"] = [&app](Req&, Res& res) {
 	app.get() = nullptr;
-	res.write("主页的路由被删除！！");
+	res.write("The routing of the home page is delete！！");
   };
   app["/timer"] = [&](Req&, Res& res) {
 	if (t.idle()) t.setTimeout([] { raise(SIGINT); }, 6000);
-	res.write("6秒后关闭服务！");
+	res.write("Turn off the server timer and start the countdown！");
 	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
-  //启动服务器
+  //Start the server
   http_serve(app, 8080);
 }

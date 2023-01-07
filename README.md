@@ -23,7 +23,8 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - file_sptr for Static file cache from[[libhttp](https://github.com/neithern/libhttp)]
 - Support unit testing. Please refer to [[coost](https://coostdocs.github.io/cn/co/unitest/)] for documentation
 - Json integrated in[[coost](https://coostdocs.github.io/cn/co/json/)], and supports serialization and deserialization
-- box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)]，so there is no need to use naked pointers
+- box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)]
+  , C++ can also be written in the same OOP way as Java without using raw pointers.
 - Zlib compression from[[zlib](https://github.com/madler/zlib)]
 
 ## Still under development
@@ -54,7 +55,9 @@ int main() {
   Timer t; App app;
   app.file_type().sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Json x = { { "h", 23 }, { "b", false }, { "s", "xx" }, { "v", {1,2,3} }, { "o", {{"xx", 0}} } };
+	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js"}, vec<Book>{ Book{},Book{} }} };
+	b.person->book->person = Person{ "ds" };//Write C++ object-oriented
+	to_json(x, &b); x["person"]["book"]["person"]["book"] = b;
 	res.write(x.dump());//JSON response
   };
   app["/api"] = [&app](Req& req, Res& res) {

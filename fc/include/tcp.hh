@@ -10,7 +10,6 @@
 #include <vector>
 #include <fstream>
 #include <set>
-#include <parser.hh>
 #include <conn.hh>
 #include <buf.hh>
 namespace fc {
@@ -42,7 +41,6 @@ namespace fc {
 	}
   };
   struct Reactor {
-	llParser parser_;
 #if defined _WIN32
 	typedef HANDLE epoll_handle_t;
 	u_long iMode = 0;
@@ -203,9 +201,7 @@ namespace fc {
 #endif
 	}
   };
-  static void shutdown_handler(int sig) {
-	quit_signal_catched = 1;
-  }
+  static void shutdown_handler(int sig) { quit_signal_catched = 1; }
   inline void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
 	std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
 #ifdef _WIN32

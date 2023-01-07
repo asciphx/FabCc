@@ -34,7 +34,6 @@
 
 #include <h/config.h>
 #include <tp/ctx.hh>
-#include <parser.hh>
 namespace fc {
   enum sd_type { _READ, _WRITE, _BOTH };
 #if defined _WIN32
@@ -71,11 +70,10 @@ namespace fc {
 	ctx::co sink;
 	socket_type fiber_id, socket_fd;
 	sockaddr in_addr;
-	llParser& parser_;
 	inline Conn(Reactor* reactor, ctx::co&& sink,
 	  socket_type fiber_id, socket_type socket_fd, sockaddr in_addr)
 	  : reactor(reactor), sink(std::forward<ctx::co&&>(sink)),
-	  fiber_id(fiber_id), socket_fd(socket_fd), in_addr(in_addr), parser_(*((llParser*)(reactor))) {}
+	  fiber_id(fiber_id), socket_fd(socket_fd), in_addr(in_addr) {}
 	//SSL* ssl = nullptr;
 	//inline bool ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
 	//  if (!ssl_ctx)

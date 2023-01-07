@@ -25,6 +25,7 @@
 #include <buf.hh>
 #include <output_buffer.hh>
 #include <file_sptr.hh>
+#include <parser.hh>
 #ifdef _WIN32
 #define $_(_) _._Ptr
 #else
@@ -37,7 +38,7 @@ namespace fc {
   __declspec(selectany) http_top_header_builder http_top_header;
 #endif
   struct Ctx {
-	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber), parser_(_fiber.parser_) {
+	Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
 	  response_headers.reserve(20);
 	  output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
 	  headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
@@ -77,7 +78,7 @@ namespace fc {
 	input_buffer& rb;
 	int status_code_ = 200;
 	const char* status_ = "200 OK";
-	llParser& parser_;
+	llParser parser_;
 	
 	std::string url_;
 	std::string_view content_type_;

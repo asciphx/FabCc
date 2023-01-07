@@ -98,7 +98,7 @@ namespace json {
 	~Json() { if (_h) this->reset(); }
 	Json(const Json& v) = delete;
 	void operator=(const Json&) = delete;
-	Json& operator=(Json&& v) { if (&v != this) { if (_h) this->reset(); _h = v._h; v._h = 0; } return *this; }
+	Json& operator=(Json&& v) { /*if (&v != this) {}*/ if (_h) this->reset(); _h = v._h; v._h = 0; return *this; }
 	// after this operation, v will be moved and becomes null
 	Json& operator=(Json& v) { return this->operator=(std::move(v)); }
 	// make a duplicate 
@@ -252,22 +252,22 @@ namespace json {
 	}
 	template <typename T>
 	inline void get_to(box<T>& $) {
-		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
-		if (_h->type == t_object) from_json(this, $.p);
+	  if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
+	  if (_h->type == t_object) from_json(this, $.p);
 	}
 	template <typename T>
 	inline void get_to(vec<T>& $) {
-		for (u32 i = 0; i < this->array_size(); ++i) { this->get(i).get_to($[i]); }
+	  for (u32 i = 0; i < this->array_size(); ++i) { this->get(i).get_to($[i]); }
 	}
 	template <typename T>
 	inline void get_to(T& $) {
-		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, &$); return; }
-		if (_h->type == t_object) from_json(this, &$);
+	  if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, &$); return; }
+	  if (_h->type == t_object) from_json(this, &$);
 	}
 	template <typename T>
 	inline void get_to(T* $) {
-		if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $); return; }
-		if (_h->type == t_object) from_json(this, $);
+	  if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $); return; }
+	  if (_h->type == t_object) from_json(this, $);
 	}
 	inline void get_to(bool& $) { $ = this->as_bool(); }
 	inline void get_to(float& $) { $ = static_cast<float>(this->as_double()); }
@@ -290,11 +290,28 @@ namespace json {
 	  }
 	  $.tm_year = year - 1900; $.tm_mon = month - 1;
 	}
+	void operator=(const std::string& s) { *this = Json(s.data(), s.size()); }
+	void operator=(const fc::Buf& s) { *this = Json(s.data_, s.end_ - s.data_); }
+	void operator=(const tm& _v) {
+	  this->reset(); std::ostringstream os; os << std::setfill('0');
+#ifdef _WIN32
+	  os << std::setw(4) << _v.tm_year + 1900;
+#else
+	  int y = _v.tm_year / 100; os << std::setw(2) << 19 + y << std::setw(2) << _v.tm_year - y * 100;
+#endif
+	  os << '-' << std::setw(2) << (_v.tm_mon + 1) << '-' << std::setw(2) << _v.tm_mday << ' ' << std::setw(2)
+		<< _v.tm_hour << ':' << std::setw(2) << _v.tm_min << ':' << std::setw(2) << _v.tm_sec;
+	  std::string s = os.str(); _h = new(xx::alloc()) _H(s.data(), s.size());
+	}
 	template <typename T>
 	void operator=(const box<T>& v) {
 	  if (v.p) {
 		i8 i = -1; fc::ForEachField(v.p, [&i, this](auto& t) { this->operator[](T::$[++i]) = t; });
 	  }
+	}
+	template <typename T, std::enable_if_t<std::is_class<T>::value>* = nullptr>
+	void operator=(const T& v) {
+	  i8 i = -1; fc::ForEachField(&v, [&i, this](auto& t) { this->operator[](T::$[++i]) = t; });
 	}
 	template <typename T>
 	void operator=(const std::vector<T>& v) {
@@ -302,8 +319,8 @@ namespace json {
 		Json j; i8 i; for (const T& t : v) {
 		  i = -1; fc::ForEachField(&t, [&i, &j, this](auto& t) { j[T::$[++i]] = t; }); this->push_back(j);
 		}
+		}
 	  }
-	}
 	// set value for Json.
 	//   - The last parameter is the value, other parameters are index or key.
 	//   - eg.
@@ -462,7 +479,7 @@ namespace json {
 	fc::Buf& _json2str(fc::Buf& fs, bool debug, int& mdp) const;
 	fc::Buf& _json2pretty(fc::Buf& fs, int& indent, int n, int& mdp) const;
 	_H* _h;
-  };
+	};
   // make an empty array
   inline Json array() { return Json(Json::_arr_t()); }
   // make an array from initializer_list
@@ -475,11 +492,11 @@ namespace json {
   inline Json parse(const char* s) { return parse(s, strlen(s)); }
   inline Json parse(const std::string& s) { return parse(s.data(), s.size()); }
   inline Json parse(const fc::Buf& b) { return parse(b.data_, b.size()); }
-} // json
+  } // json
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
 template<typename T> static void to_json(json::Json& c, const T* v) { c = v ? Json{ *v } : Json{ nullptr }; }
-template<typename T> static void to_json(json::Json& c, const box<T>* v) { if(!c.empty())c.reset(); to_json(c, v->p); }
+template<typename T> static void to_json(json::Json& c, const box<T>* v) { if (!c.empty())c.reset(); to_json(c, v->p); }
 template<typename T>
 static void to_json(json::Json& c, const std::vector<T>* v) {
   fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << v->at(i) << ','; }
