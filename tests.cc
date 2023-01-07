@@ -45,7 +45,8 @@ int main() {
   f = f.yield();
   if (!f) std::cout << "returned second time: " << data << std::endl;
   std::cout << "execution context terminated" << std::endl;
-  Json j; Person p{ "rust",14, box<Book>{"js", box<Person>{"plus",23}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
+  //linux only support 2 layer of the box<>, others need set.
+  Json j; Person p{ "rust",14,Book{"b",nullptr} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
   fc::ForRangeField<2, 4>(&p, [](auto& _) { std::cout << typeid(_).name() << std::endl; });//2nd, 3rd index of tuple
   fc::ForRangeTuple<Person, 0, 2>(&p, [&p](auto& _) {
 	std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
@@ -53,12 +54,12 @@ int main() {
   std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
   fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
-  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
-  //The box in the std::vector cannot set the initial value, only the following method can be used here
-  Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };
-  b.person->books[0].person = Person{ "joker", 9, Book{"what the fuck"} };//if box has initial value, only this way it works
+  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };//not work
+  //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
+  Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };//linux only support 2 layer of the box<>
+  b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
   b.person->book = Book{ "rs", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
-  to_json(j, &b); j["person"]["book"]["person"]["book"] = box<Book>(b); std::cout << j.dump() << std::endl;
+  Json x; to_json(x, &b); std::cout << x.dump() << std::endl;
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");

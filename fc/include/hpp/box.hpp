@@ -19,7 +19,13 @@ public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   template<typename U>
+#ifdef _WIN32
   box(box<U>&& _) noexcept: p(_.p), b(_.b) { _.p = 0; _.b = false; }
+#else
+  box(box<U>&& _) noexcept: p(NULL), b(false) {
+	if (_.p != nullptr) { p = new T{ *_.p }; delete _.p; _.p = nullptr; _.b = false; b = true; }
+  }
+#endif // _WIN32
   template<typename U>
   box(box<U>& _) noexcept: p(_.p), b(false) {}
 #ifdef _WIN32
@@ -33,7 +39,7 @@ public:
   box(U&&... _) noexcept: p(new T{ std::move(_)... }), b(true) {}
   template<typename... U>
   box(U&... _) noexcept: p(new T{ _... }), b(true) {}
-  ~box() { if (b) { delete p; } }
+  ~box() { if (b) { delete p; } p = nullptr; }
   //Automatic memory management, eg: box<T> xx = new T{};
   void operator = (T* s) { if (b)delete p; p = s; }
   void operator = (T& s) { if (b)delete p; p = &s; b = false; }
