@@ -19,7 +19,7 @@ public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   template<typename U>
-  box(box<U>&& _) noexcept: p(_.p), b(true) { _.p = 0; _.b = false; }
+  box(box<U>&& _) noexcept: p(_.p), b(_.b) { _.p = 0; _.b = false; }
   template<typename U>
   box(box<U>& _) noexcept: p(_.p), b(false) {}
 #ifdef _WIN32

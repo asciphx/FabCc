@@ -53,8 +53,11 @@ int main() {
   std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
   fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
-  Book b{ "ts", Person{"plus",23, Book{"js"}, vec<Book>{ Book{},Book{} }} };
-  b.person->book->person = Person{ "rs" };//Write C++ like Object-Oriented Programming, also work.
+  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
+  //The box in the std::vector cannot set the initial value, only the following method can be used here
+  Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };
+  b.person->books[0].person = Person{ "joker", 9, Book{"what the fuck"} };//if box has initial value, only this way it works
+  b.person->book = Book{ "rs", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
   to_json(j, &b); j["person"]["book"]["person"]["book"] = box<Book>(b); std::cout << j.dump() << std::endl;
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
