@@ -26,7 +26,7 @@ int main() {
 	.sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
 	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js"}, vec<Book>{ Book{},Book{} }} };
-	b.person->book->person = Person{ "ds" };//Write C++ like java.
+	b.person->book->person = Person{ "ds" };//Write C++ like Object-Oriented Programming
 	to_json(x, &b); x["person"]["book"]["person"]["book"] = b;
 	res.write(x.dump());//JSON response
   };
