@@ -54,7 +54,7 @@ int main() {
   std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
   fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
-  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };//not work
+  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
   //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
   Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };//linux only support 2 layer of the box<>
   b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
