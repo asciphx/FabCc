@@ -8,7 +8,7 @@
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
 [release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
 [release-link]: https://github.com/asciphx/FabCc/releases
-灵感来自于其他c++知名web框架, FabCC的定位是一个网络框架, 其特点是简洁、迅速、实用、活跃、全面。
+灵感来自于其他c++知名web框架, FabCC的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。
 
 ## 特征
 - 基于epoll架构的全平台支持[windows下由wepoll实现]

@@ -8,7 +8,7 @@
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
 [release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
 [release-link]: https://github.com/asciphx/FabCc/releases
-Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by concise, fast, practical, reactive, functional.
+Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome.
 ## Features
 - Full platform support based on epoll architecture [implemented by wepoll under windows]
 - Now the minimum compiler supports the c++14 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
