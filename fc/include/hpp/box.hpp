@@ -34,11 +34,12 @@ public:
   template<typename... U>
   box(U&... _) noexcept: p(new T{ _... }), b(true) {}
   ~box() { if (b) { delete p; } }
-  void operator = (T* s) { if (b)delete p; p = s; b = false; }
+  //Automatic memory management, eg: box<T> xx = new T{};
+  void operator = (T* s) { if (b)delete p; p = s; }
   void operator = (T& s) { if (b)delete p; p = &s; b = false; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U&& _) {
-	if (b) *p = std::move(_); else { p = new T(std::move(_)); b = true; }
+	if (b) delete p; p = new T(std::move(_)); b = true;
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U& _) {

@@ -37,7 +37,7 @@ namespace fc {
 #if (defined(_HAS_CXX17) && !_HAS_CXX17) || (!defined(_WIN32) && __cplusplus <= 201402L)
   template <class T, size_t I = 0, size_t E = std::tuple_size_V<T::Tuple>, typename Fn>//range index of tuple
   inline constexpr void ForRangeTuple(T* t, Fn&& f) {
-	char i = 0; ForEachTuple(T::Tuple, [&i, t, &f](auto F) { if (++i > I) f(F); }, std::make_index_sequence<E>{});
+	char i = 0; ForEachTuple(T::Tuple, [&i, &f](auto F) { if (++i > I) f(F); }, std::make_index_sequence<E>{});
   };
 #else
   template <class T, size_t I = 0, size_t E = std::tuple_size_V<T::Tuple>, typename Fn>//range index of tuple

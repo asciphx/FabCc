@@ -52,10 +52,10 @@ int main() {
   });
   std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
   fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
-  return 0;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
-  Book b{ "ts", box<Person>{"plus",23, box<Book>{"js", box<Person>{"ds"}}, vec<Book>{ Book{},Book{} }} }; to_json(j, &b);
-  j.get("person").get("book").get("person").get("book") = box<Book>(b); std::cout << j.dump() << std::endl;
+  Book b{ "ts", Person{"plus",23, Book{"js"}, vec<Book>{ Book{},Book{} }} };
+  b.person->book->person = Person{ "rs" };//Write C++ like Object-Oriented Programming, also work.
+  to_json(j, &b); j["person"]["book"]["person"]["book"] = box<Book>(b); std::cout << j.dump() << std::endl;
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");

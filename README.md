@@ -55,8 +55,8 @@ int main() {
   Timer t; App app;
   app.file_type().sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", box<Person>{"plus",23, box<Book>{"js"}, vec<Book>{ Book{},Book{} }} };
-	b.person->book->person = Person{ "ds" };//Write C++ like Object-Oriented Programming
+	Json x; Book b{ "ts", Person{"plus",23, Book{"js"}, vec<Book>{ Book{},Book{} }} };
+	b.person->book->person = new Person{ "rs" };//Write C++ like Object-Oriented Programming
 	to_json(x, &b); x["person"]["book"]["person"]["book"] = b;
 	res.write(x.dump());//JSON response
   };
