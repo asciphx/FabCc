@@ -60,6 +60,47 @@ int main() {
   b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
   b.person->book = Book{ "rs", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
   Json x; to_json(x, &b); std::cout << x.dump() << std::endl;
+  x = json::parse(R"(
+  {
+      "name": "ts",
+      "person": {
+          "name": "js",
+          "age": 23,
+          "book": {
+              "name": "wtf",
+              "person": {
+                  "name": "fucker",
+                  "age": 0,
+                  "book": null,
+                  "books": null
+              },
+              "persons": null
+          },
+          "books": [
+              {
+                  "name": "Hello, world!",
+                  "person": {
+                      "name": "joker",
+                      "age": 9,
+                      "book": {
+                          "name": "ojbk",
+                          "person": null,
+                          "persons": null
+                      },
+                      "books": null
+                  },
+                  "persons": null
+              },
+              {
+                  "name": "Hello, world!",
+                  "person": null,
+                  "persons": null
+              }
+          ]
+      },
+      "persons": null
+  })"); b.person.reset();//clear box<>;
+  from_json(x, &b); to_json(x, &b); std::cout << x.dump() << std::endl;
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");

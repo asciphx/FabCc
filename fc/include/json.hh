@@ -257,7 +257,7 @@ namespace json {
 	}
 	template <typename T>
 	inline void get_to(vec<T>& $) {
-	  for (u32 i = 0; i < this->array_size(); ++i) { this->get(i).get_to($[i]); }
+	  if (!$.empty()) $.clear(); for (u32 i = 0; i < this->array_size(); ++i) { this->get(i).get_to($[i]); }
 	}
 	template <typename T>
 	inline void get_to(T& $) {
@@ -321,8 +321,8 @@ namespace json {
 		Json j; i8 i; for (const T& t : v) {
 		  i = -1; fc::ForEachField(&t, [&i, &j, this](auto& t) { j[T::$[++i]] = t; }); this->push_back(j);
 		}
-		}
 	  }
+	}
 	// set value for Json.
 	//   - The last parameter is the value, other parameters are index or key.
 	//   - eg.
@@ -481,7 +481,7 @@ namespace json {
 	fc::Buf& _json2str(fc::Buf& fs, bool debug, int& mdp) const;
 	fc::Buf& _json2pretty(fc::Buf& fs, int& indent, int n, int& mdp) const;
 	_H* _h;
-	};
+  };
   // make an empty array
   inline Json array() { return Json(Json::_arr_t()); }
   // make an array from initializer_list
@@ -494,7 +494,7 @@ namespace json {
   inline Json parse(const char* s) { return parse(s, strlen(s)); }
   inline Json parse(const std::string& s) { return parse(s.data(), s.size()); }
   inline Json parse(const fc::Buf& b) { return parse(b.data_, b.size()); }
-  } // json
+} // json
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
 template<typename T> static void to_json(json::Json& c, const T* v) { c = v ? Json{ *v } : Json{ nullptr }; }
