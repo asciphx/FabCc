@@ -252,7 +252,7 @@ namespace json {
 	}
 	template <typename T>
 	inline void get_to(box<T>& $) {
-	  if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
+	  if ($) $.reset(); if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
 	  if (_h->type == t_object) from_json(this, $.p);
 	}
 	template <typename T>
@@ -317,6 +317,7 @@ namespace json {
 	}
 	template <typename T, std::enable_if_t<!fc::is_vector<T>::value>* = nullptr>
 	void operator=(const std::vector<T>& v) {
+	  if (!this->empty()) this->reset();
 	  if (!v.empty()) {
 		Json j; i8 i; for (const T& t : v) {
 		  i = -1; fc::ForEachField(&t, [&i, &j, this](auto& t) { j[T::$[++i]] = t; }); this->push_back(j);
@@ -523,10 +524,10 @@ static void from_json(const json::Json& c, std::vector<T>* v) {
 
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
 #define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_).get_to(_->__VA_ARGS_);
-#define REG(__VA_ARGS_,...)friend json::Json;template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
+#define REG(__VA_ARGS_,...)template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
   template<class T,size_t I,size_t E,typename Fn>friend constexpr void fc::ForRangeTuple(T* t, Fn&& f);\
   private:const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
-  static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
+  friend json::Json;friend box<__VA_ARGS_>;static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
 
 #define CLASS(__VA_ARGS_,...)const u8 __VA_ARGS_::_size = NUM_ARGS(__VA_ARGS__);const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);\
   static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\

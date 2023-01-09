@@ -4,7 +4,7 @@
 #include <timer.hh>
 struct Person;
 struct Book {
-  fc::Buf name = "Hello, world!";
+  fc::Buf name = "BOOK!";
   box<Person> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
@@ -25,10 +25,9 @@ int main() {
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
 	.sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Book b{ "ts", Person{"js", 23, nullptr, vec<Book>{ Book{},Book{} }} };//Linux only supports 2-layer box<>
-	b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//If the box<> in vec have initial values
-	b.person->book = Book{ "wtf", Person{"fucker"} };//Write C++ like Object-Oriented Programming
-	Json x; to_json(x, &b); res.write(x.dump());//JSON response
+	Json x; Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };
+	b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
+	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());//JSON response
   };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//Return to routing list

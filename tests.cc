@@ -56,11 +56,11 @@ int main() {
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
   //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
-  Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };//linux only support 2 layer of the box<>
+  Book b{ "ts", Person{"js",23, nullptr, vec<Book>{ Book{},Book{} }} };//linux only support 2 layer of the box<>
   b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
-  b.person->book = Book{ "rs", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
-  Json x; to_json(x, &b); std::cout << x.dump() << std::endl;
-  x = json::parse(R"(
+  b.person->book = Book{ "wtf", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
+  to_json(j, &b); fc::Buf js = j.dump();//save json
+  j = json::parse(R"(
   {
       "name": "ts",
       "person": {
@@ -99,8 +99,14 @@ int main() {
           ]
       },
       "persons": null
-  })"); b.person.reset();//clear box<>;
-  from_json(x, &b); to_json(x, &b); std::cout << x.dump() << std::endl;
+  })"); from_json(j, &b);//Turn json into an object
+  to_json(j, &b);//Then convert the object to json
+  std::cout << std::boolalpha << (js == j.dump()) << std::endl;//compare json, true
+  //The following is the best way to initialize an object, which can be written at will
+  from_json(j = json::parse(R"(
+  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"","person":{"name":"fucker","age":0},
+  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3}]}}}
+  )"), &b); to_json(j, &b); std::cout << j.str() << std::endl;//show json, 100% correct
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");
