@@ -41,7 +41,7 @@ namespace fc {
   };
 #else
   template <class T, size_t I = 0, size_t E = std::tuple_size_V<T::Tuple>, typename Fn>//range index of tuple
-  constexpr void ForRangeTuple(const T* t, Fn&& f) {
+  constexpr void ForRangeTuple(T* t, Fn&& f) {
 	if constexpr (I < E - 1) { ForRangeTuple<T, I, E - 1>(t, f); (void)f(std::get<E - 1>(T::Tuple)); } else (void)f(std::get<E - 1>(T::Tuple));
   };
 #endif
