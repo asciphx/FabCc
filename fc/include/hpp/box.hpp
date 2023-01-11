@@ -19,13 +19,7 @@ public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   template<typename U>
-#ifdef _WIN32
-  box(box<U>&& _) noexcept: p(_.p), b(_.b) { _.p = 0; _.b = false; }
-#else
-  box(box<U>&& _) noexcept: p(NULL), b(false) {
-	if (_.p != nullptr) { p = new T{ *_.p }; delete _.p; _.p = nullptr; _.b = false; b = true; }
-  }
-#endif // _WIN32
+  box(box<U>&& _) noexcept: p(_.p), b(_.p ? true : false) { _.b = false; }
   template<typename U>
   box(box<U>& _) noexcept: p(_.p), b(false) {}
 #ifdef _WIN32
@@ -40,12 +34,13 @@ public:
   template<typename... U>
   box(U&... _) noexcept: p(new T{ _... }), b(true) {}
   ~box() { if (b) { delete p; } p = nullptr; }
-  //Automatic memory management, eg: box<T> xx = new T{};
-  void operator = (T* s) { if (b)delete p; p = s; }
-  void operator = (T& s) { if (b)delete p; p = &s; b = false; }
+  //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};
+  void operator = (T* _) { if (b)delete p; p = _; b = true; }
+  void operator = (T& _) { if (b) *p = _, b = false; else { p = new T(_); b = true; } }
+  void operator = (T&& _) { if (b) delete p; p = new T(std::move(_)); b = true; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U&& _) {
-	if (b) delete p; p = new T(std::move(_)); b = true;
+	if (b) *p = std::move(_), b = false; else { p = new T(std::move(_)); b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U& _) {

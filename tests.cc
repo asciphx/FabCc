@@ -45,8 +45,7 @@ int main() {
   f = f.yield();
   if (!f) std::cout << "returned second time: " << data << std::endl;
   std::cout << "execution context terminated" << std::endl;
-  //linux only support 2 layer of the box<>, others need set.
-  Json j; Person p{ "rust",14,Book{"b",nullptr} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
+  Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
   fc::ForRangeField<2, 4>(&p, [](auto& _) { std::cout << typeid(_).name() << std::endl; });//2nd, 3rd index of tuple
   fc::ForRangeTuple<Person, 0, 2>(&p, [&p](auto& _) {
 	std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
@@ -56,7 +55,7 @@ int main() {
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
   //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
-  Book b{ "ts", Person{"js",23, nullptr, vec<Book>{ Book{},Book{} }} };//linux only support 2 layer of the box<>
+  Book b{ "ts", Person{"js",23, Book{"what the fuck"}, vec<Book>{ Book{},Book{} }} };//OOP. except box in vec
   b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
   b.person->book = Book{ "wtf", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
   to_json(j, &b); fc::Buf js = j.dump();//save json

@@ -437,8 +437,7 @@ namespace json {
 	  Json& value() const { return (Json&)_p[1]; }
 	  Json& operator*() const { return (Json&)_p[0]; }
 	private:
-	  T* _p;
-	  T* _e;
+	  T* _p, * _e;
 	  u32 _step;
 	};
 	// the begin iterator.
@@ -521,7 +520,6 @@ template<typename T>
 static void from_json(const json::Json& c, std::vector<T>* v) {
   T t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->push_back(t); }
 }
-
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
 #define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_).get_to(_->__VA_ARGS_);
 #define REG(__VA_ARGS_,...)template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
@@ -530,9 +528,8 @@ static void from_json(const json::Json& c, std::vector<T>* v) {
   friend json::Json;friend box<__VA_ARGS_>;static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
 
 #define CLASS(__VA_ARGS_,...)const u8 __VA_ARGS_::_size = NUM_ARGS(__VA_ARGS__);const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);\
-  static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\
-  static void from_json(const Json& c, __VA_ARGS_* _) { if(_){EXP(M$(FC_FROM, __VA_ARGS__))} }\
-  const char* __VA_ARGS_::$[NUM_ARGS(__VA_ARGS__)] = { PROTO_N(NUM_ARGS(__VA_ARGS__),__VA_ARGS__) };\
-  std::tuple<STAR_S(__VA_ARGS_, NUM_ARGS(__VA_ARGS__),__VA_ARGS__)>__VA_ARGS_::Tuple=std::make_tuple(STARS(__VA_ARGS_, NUM_ARGS(__VA_ARGS__), __VA_ARGS__));
-
+static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\
+static void from_json(const Json& c, __VA_ARGS_* _) { if(_){EXP(M$(FC_FROM, __VA_ARGS__))} }\
+const char* __VA_ARGS_::$[NUM_ARGS(__VA_ARGS__)] = { PROTO_N(NUM_ARGS(__VA_ARGS__),__VA_ARGS__) };\
+std::tuple<STAR_S(__VA_ARGS_, NUM_ARGS(__VA_ARGS__),__VA_ARGS__)>__VA_ARGS_::Tuple=std::make_tuple(STARS(__VA_ARGS_, NUM_ARGS(__VA_ARGS__), __VA_ARGS__));
 #endif

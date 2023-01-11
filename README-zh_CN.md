@@ -56,7 +56,7 @@ int main() {
   Timer t; App app;
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };
+	Json x; Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{},Book{} }} };
 	b.person->book = Book{ "rs" };//面向对象地写C++
 	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };

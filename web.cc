@@ -25,9 +25,9 @@ int main() {
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
 	.sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", Person{"plus",23, nullptr, vec<Book>{ Book{},Book{} }} };
+	Json x; Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{},Book{} }} };
 	b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
-	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());//JSON response
+	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//Return to routing list
