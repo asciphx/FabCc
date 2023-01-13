@@ -5,6 +5,7 @@
 #include <memory>
 #include <type_traits>
 #include <new>
+#include <hpp/tuple.hpp>
 #include <tp/c++.h>
 template <typename T> class box;
 template <class T> struct is_box_impl: std::false_type {};
@@ -16,39 +17,10 @@ namespace std {
 	  if (o.p == nullptr) return 0; return hash<std::remove_const_t<T>>()(*o);
 	}
   };
-  inline constexpr void __RR(i8& i) {};
-  inline constexpr void __RR(i16& i) {};
-  inline constexpr void __RR(i32& i) {};
-  inline constexpr void __RR(i64& i) {};
-  inline constexpr void __RR(u8& i) {};
-  inline constexpr void __RR(u16& i) {};
-  inline constexpr void __RR(u32& i) {};
-  inline constexpr void __RR(u64& i) {};
-  inline constexpr void __RR(bool& i) {};
-  inline constexpr void __RR(std::string& i) {};
-  inline constexpr void __RR(std::string_view& i) {};
-  inline constexpr void __RR(fc::Buf& i) {};
-  inline constexpr void __RR(tm& i) {};
-  inline constexpr void __RR(float& i) {};
-  inline constexpr void __RR(double& i) {};
-  inline constexpr void __RR(long double& i) {};
-  inline constexpr void __RR(const char*& i) {};
-  template<typename T>
-  inline constexpr void __RR(box<T>& i) { if (i)i.cache(); };
-  template<typename T>
-  inline constexpr void __RR(std::vector<T>& i) {};
 }
 template <typename T>
 class box {
   bool b;
-  friend constexpr void std::__RR(box& i);
-  void cache() noexcept {
-#ifdef _WIN32
-	* ((bool*)(this)) = false;
-#else
-	* ((bool*)(this)) = true;
-#endif
-  }
 public:
   T* p;
   box() noexcept: p(NULL), b(false) {}
@@ -61,7 +33,7 @@ public:
   box(T&& _) : p(new T{ std::move(_) }), b(true) {}
 #else
   box(T&& _) : p(new T{ std::move(_) }), b(false) {}
-#endif // _WIN32
+#endif
   box(T& _) : p(&_), b(false) {}
   explicit box(T* _) noexcept: p(_), b(false) {}
   template<typename... U>
@@ -122,12 +94,6 @@ public:
 template<typename T> struct box_pack {};
 template<typename T> struct box_pack<box<T>> { using type = T; };
 template<typename T> using box_pack_t = typename box_pack<T>::type;
-//Recycler to recycle the box inside the object in vec
-template<typename T>
-constexpr void __Recycler(std::vector<T>& __) {
-  for (auto& _ : __) fc::ForEachTuple(T::Tuple, [&_](auto& F) { std::__RR(_.*(F)); }
-  , std::make_index_sequence<std::tuple_size_V<decltype(T::Tuple)>>{});
-};
 template <class T, class... K>
 inline constexpr box<T> make_box(K &&... k) { return box<T>(std::in_place, std::forward<K>(k)...); }
 template <class T, class U, class... K>

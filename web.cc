@@ -25,8 +25,8 @@ int main() {
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
 	.sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", Person{"js",1, Book{ "rs" }, vec<Book>{ Book{},Book{"",Person{ "X!",9}} }} };
-	__Recycler<Book>(b.person->books);//Recycler to recycle the box<> inside the object in vec
+	Json x; Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{},Book{} }} };
+	b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
 	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/api"] = [&app](Req& req, Res& res) {

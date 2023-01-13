@@ -53,46 +53,52 @@ int main() {
   std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
   fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
-  Book b{ "ts", Person{"js",23, Book{"wtf"}, vec<Book>{ Book{"sb",Person{}},Book{"ojbk",Person{}} }} };//OOP
-  __Recycler<Book>(b.person->books);//Recycler to recycle the box inside the object in vec
-  to_json(j, &b);
-  fc::Buf js = j.dump(); std::cout << js;//save json
+  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
+  //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
+  Book b{ "ts", Person{"js",23, Book{"what the fuck"}, vec<Book>{ Book{},Book{} }} };//OOP. except box in vec
+  b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
+  b.person->book = Book{ "wtf", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
+  to_json(j, &b); fc::Buf js = j.dump();//save json
   j = json::parse(R"(
-{
-  "name": "ts",
-  "person": {
-    "name": "js",
-    "age": 23,
-    "book": {
-      "name": "wtf",
-      "person": null,
-      "persons": null
-    },
-    "books": [
-      {
-        "name": "sb",
-        "person": {
-          "name": "",
-          "age": 0,
-          "book": null,
-          "books": null
-        },
-        "persons": null
+  {
+      "name": "ts",
+      "person": {
+          "name": "js",
+          "age": 23,
+          "book": {
+              "name": "wtf",
+              "person": {
+                  "name": "fucker",
+                  "age": 0,
+                  "book": null,
+                  "books": null
+              },
+              "persons": null
+          },
+          "books": [
+              {
+                  "name": "Hello, world!",
+                  "person": {
+                      "name": "joker",
+                      "age": 9,
+                      "book": {
+                          "name": "ojbk",
+                          "person": null,
+                          "persons": null
+                      },
+                      "books": null
+                  },
+                  "persons": null
+              },
+              {
+                  "name": "Hello, world!",
+                  "person": null,
+                  "persons": null
+              }
+          ]
       },
-      {
-        "name": "ojbk",
-        "person": {
-          "name": "",
-          "age": 0,
-          "book": null,
-          "books": null
-        },
-        "persons": null
-      }
-    ]
-  },
-  "persons": null
-})"); from_json(j, &b);//Turn json into an object
+      "persons": null
+  })"); from_json(j, &b);//Turn json into an object
   to_json(j, &b);//Then convert the object to json
   std::cout << std::boolalpha << (js == j.dump()) << std::endl;//compare json, true
   //The following is the best way to initialize an object, which can be written at will
