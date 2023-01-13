@@ -6,14 +6,49 @@
 #include <type_traits>
 #include <new>
 #include <tp/c++.h>
-
 template <typename T> class box;
 template <class T> struct is_box_impl: std::false_type {};
 template <class T> struct is_box_impl<box<T>>: std::true_type {};
 template <class T> using is_box = is_box_impl<std::decay_t<T>>;
+namespace std {
+  template <class T> struct hash<box<T>> {
+	size_t operator()(const box<T>& o) const {
+	  if (o.p == nullptr) return 0; return hash<std::remove_const_t<T>>()(*o);
+	}
+  };
+  inline constexpr void __RR(i8& i) {};
+  inline constexpr void __RR(i16& i) {};
+  inline constexpr void __RR(i32& i) {};
+  inline constexpr void __RR(i64& i) {};
+  inline constexpr void __RR(u8& i) {};
+  inline constexpr void __RR(u16& i) {};
+  inline constexpr void __RR(u32& i) {};
+  inline constexpr void __RR(u64& i) {};
+  inline constexpr void __RR(bool& i) {};
+  inline constexpr void __RR(std::string& i) {};
+  inline constexpr void __RR(std::string_view& i) {};
+  inline constexpr void __RR(fc::Buf& i) {};
+  inline constexpr void __RR(tm& i) {};
+  inline constexpr void __RR(float& i) {};
+  inline constexpr void __RR(double& i) {};
+  inline constexpr void __RR(long double& i) {};
+  inline constexpr void __RR(const char*& i) {};
+  template<typename T>
+  inline constexpr void __RR(box<T>& i) { if (i)i.cache(); };
+  template<typename T>
+  inline constexpr void __RR(std::vector<T>& i) {};
+}
 template <typename T>
 class box {
   bool b;
+  friend constexpr void std::__RR(box& i);
+  void cache() noexcept {
+#ifdef _WIN32
+	* ((bool*)(this)) = false;
+#else
+	* ((bool*)(this)) = true;
+#endif
+  }
 public:
   T* p;
   box() noexcept: p(NULL), b(false) {}
@@ -36,11 +71,11 @@ public:
   ~box() { if (b) { delete p; } p = nullptr; }
   //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};
   void operator = (T* _) { if (b)delete p; p = _; b = true; }
-  void operator = (T& _) { if (b) *p = _, b = false; else { p = new T(_); b = true; } }
+  void operator = (T& _) { if (b) *p = _; else { p = new T(_); b = true; } }
   void operator = (T&& _) { if (b) delete p; p = new T(std::move(_)); b = true; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U&& _) {
-	if (b) *p = std::move(_), b = false; else { p = new T(std::move(_)); b = true; }
+	if (b) *p = _, b = false; else { p = new T(std::move(_)); b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U& _) {
@@ -82,15 +117,17 @@ public:
 	  * ((bool*)(this)) = true;
 #endif // _WIN32
   }
-  void reset() noexcept { if (b) { b = false; delete p; } p = nullptr; }
+  void reset() noexcept { if (p) { delete p; } p = nullptr; b = false; }
 };
-namespace std {
-  template <class T> struct hash<box<T>> {
-	size_t operator()(const box<T>& o) const {
-	  if (o.p == nullptr) return 0; return hash<std::remove_const_t<T>>()(*o);
-	}
-  };
-}
+template<typename T> struct box_pack {};
+template<typename T> struct box_pack<box<T>> { using type = T; };
+template<typename T> using box_pack_t = typename box_pack<T>::type;
+//Recycler to recycle the box inside the object in vec
+template<typename T>
+constexpr void __Recycler(std::vector<T>& __) {
+  for (auto& _ : __) fc::ForEachTuple(T::Tuple, [&_](auto& F) { std::__RR(_.*(F)); }
+  , std::make_index_sequence<std::tuple_size_V<decltype(T::Tuple)>>{});
+};
 template <class T, class... K>
 inline constexpr box<T> make_box(K &&... k) { return box<T>(std::in_place, std::forward<K>(k)...); }
 template <class T, class U, class... K>
@@ -163,9 +200,6 @@ template <class T, class U>
 inline constexpr bool operator>=(const box<T>& l, const U& r) { return l.p ? *l.p >= r : false; }
 template <class T, class U>
 inline constexpr bool operator>=(const U& l, const box<T>& r) { return r.p ? l >= *r.p : true; }
-template<typename T> struct box_pack {};
-template<typename T> struct box_pack<box<T>> { using type = T; };
-template<typename T> using box_pack_t = typename box_pack<T>::type;
 #include <vector>
 template<typename T>
 using vec = std::vector<T>;

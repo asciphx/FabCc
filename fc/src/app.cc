@@ -136,9 +136,7 @@ namespace fc {
 			  } else {
 				file_cache_[_] = res.__ = std::make_shared<file_sptr>(_, (size_t)res.file_size, statbuf_.st_mtime);
 			  }
-			  if (res.__->ptr_ != nullptr) {
 				res.Ctx.send_file(res.__);
-			  }
 			  //res.path_ = std::move(_);
 			  return;
 			}

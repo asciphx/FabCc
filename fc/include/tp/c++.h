@@ -11,6 +11,14 @@
 #define BOOST_UNLIKELY(x) x
 #define BOOST_LIKELY(x) x
 #endif
+typedef signed char  i8;
+typedef short i16;
+typedef int i32;
+typedef long long i64;
+typedef unsigned char  u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long long u64;
 namespace std {
 #if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)
   #define __INLINE inline

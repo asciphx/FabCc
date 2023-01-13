@@ -56,8 +56,8 @@ int main() {
   Timer t; App app;
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{},Book{} }} };
-	b.person->book = Book{ "rs" };//面向对象地写C++
+	Json x; Book b{ "ts", Person{"js",1, Book{ "rs" }, vec<Book>{ Book{},Book{"",Person{ "X!",9}} }} };
+	__Recycler<Book>(b.person->books);//Recycler用来回收vec中对象内的box<>
 	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/api"] = [&app](Req& req, Res& res) {

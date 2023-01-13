@@ -523,9 +523,10 @@ static void from_json(const json::Json& c, std::vector<T>* v) {
 #define FC_TO(__VA_ARGS_) c[#__VA_ARGS_].operator= (_->__VA_ARGS_);
 #define FC_FROM(__VA_ARGS_) c.get(#__VA_ARGS_).get_to(_->__VA_ARGS_);
 #define REG(__VA_ARGS_,...)template<typename T,typename Fn>friend constexpr void fc::ForEachField(T* t, Fn&& fn);\
-  template<class T,size_t I,size_t E,typename Fn>friend constexpr void fc::ForRangeTuple(T* t, Fn&& f);\
+  template<class T,size_t I,size_t E,typename F>friend constexpr void fc::ForRangeTuple(T*t,F&&f);\
+  template<typename T>friend constexpr void __Recycler(std::vector<T>& __);\
   private:const static char* $[NUM_ARGS(__VA_ARGS__)];const static u8 _size;static const std::string _name;\
-  friend json::Json;friend box<__VA_ARGS_>;static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
+  friend json::Json;static std::tuple<STAR_S(__VA_ARGS_,NUM_ARGS(__VA_ARGS__),__VA_ARGS__)> Tuple;
 
 #define CLASS(__VA_ARGS_,...)const u8 __VA_ARGS_::_size = NUM_ARGS(__VA_ARGS__);const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);\
 static void to_json(Json& c, const __VA_ARGS_* _) { if(_){EXP(M$(FC_TO, __VA_ARGS__))} }\
