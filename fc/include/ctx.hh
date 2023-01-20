@@ -79,6 +79,7 @@ namespace fc {
 	int status_code_ = 200;
 	const char* status_ = "200 OK";
 	llParser parser_;
+	std::unordered_map<std::string_view, std::string_view> cookie_map;
 	
 	std::string url_;
 	std::string_view content_type_;

@@ -216,7 +216,7 @@ namespace fc {
 		  assert(rb.cursor <= rb.end);
 		  ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
 		  ctx.prepare_request();
-		  Req req = ctx.parser_.to_request<Req>(ctx.fiber);
+		  Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map);
 		  if (!req.url(0)) { req.body = ctx.read_whole_body(); req.url << ctx.url_; };
 		  Res res(ctx);
 		  try {

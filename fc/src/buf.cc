@@ -176,7 +176,7 @@ namespace fc {
 	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
 	end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s.data(), s.size());
   }
-  Buf& Buf::operator=(std::string_view s) {
+  Buf& Buf::operator=(const std::string_view s) {
 	if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
 	end_ = data_; back_ = data_ + cap_; memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
   }
