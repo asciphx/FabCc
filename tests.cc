@@ -25,7 +25,7 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
-  box<std::string> op("AOP");//optional
+  std::optional<std::string> op("AOP");//optional
   std::cout << op.value_or("null") << '\n';
   op = "Hello, world!";
   std::cout << op.value_or("null") << '\n';

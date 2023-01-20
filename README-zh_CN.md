@@ -60,6 +60,12 @@ int main() {
 	b.person->book = Book{ "rs" };//C++中的面向对象开发
 	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
+  app["/serialization"] = [](Req& req, Res& res) {
+	Json x; Book b; from_json(x = json::parse(R"(
+  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
+  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
+  )"), &b); to_json(x, &b); res.write(x.dump());//反序列化与序列化
+  };
   app["/api"] = [&app](Req& req, Res& res) {
 	res.write(app._print_routes());//返回路由列表
   };
