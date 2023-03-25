@@ -33,8 +33,8 @@ namespace ctx {
 #include <stddef.h>
   typedef void* fcontext_t;
   typedef struct {
-	fcontext_t  fctx;
-	void* data;
+    fcontext_t  fctx;
+    void* data;
   } transfer_t;
   extern "C" transfer_t _CONTEXT_CALLDECL jump_fcontext(fcontext_t const to, void* vp);
   extern "C" fcontext_t _CONTEXT_CALLDECL make_fcontext(void* sp, size_t size, void (*fn)(transfer_t));
@@ -43,8 +43,8 @@ namespace ctx {
   // This C++ tail of ontop_fcontext() allocates transfer_t{ from, vp }
   // on the stack.  If fn() throws a C++ exception, then the C++ runtime
   // must remove this tail's stack frame.
-  extern "C" inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
-      return fn( transfer_t{ from, vp });
+  extern "C" inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void* vp, transfer_t(*fn)(transfer_t), fcontext_t const from) {
+    return fn(transfer_t{ from, vp });
   }
 }
 #if defined _MSC_VER

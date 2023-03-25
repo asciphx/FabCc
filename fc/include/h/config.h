@@ -38,5 +38,10 @@
 #define constexpr const
 #define noexcept throw()
 #endif
+#if defined(_MSC_VER) || defined(_WIN32)
+#include <locale.h>
+#define WIN32_LEAN_AND_MEAN
+#endif
+#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
 #endif
 

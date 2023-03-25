@@ -30,20 +30,20 @@ namespace ctx {
   struct stack_context { size_t size; void* sp; stack_context(): size(0), sp(0) {} };
 #endif
   struct stack_traits {
-	static bool is_unbounded() noexcept; static size_t page_size() noexcept; static size_t default_size() noexcept;
-	static size_t minimum_size() noexcept; static size_t maximum_size() noexcept;
+    static bool is_unbounded() noexcept; static size_t page_size() noexcept; static size_t default_size() noexcept;
+    static size_t minimum_size() noexcept; static size_t maximum_size() noexcept;
   };
   class fixedsize_stack {
-	size_t size_;
+    size_t size_;
   public:
-	fixedsize_stack(size_t size = stack_traits::default_size()) noexcept: size_(size) {}
-	stack_context allocate() {
-	  void* vp = std::malloc(size_); if (!vp) { throw std::bad_alloc(); }
-	  stack_context sctx; sctx.size = size_; sctx.sp = static_cast<char*>(vp) + size_; return sctx;
-	}
-	void deallocate(stack_context& sctx) noexcept {
-	  assert(sctx.sp); void* vp = static_cast<char*>(sctx.sp) - sctx.size; std::free(vp);
-	}
+    fixedsize_stack(size_t size = stack_traits::default_size()) noexcept: size_(size) {}
+    stack_context allocate() {
+      void* vp = std::malloc(size_); if (!vp) { throw std::bad_alloc(); }
+      stack_context sctx; sctx.size = size_; sctx.sp = static_cast<char*>(vp) + size_; return sctx;
+    }
+    void deallocate(stack_context& sctx) noexcept {
+      assert(sctx.sp); void* vp = static_cast<char*>(sctx.sp) - sctx.size; std::free(vp);
+    }
   };
 }
 #if defined _MSC_VER
