@@ -107,7 +107,7 @@ namespace fc {
         throw err::not_found();
       _:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
         if (last_dot) {
-          std::string ss = toLowerCase(_.substr(last_dot)); std::string_view extension(ss.data(), ss.size());
+          std::string ss = std::move(toLowerCase(_.substr(last_dot))); std::string_view extension(ss.data(), ss.size());
           if (content_types.find(extension) != content_types.end()) {
             res.code = 200; res.set_header("Content-Type", content_types.at(extension));
             if (extension[0] == 'h' && extension[1] == 't') { res.is_file = 1; } else {

@@ -51,7 +51,7 @@ namespace fc {
     kevent* kevents;
 #endif
     socket_type fiber_idx, event_flags, event_fd;
-    int n_events;
+    int n_events, i;
     epoll_handle_t epoll_fd;
     sockaddr_storage in_addr_storage;
     socklen_t in_len = sizeof(sockaddr_storage);
@@ -95,9 +95,9 @@ namespace fc {
         n_events = kevent(epoll_fd, NULL, 0, kevents, MAXEVENTS, &timeout);
 #endif
         if (n_events == 0) {
-          for (int i = 0; i < R_fibers.size() && R_fibers[i]; ++i) R_fibers[i] = R_fibers[i].yield();
+          for (i = 0; i < R_fibers.size() && R_fibers[i]; ++i) R_fibers[i] = R_fibers[i].yield();
         }
-        for (int i = 0; i < n_events; ++i) {
+        for (i = 0; i < n_events; ++i) {
 #if __APPLE__
           int event_flags = kevents[i].flags;
           int event_fd = kevents[i].ident;

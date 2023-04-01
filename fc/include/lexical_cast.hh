@@ -134,7 +134,7 @@ namespace std {
   template <> inline string lexical_cast<string>(long unsigned&& i) { char s[10]; return string(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
   template <> inline string lexical_cast<string>(long long&& i) { char s[20]; return string(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
   template <> inline string lexical_cast<string>(unsigned long long&& i) { char s[20]; return string(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-  template <> inline string lexical_cast<string>(bool&& b) { return std::move(b) ? STD_TURE : STD_FALSE; }
+  template <> inline string lexical_cast<string>(bool&& b) { return b ? STD_TURE : STD_FALSE; }
   template <> inline string lexical_cast<string>(double&& f) { char s[16]; return string(s, milo::dtoa(std::move(f), s, 0x10)); }
   template <> inline string lexical_cast<string>(float&& f) { char s[7]; return string(s, milo::dtoa(std::move(f), s, 0x7)); }
   template <> inline string lexical_cast<string>(long double&& f) { return to_string(std::move(f)); }//milo not support

@@ -98,7 +98,8 @@ namespace fc {
     //}
     inline ~Conn() {
       //if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
-      if (0 != close_socket(socket_fd)) std::cerr << "Error when closing file descriptor " << socket_fd << ": " << strerror(errno) << std::endl;
+      close_socket(socket_fd);
+      //if (0 != close_socket(socket_fd)) std::cerr << "Error when closing file descriptor " << socket_fd << ": " << strerror(errno) << std::endl;
     }// Will finally close the fd.
     void epoll_mod(socket_type fd, int flags);
     inline int read_impl(char* buf, int size) {

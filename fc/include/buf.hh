@@ -123,26 +123,24 @@ namespace fc {
       if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
-    _INLINE Buf& operator<<(unsigned long long&& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(long long&& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(int&& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(long&& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(unsigned long&& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(unsigned int&& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(short&& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(unsigned short&& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(char& v) { end_[0] = v; ++end_; return *this; }// not safe, but fast
-    _INLINE Buf& operator<<(bool& b) { return operator<<(b ? RES_TURE : RES_FALSE); }
-    _INLINE Buf& operator<<(unsigned long long& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(long long& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(int& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(long& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(unsigned long& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(unsigned int& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(short& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(unsigned short& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
-    _INLINE Buf& operator<<(char&& v) { end_[0] = std::move(v); ++end_; return *this; }
-    _INLINE Buf& operator<<(bool&& b) { return operator<<(std::move(b) ? RES_TURE : RES_FALSE); }
+    _INLINE Buf& operator<<(unsigned long long& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(long long& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(int& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(long& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(unsigned long& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(unsigned int& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(short& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(unsigned short& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
+    _INLINE Buf& operator<<(char v) { end_[0] = v; ++end_; return *this; }// not safe, but fast
+    _INLINE Buf& operator<<(bool b) { return operator<<(b ? RES_TURE : RES_FALSE); }
+    _INLINE Buf& operator<<(unsigned long long&& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(long long&& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(int&& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(long&& i) { char s[11]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(unsigned long&& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(unsigned int&& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(short&& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
+    _INLINE Buf& operator<<(unsigned short&& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
     _INLINE Buf& operator<<(std::string_view s) {
       if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
@@ -172,7 +170,7 @@ namespace fc {
 }
 namespace std {
   _INLINE bool operator==(std::string s, const fc::Buf& b) {
-    size_t t_l = b.end_ - b.data_; return t_l == s.size() && memcmp(s.data(), b.data_, b.end_ - b.data_) == 0;
+    size_t t_l = b.end_ - b.data_; return t_l == s.size() && memcmp(s.data(), b.data_, t_l) == 0;
   }
 }
 #undef _INLINE

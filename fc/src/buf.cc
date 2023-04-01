@@ -167,7 +167,7 @@ namespace fc {
     memcpy(end_, b.data_, l); end_ += l; return *this;
   }
   Buf& Buf::operator<<(double& d) { this->ensure(0x10); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
-  Buf& Buf::operator<<(float& f) { this->ensure(0x7); end_ += milo::dtoa(reinterpret_cast<double&>(f), end_, back_ - end_); return *this; }
+  Buf& Buf::operator<<(float& f) { this->ensure(0x7); end_ += milo::dtoa(f, end_, back_ - end_); return *this; }
   Buf& Buf::operator<<(double&& d) { this->ensure(0x10); end_ += milo::dtoa(std::move(d), end_, back_ - end_); return *this; }
   Buf& Buf::operator<<(float&& f) { this->ensure(0x7); end_ += milo::dtoa(std::move(f), end_, back_ - end_); return *this; }
   Buf& Buf::operator=(const char* s) {
