@@ -2,48 +2,55 @@
 #include <iostream>
 namespace fc {
   static int on_message_begin(llhttp__internal_s* _) {
-	llParser* $ = static_cast<llParser*>(_); $->url.reset(); $->url_params.reset();
-	$->headers.clear(); $->body.reset(); $->http_major = $->http_minor = 0; return 0;
+    llParser* $ = static_cast<llParser*>(_); $->url.reset(); $->url_params.reset();
+    $->headers.clear(); $->body.reset(); $->http_major = $->http_minor = 0; return 0;
   }
-  static int on_url(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->url_params << DecodeURL(c, l);  return 0;
-  }
+  static int on_url(llhttp__internal_s* _, const char* c, size_t s) {
+    llParser* $ = static_cast<llParser*>(_); $->url_params << DecodeURL(c, s);
+    unsigned int l = $->url_params.find('?');
+    if (l != -1) {
+      $->url << $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
+    } else { $->url << $->url_params; } return 0;
+  }//$->url_params = query_string($->url_params); handler_->handle();
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->header_field.assign(c, c + l); return 0;
+    llParser* $ = static_cast<llParser*>(_); $->header_field.assign(c, c + l); return 0;
   }
   static int on_header_value(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->header_value.assign(c, c + l);
-	//str_map::iterator i = $->headers.find($->header_field);
-	//if (i != $->headers.end()) { i->second = $->header_value;
-	//$->header_field.reset(); $->header_value.reset(); return 0; }
-	$->headers.emplace($->header_field, $->header_value);
-	$->header_field.reset(); $->header_value.reset(); return 0;
+    llParser* $ = static_cast<llParser*>(_); $->header_value.assign(c, c + l);
+    //str_map::iterator i = $->headers.find($->header_field);
+    //if (i != $->headers.end()) { i->second = $->header_value;
+    //$->header_field.reset(); $->header_value.reset(); return 0; }
+    $->headers.emplace($->header_field, $->header_value);
+    $->header_field.reset(); $->header_value.reset(); return 0;
   }
  // static int on_headers_complete(llhttp__internal_s* _) {
-	//llParser* $ = static_cast<llParser*>(_); return 0;
+  //llParser* $ = static_cast<llParser*>(_); return 0;
  // }
   static int on_body(llhttp__internal_s* _, const char* c, size_t l) {
-	llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end_, c, c + l); return 0;
+    llParser* $ = static_cast<llParser*>(_); $->body.insert($->body.end_, c, c + l); return 0;
   }
   static int on_message_complete(llhttp__internal_s* _) {
-	llParser* $ = static_cast<llParser*>(_); unsigned int l = $->url_params.find('?');
-	if (l != -1) {
-	  $->url << $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
-	} else { $->url << $->url_params; }
-	return 0;//$->url_params = query_string($->url_params); handler_->handle();
+    //llParser* $ = static_cast<llParser*>(_); unsigned int l = $->url_params.find('?');
+    //if (l != -1) {
+    //  $->url << $->url_params.substr(0, l); $->url_params = $->url_params.substr(++l);
+    //} else { $->url << $->url_params; }
+    return 0;
+  }
+  void llParser::reset() {
+    headers.clear(); url.reset(); url_params.reset(); body.reset(); http_major = http_minor = 0;
   }
   const llhttp_settings_s llParser::_ = {
-	  on_message_begin,
-	  on_url,
-	  nullptr,
-	  on_header_field,
-	  on_header_value,
-	  nullptr,
-	  on_body,
-	  on_message_complete
+    nullptr,
+    on_url,
+    nullptr,
+    on_header_field,
+    on_header_value,
+    nullptr,
+    on_body,
+    nullptr
   };
   void llParser::set_type(llhttp_type t) { this->type = t; }
   llParser::llParser(): header_field(0x1f), header_value(0x7f), body(0x28f), url_params(0x3f), url(0x1f) {
-	llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
+    llhttp__internal_init(this); this->type = HTTP_REQUEST; this->settings = (void*)&_;
   }
 }

@@ -9,21 +9,21 @@ namespace fc {
   Time::Time() { start_ = std::chrono::high_resolution_clock::now(); }
   void Time::restart() { start_ = std::chrono::high_resolution_clock::now(); }
   int Time::h() const {
-	return std::chrono::duration_cast<std::chrono::hours>(std::chrono::high_resolution_clock::now() - start_).count();
+    return std::chrono::duration_cast<std::chrono::hours>(std::chrono::high_resolution_clock::now() - start_).count();
   }
   int Time::m() const {
-	return std::chrono::duration_cast<std::chrono::minutes>(std::chrono::high_resolution_clock::now() - start_).count();
+    return std::chrono::duration_cast<std::chrono::minutes>(std::chrono::high_resolution_clock::now() - start_).count();
   }
   long long Time::s() const {
-	return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start_).count();
+    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start_).count();
   }
   long long Time::ms() const {
-	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_).count();
   }
   long long Time::us() const {
-	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_).count();
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start_).count();
   }
   long long Time::ns() const {
-	return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start_).count();
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start_).count();
   }
 }

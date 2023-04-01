@@ -14,30 +14,30 @@
 namespace unitest {
   void run_all_tests();
   void push_failed_msg(
-	  const std::string& test_name, const std::string& case_name,
-	  const char* file, int line, const fc::Buf& msg
+    const std::string& test_name, const std::string& case_name,
+    const char* file, int line, const fc::Buf& msg
   );
   struct Test {
-	Test() = default;
-	virtual ~Test() = default;
-	virtual void run() = 0;
-	virtual bool enabled() = 0;
-	virtual const std::string& name() = 0;
-	DISALLOW_COPY_AND_ASSIGN(Test);
+    Test() = default;
+    virtual ~Test() = default;
+    virtual void run() = 0;
+    virtual bool enabled() = 0;
+    virtual const std::string& name() = 0;
+    DISALLOW_COPY_AND_ASSIGN(Test);
   };
   struct TestSaver {
-	TestSaver(Test* test);
+    TestSaver(Test* test);
   };
   struct Case {
-	Case(const std::string& name)
-	  : _(name) {
-	  std::cout << " case " << _ << ':' << std::endl;
-	}
-	const std::string& name() const {
-	  return _;
-	}
+    Case(const std::string& name)
+      : _(name) {
+      std::cout << " case " << _ << ':' << std::endl;
+    }
+    const std::string& name() const {
+      return _;
+    }
   private:
-	std::string _;
+    std::string _;
   };
 } // namespace unitest
 // define a test unit

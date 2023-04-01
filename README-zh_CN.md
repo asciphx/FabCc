@@ -1,4 +1,4 @@
-# FabCc
+# FabCc(1.4-RTM)
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -14,7 +14,7 @@
 - 基于epoll架构的全平台支持[windows下由wepoll实现]
 - 现在最低编译器版本支持到了c++14, 目前兼容了c++17的许多特性包括any, optional, string_view, 以及部分的扩展
 - 最少的第三方库，均以源文件形式存放项目中
-- 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL
+- 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL, itoa
 - 难以置信的编译速度，开发速度同时也得到提升
 - 支持网页版Postman，地址是127.0.0.1:8080/test.html
 - 可以对路由进行增删改查，动态路由参考【[lithium](https://github.com/matt-42/lithium)】迭代而成
@@ -53,37 +53,38 @@ void funk(Req& req, Res& res) {
   res.write("主页路由被std::bind复写！");
 };
 int main() {
-  Timer t; App app;
+  App app; Timer t;
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{},Book{} }} };
-	b.person->book = Book{ "rs" };//C++中的面向对象开发
-	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
+	  Json x; Person p1{"sb1", 1}, p2{"sb2", 2};// 仅仅被vec中的box使用, 防止出错
+	  Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", p1},Book{"2", p2} }} };
+	  b.person->book = Book{ "rs" };//C++中的面向对象开发
+	  to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/serialization"] = [](Req& req, Res& res) {
-	Json x; Book b; from_json(x = json::parse(R"(
-  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
-  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-  )"), &b); to_json(x, &b); res.write(x.dump());//反序列化与序列化
+	  Json x; Book b; from_json(x = json::parse(R"(
+	  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
+	  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
+	  )"), &b); to_json(x, &b); res.write(x.dump());//反序列化与序列化
   };
   app["/api"] = [&app](Req& req, Res& res) {
-	res.write(app._print_routes());//返回路由列表
+	  res.write(app._print_routes());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {
-	BP bp(req, 50);
-	for (auto p : bp.params) {
-	  res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
-	}
-	res.write(res.body);
+    BP bp(req, 123);// 支持上传的文件总大小123MB
+    for (auto p : bp.params) {
+      res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+    }
+    res.write(res.body);
   };
   app["/del"] = [&app](Req&, Res& res) {
-	app.get() = nullptr;
-	res.write("主页的路由被删除！！");
+    app.get() = nullptr;
+    res.write("The routing of the home page is delete！！");
   };
   app["/timer"] = [&](Req&, Res& res) {
-    if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
-	res.write("关闭服务计时器倒计时启动！");
-	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    if (t.idle()) t.setTimeout([] { raise(SIGINT); }, 6000);
+	  res.write("关闭服务计时器倒计时启动！");
+    app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
   http_serve(app, 8080);
@@ -92,6 +93,7 @@ int main() {
 
 ### 建筑（测试、示例）
 建议使用CMake进行源代码外构建。
+如果构建失败，请删除清理cmake缓存。
 ```
 mkdir build
 cd build

@@ -20,7 +20,6 @@
  * THE SOFTWARE.
  */
 
-// Modified by Alvin at 2020.5.8.
 #pragma once
 #include <assert.h>
 #include <math.h>
@@ -32,106 +31,104 @@
 #endif
 namespace milo {
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && defined(__x86_64__)
-namespace gcc_ints
-{
+  namespace gcc_ints {
     __extension__ typedef __int128 int128;
     __extension__ typedef unsigned __int128 uint128;
-}
+  }
 #endif
 #define UINT64_C2(h, l) ((static_cast<uint64_t>(h) << 32) | static_cast<uint64_t>(l))
-struct DiyFp {
+  struct DiyFp {
     DiyFp() {}
-    DiyFp(uint64_t f, int e) : f(f), e(e) {}
+    DiyFp(uint64_t f, int e): f(f), e(e) {}
     DiyFp(double d) {
-        union {
-            double d;
-            uint64_t u64;
-        } u = { d };
-        int biased_e = (u.u64 & kDpExponentMask) >> kDpSignificandSize;
-        uint64_t significand = (u.u64 & kDpSignificandMask);
-        if (biased_e != 0) {
-            f = significand + kDpHiddenBit;
-            e = biased_e - kDpExponentBias;
-        }
-        else {
-            f = significand;
-            e = kDpMinExponent + 1;
-        }
+      union {
+        double d;
+        uint64_t u64;
+      } u = { d };
+      int biased_e = (u.u64 & kDpExponentMask) >> kDpSignificandSize;
+      uint64_t significand = (u.u64 & kDpSignificandMask);
+      if (biased_e != 0) {
+        f = significand + kDpHiddenBit;
+        e = biased_e - kDpExponentBias;
+      } else {
+        f = significand;
+        e = kDpMinExponent + 1;
+      }
     }
     DiyFp operator-(const DiyFp& rhs) const {
-        assert(e == rhs.e);
-        assert(f >= rhs.f);
-        return DiyFp(f - rhs.f, e);
+      assert(e == rhs.e);
+      assert(f >= rhs.f);
+      return DiyFp(f - rhs.f, e);
     }
     DiyFp operator*(const DiyFp& rhs) const {
-      #if defined(_MSC_VER) && defined(_M_AMD64)
-        uint64_t h;
-        uint64_t l = _umul128(f, rhs.f, &h);
-        if (l & (uint64_t(1) << 63)) h++; // rounding
-        return DiyFp(h, e + rhs.e + 64);
-      #elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && defined(__x86_64__)
-        gcc_ints::uint128 p = static_cast<gcc_ints::uint128>(f) * static_cast<gcc_ints::uint128>(rhs.f);
-        uint64_t h = p >> 64;
-        uint64_t l = static_cast<uint64_t>(p);
-        if (l & (uint64_t(1) << 63)) h++; // rounding
-        return DiyFp(h, e + rhs.e + 64);
-      #else
-        const uint64_t M32 = 0xFFFFFFFF;
-        const uint64_t a = f >> 32;
-        const uint64_t b = f & M32;
-        const uint64_t c = rhs.f >> 32;
-        const uint64_t d = rhs.f & M32;
-        const uint64_t ac = a * c;
-        const uint64_t bc = b * c;
-        const uint64_t ad = a * d;
-        const uint64_t bd = b * d;
-        uint64_t tmp = (bd >> 32) + (ad & M32) + (bc & M32);
-        tmp += 1U << 31;  /// mult_round
-        return DiyFp(ac + (ad >> 32) + (bc >> 32) + (tmp >> 32), e + rhs.e + 64);
-      #endif
+#if defined(_MSC_VER) && defined(_M_AMD64)
+      uint64_t h;
+      uint64_t l = _umul128(f, rhs.f, &h);
+      if (l & (uint64_t(1) << 63)) ++h; // rounding
+      return DiyFp(h, e + rhs.e + 64);
+#elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && defined(__x86_64__)
+      gcc_ints::uint128 p = static_cast<gcc_ints::uint128>(f) * static_cast<gcc_ints::uint128>(rhs.f);
+      uint64_t h = p >> 64;
+      uint64_t l = static_cast<uint64_t>(p);
+      if (l & (uint64_t(1) << 63)) ++h; // rounding
+      return DiyFp(h, e + rhs.e + 64);
+#else
+      const uint64_t M32 = 0xFFFFFFFF;
+      const uint64_t a = f >> 32;
+      const uint64_t b = f & M32;
+      const uint64_t c = rhs.f >> 32;
+      const uint64_t d = rhs.f & M32;
+      const uint64_t ac = a * c;
+      const uint64_t bc = b * c;
+      const uint64_t ad = a * d;
+      const uint64_t bd = b * d;
+      uint64_t tmp = (bd >> 32) + (ad & M32) + (bc & M32);
+      tmp += 1U << 31;  /// mult_round
+      return DiyFp(ac + (ad >> 32) + (bc >> 32) + (tmp >> 32), e + rhs.e + 64);
+#endif
     }
     DiyFp Normalize() const {
-      #if defined(_MSC_VER) && defined(_M_AMD64)
-        unsigned long index;
-        _BitScanReverse64(&index, f);
-        return DiyFp(f << (63 - index), e - (63 - index));
-      #elif defined(__GNUC__)
-        int s = __builtin_clzll(f);
-        return DiyFp(f << s, e - s);
-      #else
-        DiyFp res = *this;
-        while (!(res.f & kDpHiddenBit)) {
-            res.f <<= 1;
-            res.e--;
-        }
-        res.f <<= (kDiySignificandSize - kDpSignificandSize - 1);
-        res.e = res.e - (kDiySignificandSize - kDpSignificandSize - 1);
-        return res;
-      #endif
+#if defined(_MSC_VER) && defined(_M_AMD64)
+      unsigned long index;
+      _BitScanReverse64(&index, f);
+      return DiyFp(f << (63 - index), e - (63 - index));
+#elif defined(__GNUC__)
+      int s = __builtin_clzll(f);
+      return DiyFp(f << s, e - s);
+#else
+      DiyFp res = *this;
+      while (!(res.f & kDpHiddenBit)) {
+        res.f <<= 1;
+        res.e--;
+      }
+      res.f <<= (kDiySignificandSize - kDpSignificandSize - 1);
+      res.e = res.e - (kDiySignificandSize - kDpSignificandSize - 1);
+      return res;
+#endif
     }
     DiyFp NormalizeBoundary() const {
-      #if defined(_MSC_VER) && defined(_M_AMD64)
-        unsigned long index;
-        _BitScanReverse64(&index, f);
-        return DiyFp (f << (63 - index), e - (63 - index));
-      #else
-        DiyFp res = *this;
-        while (!(res.f & (kDpHiddenBit << 1))) {
-            res.f <<= 1;
-            res.e--;
-        }
-        res.f <<= (kDiySignificandSize - kDpSignificandSize - 2);
-        res.e = res.e - (kDiySignificandSize - kDpSignificandSize - 2);
-        return res;
-      #endif
+#if defined(_MSC_VER) && defined(_M_AMD64)
+      unsigned long index;
+      _BitScanReverse64(&index, f);
+      return DiyFp(f << (63 - index), e - (63 - index));
+#else
+      DiyFp res = *this;
+      while (!(res.f & (kDpHiddenBit << 1))) {
+        res.f <<= 1;
+        res.e--;
+      }
+      res.f <<= (kDiySignificandSize - kDpSignificandSize - 2);
+      res.e = res.e - (kDiySignificandSize - kDpSignificandSize - 2);
+      return res;
+#endif
     }
     void NormalizedBoundaries(DiyFp* minus, DiyFp* plus) const {
-        DiyFp pl = DiyFp((f << 1) + 1, e - 1).NormalizeBoundary();
-        DiyFp mi = (f == kDpHiddenBit) ? DiyFp((f << 2) - 1, e - 2) : DiyFp((f << 1) - 1, e - 1);
-        mi.f <<= mi.e - pl.e;
-        mi.e = pl.e;
-        *plus = pl;
-        *minus = mi;
+      DiyFp pl = DiyFp((f << 1) + 1, e - 1).NormalizeBoundary();
+      DiyFp mi = (f == kDpHiddenBit) ? DiyFp((f << 2) - 1, e - 2) : DiyFp((f << 1) - 1, e - 1);
+      mi.f <<= mi.e - pl.e;
+      mi.e = pl.e;
+      *plus = pl;
+      *minus = mi;
     }
     static const int kDiySignificandSize = 64;
     static const int kDpSignificandSize = 52;
@@ -142,8 +139,8 @@ struct DiyFp {
     static const uint64_t kDpHiddenBit = UINT64_C2(0x00100000, 0x00000000);
     uint64_t f;
     int e;
-};
-inline DiyFp GetCachedPower(int e, int* K) {
+  };
+  inline DiyFp GetCachedPower(int e, int* K) {
     // 10^-348, 10^-340, ..., 10^340
     static const uint64_t kCachedPowers_F[] = {
         UINT64_C2(0xfa8fd5a0, 0x081c0288), UINT64_C2(0xbaaee17f, 0xa23ebf76),
@@ -205,21 +202,21 @@ inline DiyFp GetCachedPower(int e, int* K) {
     //int k = static_cast<int>(ceil((-61 - e) * 0.30102999566398114)) + 374;
     double dk = (-61 - e) * 0.30102999566398114 + 347;    // dk must be positive, so can do ceiling in positive
     int k = static_cast<int>(dk);
-    if (dk - k > 0.0) k++;
+    if (dk - k > 0.0) ++k;
     unsigned index = static_cast<unsigned>((k >> 3) + 1);
     *K = -(-348 + static_cast<int>(index << 3));    // decimal exponent no need lookup table
     assert(index < sizeof(kCachedPowers_F) / sizeof(kCachedPowers_F[0]));
     return DiyFp(kCachedPowers_F[index], kCachedPowers_E[index]);
-}
-inline void GrisuRound(char* buffer, int len, uint64_t delta, uint64_t rest, uint64_t ten_kappa, uint64_t wp_w) {
+  }
+  inline void GrisuRound(char* buffer, int len, uint64_t delta, uint64_t rest, uint64_t ten_kappa, uint64_t wp_w) {
     while (rest < wp_w && delta - rest >= ten_kappa &&
-           (rest + ten_kappa < wp_w ||  /// closer
-            wp_w - rest > rest + ten_kappa - wp_w)) {
-        buffer[len - 1]--;
-        rest += ten_kappa;
+      (rest + ten_kappa < wp_w ||  /// closer
+        wp_w - rest > rest + ten_kappa - wp_w)) {
+      buffer[len - 1]--;
+      rest += ten_kappa;
     }
-}
-inline int CountDecimalDigit32(uint32_t n) {
+  }
+  inline int CountDecimalDigit32(uint32_t n) {
     // Simple pure C++ implementation was faster than __builtin_clz version in this situation.
     if (n < 10) return 1;
     if (n < 100) return 2;
@@ -233,8 +230,8 @@ inline int CountDecimalDigit32(uint32_t n) {
     //if (n < 1000000000) return 9;
     //return 10;
     return 9;
-}
-inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buffer, int* len, int* K) {
+  }
+  inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buffer, int* len, int* K) {
     static const uint64_t kPow10[] = { 1ULL, 10ULL, 100ULL, 1000ULL, 10000ULL, 100000ULL, 1000000ULL, 10000000ULL, 100000000ULL,
                                        1000000000ULL, 10000000000ULL, 100000000000ULL, 1000000000000ULL,
                                        10000000000000ULL, 100000000000000ULL, 1000000000000000ULL,
@@ -247,53 +244,53 @@ inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buff
     int kappa = CountDecimalDigit32(p1); // kappa in [0, 9]
     *len = 0;
     while (kappa > 0) {
-        uint32_t d;
-        switch (kappa) {
-            case  9: d = p1 /  100000000; p1 %=  100000000; break;
-            case  8: d = p1 /   10000000; p1 %=   10000000; break;
-            case  7: d = p1 /    1000000; p1 %=    1000000; break;
-            case  6: d = p1 /     100000; p1 %=     100000; break;
-            case  5: d = p1 /      10000; p1 %=      10000; break;
-            case  4: d = p1 /       1000; p1 %=       1000; break;
-            case  3: d = p1 /        100; p1 %=        100; break;
-            case  2: d = p1 /         10; p1 %=         10; break;
-            case  1: d = p1;              p1 =           0; break;
-            default:
-            #if defined(_MSC_VER)
-              __assume(0);
-            #elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
-              __builtin_unreachable();
-            #else
-              d = 0;
-            #endif
-        }
-        if (d || *len)
-            buffer[(*len)++] = static_cast<char>('0' + static_cast<char>(d));
-        kappa--;
-        uint64_t tmp = (static_cast<uint64_t>(p1) << -one.e) + p2;
-        if (tmp <= delta) {
-            *K += kappa;
-            GrisuRound(buffer, *len, delta, tmp, kPow10[kappa] << -one.e, wp_w.f);
-            return;
-        }
+      uint32_t d;
+      switch (kappa) {
+      case  9: d = p1 / 100000000; p1 %= 100000000; break;
+      case  8: d = p1 / 10000000; p1 %= 10000000; break;
+      case  7: d = p1 / 1000000; p1 %= 1000000; break;
+      case  6: d = p1 / 100000; p1 %= 100000; break;
+      case  5: d = p1 / 10000; p1 %= 10000; break;
+      case  4: d = p1 / 1000; p1 %= 1000; break;
+      case  3: d = p1 / 100; p1 %= 100; break;
+      case  2: d = p1 / 10; p1 %= 10; break;
+      case  1: d = p1;              p1 = 0; break;
+      default:
+#if defined(_MSC_VER)
+        __assume(0);
+#elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
+        __builtin_unreachable();
+#else
+        d = 0;
+#endif
+      }
+      if (d || *len)
+        buffer[(*len)++] = static_cast<char>('0' + static_cast<char>(d));
+      kappa--;
+      uint64_t tmp = (static_cast<uint64_t>(p1) << -one.e) + p2;
+      if (tmp <= delta) {
+        *K += kappa;
+        GrisuRound(buffer, *len, delta, tmp, kPow10[kappa] << -one.e, wp_w.f);
+        return;
+      }
     }
     // kappa = 0
     for (;;) {
-        p2 *= 10;
-        delta *= 10;
-        char d = static_cast<char>(p2 >> -one.e);
-        if (d || *len) buffer[(*len)++] = static_cast<char>('0' + d);
-        p2 &= one.f - 1;
-        kappa--;
-        if (p2 < delta) {
-            *K += kappa;
-            int index = -kappa;
-            GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 20 ? kPow10[index] : 0));
-            return;
-        }
+      p2 *= 10;
+      delta *= 10;
+      char d = static_cast<char>(p2 >> -one.e);
+      if (d || *len) buffer[(*len)++] = static_cast<char>('0' + d);
+      p2 &= one.f - 1;
+      kappa--;
+      if (p2 < delta) {
+        *K += kappa;
+        int index = -kappa;
+        GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 20 ? kPow10[index] : 0));
+        return;
+      }
     }
-}
-inline void Grisu2(double value, char* buffer, int* length, int* K) {
+  }
+  inline void Grisu2(double value, char* buffer, int* length, int* K) {
     const DiyFp v(value);
     DiyFp w_m, w_p;
     v.NormalizedBoundaries(&w_m, &w_p);
@@ -301,11 +298,11 @@ inline void Grisu2(double value, char* buffer, int* length, int* K) {
     const DiyFp W = v.Normalize() * c_mk;
     DiyFp Wp = w_p * c_mk;
     DiyFp Wm = w_m * c_mk;
-    Wm.f++;
-    Wp.f--;
+    ++Wm.f;
+    --Wp.f;
     DigitGen(W, Wp, Wp.f - Wm.f, buffer, length, K);
-}
-inline const char* GetDigitsLut() {
+  }
+  inline const char* GetDigitsLut() {
     static const char cDigitsLut[200] = {
         '0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7', '0', '8', '0', '9',
         '1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1', '6', '1', '7', '1', '8', '1', '9',
@@ -319,109 +316,102 @@ inline const char* GetDigitsLut() {
         '9', '0', '9', '1', '9', '2', '9', '3', '9', '4', '9', '5', '9', '6', '9', '7', '9', '8', '9', '9'
     };
     return cDigitsLut;
-}
-inline char* WriteExponent(int K, char* buffer) {
+  }
+  inline char* WriteExponent(int K, char* buffer) {
     if (K < 0) {
-        *buffer++ = '-';
-        K = -K;
+      *buffer++ = '-';
+      K = -K;
     }
     if (K >= 100) {
-        *buffer++ = '0' + static_cast<char>(K / 100);
-        K %= 100;
-        const char* d = GetDigitsLut() + K * 2;
-        *buffer++ = d[0];
-        *buffer++ = d[1];
-    }
-    else if (K >= 10) {
-        const char* d = GetDigitsLut() + K * 2;
-        *buffer++ = d[0];
-        *buffer++ = d[1];
-    }
-    else
-        *buffer++ = '0' + static_cast<char>(K);
+      *buffer++ = '0' + static_cast<char>(K / 100);
+      K %= 100;
+      const char* d = GetDigitsLut() + K * 2;
+      *buffer++ = d[0];
+      *buffer++ = d[1];
+    } else if (K >= 10) {
+      const char* d = GetDigitsLut() + K * 2;
+      *buffer++ = d[0];
+      *buffer++ = d[1];
+    } else
+      *buffer++ = '0' + static_cast<char>(K);
     *buffer = '\0';
     return buffer;
-}
-inline char* Prettify(char* buffer, int length, int k, int maxDecimalPlaces) {
+  }
+  inline char* Prettify(char* buffer, int length, int k, int maxDecimalPlaces) {
     const int kk = length + k;  // 10^(kk-1) <= v < 10^kk
     if (0 <= k && kk <= 21) {
-        // 1234e7 -> 12340000000
-        for (int i = length; i < kk; ++i) buffer[i] = '0';
-        buffer[kk] = '.';
-        buffer[kk + 1] = '0';
-        return &buffer[kk + 2];
-    }
-    else if (0 < kk && kk <= 21) {
-        // 1234e-2 -> 12.34
-        memmove(&buffer[kk + 1], &buffer[kk], static_cast<size_t>(length - kk));
-        buffer[kk] = '.';
-        if (0 > k + maxDecimalPlaces) {
-            // When maxDecimalPlaces = 2, 1.2345 -> 1.23, 1.102 -> 1.1
-            // Remove extra trailing zeros (at least one) after truncation.
-            for (int i = kk + maxDecimalPlaces; i > kk + 1; i--) {
-                if (buffer[i] != '0') return &buffer[i + 1];
-            }
-            return &buffer[kk + 2]; // Reserve one zero
-        } else {
-            return &buffer[length + 1];
+      // 1234e7 -> 12340000000
+      for (int i = length; i < kk; ++i) buffer[i] = '0';
+      buffer[kk] = '.';
+      buffer[kk + 1] = '0';
+      return &buffer[kk + 2];
+    } else if (0 < kk && kk <= 21) {
+      // 1234e-2 -> 12.34
+      memmove(&buffer[kk + 1], &buffer[kk], static_cast<size_t>(length - kk));
+      buffer[kk] = '.';
+      if (0 > k + maxDecimalPlaces) {
+        // When maxDecimalPlaces = 2, 1.2345 -> 1.23, 1.102 -> 1.1
+        // Remove extra trailing zeros (at least one) after truncation.
+        for (int i = kk + maxDecimalPlaces; i > kk + 1; i--) {
+          if (buffer[i] != '0') return &buffer[i + 1];
         }
-    }
-    else if (kk == 0 || (-3 < kk && kk < 0 && -maxDecimalPlaces <= k)) {
-        // 1234e-6 -> 0.001234
-        const int offset = 2 - kk;
-        memmove(&buffer[offset], &buffer[0], static_cast<size_t>(length));
-        buffer[0] = '0';
-        buffer[1] = '.';
-        for (int i = 2; i < offset; i++) buffer[i] = '0';
-        if (length - kk > maxDecimalPlaces) {
-            // When maxDecimalPlaces = 2, 0.123 -> 0.12, 0.102 -> 0.1
-            // Remove extra trailing zeros (at least one) after truncation.
-            for (int i = maxDecimalPlaces + 1; i > 2; i--) {
-                if (buffer[i] != '0') return &buffer[i + 1];
-            }
-            return &buffer[3]; // Reserve one zero
-        } else {
-            return &buffer[length + offset];
+        return &buffer[kk + 2]; // Reserve one zero
+      } else {
+        return &buffer[length + 1];
+      }
+    } else if (kk == 0 || (-3 < kk && kk < 0 && -maxDecimalPlaces <= k)) {
+      // 1234e-6 -> 0.001234
+      const int offset = 2 - kk;
+      memmove(&buffer[offset], &buffer[0], static_cast<size_t>(length));
+      buffer[0] = '0';
+      buffer[1] = '.';
+      for (int i = 2; i < offset; ++i) buffer[i] = '0';
+      if (length - kk > maxDecimalPlaces) {
+        // When maxDecimalPlaces = 2, 0.123 -> 0.12, 0.102 -> 0.1
+        // Remove extra trailing zeros (at least one) after truncation.
+        for (int i = maxDecimalPlaces + 1; i > 2; i--) {
+          if (buffer[i] != '0') return &buffer[i + 1];
         }
+        return &buffer[3]; // Reserve one zero
+      } else {
+        return &buffer[length + offset];
+      }
+    } else if (length == 1) {
+      // 1e30
+      buffer[1] = 'e';
+      return WriteExponent(kk - 1, &buffer[2]);
+    } else {
+      // 1234e30 -> 1.234e33
+      // 12345e-8 -> 1.23e-4  (mdp = 2)
+      size_t x = maxDecimalPlaces < length - 1 ? maxDecimalPlaces + 1 : length;
+      memmove(&buffer[2], &buffer[1], x - 1);
+      buffer[1] = '.';
+      while (x > 2 && buffer[x] == '0') --x;
+      buffer[x + 1] = 'e';
+      return WriteExponent(kk - 1, &buffer[x + 2]);
     }
-    else if (length == 1) {
-        // 1e30
-        buffer[1] = 'e';
-        return WriteExponent(kk - 1, &buffer[2]);
-    }
-    else {
-        // 1234e30 -> 1.234e33
-        // 12345e-8 -> 1.23e-4  (mdp = 2)
-        size_t x = maxDecimalPlaces < length - 1 ? maxDecimalPlaces + 1 : length;
-        memmove(&buffer[2], &buffer[1], x - 1);
-        buffer[1] = '.';
-        while (x > 2 && buffer[x] == '0') --x;
-        buffer[x + 1] = 'e';
-        return WriteExponent(kk - 1, &buffer[x + 2]);
-    }
-}
-inline int dtoa(double value, char* buffer, int maxDecimalPlaces=324) {
+  }
+  inline int dtoa(double value, char* buffer, int maxDecimalPlaces = 324) {
     // Not handling NaN and inf
     //assert(!isnan(value));
     //assert(!isinf(value));
     assert(maxDecimalPlaces > 0);
     if (value == 0) {
-        buffer[0] = '0';
-        buffer[1] = '.';
-        buffer[2] = '0';
-        buffer[3] = '\0';
-        return 3;
+      buffer[0] = '0';
+      buffer[1] = '.';
+      buffer[2] = '0';
+      buffer[3] = '\0';
+      return 3;
+    } else {
+      char* p = buffer;
+      if (value < 0) {
+        *buffer++ = '-';
+        value = -value;
+      }
+      int length, K;
+      Grisu2(value, buffer, &length, &K);
+      return static_cast<int>(Prettify(buffer, length, K, maxDecimalPlaces) - p);
     }
-    else {
-        char* p = buffer;
-        if (value < 0) {
-            *buffer++ = '-';
-            value = -value;
-        }
-        int length, K;
-        Grisu2(value, buffer, &length, &K);
-        return static_cast<int>(Prettify(buffer, length, K, maxDecimalPlaces) - p);
-    }
-}
+  }
 #undef UINT64_C2
 } // milo

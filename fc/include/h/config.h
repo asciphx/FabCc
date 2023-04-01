@@ -20,7 +20,7 @@
 #define FILE_TIME "max-age=66666,immutable"//Static resource cache seconds(= 0.77 days)
 #define STATIC_DIRECTORY "static/"//Make sure you bring '/' with you at the end
 #define UPLOAD_DIRECTORY "upload/"//Make sure you bring '/' with you at the end
-#define SERVER_NAME "FabCc/1.3-GA"//the server name config
+#define SERVER_NAME "FabCc/1.4-RTM"//the server name config
 #define HOME_PAGE "index.html"//default home page(app.home(?))
 
 //Cors config
@@ -30,7 +30,11 @@
 //#define AccessControlAllowMethods "GET,POST,DELETE,PUT,PATCH"
 #define SHOW_SERVER_NAME 1
 #define CACHE_HTML_TIME_SECOND 6
-
+//Set the file size allowed for POST according to the host memory
+//for example, 2G memory can be set to 128MB, because the idle memory is about 600+MB
+//It is best to use breakpoint resume, but it has not been implemented yet
+#define MAX_FILE_SIZE 134217728
+#define MAX_MEM_SIZE_MB 400 // < 600 - MAX_FILE_SIZE
 
 #if defined(_MSC_VER)
 #if _MSC_VER < 1900
@@ -38,5 +42,10 @@
 #define constexpr const
 #define noexcept throw()
 #endif
+#if defined(_MSC_VER) || defined(_WIN32)
+#include <locale.h>
+#define WIN32_LEAN_AND_MEAN
+#endif
+#define TYPE_GET(t, ptr, member) (t*)(ptr)-((size_t)&reinterpret_cast<char const volatile&>(((t*)0)->member))
 #endif
 

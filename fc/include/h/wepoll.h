@@ -39,18 +39,18 @@
 #include <stdint.h>
 
 enum EPOLL_EVENTS {
-  EPOLLIN      = (int) (1U <<  0),
-  EPOLLPRI     = (int) (1U <<  1),
-  EPOLLOUT     = (int) (1U <<  2),
-  EPOLLERR     = (int) (1U <<  3),
-  EPOLLHUP     = (int) (1U <<  4),
-  EPOLLRDNORM  = (int) (1U <<  6),
-  EPOLLRDBAND  = (int) (1U <<  7),
-  EPOLLWRNORM  = (int) (1U <<  8),
-  EPOLLWRBAND  = (int) (1U <<  9),
-  EPOLLMSG     = (int) (1U << 10), /* Never reported. */
-  EPOLLRDHUP   = (int) (1U << 13),
-  EPOLLONESHOT = (int) (1U << 31)
+  EPOLLIN = (int)(1U << 0),
+  EPOLLPRI = (int)(1U << 1),
+  EPOLLOUT = (int)(1U << 2),
+  EPOLLERR = (int)(1U << 3),
+  EPOLLHUP = (int)(1U << 4),
+  EPOLLRDNORM = (int)(1U << 6),
+  EPOLLRDBAND = (int)(1U << 7),
+  EPOLLWRNORM = (int)(1U << 8),
+  EPOLLWRBAND = (int)(1U << 9),
+  EPOLLMSG = (int)(1U << 10), /* Never reported. */
+  EPOLLRDHUP = (int)(1U << 13),
+  EPOLLONESHOT = (int)(1U << 31)
 };
 
 #define EPOLLIN      (1U <<  0)
@@ -91,19 +91,19 @@ struct epoll_event {
 extern "C" {
 #endif
 
-WEPOLL_EXPORT HANDLE epoll_create();
+  WEPOLL_EXPORT HANDLE epoll_create();
 
-WEPOLL_EXPORT int epoll_close(HANDLE ephnd);
+  WEPOLL_EXPORT int epoll_close(HANDLE ephnd);
 
-WEPOLL_EXPORT int epoll_ctl(HANDLE ephnd,
-                            int op,
-                            SOCKET sock,
-                            struct epoll_event* event);
+  WEPOLL_EXPORT int epoll_ctl(HANDLE ephnd,
+    int op,
+    SOCKET sock,
+    struct epoll_event* event);
 
-WEPOLL_EXPORT int epoll_wait(HANDLE ephnd,
-                             struct epoll_event* events,
-                             int maxevents,
-                             int timeout);
+  WEPOLL_EXPORT int epoll_wait(HANDLE ephnd,
+    struct epoll_event* events,
+    int maxevents,
+    int timeout);
 
 #ifdef __cplusplus
 } /* extern "C" */

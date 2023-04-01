@@ -1,5 +1,17 @@
 #ifndef BOX_H
 #define BOX_H
+/*
+ * This software is licensed under the AGPL-3.0 License.
+ *
+ * Copyright (C) 2023 Asciphx
+ *
+ * Permissions of this strongest copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger works
+ * using a licensed work, under the same license. Copyright and license notices must be
+ * preserved. Contributors provide an express grant of patent rights. When a modified
+ * version is used to provide a service over a network, the complete source code of
+ * the modified version must be made available.
+ */
 #include <string>
 #include <iostream>
 #include <memory>
@@ -13,9 +25,9 @@ template <class T> struct is_box_impl<box<T>>: std::true_type {};
 template <class T> using is_box = is_box_impl<std::decay_t<T>>;
 namespace std {
   template <class T> struct hash<box<T>> {
-	size_t operator()(const box<T>& o) const {
-	  if (o.p == nullptr) return 0; return hash<std::remove_const_t<T>>()(*o);
-	}
+    size_t operator()(const box<T>& o) const {
+      if (o.p == nullptr) return 0; return hash<std::remove_const_t<T>>()(*o);
+    }
   };
 }
 template <typename T>
@@ -29,8 +41,8 @@ public:
   box(box<U>&& _) noexcept: p(_.p), b(_.b) { _.b = false; }
   template<typename U>
   box(box<U>& _) noexcept: p(_.p), b(false) {}
-  box(T&& _) : p(new T{ std::move(_) }), b(true) {}
-  box(T& _) : p(&_), b(false) {}
+  box(T&& _): p(new T{ std::move(_) }), b(true) {}
+  box(T& _): p(&_), b(false) {}
   explicit box(T* _) noexcept: p(std::addressof(*_)), b(false) {}//not use
   template<typename... U>
   box(U&&... _) noexcept: p(new T{ std::move(_)... }), b(true) {}
@@ -43,11 +55,11 @@ public:
   void operator = (T&& _) { if (b) delete p; p = new T(std::move(_)); b = true; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U&& _) {
-	 if (p) *p = std::move(_); else { p = new T(std::move(_)); b = true; }
+    if (p) *p = std::move(_); else { p = new T(std::move(_)); b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U& _) {
-	if (p) *p = _, b = false; else { p = new T(_); b = true; }
+    if (p) *p = _; else { p = new T(_); b = true; }
   }
   void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
   constexpr bool has_value() const noexcept { return this->p != nullptr; }
@@ -59,19 +71,19 @@ public:
   T& operator*() & noexcept { return *p; }
   constexpr const T& operator*() const& noexcept { return *p; }
   __CONSTEXPR T value_or(T&& _) const {
-	if __CONSTEXPR(!std::is_class<T>::value)
-	  * ((bool*)(this)) = false;
-	return this->p ? *this->operator->() : _;
+    if __CONSTEXPR(!std::is_class<T>::value)
+      * ((bool*)(this)) = false;
+    return this->p ? *this->operator->() : _;
   }
   __CONSTEXPR T value_or(T& _) const {
-	if __CONSTEXPR(!std::is_class<T>::value)
-	  * ((bool*)(this)) = false;
-	return this->p ? *this->operator->() : _;
+    if __CONSTEXPR(!std::is_class<T>::value)
+      * ((bool*)(this)) = false;
+    return this->p ? *this->operator->() : _;
   }
   //if in the any container, eg:std::map{ { box<T>, U } } , and not used value_or
   void clear() const noexcept {
-	if __CONSTEXPR(!std::is_class<T>::value)
-	  * ((bool*)(this)) = false;
+    if __CONSTEXPR(!std::is_class<T>::value)
+      * ((bool*)(this)) = false;
   }
   void reset() noexcept { if (p) { delete p; } p = nullptr; b = false; }
 };

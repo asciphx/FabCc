@@ -15,7 +15,7 @@ namespace edge {
   // Return non-edge elements.
   std::vector<fc::Buf> init(int argc, const char** argv);
   inline std::vector<fc::Buf> init(int argc, char** argv) {
-	return edge::init(argc, (const char**)argv);
+    return edge::init(argc, (const char**)argv);
   }
   // Initialize with a config file.
   void init(const std::string& path);
@@ -29,10 +29,10 @@ namespace edge {
   bool alias(const char* name, const char* new_name);
 
   namespace xx {
-	void add_flag(
-		char type, const char* name, const char* value, const char* help,
-		const char* file, int line, void* addr, const char* alias
-	);
+    void add_flag(
+      char type, const char* name, const char* value, const char* help,
+      const char* file, int line, void* addr, const char* alias
+    );
   } // namespace xx
 } // namespace edge
 

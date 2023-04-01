@@ -1,4 +1,4 @@
-# FabCc
+# FabCc(1.4-RTM)
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -13,7 +13,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - Full platform support based on epoll architecture [implemented by wepoll under windows]
 - Now the minimum compiler supports the c++14 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
 - The fewest third-party libraries, are stored in the project in the form of source files
-- Fastest API, such as lexical_cast, EncodeURL, DecodeURL
+- Fastest API, such as lexical_cast, EncodeURL, DecodeURL, itoa
 - Incredible compilation speed and development speed are also improved
 - Support the web version of Postman, the address is 127.0.0.1:8080/test.html
 - Can add, delete, modify and query the route. Dynamic Route Reference[[lithium](https://github.com/matt-42/lithium)]Iterative
@@ -52,37 +52,39 @@ void funk(Req& req, Res& res) {
   res.write("Homepage route is replicated by std::bind！");
 };
 int main() {
-  Timer t; App app;
-  app.file_type().sub_api("/", app.serve_file("static"));//Service file interface
+  App app; Timer t;
+  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
+    .sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-	Json x; Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{},Book{} }} };
-	b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
-	to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
+    Json x; Person p1{ "sb1", 1 }, p2{ "sb2", 2 };// Only used by boxes in vec to prevent errors
+    Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", p1},Book{"2", p2} }} };
+    b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
+    to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/serialization"] = [](Req& req, Res& res) {
-	Json x; Book b; from_json(x = json::parse(R"(
-  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
-  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-  )"), &b); to_json(x, &b); res.write(x.dump());//Deserialization and serialization
+    Json x; Book b; from_json(x = json::parse(R"(
+	{"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
+	"persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
+	)"), &b); to_json(x, &b); res.write(x.dump());
   };
   app["/api"] = [&app](Req& req, Res& res) {
-	res.write(app._print_routes());//Return to routing list
+    res.write(app._print_routes());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {
-	BP bp(req, 50);
-	for (auto p : bp.params) {
-	  res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
-	}
-	res.write(res.body);
+    BP bp(req, 123);//Support for uploading files with a total size of 123MB
+    for (auto p : bp.params) {
+      res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+    }
+    res.write(res.body);
   };
   app["/del"] = [&app](Req&, Res& res) {
-	app.get() = nullptr;
-	res.write("The routing of the home page is delete！！");
+    app.get() = nullptr;
+    res.write("The routing of the home page is delete！！");
   };
   app["/timer"] = [&](Req&, Res& res) {
-    if(t.idle()) t.setTimeout([] { exit(0); }, 6000);
-	res.write("Turn off the server timer and start the countdown！");
-	app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    if (t.idle()) t.setTimeout([] { raise(SIGINT); }, 6000);
+    res.write("Turn off the server timer and start the countdown！");
+    app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
   http_serve(app, 8080);
@@ -91,6 +93,7 @@ int main() {
 
 ### Building (Tests, Examples)
 Out-of-source build with CMake is recommended.
+delete clean cmake cache if build fails.
 ```
 mkdir build
 cd build

@@ -10,24 +10,24 @@
   using hours        = duration<int, ratio<3600>>; */
 namespace fc {
   namespace sleep {
-	void h(int h);
-	void m(int m);
-	void s(long long s);
-	void ms(long long ms);
-	void us(long long us);
-	void ns(long long ns);
+    void h(int h);
+    void m(int m);
+    void s(long long s);
+    void ms(long long ms);
+    void us(long long us);
+    void ns(long long ns);
   }
   class Time {
-	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_;
   public:
-	Time();
-	void restart();
-	int h() const;
-	int m() const;
-	long long s() const;
-	long long ms() const;
-	long long us() const;
-	long long ns() const;
+    Time();
+    void restart();
+    int h() const;
+    int m() const;
+    long long s() const;
+    long long ms() const;
+    long long us() const;
+    long long ns() const;
   };
 }
 #endif

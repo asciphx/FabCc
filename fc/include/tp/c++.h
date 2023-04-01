@@ -5,13 +5,29 @@
 #include <type_traits>
 #include <utility>
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
-#define BOOST_UNLIKELY(x) __builtin_expect(x, 0)
-#define BOOST_LIKELY(x) __builtin_expect(x, 1)
+#define unlikely(x) __builtin_expect(x, 0)
+#define likely(x) __builtin_expect(x, 1)
 #else
-#define BOOST_UNLIKELY(x) x
-#define BOOST_LIKELY(x) x
+#define unlikely(x) x
+#define likely(x) x
 #endif
-typedef signed char  i8;
+#if defined(_MSVC_LANG)
+#define ALIGN(s) __declspec(align(s))
+#define FORCE_INLINE __forceinline
+#define NEVER_INLINE __declspec(noinline)
+#ifdef _WIN64
+typedef signed __int64 ssize_t;
+#elif _WIN32
+typedef signed int ssize_t;
+#endif
+#else
+#define ALIGN(s) __attribute__((aligned(s)))
+#define FORCE_INLINE inline __attribute__((always_inline))
+#define NEVER_INLINE inline __attribute__((noinline))
+#endif
+typedef float f32;
+typedef double f64;
+typedef signed char i8;
 typedef short i16;
 typedef int i32;
 typedef long long i64;

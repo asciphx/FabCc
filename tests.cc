@@ -1,8 +1,8 @@
-#include <lexical_cast.hh>
 #include <hpp/text.hpp>
 #include <hpp/any.hpp>
 #include <hpp/optional.hpp>
 #include <hpp/tuple.hpp>
+#include <lexical_cast.hh>
 #include <time.h>
 #include <iostream>
 #include <str_map.hh>
@@ -10,6 +10,7 @@
 #include <buf.hh>
 #include <json.hh>
 #include <tp/ctx.hh>
+#include <hpp/i2a.hpp>
 struct Person;
 struct Book {
   fc::Buf name = "Hello, world!";
@@ -25,6 +26,33 @@ struct Person {
 };
 CLASS(Person, name, age, book, books)
 int main() {
+  clock_t start = clock();
+  char* c = (char*)malloc(21 * sizeof(char));
+  for (u32 i = 0; i < 4294967205; i += 79) {
+    u2a(c, i); if (std::lexical_cast<u32>(c) != i) { printf("<%s>", c); break; }
+  }
+  printf("use %.6f seconds\n", (float)(clock() - start) / CLOCKS_PER_SEC);
+  i2a(c, INT32_MIN); std::cout << c << "\n";
+  i2a(c, INT32_MAX); std::cout << c << "\n";
+  u2a(c, UINT32_MAX); std::cout << c << "\n" << std::boolalpha;
+  u64toa(c, UINT64_MAX); std::cout << c << " : " << (std::lexical_cast<unsigned long long>(c) == UINT64_MAX) << "\n";
+  i64toa(c, INT64_MAX); std::cout << c << " : " << (atoll(c) == INT64_MAX) << "\n";
+  i64toa(c, INT64_MIN); std::cout << c << " : " << (atoll(c) == INT64_MIN) << "\n";
+  u64toa(c, 18446700000009551615ULL); std::cout << c << " : "
+    << (std::lexical_cast<unsigned long long>(c) == 18446700000009551615ULL) << "\n";
+  delete[] c;
+  start = clock();
+  unsigned long long l;
+  std::string s(20, '\0');
+  for (unsigned long long i = 0; i < 9999999; ++i) {
+    u64toa(const_cast<char*>(s.c_str()), 184467010000095516ULL);
+  }
+  printf("use %.6f seconds\n", (float)(clock() - start) / CLOCKS_PER_SEC);
+  l = std::lexical_cast<unsigned long long>(s);
+  std::cout << (std::lexical_cast<unsigned long long>(s) == l);
+  //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
+  //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
+  return 0;
   std::optional<std::string> op("AOP");//optional
   std::cout << op.value_or("null") << '\n';
   op = "Hello, world!";
@@ -33,12 +61,12 @@ int main() {
   std::cout << op.value_or("null") << '\n';
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
-	std::cout << "entered first time: " << data << std::endl;
-	data += 2;
-	f = f.yield();
-	std::cout << "entered second time: " << data << std::endl;
-	return std::move(f);
-	} };
+  std::cout << "entered first time: " << data << std::endl;
+  data += 2;
+  f = f.yield();
+  std::cout << "entered second time: " << data << std::endl;
+  return std::move(f);
+  } };
   f = f.yield();
   std::cout << "returned first time: " << data << std::endl;
   data += 2;
@@ -48,8 +76,8 @@ int main() {
   Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
   fc::ForRangeField<2, 4>(&p, [](auto& _) { std::cout << typeid(_).name() << std::endl; });//2nd, 3rd index of tuple
   fc::ForRangeTuple<Person, 0, 2>(&p, [&p](auto& _) {
-	std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
-  });
+    std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
+    });
   std::map<std::optional<int>, std::string> m = { {3, "three"}, {5, "five"}, {std::nullopt, "null"}, {1, "one"} };
   fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
@@ -109,24 +137,7 @@ int main() {
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");
-  vs = { "www","zzzz","cc" }; to_json(j, &vs); std::cout << j.str() << std::endl;
-  return 0;
-  clock_t start = clock();
-  unsigned long long l;
-  // double d;
-  std::string s("18446744073709551615", 20),
-	num("18446744073709551615", 20);
-  for (unsigned long long i = 5; i < 9672955; ++i) {
-	// l = std::lexical_cast<int>("123456");
-	// d = std::lexical_cast<double>("54345.5466");
-	// s = atoi("543455466");
-	l = std::lexical_cast<unsigned long long>(num);
-  }
-  printf("use %.6f seconds\n", (float)(clock() - start) / CLOCKS_PER_SEC);
-  l = std::lexical_cast<unsigned long long>(s);
-  //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
-  //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
-  std::cout << l;
+  vs = { "www","zzzz","c" }; to_json(j, &vs); std::cout << j.str() << std::endl;
   text<8> t("你好世界！我好！世界"); std::cout << t;
   return 0;
 }
