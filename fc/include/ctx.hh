@@ -21,7 +21,6 @@
 #include <tcp.hh>
 #include <input_buffer.hh>
 #include <h/any_types.h>
-#include <http_top_header_builder.hh>
 #include <buf.hh>
 #include <output_buffer.hh>
 #include <parser.hh>
@@ -34,11 +33,6 @@
 #undef min
 #endif
 namespace fc {
-#ifndef _WIN32
-  http_top_header_builder http_top_header [[gnu::weak]];
-#else
-  __declspec(selectany) http_top_header_builder http_top_header;
-#endif
   struct Ctx {
     Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
       response_headers.reserve(20);

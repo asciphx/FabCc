@@ -178,7 +178,7 @@ namespace fc {
           }
           ctx.respond_if_needed(); ctx.prepare_next_request(); ctx.parser_.reset();
           //if (rb.empty())
-            ctx.output_stream.flush();
+          ctx.output_stream.flush();
         }
       } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl; return;
@@ -186,23 +186,19 @@ namespace fc {
     };
     if (!fc::is_directory(fc::directory_)) fc::create_directory(fc::directory_);
     if (!fc::is_directory(fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
-    std::thread date_thread([]() {
-      while (!quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
-      });
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 #ifdef _WIN32
     nthreads += nthreads / 2;//Because the number of thread is 1.5 times that of others, which just meets the benchmark
 #endif
-    socket_type sfd = start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
-    date_thread.join(); close_socket(sfd); std::cout << std::endl;
+    start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
     // if constexpr (has_key<decltype(options)>(s::ssl_key)) {
-      //static_assert(has_key<decltype(options)>(s::ssl_certificate),
-      //			  "You need to provide both the ssl_certificate option and the ssl_key option.");
-      //std::string ssl_key = options.ssl_key;
-      //std::string ssl_cert = options.ssl_certificate;
-      //std::string ssl_ciphers = get_or(options, s::ssl_ciphers, "");
-      //start_tcp_server(ip, port, SOCK_STREAM, nthreads,
-      //				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
+    //static_assert(has_key<decltype(options)>(s::ssl_certificate),
+    //			  "You need to provide both the ssl_certificate option and the ssl_key option.");
+    //std::string ssl_key = options.ssl_key;
+    //std::string ssl_cert = options.ssl_certificate;
+    //std::string ssl_ciphers = get_or(options, s::ssl_ciphers, "");
+    //start_tcp_server(ip, port, SOCK_STREAM, nthreads,
+    //				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
     // } else {
     // }
   }

@@ -12,7 +12,13 @@
 #include <set>
 #include <conn.hh>
 #include <buf.hh>
+#include <http_top_header_builder.hh>
 namespace fc {
+#ifndef _WIN32
+  http_top_header_builder http_top_header [[gnu::weak]];
+#else
+  __declspec(selectany) http_top_header_builder http_top_header;
+#endif
   static int MAXEVENTS = 16;
   static volatile int quit_signal_catched = 0;
   /**
@@ -198,17 +204,17 @@ namespace fc {
 #if _WIN32
       epoll_close(epoll_fd);
 #else
-      close_socket(epoll_fd);
+      close(epoll_fd);
 #endif
       free(kevents); std::cout << "@";
     }
   };
   static void shutdown_handler(int sig) { quit_signal_catched = 1; }
-  inline socket_type start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
+  inline void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
 #ifdef _WIN32
     system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA wsaData; int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return 0; } // Setup quit signals
+    if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
     signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler);
 #else
     struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler;
@@ -221,6 +227,9 @@ namespace fc {
 #endif
     // Start the server threads.
     const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
+    std::thread date_thread([]() {
+      while (!quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
+      });
     socket_type server_fd = create_and_bind(listen_ip, port, socktype);
     std::vector<std::future<void>> fus; MAXEVENTS = nthreads << 2;
     for (int i = 0; i < nthreads; ++i) {
@@ -231,7 +240,9 @@ namespace fc {
         reactor.event_loop(server_fd, conn_handler, nthreads);
         }));
     }
-    return server_fd;
+    date_thread.join();
+    close_socket(server_fd);
+    std::cout << std::endl;
   }
 }
 #endif
