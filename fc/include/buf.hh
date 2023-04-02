@@ -31,25 +31,26 @@ namespace fc {
     Buf& operator=(const Buf& o);
     friend std::string& operator+=(std::string& s, const Buf& _v) { s.append(_v.data_, _v.end_); return s; };
     void clear();
-
-    _INLINE void push_back(const char c) { if (end_ == back_) this->ensure((cap_ + 1) >> 1); end_[0] = c; ++end_; }//safe
+    _INLINE void push_back(const char c) {
+      if (end_ == back_) this->enlarge((cap_ + 1) >> 1); end_[0] = c; ++end_;
+    }//safe
     _INLINE Buf& pop_back() { --end_; return *this; }// safe
     _INLINE void reset() { end_ = data_; }
     _INLINE bool empty() const { return end_ == data_; };
     _INLINE unsigned int size() const { return end_ - data_; }
     _INLINE unsigned int length() const { return end_ - data_; }
     _INLINE Buf& append(unsigned int n, char c) {
-      if (back_ - end_ < n) reserve(cap_ + n); memset(end_, c, n); end_ += n; return *this;
+      if (back_ - end_ < n) enlarge(((cap_ + 1) >> 1) + n); memset(end_, c, n); end_ += n; return *this;
     }
     _INLINE Buf& append(char c) {
-      if (back_ - end_ < 1u) reserve(cap_ + 1u); end_[0] = c; ++end_; return *this;
+      if (back_ - end_ < 1u) enlarge(((cap_ + 1) >> 1) + 1); end_[0] = c; ++end_; return *this;
     }
     _INLINE Buf& append(const char* p, unsigned int n) {
-      if (back_ - end_ < n) reserve(cap_ + n); memcpy(end_, p, n); end_ += n; return *this;
+      if (back_ - end_ < n) enlarge(((cap_ + 1) >> 1) + n); memcpy(end_, p, n); end_ += n; return *this;
     }
     _INLINE Buf& append(const char* p) {
       unsigned int n = (unsigned int)strlen(p);
-      if (back_ - end_ < n) reserve(cap_ + (unsigned int)n); memcpy(end_, p, n); end_ += n; return *this;
+      if (back_ - end_ < n) enlarge(((cap_ + 1) >> 1) + n); memcpy(end_, p, n); end_ += n; return *this;
     }
     _INLINE std::string b2s() const { return std::string(data_, end_ - data_); };
     _INLINE std::string_view b2v() const { return std::string_view(data_, end_ - data_); };
@@ -116,11 +117,11 @@ namespace fc {
     Buf& operator<<(const Buf& s);
     Buf& operator<<(Buf&& s);
     _INLINE Buf& operator<<(const std::string& s) {
-      if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
+      if (end_ + s.size() >= back_) { enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size()); return *this; }
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
     _INLINE Buf& operator<<(std::string&& s) {
-      if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
+      if (end_ + s.size() >= back_) { enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size()); return *this; }
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
     _INLINE Buf& operator<<(unsigned long long& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
@@ -131,7 +132,7 @@ namespace fc {
     _INLINE Buf& operator<<(unsigned int& i) { char s[10]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
     _INLINE Buf& operator<<(short& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
     _INLINE Buf& operator<<(unsigned short& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
-    _INLINE Buf& operator<<(char v) { end_[0] = v; ++end_; return *this; }// not safe, but fast
+    _INLINE Buf& operator<<(char v) { if (end_ == back_) this->enlarge((cap_ + 1) >> 1); end_[0] = v; ++end_; return *this; }
     _INLINE Buf& operator<<(bool b) { return operator<<(b ? RES_TURE : RES_FALSE); }
     _INLINE Buf& operator<<(unsigned long long&& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
     _INLINE Buf& operator<<(long long&& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
@@ -142,7 +143,7 @@ namespace fc {
     _INLINE Buf& operator<<(short&& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
     _INLINE Buf& operator<<(unsigned short&& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
     _INLINE Buf& operator<<(std::string_view s) {
-      if (end_ + s.size() >= back_ && !reserve((unsigned int)((cap_)+s.size()))) return *this;
+      if (end_ + s.size() >= back_) { enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size()); return *this; }
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
     _INLINE Buf& operator<<(const char* s) { return this->append(s); }
@@ -164,6 +165,10 @@ namespace fc {
     char* data_;
     char* end_;
   private:
+    _INLINE void enlarge(unsigned int l) {
+      char* c = static_cast<char*>(malloc(cap_)); unsigned int size = end_ - data_; memcpy(c, data_, size); delete[] data_;
+      cap_ += l; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; free(c);
+    }
     char* back_;
     unsigned int cap_;
   };

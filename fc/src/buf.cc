@@ -81,7 +81,7 @@ namespace fc {
       if (s.empty()) return *this; return *this << s;
     } else { /* append itself */
       if (data_) {
-        this->reserve(end_ - data_ + 10); memcpy(end_, data_, end_ - data_); end_ += end_ - data_;
+        this->enlarge(end_ - data_ + 10); memcpy(end_, data_, end_ - data_); end_ += end_ - data_;
       }
       return *this;
     }
@@ -110,10 +110,10 @@ namespace fc {
     back_ = data_ + cap_; memcpy(data_, c, size); end_ += size; free(c); return true;
   };
   Buf& Buf::insert(char*& s, const char* e, const char* f) {
-    unsigned int l = f - e; if (s + l >= back_ && !reserve(cap_ + l)) return *this; memcpy(s, e, l); s += l; return *this;
+    unsigned int l = f - e; if (s + l >= back_) { enlarge(cap_ + l); return *this; }; memcpy(s, e, l); s += l; return *this;
   }
   Buf& Buf::assign(const char* s, const char* e) {
-    unsigned int l = e - s; if (end_ + l >= back_ && !reserve(cap_ + l)) return *this; memcpy(end_, s, l); end_ += l; return *this;
+    unsigned int l = e - s; if (end_ + l >= back_) { enlarge(cap_ + l); return *this; }; memcpy(end_, s, l); end_ += l; return *this;
   }
   void Buf::swap(Buf& b) noexcept {
     std::swap(b.cap_, cap_); std::swap(b.back_, back_); std::swap(b.end_, end_); std::swap(b.data_, data_);
@@ -159,11 +159,11 @@ namespace fc {
   }
   Buf& Buf::operator<<(const Buf& buf) {
     const Buf* b = &buf; unsigned int l = b->end_ - b->data_;
-    if (end_ + l >= back_ && !reserve((unsigned int)((end_ - data_) + l))) return *this;
+    if (end_ + l >= back_) { enlarge((unsigned int)(end_ - data_) + l); return *this; }
     memcpy(end_, b->data_, l); end_ += l; return *this;
   }
   Buf& Buf::operator<<(Buf&& b) {
-    unsigned int l = b.end_ - b.data_; if (end_ + l >= back_ && !reserve((unsigned int)(end_ - data_) + l)) return *this;
+    unsigned int l = b.end_ - b.data_; if (end_ + l >= back_) { enlarge((unsigned int)(end_ - data_) + l); return *this; };
     memcpy(end_, b.data_, l); end_ += l; return *this;
   }
   Buf& Buf::operator<<(double& d) { this->ensure(0x10); end_ += milo::dtoa(d, end_, back_ - end_); return *this; }
@@ -171,19 +171,19 @@ namespace fc {
   Buf& Buf::operator<<(double&& d) { this->ensure(0x10); end_ += milo::dtoa(std::move(d), end_, back_ - end_); return *this; }
   Buf& Buf::operator<<(float&& f) { this->ensure(0x7); end_ += milo::dtoa(std::move(f), end_, back_ - end_); return *this; }
   Buf& Buf::operator=(const char* s) {
-    unsigned int l = (unsigned int)strlen(s); if (l > cap_ && !reserve(cap_ + l)) return *this;
+    unsigned int l = (unsigned int)strlen(s); if (l > cap_) { enlarge(cap_ + l); return *this; };
     delete[] data_; data_ = new char[cap_]; end_ = data_; back_ = data_ + cap_; return *this << (std::string_view(s, l));
   }
   Buf& Buf::operator=(std::string&& s) {
-    if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
+    if (s.size() > cap_) { enlarge((unsigned int)s.size()); return *this; }; delete[] data_; data_ = new char[cap_];
     end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s.data(), s.size());
   }
   Buf& Buf::operator=(std::string& s) {
-    if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
+    if (s.size() > cap_) { enlarge((unsigned int)s.size()); return *this; }; delete[] data_; data_ = new char[cap_];
     end_ = data_; back_ = data_ + cap_; return *this << std::string_view(s.data(), s.size());
   }
   Buf& Buf::operator=(const std::string_view s) {
-    if (s.size() > cap_ && !reserve(cap_ + (unsigned int)s.size())) return *this; delete[] data_; data_ = new char[cap_];
+    if (s.size() > cap_) { enlarge((unsigned int)s.size()); return *this; }; delete[] data_; data_ = new char[cap_];
     end_ = data_; back_ = data_ + cap_; memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
   }
   Buf& Buf::operator<<(const tm& _v) {
