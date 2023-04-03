@@ -52,9 +52,9 @@ public:
   box(T&& _): p(std::move(_)), b(_ ? true : false) {}
   box(T& _): p(_), b(_ ? true : false) {}
   template<typename... X>
-  box(X&&... _) noexcept: p(new T{std::in_place, std::forward<X>(_)...}), b(true) {}
+  box(X&&... _) noexcept: p(std::in_place, std::forward<X>(_)...), b(true) {}
   template<class I, typename... Z>
-  box(std::initializer_list<I> $, Z&&... _) noexcept: p(new T{std::in_place, $, std::forward<Z>(_)...}), b(true) {}
+  box(std::initializer_list<I> $, Z&&... _) noexcept: p(std::in_place, $, std::forward<Z>(_)...), b(true) {}
   template<typename... U>
   box(U&... _) noexcept: p(_...), b(true) {}
   box(const box<T>& _) : p(_.p), b(true) {}
