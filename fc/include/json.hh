@@ -256,7 +256,7 @@ namespace json {
       Json& r = this->get(std::forward<T>(v)); return r.is_null() ? r : r.get(std::forward<X>(x)...);
     }
     template <typename T>
-    inline void get_to(box<T>& $) {
+    inline void get_to(box<T*>& $) {
       if ($) $.reset(); if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); from_json(this, $.p); return; }
       if (_h->type == t_object) from_json(this, $.p);
     }
@@ -311,8 +311,8 @@ namespace json {
     }
     template <typename T, std::enable_if_t<std::is_fundamental<T>::value>* = nullptr>
     void operator=(const T& s) { *this = Json(const_cast<T&>(s)); }
-    template <typename T, std::enable_if_t<!is_box<T>::value>* = nullptr>
-    void operator=(const box<T>& v) {
+    template <typename T, std::enable_if_t<!is_box_ptr<T>::value>* = nullptr>
+    void operator=(const box<T*>& v) {
       if (v.p) {
         i8 i = -1; fc::ForEachField(v.p, [&i, this](auto& t) { this->operator[](T::$[++i]) = t; });
       }
@@ -504,7 +504,7 @@ namespace json {
 typedef json::Json Json;
 inline fc::Buf& operator<<(fc::Buf& fs, const json::Json& x) { return x.dbg(fs); }
 template<typename T> static void to_json(json::Json& c, const T* v) { c = v ? Json{ *v } : Json{ nullptr }; }
-template<typename T> static void to_json(json::Json& c, const box<T>* v) { if (!c.empty())c.reset(); to_json(c, v->p); }
+template<typename T> static void to_json(json::Json& c, const box<T*>* v) { if (!c.empty())c.reset(); to_json(c, v->p); }
 template<typename T>
 static void to_json(json::Json& c, const std::vector<T>* v) {
   fc::Buf b; b << '['; for (size_t i = 0; i < v->size(); ++i) { b << static_cast<T>(v->at(i)) << ','; }

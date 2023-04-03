@@ -8,7 +8,6 @@
 #include <ctx.hh>
 #include <conn.hh>
 #include <h/common.h>
-#include <hpp/optional.hpp>
 #include <hpp/string_view.hpp>
 #include <str_map.hh>
 #include <iostream>

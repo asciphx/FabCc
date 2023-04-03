@@ -5,14 +5,14 @@
 struct Person;
 struct Book {
   std::string name = "BOOK!";
-  box<Person> person; vec<Person> persons;
+  box<Person*> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
   std::string name;
   int age;
-  box<Book> book; vec<Book> books;
+  box<Book*> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)

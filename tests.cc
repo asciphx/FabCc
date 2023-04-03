@@ -1,6 +1,5 @@
 #include <hpp/text.hpp>
 #include <hpp/any.hpp>
-#include <hpp/optional.hpp>
 #include <hpp/tuple.hpp>
 #include <lexical_cast.hh>
 #include <time.h>
@@ -14,14 +13,14 @@
 struct Person;
 struct Book {
   fc::Buf name = "Hello, world!";
-  box<Person> person; vec<Person> persons;
+  box<Person*> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
   fc::Buf name;
   int age;
-  box<Book> book; vec<Book> books;
+  box<Book*> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
@@ -49,16 +48,18 @@ int main() {
   }
   printf("use %.6f seconds\n", (float)(clock() - start) / CLOCKS_PER_SEC);
   l = std::lexical_cast<unsigned long long>(s);
-  std::cout << (std::lexical_cast<unsigned long long>(s) == l);
-  //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
-  //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
-  return 0;
-  std::optional<std::string> op("AOP");//optional
+  std::cout << (std::lexical_cast<unsigned long long>(s) == l) << '\n';
+  box<std::string> op("AOP");//optional
   std::cout << op.value_or("null") << '\n';
   op = "Hello, world!";
   std::cout << op.value_or("null") << '\n';
   op = {};
   std::cout << op.value_or("null") << '\n';
+  std::map<box<int>, std::string> m = { {3, "three"}, {5, "five"}, {nullptr, "null"}, {1, "one"} };
+  for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n';
+  //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
+  //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
+  return 0;
   int data = 1;
   fc::co f{ [&data](fc::co&& f) {
   std::cout << "entered first time: " << data << std::endl;
@@ -78,8 +79,6 @@ int main() {
   fc::ForRangeTuple<Person, 0, 2>(&p, [&p](auto& _) {
     std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
     });
-  std::map<std::optional<int>, std::string> m = { {3, "three"}, {5, "five"}, {std::nullopt, "null"}, {1, "one"} };
-  fc::Buf buf; for (auto& p : m) buf << p.first.value_or(-1) << " : " << p.second << '\n'; std::cout << buf;
   from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
   //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
   //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
