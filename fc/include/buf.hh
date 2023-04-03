@@ -117,11 +117,11 @@ namespace fc {
     Buf& operator<<(const Buf& s);
     Buf& operator<<(Buf&& s);
     _INLINE Buf& operator<<(const std::string& s) {
-      if (end_ + s.size() >= back_) { enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size()); return *this; }
+      if (end_ + s.size() >= back_) enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size());
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
     _INLINE Buf& operator<<(std::string&& s) {
-      if (end_ + s.size() >= back_) { enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size()); return *this; }
+      if (end_ + s.size() >= back_) enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size());
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
     _INLINE Buf& operator<<(unsigned long long& i) { char s[20]; return this->append(s, jeaiii::to_text_from_integer(s, i) - s); }
@@ -143,7 +143,7 @@ namespace fc {
     _INLINE Buf& operator<<(short&& i) { char s[5]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
     _INLINE Buf& operator<<(unsigned short&& i) { char s[4]; return this->append(s, jeaiii::to_text_from_integer(s, std::move(i)) - s); }
     _INLINE Buf& operator<<(std::string_view s) {
-      if (end_ + s.size() >= back_) { enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size()); return *this; }
+      if (end_ + s.size() >= back_) enlarge(((cap_ + 1) >> 1) + (unsigned int)s.size());
       memcpy(end_, s.data(), s.size()); end_ += s.size(); return *this;
     }
     _INLINE Buf& operator<<(const char* s) { return this->append(s); }
