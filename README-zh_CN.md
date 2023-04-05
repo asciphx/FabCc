@@ -56,10 +56,9 @@ int main() {
   App app; Timer t;
   app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-	  Json x; Person p1{"sb1", 1}, p2{"sb2", 2};// 仅仅被vec中的box使用, 防止出错
-	  Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", p1},Book{"2", p2} }} };
+    Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
 	  b.person->book = Book{ "rs" };//C++中的面向对象开发
-	  to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
+    Json x; to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/serialization"] = [](Req& req, Res& res) {
 	  Json x; Book b; from_json(x = json::parse(R"(

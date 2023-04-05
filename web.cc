@@ -25,10 +25,9 @@ int main() {
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
     .sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-    Json x; Person p1{ "sb1", 1 }, p2{ "sb2", 2 };// Only used by boxes in vec to prevent errors
-    Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", p1},Book{"2", p2} }} };
+    Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
     b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
-    to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
+    Json x; to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/serialization"] = [](Req& req, Res& res) {
     Json x; Book b; from_json(x = json::parse(R"(

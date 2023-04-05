@@ -59,32 +59,13 @@ int main() {
   for (auto& p : m) std::cout << p.first.value_or(-1) << " : " << p.second << '\n';
   //printf("%.6lf\n", std::lexical_cast<double>("54345.5466"));
   //printf("%f\n", std::lexical_cast<double>("0xffffff.ff"));
-  return 0;
-  int data = 1;
-  fc::co f{ [&data](fc::co&& f) {
-  std::cout << "entered first time: " << data << std::endl;
-  data += 2;
-  f = f.yield();
-  std::cout << "entered second time: " << data << std::endl;
-  return std::move(f);
-  } };
-  f = f.yield();
-  std::cout << "returned first time: " << data << std::endl;
-  data += 2;
-  f = f.yield();
-  if (!f) std::cout << "returned second time: " << data << std::endl;
-  std::cout << "execution context terminated" << std::endl;
-  Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; to_json(j, &p); std::cout << j.str() << std::endl;
+  Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; to_json(j, &p);
   fc::ForRangeField<2, 4>(&p, [](auto& _) { std::cout << typeid(_).name() << std::endl; });//2nd, 3rd index of tuple
   fc::ForRangeTuple<Person, 0, 2>(&p, [&p](auto& _) {
     std::cout << typeid(std::remove_reference_t<decltype(p.*_)>).name() << std::endl;//0nd, 1rd index of tuple
     });
-  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();
-  //Book b{ "ts", Person{"js",23,nullptr, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
-  //The box in the std::vector cannot set the initial value, only the following method can be used here, Otherwise there will be a memory leak
-  Book b{ "ts", Person{"js",23, Book{"what the fuck"}, vec<Book>{ Book{},Book{} }} };//OOP. except box in vec
-  b.person->books[0].person = Person{ "joker", 9, Book{"ojbk"} };//if box has initial value, only this way it works
-  b.person->book = Book{ "wtf", Person{"fucker"} };//Write C++ like Object-Oriented Programming, also work.
+  from_json(j, &v); std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();// v is Person, not Book. so reset for Book.
+  Book b{ "ts", Person{"js",23, Book{"wtf", Person{"fucker"}}, vec<Book>{ Book{"",Person{ "joker", 9, Book{"what the fuck"} }},Book{"",Person{ "ojbk" }} }} };
   to_json(j, &b); fc::Buf js = j.dump();//save json
   j = json::parse(R"(
   {
@@ -104,12 +85,12 @@ int main() {
           },
           "books": [
               {
-                  "name": "Hello, world!",
+                  "name": "",
                   "person": {
                       "name": "joker",
                       "age": 9,
                       "book": {
-                          "name": "ojbk",
+                          "name": "what the fuck",
                           "person": null,
                           "persons": null
                       },
@@ -118,8 +99,13 @@ int main() {
                   "persons": null
               },
               {
-                  "name": "Hello, world!",
-                  "person": null,
+                  "name": "",
+                  "person": {
+                      "name": "ojbk",
+                      "age": 0,
+                      "book": null,
+                      "books": null
+                  },
                   "persons": null
               }
           ]
@@ -128,11 +114,21 @@ int main() {
   })"); from_json(j, &b);//Turn json into an object
   to_json(j, &b);//Then convert the object to json
   std::cout << std::boolalpha << (js == j.dump()) << std::endl;//compare json, true
-  //The following is the best way to initialize an object, which can be written at will
-  from_json(j = json::parse(R"(
-  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"","person":{"name":"fucker","age":0},
-  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3}]}}}
-  )"), &b); to_json(j, &b); std::cout << j.str() << std::endl;//show json, 100% correct
+  return 0;
+  int data = 1;
+  fc::co f{ [&data](fc::co&& f) {
+    std::cout << "entered first time: " << data << std::endl;
+    data += 2;
+    f = f.yield();
+    std::cout << "entered second time: " << data << std::endl;
+    return std::move(f);
+  } };
+  f = f.yield();
+  std::cout << "returned first time: " << data << std::endl;
+  data += 2;
+  f = f.yield();
+  if (!f) std::cout << "returned second time: " << data << std::endl;
+  std::cout << "execution context terminated" << std::endl;
   vec<int> vi{ 1,2,3,4,5,6 }; to_json(j, &vi); std::cout << j.str() << std::endl;
   from_json(json::array({ 6,5,4,3,2,1 }), &vi); to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); vec<fc::Buf> vs; from_json(j, &vs); std::cout << std::boolalpha << (vs[1] == "gdg");
