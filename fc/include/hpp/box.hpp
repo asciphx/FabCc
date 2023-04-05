@@ -49,8 +49,9 @@ public:
   box(box<U>&& _) noexcept: p(std::move(_.p)), b(std::move(_.b)) {}
   template<typename U, std::enable_if_t<std::is_same<T, U>::value>* = nullptr>
   box(box<U>& _) noexcept: p(_.p), b(_.b) {}
-  box(T&& _): p(std::move(_)), b(_ ? true : false) {}
-  box(T& _): p(_), b(_ ? true : false) {}
+  box(T&& _): p(std::move(_)), b(true) {}
+  box(T& _): p(_), b(true) {}
+  box(T* _): p(*_), b(_ ? true : false) {}
   template<typename... X>
   box(X&&... _) noexcept: p(std::in_place, std::forward<X>(_)...), b(true) {}
   template<class I, typename... Z>
@@ -94,10 +95,9 @@ public:
   box(V&&... _) noexcept: p(new T{ std::move(_)... }), b(true) {}
   template<typename... Y>
   box(Y&... _) noexcept: p(new T{ _... }), b(true) {}
-  box(const box<T>&& _) : p(_.p), b(_.b) { _.b = false; }
   ~box() { if (b) { delete p; p = nullptr; } }
   //Automatic memory management, but be careful not to release the external, eg: box<T*> xx = new T{};
-  void operator = (T* _) { if (b) delete p; p = _; b = _ ? true : false; }
+  void operator = (T* _) { if (b) delete p; p = _; b = true; }
   void operator = (T& _) { if (b) *p = _; else { p = new T(_); b = true; } }
   void operator = (T&& _) { if (b) delete p; p = new T(std::move(_)); b = true; }
   void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
