@@ -54,17 +54,18 @@ void funk(Req& req, Res& res) {
 };
 int main() {
   App app; Timer t;
-  app.file_type().sub_api("/", app.serve_file("static"));//服务文件接口
+  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" })
+    .sub_api("/", app.serve_file("static"));//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
-    Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
-	  b.person->book = Book{ "rs" };//C++中的面向对象开发
+    Book b{ "ts", Person{"js",33, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
+    b.person->book = Book{ "rs" };//C++中的面向对象开发
     Json x; to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/serialization"] = [](Req& req, Res& res) {
-	  Json x; Book b; from_json(x = json::parse(R"(
-	  {"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
-	  "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-	  )"), &b); to_json(x, &b); res.write(x.dump());//反序列化与序列化
+    Json x; Book b; from_json(x = json::parse(R"(
+	{"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
+	"persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
+	)"), &b); b.person->book->persons[2].name = "wwzzgg"; to_json(x, &b); res.write(x.dump());//反序列化与序列化
   };
   app["/api"] = [&app](Req& req, Res& res) {
 	  res.write(app._print_routes());//返回路由列表

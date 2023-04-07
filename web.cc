@@ -5,14 +5,14 @@
 struct Person;
 struct Book {
   std::string name = "BOOK!";
-  box<Person*> person; vec<Person> persons;
+  box<Person> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
   std::string name;
   int age;
-  box<Book*> book; vec<Book> books;
+  box<Book> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
@@ -22,18 +22,18 @@ void funk(Req& req, Res& res) {
 };
 int main() {
   App app; Timer t;
-  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","lanim","lmesh" })
+  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" })
     .sub_api("/", app.serve_file("static"));//Service file interface
   app["/json"] = [](Req& req, Res& res) {
-    Book b{ "ts", Person{"js",23, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
+    Book b{ "ts", Person{"js",33, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
     b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
     Json x; to_json(x, &b); x["person"]["book"]["person"] = b.person; res.write(x.dump());
   };
   app["/serialization"] = [](Req& req, Res& res) {
     Json x; Book b; from_json(x = json::parse(R"(
-	{"name":"ts","person":{"name":"js","age":23,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
+	{"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
 	"persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-	)"), &b); to_json(x, &b); res.write(x.dump());
+	)"), &b); b.person->book->persons[2].name = "wwzzgg"; to_json(x, &b); res.write(x.dump());
   };
   app["/api"] = [&app](Req& req, Res& res) {
     res.write(app._print_routes());//Return to routing list

@@ -12,15 +12,15 @@
 #include <hpp/i2a.hpp>
 struct Person;
 struct Book {
-  fc::Buf name = "Hello, world!";
-  box<Person*> person; vec<Person> persons;
+  box<fc::Buf> name = "Hello, world!";
+  box<Person> person; vec<Person> persons;
   REG(Book, name, person, persons)
 };
 CLASS(Book, name, person, persons)
 struct Person {
-  fc::Buf name;
-  int age;
-  box<Book*> book; vec<Book> books;
+  box<fc::Buf> name;
+  box<int> age;
+  box<Book> book; vec<Book> books;
   REG(Person, name, age, book, books)
 };
 CLASS(Person, name, age, book, books)
@@ -77,7 +77,7 @@ int main() {
               "name": "wtf",
               "person": {
                   "name": "fucker",
-                  "age": 0,
+                  "age": null,
                   "book": null,
                   "books": null
               },
@@ -102,7 +102,7 @@ int main() {
                   "name": "",
                   "person": {
                       "name": "ojbk",
-                      "age": 0,
+                      "age": null,
                       "book": null,
                       "books": null
                   },
@@ -111,8 +111,7 @@ int main() {
           ]
       },
       "persons": null
-  })"); from_json(j, &b);//Turn json into an object
-  to_json(j, &b);//Then convert the object to json
+  })");
   std::cout << std::boolalpha << (js == j.dump()) << std::endl;//compare json, true
   return 0;
   int data = 1;

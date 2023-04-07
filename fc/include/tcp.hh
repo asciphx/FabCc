@@ -78,7 +78,7 @@ namespace fc {
       epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
       kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif  _WIN32
-      this->epoll_fd = epoll_create(); fd_to_fiber_idx.resize(4); R_fibers.resize(nthreads);
+      this->epoll_fd = epoll_create(); fd_to_fiber_idx.resize(4);
       epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN);
       kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif __APPLE__
@@ -215,7 +215,7 @@ namespace fc {
 #ifdef _WIN32
     system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA wsaData; int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
-    signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler);
+    signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler); R_fibers.resize(nthreads);
 #else
     struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler;
     sigaction(SIGINT, &act, 0); sigaction(SIGTERM, &act, 0); sigaction(SIGQUIT, &act, 0);
