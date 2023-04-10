@@ -1022,7 +1022,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned short lexical_cast<unsigned short>(string_view& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 4) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 4) {
       unsigned short r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_PO[l--] * (*c++ - 0x30);
@@ -1064,7 +1064,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned int lexical_cast<unsigned int>(string_view& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned int r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1106,7 +1106,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned long lexical_cast<unsigned long>(string_view& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1148,7 +1148,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned long long lexical_cast<unsigned long long>(string_view& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 19) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
       unsigned long long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POWS[l--] * (*c++ - 0x30);
@@ -1267,7 +1267,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned short lexical_cast<unsigned short>(string_view&& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 4) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 4) {
       unsigned short r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_PO[l--] * (*c++ - 0x30);
@@ -1309,7 +1309,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned int lexical_cast<unsigned int>(string_view&& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned int r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1351,7 +1351,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned long lexical_cast<unsigned long>(string_view&& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1393,7 +1393,7 @@ namespace std {
   }
   template <> [[nodiscard]]
     unsigned long long lexical_cast<unsigned long long>(string_view&& s) {
-    const char* c = s.data(); size_t l = s.length(); if (--l < 19) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
       unsigned long long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POWS[l--] * (*c++ - 0x30);
