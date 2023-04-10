@@ -23,7 +23,7 @@ void funk(Req& req, Res& res) {
 int main() {
   App app; Timer t;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" })
-    .sub_api("/", app.serve_file("static"));//Service file interface
+    .sub_api("/", app.serve_file("static")).set_use_max_mem(300.0);//Service file interface
   app["/json"] = [](Req& req, Res& res) {
     Book b{ "ts", Person{"js",33, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
     b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
@@ -43,7 +43,7 @@ int main() {
     for (auto p : bp.params) {
       res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
     }
-    res.write(res.body);
+    res.write(res.body.pop_back().pop_back());
   };
   app["/del"] = [&app](Req&, Res& res) {
     app.get() = nullptr;

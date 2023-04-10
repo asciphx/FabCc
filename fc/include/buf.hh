@@ -17,6 +17,8 @@
 namespace fc {
   static const std::string_view RES_TURE("true", 4), RES_FALSE("false", 5);
   struct Buf {
+    char* data_;
+    char* end_;
     Buf();
     Buf(Buf&& o);
     Buf(const Buf& o);
@@ -162,8 +164,6 @@ namespace fc {
     _INLINE bool operator==(std::string&& b) const {
       size_t t_l = this->end_ - this->data_; return t_l == b.size() && memcmp(data_, b.data(), t_l) == 0;
     }
-    char* data_;
-    char* end_;
   private:
     _INLINE void enlarge(unsigned int l) {
       char* c = static_cast<char*>(malloc(cap_)); unsigned int size = end_ - data_; memcpy(c, data_, size); delete[] data_;

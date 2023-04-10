@@ -26,6 +26,10 @@ namespace fc {
   static const char RES_GMT[26] = "%a, %d %b %Y %H:%M:%S GMT";
   static std::string directory_ = STATIC_DIRECTORY;
   static std::string upload_path_ = UPLOAD_DIRECTORY;
+  //Set the file size allowed for POST according to the host memory
+  //for example, 2G memory can be set to 128MB, because the idle memory is about 600+MB
+  //It is best to use breakpoint resume, but it has not been implemented yet
+  static float RES_USE_MAX_MEM_SIZE_MB = 400.0;// < 600 - L
 }
 
 #endif // COMMON_H

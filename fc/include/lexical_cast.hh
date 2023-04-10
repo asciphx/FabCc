@@ -31,7 +31,7 @@ namespace std {
   static const string STD_TURE("true", 4), STD_FALSE("false", 5);
 
   template <typename T> _INLINE T lexical_cast(const char* c);
-  template <typename S> _INLINE S lexical_cast(string_view sv) { return lexical_cast<S>(sv.data()); };
+  //template <typename S> _INLINE S lexical_cast(string_view sv) { return lexical_cast<S>(sv.data()); };
   template <> string lexical_cast<string>(const char* c);
   template <> _NODISCARD bool lexical_cast<bool>(const char* c);
   template <> _NODISCARD char lexical_cast<char>(const char* c);
@@ -104,6 +104,44 @@ namespace std {
   template <> _NODISCARD double lexical_cast<double>(string&& s);
   template <> _NODISCARD long double lexical_cast<long double>(string&& s);
   template <> tm lexical_cast<tm>(string&& s);
+
+  template <typename T> _INLINE T lexical_cast(string_view& s);
+  template <> _NODISCARD string lexical_cast<string>(string_view& c);
+  template <> _NODISCARD bool lexical_cast<bool>(string_view& s);
+  template <> _NODISCARD char lexical_cast<char>(string_view& s);
+  template <> _NODISCARD signed char lexical_cast<signed char>(string_view& s);
+  template <> _NODISCARD unsigned char lexical_cast<unsigned char>(string_view& s);
+  template <> _NODISCARD short lexical_cast<short>(string_view& s);
+  template <> _NODISCARD unsigned short lexical_cast<unsigned short>(string_view& s);
+  template <> _NODISCARD int lexical_cast<int>(string_view& s);
+  template <> _NODISCARD unsigned int lexical_cast<unsigned int>(string_view& s);
+  template <> _NODISCARD long lexical_cast<long>(string_view& s);
+  template <> _NODISCARD long unsigned lexical_cast<long unsigned>(string_view& s);
+  template <> _NODISCARD long long lexical_cast<long long>(string_view& s);
+  template <> _NODISCARD unsigned long long lexical_cast<unsigned long long>(string_view& s);
+  template <> _NODISCARD float lexical_cast<float>(string_view& s);
+  template <> _NODISCARD double lexical_cast<double>(string_view& s);
+  template <> _NODISCARD long double lexical_cast<long double>(string_view& s);
+  template <> tm lexical_cast<tm>(string_view& s);
+
+  template <typename T> _INLINE T lexical_cast(string_view&& s);
+  template <> _NODISCARD string lexical_cast<string>(string_view&& c);
+  template <> _NODISCARD bool lexical_cast<bool>(string_view&& s);
+  template <> _NODISCARD char lexical_cast<char>(string_view&& s);
+  template <> _NODISCARD signed char lexical_cast<signed char>(string_view&& s);
+  template <> _NODISCARD unsigned char lexical_cast<unsigned char>(string_view&& s);
+  template <> _NODISCARD short lexical_cast<short>(string_view&& s);
+  template <> _NODISCARD unsigned short lexical_cast<unsigned short>(string_view&& s);
+  template <> _NODISCARD int lexical_cast<int>(string_view&& s);
+  template <> _NODISCARD unsigned int lexical_cast<unsigned int>(string_view&& s);
+  template <> _NODISCARD long lexical_cast<long>(string_view&& s);
+  template <> _NODISCARD long unsigned lexical_cast<long unsigned>(string_view&& s);
+  template <> _NODISCARD long long lexical_cast<long long>(string_view&& s);
+  template <> _NODISCARD unsigned long long lexical_cast<unsigned long long>(string_view&& s);
+  template <> _NODISCARD float lexical_cast<float>(string_view&& s);
+  template <> _NODISCARD double lexical_cast<double>(string_view&& s);
+  template <> _NODISCARD long double lexical_cast<long double>(string_view&& s);
+  template <> tm lexical_cast<tm>(string_view&& s);
 
   template <typename S, typename T> _INLINE S lexical_cast(T& i);
   template <> inline string lexical_cast<string>(char& i) { char s[4]; return string(s, jeaiii::to_text_from_integer(s, i) - s); }

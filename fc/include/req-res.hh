@@ -16,8 +16,6 @@
 #else
 #include <fcntl.h>
 #endif
-#define BUF_SIZE 0x10000
-#define BUF_MAXSIZE 256000000
 namespace fc {
   struct App;
   class Req {
@@ -33,7 +31,7 @@ namespace fc {
     fc::Buf& url;
     fc::Buf& params;
     fc::Buf& body;
-    //uint64_t uuid;
+    unsigned int length;
     str_map& headers;
     fc::Buf ip_addr;
     Conn& fiber;

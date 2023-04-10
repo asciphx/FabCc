@@ -32,9 +32,11 @@ namespace fc {
     DRT map_;
     //std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
     std::unordered_map<std::string_view, std::string_view> content_types;
-    void sub_api(const char* prefix, const App& subapi);
+    App& sub_api(const char* prefix, const App& subapi);
     //Serve static directory
     App serve_file(const char* r);
+    //set use max mem size(MB), The remaining memory size available to the system minus the maximum size of the uploaded files
+    App& set_use_max_mem(float&& f);
     App& file_type(const std::vector<std::string_view>& line = { "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" });
   };
   void http_serve(App& api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");

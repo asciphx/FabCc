@@ -1,28 +1,5 @@
 #include <ctx.hh>
-#ifdef WIN32
-#include <psapi.h>
-#include <direct.h>
-#include <process.h>
-#else
-#include <sys/stat.h>
-#include <sys/sysinfo.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif
 namespace fc {
-#ifdef WIN32
-  inline float GetMemUsage(int pid = _getpid()) {
-    uint64_t m = 0, n = 0; PROCESS_MEMORY_COUNTERS pmc; HANDLE h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-    if (GetProcessMemoryInfo(h, &pmc, sizeof(pmc))) m = pmc.WorkingSetSize, n = pmc.PagefileUsage;
-    CloseHandle(h); return m / 1048576.0;
-#else
-  inline float GetMemUsage(int pid = getpid()) {
-    char file_name[64] = { 0 }, line_buff[512] = { 0 }; sprintf(file_name, "/proc/%d/status", pid);
-    FILE* fd = fopen(file_name, "r"); if (nullptr == fd) return 0; int v = 0;
-    for (int i = 0; i < 22; ++i) char* cha = fgets(line_buff, sizeof(line_buff), fd);
-    sscanf(line_buff, "%s %d", file_name, &v); fclose(fd); return v / 1024.0;
-#endif
-  }
   void Ctx::format_top_headers(output_buffer & output_stream) {
     if (status_code_ == 200) output_stream << http_top_header.top_header_200();
     else output_stream << "HTTP/1.1 " << status_ << http_top_header.top_header();
@@ -39,7 +16,7 @@ namespace fc {
         return value;
       };
       if (key == "Content-Length") {
-        content_length_ = atoi(get_value().data());
+        content_length_ = std::lexical_cast<unsigned int>(get_value());
       } else if (key == "Content-Type") {
         content_type_ = get_value(); chunked_ = (content_type_ == "chunked");
       }
@@ -138,7 +115,7 @@ namespace fc {
   // Open file.
     FILE* fd; if ((fd = fopen(path.c_str(), "rb")) == NULL) // C4996
       throw err::not_found(Buf("File:", 5) << path << " not found.");
-    fseek(fd, 0L, SEEK_END); content_length_ = ftell(fd); rewind(fd);
+    fseek(fd, 0L, SEEK_END); content_length_ = static_cast<unsigned int>(ftell(fd)); rewind(fd);
     // Writing the http headers.
     response_written_ = true; format_top_headers(output_stream);
     headers_stream.flush(); // flushes to output_stream.
@@ -163,28 +140,6 @@ namespace fc {
     cur = end + 1;
     if (*end == split_char) return std::string_view(start, cur - start - 1);
     else return std::string_view(start, cur - start);
-  }
-  void Ctx::read_body(fc::Buf & b) {
-    if (content_length_ > MAX_FILE_SIZE || GetMemUsage() > MAX_MEM_SIZE_MB) {
-      throw std::runtime_error("request too long, or insufficient memory");//skip
-    }
-    b.resize(content_length_);
-#ifdef _WIN32
-    int count = fiber.read(b.data_, content_length_), offset = 0;
-    while (content_length_ > offset) {
-      if (count > 0) {
-        offset += count; count = fiber.read(b.data_ + offset, content_length_);
-      } else count = fiber.read(b.data_ + offset, content_length_);
-    }
-#else
-    int count = fiber.read(b.data_, content_length_), offset = count > 0 ? count : 0;
-    while (content_length_ > offset) {
-      if (count > 0) {
-        count = fiber.read(b.data_ + offset, content_length_); offset += count;
-      } else count = fiber.read(b.data_ + offset, content_length_);
-    }
-#endif // _WIN32
-    b.end_ += content_length_; content_length_ = parser_.finish = 0;
   }
   std::string_view Ctx::read_whole_body() {
     is_body_read_ = true; if (!chunked_ && !content_length_) {

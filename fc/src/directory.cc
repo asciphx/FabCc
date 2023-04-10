@@ -19,9 +19,9 @@ namespace fc {
     int ret = mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
     if (ret && errno == EEXIST) {
-      DEBUG("\"%s\" aleardy exist\n", path.c_str()); return 1;
+      return 1;//DEBUG("\"%s\" aleardy exist\n", path.c_str());
     } else if (ret) {
-      DEBUG("create error: %d, :%s\n", ret, strerror(errno)); return -1;
+      printf("create error: %d, :%s\n", ret, strerror(errno)); return -1;
     }
     return 0;
   }

@@ -39,6 +39,7 @@ namespace fc {
   VH& App::post(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
   VH& App::put(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
   //VH& App::patch(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
+  App& App::set_use_max_mem(float&& f) { RES_USE_MAX_MEM_SIZE_MB = std::move(f); return *this; }
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it
@@ -77,12 +78,12 @@ namespace fc {
       it->second(req, res);
     } else throw err::not_found();
   }
-  void App::sub_api(const char* prefix, const App& app) {
+  App& App::sub_api(const char* prefix, const App& app) {
     char m; if ((prefix[0] == '/' || prefix[0] == '\\') && prefix[1] == 0)++prefix;
     app.map_.for_all_routes([this, &prefix, &m](std::string r, VH h) {
       std::string $(prefix); $.push_back('/'); m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
       $ += r[1] == 0x2f ? r.substr(2) : r.substr(3); this->map_.add($.c_str(), m) = h;
-      });
+      }); return *this;
   }
   App App::serve_file(const char* r = STATIC_DIRECTORY) {
     App api;
@@ -100,7 +101,7 @@ namespace fc {
       };
 #endif // !__linux__
       api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
-        std::string _($); _ += req.url.c_str() + 1;
+        std::string _($); _.append(req.url.c_str() + 1, req.url.end_ - req.url.data_ - 1);
         std::string::iterator i = --_.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
@@ -160,7 +161,8 @@ namespace fc {
           Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map); Res res(ctx);
           if (ctx.parser_.finish) {
             try {
-              ctx.read_body(req.body); api._call(*((char*)(&req)), req.url, req, res);
+              req.length = std::move(ctx.content_length_);
+              api._call(*((char*)(&req)), req.url, req, res);
             } catch (const http_error& e) {
               ctx.set_status(e.i()); ctx.respond(e.what());
             } catch (const std::exception& e) {
@@ -171,10 +173,10 @@ namespace fc {
           try {
             api._call(*((char*)(&req)), req.url, req, res);
           } catch (const http_error& e) {
-            ctx.set_status(e.i()); ctx.respond(e.what());
+            ctx.set_status(e.i()); ctx.respond(e.what());//If error code is equal 500, record the log
+            if (e.i() == 500) std::cerr << "ERROR<" << e.i() << ">: " << e.what() << std::endl;
           } catch (const std::exception& e) {
-            std::cerr << "INTERNAL ERROR: " << e.what() << std::endl;
-            ctx.set_status(500); ctx.respond(e.what());
+            ctx.set_status(500); ctx.respond(e.what());//No logging is required as log takes up disk space
           }
           ctx.respond_if_needed(); ctx.prepare_next_request(); ctx.parser_.reset();
           //if (rb.empty())

@@ -14,6 +14,7 @@
 */
 #include <string>
 #include <iostream>
+#include <stdexcept>
 #include <memory>
 #include <type_traits>
 #include <new>
@@ -45,42 +46,42 @@ public:
   explicit box(T* _) noexcept: p(std::addressof(*_)), b(false) {}//not use
   template<typename... X>
   box(X&&... _) noexcept: p(new T{ std::forward<X>(_)... }), b(true) {}
-  ~box() { if (b) { delete p; p = nullptr; } }
+  ~box() { if (this->b) { delete this->p; this->p = nullptr; } }
   //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};
-  void operator = (T* _) { if (b) delete p; p = _; b = true; }
-  void operator = (T& _) { if (b) *p = _; else { p = new T(_); b = true; } }
-  void operator = (T&& _) { if (b) delete p; p = new T(std::move(_)); b = true; }
+  void operator = (T* _) { if (this->b) delete this->p; this->p = _; this->b = true; }
+  void operator = (T& _) { if (this->b) *this->p = _; else { this->p = new T(_); this->b = true; } }
+  void operator = (T&& _) { if (this->b) delete this->p; this->p = new T(std::move(_)); this->b = true; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U&& _) {
-    if (p) *p = std::move(_); else { p = new T(std::move(_)); b = true; }
+    if (this->p) *this->p = std::move(_); else { this->p = new T(std::move(_)); this->b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
   void operator=(U& _) {
-    if (p) *p = _; else { p = new T(_); b = true; }
+    if (this->p) *this->p = _; else { this->p = new T(_); this->b = true; }
   }
   void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
   constexpr bool has_value() const noexcept { return this->p != nullptr; }
   constexpr explicit operator bool() const noexcept { return this->p != nullptr; }
-  const T* operator->() const { return this->p; }
-  T* operator->() { return this->p; }
-  T& operator*() & noexcept { return *p; }
-  constexpr const T& operator*() const& noexcept { return *p; }
+  const T* operator->() const { if (!p)throw std::range_error(std::string(typeid(T).name()).append("'s ptr is null!", 15)); return p; }
+  T* operator->() { if (!this->p)throw std::range_error(std::string(typeid(T).name()).append("'s ptr is null!", 15)); return this->p; }
+  T& operator*() & noexcept { return *this->p; }
+  constexpr const T& operator*() const& noexcept { return *this->p; }
   __CONSTEXPR T value_or(T&& _) const {
     if __CONSTEXPR(!std::is_class<T>::value)* ((bool*)(this)) = false; return this->p != nullptr ? *this->p : _;
   }
   __CONSTEXPR T value_or(T& _) const {
     if __CONSTEXPR(!std::is_class<T>::value)* ((bool*)(this)) = false; return this->p != nullptr ? *this->p : _;
   }
-  void reset() noexcept { if (p) { delete p; } p = nullptr; b = false; }
+  void reset() noexcept { if (this->p) { delete this->p; } this->p = nullptr; this->b = false; }
 };
 template<typename T> struct box_pack {};
 template<typename T> struct box_pack<box<T>> { using type = T; };
 template<typename T> using box_pack_t = typename box_pack<T>::type;
 //box<T>
 template <typename T>
-std::ostream& operator<<(std::ostream& s, box<T>& b) { if(b.p == nullptr) return s << "null"; return s << *b.p; }
+std::ostream& operator<<(std::ostream& s, box<T>& b) { if (b.p == nullptr) return s << "null"; return s << *b.p; }
 template <typename T>
-std::ostream& operator<<(std::ostream& s, const box<T>& b) { if(b.p == nullptr) return s << "null"; return s << *b.p; }
+std::ostream& operator<<(std::ostream& s, const box<T>& b) { if (b.p == nullptr) return s << "null"; return s << *b.p; }
 template <class T, class U>
 inline constexpr bool operator==(const box<T>& l, const box<U>& r) { return l.p == r.p; }
 template <class T, class U>

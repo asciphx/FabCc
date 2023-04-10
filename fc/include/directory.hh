@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string>
 #include <cstring>
-#include <h/config.h>
 #if defined _WIN32
 #include <direct.h>
 #include <windows.h>

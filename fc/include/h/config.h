@@ -30,11 +30,6 @@
 //#define AccessControlAllowMethods "GET,POST,DELETE,PUT,PATCH"
 #define SHOW_SERVER_NAME 1
 #define CACHE_HTML_TIME_SECOND 6
-//Set the file size allowed for POST according to the host memory
-//for example, 2G memory can be set to 128MB, because the idle memory is about 600+MB
-//It is best to use breakpoint resume, but it has not been implemented yet
-#define MAX_FILE_SIZE 134217728
-#define MAX_MEM_SIZE_MB 400 // < 600 - MAX_FILE_SIZE
 
 #if defined(_MSC_VER)
 #if _MSC_VER < 1900

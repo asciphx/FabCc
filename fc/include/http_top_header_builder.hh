@@ -1,4 +1,5 @@
 #pragma once
+#include <hpp/string_view.hpp>
 #include <time.h>
 namespace internal {
   struct double_buffer {

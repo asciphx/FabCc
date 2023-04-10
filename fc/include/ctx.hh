@@ -53,7 +53,6 @@ namespace fc {
     // split a string, starting from cur && ending with split_char.
     // Advance cur to the end of the split.
     std::string_view split(const char*& cur, const char* line_end, char split_char);
-    void read_body(fc::Buf& b);
     std::string_view read_whole_body();
     void prepare_next_request();
     template <typename C> void url_decode_parameters(std::string_view content, C kv_callback) {
@@ -77,7 +76,7 @@ namespace fc {
 
     std::string_view content_type_;
     bool chunked_;
-    int content_length_;
+    unsigned int content_length_;
     std::vector<std::pair<std::string_view, std::string_view>> response_headers;
     bool is_body_read_ = false;
     std::string_view body_;
