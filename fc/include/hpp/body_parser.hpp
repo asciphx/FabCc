@@ -55,11 +55,11 @@ namespace fc {
         if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(fc::directory_); ss += menu;
         RES_menu.insert(m); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
       }
-      assert(L < RES_DEFAULT_MAX_MEM_SIZE_MB); p_b(req.body);
+      assert(L < RES_USE_MAX_MEM_SIZE_MB); p_b(req.body);
     }
     BP(Req& req, unsigned short mb = 32, bool b = false): menu(fc::upload_path_), L(mb), req(req), ban_file(b),
       boundary(g_b(fc::get_header(req.headers, RES_CT))), content_length_(req.length) {
-      assert(L < RES_DEFAULT_MAX_MEM_SIZE_MB); p_b(req.body);
+      assert(L < RES_USE_MAX_MEM_SIZE_MB); p_b(req.body);
     }
   private: //get_boundary
     string g_b(const Buf& h) const {
