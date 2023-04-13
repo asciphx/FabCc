@@ -46,17 +46,17 @@ public:
   explicit box(T* _) noexcept: p(std::addressof(*_)), b(false) {}//not use
   template<typename... X>
   box(X&&... _) noexcept: p(new T{ std::forward<X>(_)... }), b(true) {}
-  ~box() { if (this->b) { delete this->p; this->p = nullptr; } }
+  ~box() noexcept { if (this->b) { delete this->p; this->p = nullptr; } }
   //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};
-  void operator = (T* _) { if (this->b) delete this->p; this->p = _; this->b = true; }
-  void operator = (T& _) { if (this->b) *this->p = _; else { this->p = new T(_); this->b = true; } }
-  void operator = (T&& _) { if (this->b) delete this->p; this->p = new T(std::move(_)); this->b = true; }
+  void operator = (T* _) noexcept { if (this->b) delete this->p; this->p = _; this->b = true; }
+  void operator = (T& _) noexcept { if (this->b) *this->p = _; else { this->p = new T(_); this->b = true; } }
+  void operator = (T&& _) noexcept { if (this->b) delete this->p; this->p = new T(std::move(_)); this->b = true; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
-  void operator=(U&& _) {
+  void operator=(U&& _) noexcept {
     if (this->p) *this->p = std::move(_); else { this->p = new T(std::move(_)); this->b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
-  void operator=(U& _) {
+  void operator=(U& _) noexcept {
     if (this->p) *this->p = _; else { this->p = new T(_); this->b = true; }
   }
   void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
@@ -66,10 +66,10 @@ public:
   T* operator->() { if (!this->p)throw std::range_error(std::string(typeid(T).name()).append("'s ptr is null!", 15)); return this->p; }
   T& operator*() & noexcept { return *this->p; }
   constexpr const T& operator*() const& noexcept { return *this->p; }
-  __CONSTEXPR T value_or(T&& _) const {
+  __CONSTEXPR T value_or(T&& _) const noexcept {
     if __CONSTEXPR(!std::is_class<T>::value)* ((bool*)(this)) = false; return this->p != nullptr ? *this->p : _;
   }
-  __CONSTEXPR T value_or(T& _) const {
+  __CONSTEXPR T value_or(T& _) const noexcept {
     if __CONSTEXPR(!std::is_class<T>::value)* ((bool*)(this)) = false; return this->p != nullptr ? *this->p : _;
   }
   void reset() noexcept { if (this->p) { delete this->p; } this->p = nullptr; this->b = false; }

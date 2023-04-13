@@ -42,12 +42,11 @@ namespace fc {
     sscanf(line_buff, "%s %d", file_name, &v); fclose(fd); return v / 1024.0;
 #endif
   }
-  using namespace std;
   static std::set<const char*> RES_menu = {};
-  struct param { size_t size = 0; string key; string value; string filename; /*string type;*/ };
+  struct param { size_t size = 0; std::string key; std::string value; std::string filename; /*string type;*/ };
   ///The parsed multipart Req/Res (Length[ MB for file, KB for without file ]),(Bool is_file)//MD5?
   struct BP {
-    const Req& req; string boundary, menu; vector<param> params; unsigned short L; bool ban_file;
+    const Req& req; std::string boundary, menu; std::vector<param> params; unsigned short L; bool ban_file;
     unsigned int content_length_;//string content_type = "multipart/form-data";
     BP(Req& req, const char* m, unsigned short mb = 32): menu(fc::upload_path_), L(mb), req(req), ban_file(false),
       boundary(g_b(fc::get_header(req.headers, RES_CT))), content_length_(req.length) {
@@ -62,17 +61,18 @@ namespace fc {
       assert(L < RES_USE_MAX_MEM_SIZE_MB); p_b(req.body);
     }
   private: //get_boundary
-    string g_b(const Buf& h) const {
+    std::string g_b(const Buf& h) const {
       //std::cout << "<" << h << ">" << h.size() << std::endl;
       unsigned int f = h.find("=----"); if (f != -1) return h.substr(f + 0xe).b2s(); return h.b2s();//raw
     }
     //parse_body
     void p_b(Buf& value) {//std::cout<<boundary<<std::endl;
       if (content_length_) {
-        if (ban_file) throw err::not_implemented(Buf(30) << std::string_view("File not allowed!", 17));
+        if (ban_file) throw err::not_implemented(Buf(18) << Buf("File not allowed!", 17));
         if (content_length_ > L * 1048576u) throw err::bad_request(Buf(40) << "Body size can't be biger than : " << L << "MB");
-        float mem{ GetMemUsage() }; value.resize(content_length_);//not finish read
+        float mem{ GetMemUsage() };//not finish read
         if (mem > RES_USE_MAX_MEM_SIZE_MB) throw err::internal_server_error(Buf() << "insufficient memory!" << mem);
+        value.resize(content_length_);
 #ifdef _WIN32
         int count = req.fiber.read(value.data_, content_length_); unsigned int offset = 0;
         while (content_length_ > offset) {
@@ -123,27 +123,27 @@ namespace fc {
     param p_s(std::string& s) {
       struct param p;
       size_t f = s.find("\r\n\r\n");
-      string lines(s.substr(0, f + 2));
+      std::string lines(s.substr(0, f + 2));
       s.erase(0, f + 4);
       f = lines.find(';');
-      if (f != string::npos) lines.erase(0, f + 2);
+      if (f != std::string::npos) lines.erase(0, f + 2);
       f = lines.find("\r\n");
-      string line = lines.substr(0, f);
+      std::string line = lines.substr(0, f);
       lines.erase(0, f + 2);
       char b = 0;
       while (!line.empty()) {
         const char* c = line.c_str() + 7; f = 9; while (*++c != '"' && ++f);
-        string value = line.substr(0, f);
+        std::string value = line.substr(0, f);
         if (b == '\0') {
           if (*++c == ';') { f += 2; }
           line.erase(0, f + 2); f = value.find('=');
           value = value.substr(f + 2); value.pop_back();
           p.key = DecodeURL(value); ++b;
         } else if (b == '\1') {
-          if (f != string::npos) line.erase(0, f + 2); else line.clear();
+          if (f != std::string::npos) line.erase(0, f + 2); else line.clear();
           f = value.find('=');
           value = value.substr(f + 2); value.pop_back();
-          string::iterator i = --value.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
+          std::string::iterator i = --value.end(); if (*--i == '.')goto _; if (*--i == '.')goto _;
           if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
           if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
           throw err::bad_request("Suffix does not exist or exceeds 8 digits!");
@@ -157,8 +157,8 @@ namespace fc {
         line = lines.substr(0, f);
         lines.erase(0, f + 2);
         f = line.rfind(';');
-        string h = line.substr(0, f);
-        if (f != string::npos) line.erase(0, f + 2); else line.clear();
+        std::string h = line.substr(0, f);
+        if (f != std::string::npos) line.erase(0, f + 2); else line.clear();
         //f = h.find(':');
         //p.type = h.substr(f + 2);
         p.size = p.value.length();
@@ -167,10 +167,10 @@ namespace fc {
         int ret = stat(h.c_str(), &ps);
         if (!ret && ps.st_mode & S_IFREG) {
           if (ps.st_size == p.size) return p;
-          std::ofstream of(h, ios::trunc | ios::out | ios::binary);
+          std::ofstream of(h, std::ios::trunc | std::ios::out | std::ios::binary);
           of << p.value; of.close(); return p;
         };
-        std::ofstream of(h, ios::out | ios::app | ios::binary);
+        std::ofstream of(h, std::ios::out | std::ios::app | std::ios::binary);
         of << p.value; of.close();
       }
       return p;
