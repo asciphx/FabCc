@@ -68,7 +68,7 @@ namespace fc {
     //parse_body
     void p_b(Buf& value) {//std::cout<<boundary<<std::endl;
       if (content_length_) {
-        if (ban_file) throw err::not_implemented(Buf(18) << Buf("File not allowed!", 17));
+        if (ban_file) throw err::not_implemented(Buf("File not allowed!", 17));
         if (content_length_ > L * 1048576u) throw err::bad_request(Buf(40) << "Body size can't be biger than : " << L << "MB");
         float mem{ GetMemUsage() };//not finish read
         if (mem > RES_USE_MAX_MEM_SIZE_MB) throw err::internal_server_error(Buf() << "insufficient memory!" << mem);

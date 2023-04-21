@@ -74,15 +74,15 @@ namespace fc {
     void epoll_mod(socket_type fd, int flags);
     void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler, int nthreads) {
 #if __linux__
-      this->epoll_fd = epoll_create1(0); fd_to_fiber_idx.resize(2); R_fibers.resize(2);
+      this->epoll_fd = epoll_create1(0);
       epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
       kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif  _WIN32
-      this->epoll_fd = epoll_create(); fd_to_fiber_idx.resize(4);
+      this->epoll_fd = epoll_create();
       epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN);
       kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif __APPLE__
-      this->epoll_fd = kqueue(); R_fibers.resize(3); fd_to_fiber_idx.resize(3);
+      this->epoll_fd = kqueue();
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ);
       epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGKILL, EV_ADD, EVFILT_SIGNAL);

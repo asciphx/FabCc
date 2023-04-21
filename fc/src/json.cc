@@ -63,7 +63,7 @@ namespace json {
         }
       }
       fc::Buf& stream() { _fs.reset(); return _fs; }
-      Json& null() { _null.reset(); return _null; }
+      Json& null() { return _null; }
       friend Parser;
     private:
       Array _a[4], _stack, _ustack;
