@@ -175,7 +175,7 @@ namespace fc {
             } catch (const std::exception& e) {
               ctx.set_status(500); ctx.respond(e.what());
             }
-            ctx.output_stream.flush(); ctx.cacheFilePtr_.reset(); return;//
+            ctx.output_stream.flush(); return;//
           }
           try {
             api._call(*((char*)(&req)), req.url, req, res);
