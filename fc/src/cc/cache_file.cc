@@ -39,6 +39,7 @@ inline char* UnicodeToUtf8(const char* str) {
 }
 #else
 #include <stdlib.h>
+#include <cstring>
 inline char* UnicodeToUtf8(const char* str) {
   if (NULL == str) return NULL;
   size_t destlen = mbstowcs(0, str, 0);
