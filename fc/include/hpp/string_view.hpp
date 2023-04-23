@@ -56,7 +56,7 @@ namespace std {
       if (a >= length_) { return string_view(); } return string_view(data_ + a, length_ - a);
     }
     string_view substr(size_t a, size_t b) const {
-      if (a >= length_) { return string_view(); } return string_view(data_ + a, a + b > length_ ? 0 : b);
+      if (a >= length_) { return string_view(); } return string_view(data_ + a, a + b > length_ ? length_ - a : b);
     }
     size_t find(const char c) const {
       size_t l = 0; while (l < length_) { if (data_[l] == c) { return l; } ++l; } return -1;

@@ -43,8 +43,8 @@ namespace fc {
 #endif
   }
   static std::set<const char*> RES_menu = {};
-  struct param { size_t size = 0; std::string key; std::string value; std::string filename; /*string type;*/ };
-  ///The parsed multipart Req/Res (Length[ MB for file, KB for without file ]),(Bool is_file)//MD5?
+  struct param { size_t size = 0; std::string key; std::string_view value; std::string filename; bool is_file = false; /*string type;*/ };
+  ///The parsed multipart Req/Res (Length[ MB for file, KB for without file ]),(Bool is_file)// MAX_SIZE < 2GB
   struct BP {
     const Req& req; std::string boundary, menu; std::vector<param> params; unsigned short L; bool ban_file;
     unsigned int content_length_;//string content_type = "multipart/form-data";
@@ -54,11 +54,11 @@ namespace fc {
         if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(fc::directory_); ss += menu;
         RES_menu.insert(m); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
       }
-      assert(L < RES_USE_MAX_MEM_SIZE_MB); p_b(req.body);
+      if(L > 2047) throw err::internal_server_error(Buf("not support!", 12)); p_b(req.body);
     }
     BP(Req& req, unsigned short mb = 32, bool b = false): menu(fc::upload_path_), L(mb), req(req), ban_file(b),
       boundary(g_b(fc::get_header(req.headers, RES_CT))), content_length_(req.length) {
-      assert(L < RES_USE_MAX_MEM_SIZE_MB); p_b(req.body);
+      if(L > 2047) throw err::internal_server_error(Buf("not support!", 12)); p_b(req.body);
     }
   private: //get_boundary
     std::string g_b(const Buf& h) const {
@@ -72,23 +72,15 @@ namespace fc {
         if (content_length_ > L * 1048576u) throw err::bad_request(Buf(40) << "Body size can't be biger than : " << L << "MB");
         float mem{ GetMemUsage() };//not finish read
         if (mem > RES_USE_MAX_MEM_SIZE_MB) throw err::internal_server_error(Buf() << "insufficient memory!" << mem);
-        value.resize(content_length_);
-#ifdef _WIN32
-        int count = req.fiber.read(value.data_, content_length_); unsigned int offset = 0;
+        value.resize(131072);
+        int count = req.fiber.read(value.data_, 131072); unsigned int offset = count > 0 ? count : 0; req.cache_file->append(value.data_, count);
         while (content_length_ > offset) {
           if (count > 0) {
-            offset += count; count = req.fiber.read(value.data_ + offset, content_length_);
-          } else count = req.fiber.read(value.data_ + offset, content_length_);
+            count = req.fiber.read(value.data_, 131072); offset += count; req.cache_file->append(value.data_, count);
+          } else count = req.fiber.read(value.data_, 131072);
         }
-#else
-        int count = req.fiber.read(value.data_, content_length_); unsigned int offset = count > 0 ? count : 0;
-        while (content_length_ > offset) {
-          if (count > 0) {
-            count = req.fiber.read(value.data_ + offset, content_length_); offset += count;
-          } else count = req.fiber.read(value.data_ + offset, content_length_);
-        }
-#endif // _WIN32
-        value.end_ += content_length_;
+        //value.end_ += content_length_;
+
       } else {
         if (value.size() < 45u) throw err::bad_request("Wrong size!");
         if (value.size() > L * 1024u) throw err::not_extended(Buf(40) << "Body size can't be biger than : " << L << "KB");
@@ -109,22 +101,23 @@ namespace fc {
           }
         }
       }
-      unsigned int f = value.find(boundary);
-      value.erase(0, f + (unsigned int)boundary.length() + 2); std::string s(64, 0); _:;
-      if (value.size() > 2) {
-        f = value.find(boundary);
-        s = value.substr(0, f - 0xf).b2s();
+      std::string_view content = req.cache_file->getStringView();
+      std::string_view::size_type f = content.find(boundary);
+      content = content.substr(f + boundary.length() + 2, content.size()); std::string_view s; _:;
+      if (content.size() > 2) {
+        f = content.find(boundary);
+        s = content.substr(0, f - 0xf);
         params.emplace_back(p_s(s));
-        value.erase(0, f + (unsigned int)boundary.length() + 2); goto _;
+        content = content.substr(f + boundary.length() + 2, content.size()); goto _;
       }
       if (params.size() == 0) throw err::not_found("Not Found!");
     }
     //parse_section
-    param p_s(std::string& s) {
+    param p_s(std::string_view& s) {
       struct param p;
       size_t f = s.find("\r\n\r\n");
       std::string lines(s.substr(0, f + 2));
-      s.erase(0, f + 4);
+      s = s.substr(f + 4);
       f = lines.find(';');
       if (f != std::string::npos) lines.erase(0, f + 2);
       f = lines.find("\r\n");
@@ -148,7 +141,7 @@ namespace fc {
           if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
           throw err::bad_request("Suffix does not exist or exceeds 8 digits!");
         _:std::string s = menu + value;
-          p.filename = DecodeURL(s); ++b;
+          p.filename = DecodeURL(s); ++b; p.is_file = true;
         }
       }
       p.value = s.substr(0, s.length() - 2);

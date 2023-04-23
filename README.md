@@ -9,6 +9,8 @@
 [release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
 [release-link]: https://github.com/asciphx/FabCc/releases
 Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome.
+## Eng | [简中](./README-zh_CN.md)
+> The released version is the stable version, and the branch may not compile successfully on certain platforms because the branch is a development version.
 ## Features
 - Full platform support based on epoll architecture [implemented by wepoll under windows]
 - Now the minimum compiler supports the c++14 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
@@ -26,6 +28,8 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)],   
   so C++ can also be written in the same OOP way as Java without using raw pointers.
 - Zlib compression from[[zlib](https://github.com/madler/zlib)]
+- mman from【[mman](https://code.google.com/archive/p/mman-win32/source/default/source)】
+- cache_file from【[drogon](https://github.com/drogonframework/drogon/blob/master/lib/src/CacheFile.h)】
 
 ## Still under development
 - [x] Processing of routing brace
@@ -70,7 +74,7 @@ int main() {
     res.write(app._print_routes());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {
-    BP bp(req, 123);//Support for uploading files with a total size of 123MB
+    BP bp(req, 1000);//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
       res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
     }

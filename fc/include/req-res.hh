@@ -27,7 +27,7 @@ namespace fc {
     std::string_view cookie(const char* k);
     std::string ip_address() const;
     Req(HTTP method, fc::Buf& url, fc::Buf& params, str_map& headers, fc::Buf& body, Conn& fib,
-      std::unordered_map<std::string_view, std::string_view>& cookie_map);
+      std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cacheFile);
     fc::Buf& url;
     fc::Buf& params;
     fc::Buf& body;
@@ -35,6 +35,7 @@ namespace fc {
     str_map& headers;
     fc::Buf ip_addr;
     Conn& fiber;
+    std::unique_ptr<fc::cache_file>& cache_file;
     std::unordered_map<std::string_view, std::string_view>& cookie_map;
   };// request
 

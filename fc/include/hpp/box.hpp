@@ -32,11 +32,7 @@ namespace std {
   };
 }
 template <class T, class... K>
-inline constexpr box<T> make_box(K &&... k) { return box<T>(std::in_place, std::forward<K>(k)...); }
-template <class T, class U, class... K>
-inline constexpr box<T> make_box(std::initializer_list<U> i, K &&... k) {
-  return box<T>(std::in_place, i, std::forward<K>(k)...);
-}
+inline constexpr box<T> make_box(K &&... k) { return box<T>(std::forward<K>(k)...); }
 template <typename T>
 class box {
   bool b;

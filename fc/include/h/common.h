@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <string>
+#include <chrono>
 #include <hpp/string_view.hpp>
 #include <str_map.hh>
 #include <h/config.h>
@@ -28,8 +29,9 @@ namespace fc {
   static std::string upload_path_ = UPLOAD_DIRECTORY;
   //Set the file size allowed for POST according to the host memory
   //for example, 2G memory can be set to 128MB, because the idle memory is about 600+MB
-  //It is best to use breakpoint resume, but it has not been implemented yet
-  static float RES_USE_MAX_MEM_SIZE_MB = 400.0;// < 600 - L
+  //Each connection occupies approximately 0.128mb, multiply the concurrency limit by 0.128
+  static float RES_USE_MAX_MEM_SIZE_MB = 400.0;// < 600 - limit * 0.128
+  static std::chrono::time_point<std::chrono::high_resolution_clock> RES_START_TIME;
 }
 
 #endif // COMMON_H

@@ -39,9 +39,9 @@ int main() {
     res.write(app._print_routes());//Return to routing list
   };
   app.post("/api") = [](Req& req, Res& res) {
-    BP bp(req, 123);//Support for uploading files with a total size of 123MB
+    BP bp(req, 1000);//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
-      res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
+      res.body << (p.key + ": ") << (!p.is_file ? p.value : p.filename) << ", ";
     }
     res.write(res.body.pop_back().pop_back());
   };

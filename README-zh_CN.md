@@ -10,6 +10,8 @@
 [release-link]: https://github.com/asciphx/FabCc/releases
 灵感来自于其他c++知名web框架, FabCC的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。
 
+## [Eng](./README.md) | 简中
+> 已发布的版本才是稳定版，而分支的可能无法在某些平台编译成功，因为分支是开发版。
 ## 特征
 - 基于epoll架构的全平台支持[windows下由wepoll实现]
 - 现在最低编译器版本支持到了c++14, 目前兼容了c++17的许多特性包括any, optional, string_view, 以及部分的扩展
@@ -27,6 +29,8 @@
 - 设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】  
   ，因此不需要使用原始指针，C++也可以用与Java相同的OOP方式编写
 - zlib压缩来自【[zlib](https://github.com/madler/zlib)】
+- mman来自【[mman](https://code.google.com/archive/p/mman-win32/source/default/source)】
+- cache_file来自【[drogon](https://github.com/drogonframework/drogon/blob/master/lib/src/CacheFile.cc)】
 
 ## 仍在开发中
 - [x] 路由大括号表达式
@@ -71,7 +75,7 @@ int main() {
 	  res.write(app._print_routes());//返回路由列表
   };
   app.post("/api") = [](Req& req, Res& res) {
-    BP bp(req, 123);// 支持上传的文件总大小123MB
+    BP bp(req, 1000);// 支持上传的文件总大小1000MB
     for (auto p : bp.params) {
       res.body << (p.key + ": " + (!p.size ? p.value : p.filename) + ", ");
     }

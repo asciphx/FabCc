@@ -206,7 +206,7 @@ namespace json {
         case t_int: { char s[20]; return std::string(s, jeaiii::to_text_from_integer(s, _h->i) - s); }
         case t_uint: { char b[20]; return std::string(b, jeaiii::to_text_from_integer(b, static_cast<u64>(_h->i)) - b); }
         case t_string: return std::string(_h->s, _h->size);
-        case t_bool: return _h->b ? std::string(fc::RES_TURE.data(), fc::RES_TURE.size()) : std::string(fc::RES_FALSE.data(), fc::RES_FALSE.size());
+        case t_bool: return _h->b ? std::string("true", 4) : std::string("false", 5);
         }
       }
       return RES_NULL;

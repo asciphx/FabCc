@@ -95,7 +95,7 @@ namespace fc {
     epoll_ctl(epoll_fd, new_fd, EV_ADD, flags);
 #endif
   // Associate new_fd to the fiber.找到一个新的传输光纤id
-    if (fd_to_fiber_idx.size() < new_fd + 1) fd_to_fiber_idx.resize(new_fd * 2 + 1, -1);
+    if (fd_to_fiber_idx.size() < new_fd + 1) fd_to_fiber_idx.resize(new_fd * 2 + 2, -1);
     fd_to_fiber_idx[new_fd] = fiber_idx;
   }
   void Reactor::epoll_mod(socket_type fd, int flags) {

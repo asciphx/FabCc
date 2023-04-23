@@ -3,6 +3,8 @@
 #include <string>
 #include <cstring>
 #if defined _WIN32
+#undef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #include <direct.h>
 #include <windows.h>
 #define CROSSPLATFORM_MAX_PATH MAX_PATH

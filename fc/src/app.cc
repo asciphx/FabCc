@@ -1,6 +1,9 @@
 #include <app.hh>
 #include <list>
 #include <utility>
+#include <memory>
+#include <random>
+#include <algorithm>
 #include <directory.hh>
 namespace fc {
   char c2m(const char* m, size_t l) {
@@ -133,7 +136,7 @@ namespace fc {
   void http_serve(App& api, int port, int nthreads, std::string ip) {
     std::function<void(Conn&)> make_http_processor = [&api](Conn& fiber) {
       try {
-        input_buffer rb; Ctx ctx(rb, fiber); ctx.socket_fd = fiber.socket_fd;
+        input_buffer rb; Ctx ctx(rb, fiber); ctx.socket_fd = fiber.socket_fd; std::random_device rd;
         while (true) {
           ctx.is_body_read_ = false; ctx.header_lines.clear(); ctx.header_lines.reserve(100);
           // Read until there is a complete header.
@@ -158,10 +161,14 @@ namespace fc {
           // Header is complete. Process it. Run the handler.
           assert(rb.cursor <= rb.end); ctx.prepare_request();
           ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
-          Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map); Res res(ctx);
+          Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map, ctx.cacheFilePtr_); Res res(ctx);
           if (ctx.parser_.finish) {
             try {
-              req.length = std::move(ctx.content_length_);
+              req.length = std::move(ctx.content_length_); Buf mask(32); mask << fc::directory_; mask.append("_/", 2);
+              std::ostringstream os; os << std::hex << std::uppercase << std::setw(2) << rd(); std::string ss{ os.str() };
+              mask << ss[0] << ss[1] << '/' << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now() - RES_START_TIME).count();
+              ctx.cacheFilePtr_ = std::make_unique<fc::cache_file>(mask.data_, mask.size());
               api._call(*((char*)(&req)), req.url, req, res);
             } catch (const http_error& e) {
               ctx.set_status(e.i()); ctx.respond(e.what());
@@ -187,7 +194,12 @@ namespace fc {
       }
     };
     if (!fc::is_directory(fc::directory_)) fc::create_directory(fc::directory_);
-    if (!fc::is_directory(fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
+    if (!fc::is_directory(fc::directory_ + fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
+    if (!fc::is_directory(fc::directory_ + "_/")) fc::create_directory(fc::directory_ + "_/");
+    for (int i = 0; i < 256; ++i) {
+      char dirName[4]; snprintf(dirName, 4, "%02X", i); fc::create_directory(fc::directory_ + "/_/" + dirName);
+    }
+    RES_START_TIME = std::chrono::high_resolution_clock::now();
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 #ifdef _WIN32
     nthreads += nthreads / 2;//Because the number of thread is 1.5 times that of others, which just meets the benchmark

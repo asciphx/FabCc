@@ -158,7 +158,7 @@ namespace fc {
 #endif
               fiber_idx = 0;// Find a free fiber for this new connection.找到一个空闲的来处理新连接
               while (fiber_idx < R_fibers.size()) { if (R_fibers[fiber_idx]) { ++fiber_idx; continue; } goto _; }
-              R_fibers.resize(R_fibers.size() * 2 + 1);
+              R_fibers.resize(R_fibers.size() * 2 + 2);
             _:
 #if __linux__
               this->epoll_add(socket_fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fiber_idx);
