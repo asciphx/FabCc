@@ -1,16 +1,16 @@
 #pragma once
 /*
- * This software is licensed under the AGPL-3.0 License.
- *
- * Copyright (C) 2023 Asciphx
- *
- * Permissions of this strongest copyleft license are conditioned on making available
- * complete source code of licensed works and modifications, which include larger works
- * using a licensed work, under the same license. Copyright and license notices must be
- * preserved. Contributors provide an express grant of patent rights. When a modified
- * version is used to provide a service over a network, the complete source code of
- * the modified version must be made available.
- */
+* This software is licensed under the AGPL-3.0 License.
+*
+* Copyright (C) 2023 Asciphx
+*
+* Permissions of this strongest copyleft license are conditioned on making available
+* complete source code of licensed works and modifications, which include larger works
+* using a licensed work, under the same license. Copyright and license notices must be
+* preserved. Contributors provide an express grant of patent rights. When a modified
+* version is used to provide a service over a network, the complete source code of
+* the modified version must be made available.
+*/
 #include <string>
 #include <vector>
 #include <sstream>
@@ -54,11 +54,11 @@ namespace fc {
         if (menu[menu.size() - 1] != '/')menu.push_back('/'); std::string ss(fc::directory_); ss += menu;
         RES_menu.insert(m); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
       }
-      if(L > 2047) throw err::internal_server_error(Buf("not support!", 12)); p_b(req.body);
+      if (L > 2047) throw err::internal_server_error(Buf("not support!", 12)); p_b(req.body);
     }
     BP(Req& req, unsigned short mb = 32, bool b = false): menu(fc::upload_path_), L(mb), req(req), ban_file(b),
       boundary(g_b(fc::get_header(req.headers, RES_CT))), content_length_(req.length) {
-      if(L > 2047) throw err::internal_server_error(Buf("not support!", 12)); p_b(req.body);
+      if (L > 2047) throw err::internal_server_error(Buf("not support!", 12)); p_b(req.body);
     }
   private: //get_boundary
     std::string g_b(const Buf& h) const {
@@ -144,7 +144,7 @@ namespace fc {
           p.filename = DecodeURL(s); ++b; p.is_file = true;
         }
       }
-      p.value = s.substr(0, s.length() - 2);
+      p.value = s.substr(0, s.size() - 2);
       if (b == '\2') {
         f = lines.find("\r\n");
         line = lines.substr(0, f);
@@ -154,7 +154,7 @@ namespace fc {
         if (f != std::string::npos) line.erase(0, f + 2); else line.clear();
         //f = h.find(':');
         //p.type = h.substr(f + 2);
-        p.size = p.value.length();
+        p.size = p.value.size();
         h = fc::directory_ + p.filename;
         struct stat ps;
         int ret = stat(h.c_str(), &ps);

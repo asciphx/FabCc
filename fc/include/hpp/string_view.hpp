@@ -1,17 +1,17 @@
 #ifndef STRING_VIEW_HPP
 #define STRING_VIEW_HPP
 /*
- * This software is licensed under the AGPL-3.0 License.
- *
- * Copyright (C) 2023 Asciphx
- *
- * Permissions of this strongest copyleft license are conditioned on making available
- * complete source code of licensed works and modifications, which include larger works
- * using a licensed work, under the same license. Copyright and license notices must be
- * preserved. Contributors provide an express grant of patent rights. When a modified
- * version is used to provide a service over a network, the complete source code of
- * the modified version must be made available.
- */
+* This software is licensed under the AGPL-3.0 License.
+*
+* Copyright (C) 2023 Asciphx
+*
+* Permissions of this strongest copyleft license are conditioned on making available
+* complete source code of licensed works and modifications, which include larger works
+* using a licensed work, under the same license. Copyright and license notices must be
+* preserved. Contributors provide an express grant of patent rights. When a modified
+* version is used to provide a service over a network, the complete source code of
+* the modified version must be made available.
+*/
 #if (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(__cplusplus) && __cplusplus >= 201703L)
 #include <string_view>
 #else//__cplusplus <= 201402L
@@ -28,6 +28,7 @@ namespace std {
   class string_view {
     const char* data_; size_t length_;
   public:
+    using size_type = size_t;
     static constexpr size_t npos = size_t(-1);
     constexpr string_view() noexcept: data_(nullptr), length_(0) {}
     constexpr string_view(const char* data, size_t length) : data_(data), length_(length) {}
@@ -60,6 +61,11 @@ namespace std {
     }
     size_t find(const char c) const {
       size_t l = 0; while (l < length_) { if (data_[l] == c) { return l; } ++l; } return -1;
+    }
+    size_t find(const std::string& c) const {
+      size_t l = 0, a = 0; while (l < length_) {
+        if (data_[l] != c[a])a = 0; ++l; ++a; if (a == c.length()) { return l - c.length(); }
+      } return -1;
     }
     size_t find(const char* c) const {
       size_t l = 0, L = strlen(c), a = 0; while (l < length_) {
