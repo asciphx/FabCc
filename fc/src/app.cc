@@ -164,10 +164,10 @@ namespace fc {
           Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map, ctx.cacheFilePtr_); Res res(ctx);
           if (ctx.parser_.finish) {
             try {
-              req.length = std::move(ctx.content_length_); Buf mask(32); mask << fc::directory_; mask.append("_/", 2);
-              std::ostringstream os; os << std::hex << std::uppercase << std::setw(2) << rd(); std::string ss{ os.str() };
-              mask << ss[0] << ss[1] << '/' << std::chrono::duration_cast<std::chrono::nanoseconds>(
-                std::chrono::high_resolution_clock::now() - RES_START_TIME).count();
+              req.length = std::move(ctx.content_length_); Buf mask(32); mask.append("_/", 2);
+              std::ostringstream os; os << std::hex << std::uppercase << std::setw(4) << rd(); std::string ss{ os.str() };
+              mask << ss[0] << ss[2] << '/' << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now() - RES_START_TIME).count() << ss[3] << ss[1];
               ctx.cacheFilePtr_ = std::make_unique<fc::cache_file>(mask.data_, mask.size());
               api._call(*((char*)(&req)), req.url, req, res);
             } catch (const http_error& e) {
@@ -175,7 +175,7 @@ namespace fc {
             } catch (const std::exception& e) {
               ctx.set_status(500); ctx.respond(e.what());
             }
-            ctx.output_stream.flush(); return;//
+            ctx.output_stream.flush(); ctx.cacheFilePtr_.reset(); return;//
           }
           try {
             api._call(*((char*)(&req)), req.url, req, res);
@@ -195,10 +195,8 @@ namespace fc {
     };
     if (!fc::is_directory(fc::directory_)) fc::create_directory(fc::directory_);
     if (!fc::is_directory(fc::directory_ + fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
-    if (!fc::is_directory(fc::directory_ + "_/")) fc::create_directory(fc::directory_ + "_/");
-    for (int i = 0; i < 256; ++i) {
-      char dirName[4]; snprintf(dirName, 4, "%02X", i); fc::create_directory(fc::directory_ + "/_/" + dirName);
-    }
+    if (!fc::is_directory("_/")) fc::create_directory("_/");
+    for (int i = 0; i < 256; ++i) { char c[4]; snprintf(c, 4, "%02X", i); fc::create_directory(std::string("_/", 2) + c); }
     RES_START_TIME = std::chrono::high_resolution_clock::now();
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 #ifdef _WIN32

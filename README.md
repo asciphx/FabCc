@@ -28,8 +28,8 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)],   
   so C++ can also be written in the same OOP way as Java without using raw pointers.
 - Zlib compression from[[zlib](https://github.com/madler/zlib)]
-- mman from【[mman](https://code.google.com/archive/p/mman-win32/source/default/source)】
-- cache_file from【[drogon](https://github.com/drogonframework/drogon/blob/master/lib/src/CacheFile.h)】
+- mman from [[mman](https://code.google.com/archive/p/mman-win32/source/default/source)]
+- cache_file from [[drogon](https://github.com/drogonframework/drogon/blob/master/lib/src/CacheFile.h)]
 
 ## Still under development
 - [x] Processing of routing brace
