@@ -210,7 +210,7 @@ namespace fc {
     }
   };
   static void shutdown_handler(int sig) { quit_signal_catched = 1; }
-  inline void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
+  static void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
 #ifdef _WIN32
     system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA wsaData; int err = WSAStartup(MAKEWORD(2, 2), &wsaData);

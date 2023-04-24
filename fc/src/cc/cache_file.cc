@@ -58,7 +58,7 @@ cache_file::cache_file(const char* path, size_t l, bool autoDelete)
 #ifndef _MSC_VER
   file_ = fopen(path_.data(), "wb+");
 #else
-  char* c = UnicodeToUtf8(path); file_ = fopen(c, "wb+"); free(c);
+  char* c = UnicodeToUtf8(path); file_ = fopen(c, "wb+"); const_cast<std::string&>(path_) = c; free(c);
 #endif
 }
 cache_file::~cache_file() {
@@ -68,7 +68,7 @@ cache_file::~cache_file() {
   if (autoDelete_ && file_) {
     fclose(file_);
 #if defined(_WIN32) && !defined(__MINGW32__)
-    char* c = UnicodeToUtf8(path_.c_str()); _unlink(c); free(c);
+    _unlink(path_.c_str());
 #else
     unlink(path_.data());
 #endif

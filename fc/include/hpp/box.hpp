@@ -74,7 +74,7 @@ public:
   __CONSTEXPR T value_or(T& _) const noexcept {
     if __CONSTEXPR(!std::is_class<T>::value)* ((bool*)(this)) = false; return this->p != nullptr ? *this->p : _;
   }
-  void reset() noexcept { if (this->p) { delete this->p; } this->p = nullptr; this->b = false; }
+  void reset() noexcept { if (this->p) { this->p->~T(); ::free(static_cast<void*>(this->p)); } this->b = false; }
 };
 template<typename T> struct box_pack {};
 template<typename T> struct box_pack<box<T>> { using type = T; };
