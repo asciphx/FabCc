@@ -161,7 +161,7 @@ namespace fc {
           // Header is complete. Process it. Run the handler.
           assert(rb.cursor <= rb.end); ctx.prepare_request();
           ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
-          Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map); Res res(ctx);
+          Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map, ctx.cache_file); Res res(ctx);
           if (ctx.parser_.finish) {
             try {
               req.length = std::move(ctx.content_length_); Buf mask(32); mask.append("_/", 2);

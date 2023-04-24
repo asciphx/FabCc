@@ -7,6 +7,8 @@
 #include <hpp/string_view.hpp>
 #include <str_map.hh>
 #include <buf.hh>
+#include <hpp/box.hpp>
+#include <hh/cache_file.hh>
 namespace fc {
   class Conn;
   struct llParser: public llhttp__internal_s {
@@ -23,8 +25,8 @@ namespace fc {
     //bool keep_alive;
     const static llhttp_settings_s _;
     template<typename R>
-    R to_request(Conn& fib, std::unordered_map<std::string_view, std::string_view>& cookie_map) {
-      return R{ static_cast<HTTP>(method), url, url_params, headers, body, fib, cookie_map };
+    R to_request(Conn& fib, std::unordered_map<std::string_view, std::string_view>& cookie_map, box<fc::cache_file>& cache) {
+      return R{ static_cast<HTTP>(method), url, url_params, headers, body, fib, cookie_map, cache };
     }
   };
 }
