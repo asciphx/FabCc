@@ -29,7 +29,6 @@
 #else
 #define $_(_) _.base()
 #endif // _WIN32
-#include <hh/cache_file.hh>
 #ifdef _MSC_VER
 #undef min
 #endif
@@ -74,7 +73,6 @@ namespace fc {
     const char* status_ = "200 OK";
     llParser parser_;
     std::unordered_map<std::string_view, std::string_view> cookie_map;
-    std::unique_ptr<fc::cache_file> cacheFilePtr_;
 
     std::string_view content_type_;
     bool chunked_;

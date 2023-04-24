@@ -3,8 +3,8 @@
 namespace fc {
   // Req::Req():body(0x1ff), params(0x3f), url(0x1f), ip_addr(16) {};
   Req::Req(HTTP m, fc::Buf& u, fc::Buf& p, str_map& h, fc::Buf& b, Conn& fib,
-    std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cacheFile): fiber(fib), length(0),
-    method(m), url(u), params(p), headers(h), body(b), cookie_map(cookie_map), cache_file(cacheFile) {}
+    std::unordered_map<std::string_view, std::string_view>& cookie_map): fiber(fib), length(0),
+    method(m), url(u), params(p), headers(h), body(b), cookie_map(cookie_map) {}
     // void Req::add_header(fc::Buf key, fc::Buf value) { headers.emplace(std::move(key), std::move(value)); }
   fc::Buf Req::header(const char* k) const { return headers.find(k)->second; }
   std::string_view Req::cookie(const char* k) {

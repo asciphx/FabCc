@@ -72,12 +72,12 @@ namespace fc {
         if (content_length_ > L * 1048576u) throw err::bad_request(Buf(40) << "Body size can't be biger than : " << L << "MB");
         float mem{ GetMemUsage() };//not finish read
         if (mem > RES_USE_MAX_MEM_SIZE_MB) throw err::internal_server_error(Buf() << "insufficient memory!" << mem);
-        value.resize(131072);
-        int count = req.fiber.read(value.data_, 131072); unsigned int offset = count > 0 ? count : 0; req.cache_file->append(value.data_, count);
+        value.resize(65536); int count = req.fiber.read(value.data_, 65536);
+        unsigned int offset = count > 0 ? count : 0; const_cast<Req&>(req).cache_file->append(value.data_, count);
         while (content_length_ > offset) {
           if (count > 0) {
-            count = req.fiber.read(value.data_, 131072); offset += count; req.cache_file->append(value.data_, count);
-          } else count = req.fiber.read(value.data_, 131072);
+            count = req.fiber.read(value.data_, 65536); offset += count; const_cast<Req&>(req).cache_file->append(value.data_, count);
+          } else count = req.fiber.read(value.data_, 65536);
         }
         //value.end_ += content_length_;
 
@@ -101,7 +101,7 @@ namespace fc {
           }
         }
       }
-      std::string_view content = req.cache_file->getStringView();
+      std::string_view content = const_cast<Req&>(req).cache_file->getStringView();
       std::string_view::size_type f = content.find(boundary);
       content = content.substr(f + boundary.length() + 2, content.size()); std::string_view s; _:;
       if (content.size() > 2) {

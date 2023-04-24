@@ -26,8 +26,8 @@ namespace fc {
     size_t dataLength_{ 0 };
     cache_file(const cache_file&) = delete;
     void operator=(const cache_file&) = delete;
-    cache_file(cache_file &&) noexcept(true) = default;
-    cache_file &operator=(cache_file &&) noexcept(true) = default;
+    cache_file(cache_file&&) noexcept(true) = default;
+    cache_file& operator=(cache_file&&) noexcept(true) = default;
   public:
     explicit cache_file(const char* path, size_t l, bool autoDelete = true);
     ~cache_file();

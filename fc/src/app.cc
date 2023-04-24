@@ -161,15 +161,15 @@ namespace fc {
           // Header is complete. Process it. Run the handler.
           assert(rb.cursor <= rb.end); ctx.prepare_request();
           ctx.body_start = std::string_view(rb.data() + header_end, rb.end - header_end);
-          Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map, ctx.cacheFilePtr_); Res res(ctx);
+          Req req = ctx.parser_.to_request<Req>(ctx.fiber, ctx.cookie_map); Res res(ctx);
           if (ctx.parser_.finish) {
             try {
               req.length = std::move(ctx.content_length_); Buf mask(32); mask.append("_/", 2);
               std::ostringstream os; os << std::hex << std::uppercase << std::setw(4) << rd(); std::string ss{ os.str() };
-              mask << ss[0] << ss[2] << '/' << std::chrono::duration_cast<std::chrono::nanoseconds>(
+              mask << ss[0] << ss[2] << '/' << std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::high_resolution_clock::now() - RES_START_TIME).count() << ss[3] << ss[1];
-              ctx.cacheFilePtr_ = std::make_unique<fc::cache_file>(mask.data_, mask.size());
-              api._call(*((char*)(&req)), req.url, req, res);
+              req.cache_file = new fc::cache_file(mask.data_, mask.size());
+              api._call(*((char*)(&req)), req.url, req, res); req.cache_file.reset();
             } catch (const http_error& e) {
               ctx.set_status(e.i()); ctx.respond(e.what());
             } catch (const std::exception& e) {

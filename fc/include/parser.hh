@@ -5,7 +5,6 @@
 #include <h/llhttp.h>
 #include <h/common.h>
 #include <hpp/string_view.hpp>
-#include <hh/cache_file.hh>
 #include <str_map.hh>
 #include <buf.hh>
 namespace fc {
@@ -24,8 +23,8 @@ namespace fc {
     //bool keep_alive;
     const static llhttp_settings_s _;
     template<typename R>
-    R to_request(Conn& fib, std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cacheFile) {
-      return R{ static_cast<HTTP>(method), url, url_params, headers, body, fib, cookie_map, cacheFile };
+    R to_request(Conn& fib, std::unordered_map<std::string_view, std::string_view>& cookie_map) {
+      return R{ static_cast<HTTP>(method), url, url_params, headers, body, fib, cookie_map };
     }
   };
 }
