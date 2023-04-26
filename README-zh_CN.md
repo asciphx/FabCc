@@ -41,8 +41,6 @@
 - 静态文件缓存file_sptr【[libhttp](https://github.com/neithern/libhttp)】
 - 支持单元测试，文档请见【[coost](https://coostdocs.gitee.io/cn/co/unitest/)】
 - Json集成于【[coost](https://coostdocs.gitee.io/cn/co/json/)】, 并支持序列化与反序列化
-- 设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】  
-  ，因此不需要使用原始指针，C++也可以用与Java相同的OOP方式编写
 - zlib压缩来自【[zlib](https://github.com/madler/zlib)】
 - mman来自【[mman](https://code.google.com/archive/p/mman-win32/source/default/source)】
 - cache_file来自【[drogon](https://github.com/drogonframework/drogon/blob/master/lib/src/CacheFile.cc)】

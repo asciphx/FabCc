@@ -40,8 +40,6 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - file_sptr for Static file cache from[[libhttp](https://github.com/neithern/libhttp)]
 - Support unit testing. Please refer to [[coost](https://coostdocs.github.io/cn/co/unitest/)] for documentation
 - Json integrated in[[coost](https://coostdocs.github.io/cn/co/json/)], and supports serialization and deserialization
-- box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)],   
-  so C++ can also be written in the same OOP way as Java without using raw pointers.
 - Zlib compression from[[zlib](https://github.com/madler/zlib)]
 - mman from [[mman](https://code.google.com/archive/p/mman-win32/source/default/source)]
 - cache_file from [[drogon](https://github.com/drogonframework/drogon/blob/master/lib/src/CacheFile.h)]
