@@ -213,11 +213,11 @@ namespace fc {
   static void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
 #ifdef _WIN32
-    system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA wsaData; int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w); MAXEVENTS = nthreads << 1;
     if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
     signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler); R_fibers.resize(nthreads);
 #else
-    struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler;
+    struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler; MAXEVENTS = nthreads << 2;
     sigaction(SIGINT, &act, 0); sigaction(SIGTERM, &act, 0); sigaction(SIGQUIT, &act, 0);
     // Ignore sigpipe signal. Otherwise sendfile causes crashes if the
     // client closes the connection during the response transfer.
@@ -231,7 +231,7 @@ namespace fc {
       while (!quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
       });
     socket_type server_fd = create_and_bind(listen_ip, port, socktype);
-    std::vector<std::future<void>> fus; MAXEVENTS = nthreads << 2;
+    std::vector<std::future<void>> fus;
     for (int i = 0; i < nthreads; ++i) {
       fus.push_back(std::async(std::launch::async, [&] {
         Reactor reactor;

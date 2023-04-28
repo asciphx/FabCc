@@ -200,7 +200,7 @@ namespace fc {
     RES_START_TIME = std::chrono::high_resolution_clock::now();
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 #ifdef _WIN32
-    nthreads += nthreads / 2;//Because the number of thread is 1.5 times that of others, which just meets the benchmark
+    nthreads <<= 1;//Because the number of thread is 2 times that of others, which just meets the benchmark for win32
 #endif
     start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor));//SOCK_DGRAM
     // if constexpr (has_key<decltype(options)>(s::ssl_key)) {
