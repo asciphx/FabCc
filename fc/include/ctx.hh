@@ -36,8 +36,8 @@ namespace fc {
   struct Ctx {
     Ctx(input_buffer& _rb, Conn& _fiber): rb(_rb), fiber(_fiber) {
       response_headers.reserve(20);
-      output_stream = output_buffer(65536, [&](const char* d, int s) { fiber.write(d, s); });
-      headers_stream = output_buffer(998, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
+      output_stream = output_buffer(32741, [&](const char* d, int s) { fiber.write(d, s); });
+      headers_stream = output_buffer(997, [&](const char* d, int s) { output_stream << std::string_view(d, s); });
     }
     Ctx& operator=(const Ctx&) = delete;
     Ctx(const Ctx&) = delete;

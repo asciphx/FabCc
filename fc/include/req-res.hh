@@ -55,9 +55,9 @@ namespace fc {
     int is_file{ 0 };
     //long file_size = 0;
     fc::Ctx& Ctx;
+  public:
     inline void set_header(std::string_view k, std::string_view v) { Ctx.set_header(k, v); }
     inline void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
-  public:
     inline Res(fc::Ctx& ctx): Ctx(ctx) {}
     uint16_t code{ 200 };// Check whether the response has a static file defined.
     fc::Buf body;

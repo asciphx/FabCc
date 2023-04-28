@@ -7,10 +7,19 @@ int main() {
     res.write("<p>Hello, world!</p>");
   };
   app["/json"] = [](Req& req, Res& res) {
-    res.write(Json({"message", "Hello, World!"}).str());
+    res.write(Json({ {"message", "Hello, World!"} }).str());
   };
-  app["/benchmark"] = [](Req& req, Res& res) {
-    res.write("<p>Hello, world!</p>");
+  app["/plaintext"] = [](Req& req, Res& res) {
+    res.set_header("Content-Type", "text/plain");
+    res.write("Hello, World!");
+  };
+  app["/db"] = [](Req& req, Res& res) {
+  };
+  app["/queries"] = [](Req& req, Res& res) {
+  };
+  app["/fortunes"] = [](Req& req, Res& res) {
+  };
+  app["/updates"] = [](Req& req, Res& res) {
   };
   http_serve(app, 8080);
   return 0;
