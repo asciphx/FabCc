@@ -32,14 +32,14 @@ namespace fc {
         }
       }
     }
-    void free(const char* i1, const char* i2) {
+    inline void free(const char* i1, const char* i2) {
       assert(i1 >= buffer_.data());
       assert(i1 <= &buffer_.back());
       // std::cout << (i2 - &buffer_.front()) << " " << buffer_.size() <<  << std::endl;
       assert(i2 >= buffer_.data() && i2 <= &buffer_.back() + 1);
       free(int(i1 - buffer_.data()), int(i2 - buffer_.data()));
     }
-    void free(const std::string_view& str) { free(str.data(), str.data() + str.size()); }
+    inline void free(const std::string_view& str) { free(str.data(), str.data() + str.size()); }
     // private: Read more data
     // Read from ptr until character x.
     // read n more characters at address ptr.
@@ -47,7 +47,7 @@ namespace fc {
     // free part of the buffer and more data if needed.
     // Read more data.
     // Return 0 on error.
-    template <typename F> int read_more(F& fiber, int size = -1) {
+    template <typename F> inline int read_more(F& fiber, int size = -1) {
       // If size is not specified, read potentially until the end of the buffer.
       if (size == -1) size = (int)buffer_.size() - end;
       if (end == buffer_.size() || size > (buffer_.size() - end))
@@ -57,7 +57,7 @@ namespace fc {
       assert(end <= buffer_.size());
       return received;
     }
-    template <typename F> std::string_view read_n(F&& fiber, const char* start, int size) {
+    template <typename F> inline std::string_view read_n(F&& fiber, const char* start, int size) {
       int str_start = start - buffer_.data();
       int str_end = size + str_start;
       if (end < str_end) {
@@ -85,9 +85,9 @@ namespace fc {
       start = str_end + 1;
       return res;
     }
-    bool empty() const { return cursor == end; }
+    inline bool empty() const { return cursor == end; }
     // Return the amount of data currently available to read.
-    int current_size() { return end - cursor; }
+    inline int current_size() { return end - cursor; }
     // Reset the buffer. Copy remaining data at the beggining if there is some.
     void reset() {
       assert(cursor <= end);
@@ -106,6 +106,6 @@ namespace fc {
     }
     // On success return the number of bytes read.
     // On error return 0.
-    char* data() { return buffer_.data(); }
+    inline char* data() { return buffer_.data(); }
   };
 } // namespace fc

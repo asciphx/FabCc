@@ -1,6 +1,6 @@
 #include <ctx.hh>
 namespace fc {
-  void Ctx::format_top_headers(output_buffer & output_stream) {
+  void Ctx::format_top_headers(output_buffer& output_stream) {
     if (status_code_ == 200) output_stream << http_top_header.top_header_200();
     else output_stream << "HTTP/1.1 " << status_ << http_top_header.top_header();
   }
@@ -22,11 +22,11 @@ namespace fc {
       }
     }
   }
-  void Ctx::respond(const std::string_view & s) {
+  void Ctx::respond(const std::string_view& s) {
     response_written_ = true;
     format_top_headers(output_stream);
     headers_stream.flush();                                             // flushes to output_stream.
-    output_stream << "Content-Length: " << s.size() << "\r\n\r\n" << s; // Add body
+    output_stream << "Content-Length: " << s.size() << "\r\n\r\n" << const_cast<std::string_view&>(s); // Add body
     //std::cout << output_stream.to_string_view() << "$\n";
   }
   void Ctx::respond_if_needed() {
@@ -77,7 +77,7 @@ namespace fc {
     }
   }
   // Send a file.
-  void Ctx::send_file(std::string & path) {
+  void Ctx::send_file(std::string& path) {
 #ifndef _WIN32 // Linux / Macos version with sendfile
   // Open the file in non blocking mode.
     int fd = open(path.c_str(), O_RDONLY);

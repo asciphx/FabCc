@@ -56,16 +56,18 @@ namespace fc {
     //long file_size = 0;
     fc::Ctx& Ctx;
   public:
-    inline void set_header(std::string_view k, std::string_view v) { Ctx.set_header(k, v); }
-    inline void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
-    inline Res(fc::Ctx& ctx): Ctx(ctx) {}
+    FORCE_INLINE void set_header(std::string_view k, std::string_view v) { Ctx.set_header(k, v); }
+    FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
+    FORCE_INLINE Res(fc::Ctx& ctx): Ctx(ctx) {}
     uint16_t code{ 200 };// Check whether the response has a static file defined.
     fc::Buf body;
     //void set_header(const fc::Buf& key, fc::Buf value);
     //void add_header(const fc::Buf& key, fc::Buf value);
-    void write(const std::string& body_part);
-    void write(const std::string_view& body_part);
-    void write(const fc::Buf& body_part);
+    FORCE_INLINE void write(const std::string& b) { this->write(std::move(const_cast<std::string&>(b))); };
+    FORCE_INLINE void write(const fc::Buf& b) { this->write(std::move(const_cast<fc::Buf&>(b))); };
+    void write(const std::string_view& b);
+    void write(fc::Buf&& body_part);
+    void write(std::string&& body_part);
     void write(const char* body_part);
     inline void set_status(int s) { Ctx.set_status(s); }
     fc::Buf& compress_str(char* const str, size_t len);
