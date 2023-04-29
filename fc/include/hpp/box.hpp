@@ -50,27 +50,27 @@ public:
   box(X&&... _) noexcept: p(new T{ std::forward<X>(_)... }), b(true) {}
   ~box() noexcept { if (this->b) { delete this->p; this->p = nullptr; } }
   //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};
-  void operator = (T* _) noexcept { if (this->b) delete this->p; this->p = _; this->b = true; }
-  void operator = (T& _) noexcept { if (this->b) *this->p = _; else { this->p = new T(_); this->b = true; } }
-  void operator = (T&& _) noexcept { if (this->b) delete this->p; this->p = new T(std::move(_)); this->b = true; }
+  FORCE_INLINE void operator = (T* _) noexcept { if (this->b) delete this->p; this->p = _; this->b = true; }
+  FORCE_INLINE void operator = (T& _) noexcept { if (this->b) *this->p = _; else { this->p = new T(_); this->b = true; } }
+  FORCE_INLINE void operator = (T&& _) noexcept { if (this->b) delete this->p; this->p = new T(std::move(_)); this->b = true; }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
-  void operator=(U&& _) noexcept {
+  FORCE_INLINE void operator=(U&& _) noexcept {
     if (this->p) *this->p = std::move(_); else { this->p = new T(std::move(_)); this->b = true; }
   }
   template <class U = T, std::enable_if_t<!std::is_same<box<T>, std::decay_t<U>>::value>* = nullptr>
-  void operator=(U& _) noexcept {
+  FORCE_INLINE void operator=(U& _) noexcept {
     if (this->p) *this->p = _; else { this->p = new T(_); this->b = true; }
   }
-  void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
+  FORCE_INLINE void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
   constexpr bool has_value() const noexcept { return this->p != nullptr; }
   constexpr explicit operator bool() const noexcept { return this->p != nullptr; }
   const T* operator->() const { if (!p)throw std::range_error(std::string(typeid(T).name()).append("'s ptr is null!", 15)); return p; }
   T* operator->() { if (!this->p)throw std::range_error(std::string(typeid(T).name()).append("'s ptr is null!", 15)); return this->p; }
-  T& operator*() & noexcept { return *this->p; }
+  FORCE_INLINE T& operator*() & noexcept { return *this->p; }
   constexpr const T& operator*() const& noexcept { return *this->p; }
   __CONSTEXPR T value_or(T&& _) const noexcept { return this->p != nullptr ? *this->p : _; }
   __CONSTEXPR T value_or(T& _) const noexcept { return this->p != nullptr ? *this->p : _; }
-  void reset() noexcept { if (this->p) { this->p->~T(); ::free(static_cast<void*>(this->p)); } this->b = false; }
+  FORCE_INLINE void reset() noexcept { if (this->p) { this->p->~T(); ::free(static_cast<void*>(this->p)); } this->b = false; }
 };
 template<typename T> struct box_pack {};
 template<typename T> struct box_pack<box<T>> { using type = T; };

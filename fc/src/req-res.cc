@@ -58,10 +58,8 @@ namespace fc {
   //Res::Res():zlib_cp_str(0x1ff), body(0xff) {};
   //void Res::set_header(const fc::Buf& key, fc::Buf value) { headers.erase(key); headers.emplace(key, std::move(value)); }
   //void Res::add_header(const fc::Buf& key, fc::Buf value) { headers.emplace(key, std::move(value)); }
-  void Res::write(const std::string_view& b) { Ctx.respond(b); };
   void Res::write(fc::Buf&& b) { std::string_view sv(b.data(), b.size()); Ctx.respond(sv); };
   void Res::write(std::string&& b) { std::string_view sv(b.data(), b.size()); Ctx.respond(sv); };
-  void Res::write(const char* b) { std::string_view sv(b, strlen(b)); Ctx.respond(sv); };
   fc::Buf& Res::compress_str(char* const str, size_t len) {
   // Initialize with the default values
     if (::deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, algorithm::GZIP, 8, Z_DEFAULT_STRATEGY) == Z_OK) {

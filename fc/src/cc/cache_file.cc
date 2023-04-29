@@ -54,13 +54,15 @@ inline char* UnicodeToUtf8(const char* str) {
 #endif
 using namespace fc;
 cache_file::cache_file(const char* path, size_t l, bool autoDelete)
-  : autoDelete_(autoDelete), path_(path, l) {
+  : autoDelete_(autoDelete)
 #ifndef _MSC_VER
+  , path_(path, l) {
   file_ = fopen(path_.data(), "wb+");
 #else
-  char* c = UnicodeToUtf8(path); file_ = fopen(c, "wb+"); const_cast<std::string&>(path_) = c; free(c);
+  {
+    char* c = UnicodeToUtf8(path); file_ = fopen(c, "wb+"); path_ = c; free(c);
 #endif
-}
+  }
 cache_file::~cache_file() {
   if (data_) {
     munmap(data_, dataLength_);
@@ -75,7 +77,7 @@ cache_file::~cache_file() {
   } else if (file_) {
     fclose(file_);
   }
-  }
+}
 void cache_file::append(const char* data, size_t length) {
   if (file_)
     fwrite(data, length, 1, file_);

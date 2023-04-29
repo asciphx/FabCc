@@ -21,7 +21,7 @@ namespace fc {
     size_t length();
     FILE* file_{ nullptr };
     bool autoDelete_{ false };
-    const std::string path_;
+    std::string path_;
     char* data_{ nullptr };
     size_t dataLength_{ 0 };
     cache_file(const cache_file&) = delete;
