@@ -73,49 +73,43 @@ namespace fc {
 #endif
     void epoll_mod(socket_type fd, int flags);
     void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler, int nthreads) {
+      this->fd_to_fiber_idx.resize(1);
 #if __linux__
-      this->epoll_fd = epoll_create1(0);
-      epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
-      kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
+      this->epoll_fd = epoll_create1(0); R_fibers.resize(1);
+      epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
+      this->kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif  _WIN32
       this->epoll_fd = epoll_create();
-      epoll_ctl(epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN);
-      kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
+      epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN);
+      this->kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif __APPLE__
-      this->epoll_fd = kqueue();
+      this->epoll_fd = kqueue(); R_fibers.resize(1);
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ);
       epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGKILL, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGTERM, EV_ADD, EVFILT_SIGNAL);
-      kevents = static_cast<kevent*>(calloc(MAXEVENTS, sizeof(kevent)));
-      struct timespec timeout;
-      memset(&timeout, 0, sizeof(timeout));
-      timeout.tv_nsec = 10000;
+      this->kevents = static_cast<kevent*>(calloc(MAXEVENTS, sizeof(kevent)));
+      struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
       while (!quit_signal_catched) {
 #if __linux__ || _WIN32
-        n_events = epoll_wait(epoll_fd, kevents, MAXEVENTS, 1);
+        n_events = epoll_wait(this->epoll_fd, kevents, MAXEVENTS, 1);
 #elif __APPLE__
         // kevent is already listening to quit signals.
-        n_events = kevent(epoll_fd, NULL, 0, kevents, MAXEVENTS, &timeout);
+        n_events = kevent(this->epoll_fd, NULL, 0, kevents, MAXEVENTS, &timeout);
 #endif
         if (n_events == 0) {
           for (i = 0; i < R_fibers.size() && R_fibers[i]; ++i) R_fibers[i] = R_fibers[i].yield();
         }
         for (i = 0; i < n_events; ++i) {
 #if __APPLE__
-          int event_flags = kevents[i].flags;
-          int event_fd = kevents[i].ident;
+          event_flags = kevents[i].flags; event_fd = kevents[i].ident;
           if (kevents[i].filter == EVFILT_SIGNAL) {
-            if (event_fd == SIGINT)
-              std::cout << "SIGINT" << std::endl;
-            if (event_fd == SIGTERM)
-              std::cout << "SIGTERM" << std::endl;
-            if (event_fd == SIGKILL)
-              std::cout << "SIGKILL" << std::endl;
-            quit_signal_catched = true;
-            break;
+            if (event_fd == SIGINT) std::cout << "SIGINT" << std::endl;
+            if (event_fd == SIGTERM) std::cout << "SIGTERM" << std::endl;
+            if (event_fd == SIGKILL) std::cout << "SIGKILL" << std::endl;
+            quit_signal_catched = true; break;
           }
 #else
           event_flags = kevents[i].events, event_fd = kevents[i].data.fd;
@@ -158,7 +152,7 @@ namespace fc {
 #endif
               fiber_idx = 0;// Find a free fiber for this new connection.找到一个空闲的来处理新连接
               while (fiber_idx < R_fibers.size()) { if (R_fibers[fiber_idx]) { ++fiber_idx; continue; } goto _; }
-              R_fibers.resize(R_fibers.size() * 2 + 2);
+              R_fibers.resize(R_fibers.size() * 2);
             _:
 #if __linux__
               this->epoll_add(socket_fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fiber_idx);
@@ -233,7 +227,7 @@ namespace fc {
     socket_type server_fd = create_and_bind(listen_ip, port, socktype);
     std::vector<std::future<void>> fus;
     for (int i = 0; i < nthreads; ++i) {
-      fus.push_back(std::async(std::launch::async, [&] {
+      fus.push_back(std::async(std::launch::async, [&server_fd, &conn_handler, &nthreads, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
         Reactor reactor;
         // if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
         //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);
@@ -241,6 +235,7 @@ namespace fc {
         }));
     }
     date_thread.join();
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
     close_socket(server_fd);
     std::cout << std::endl;
   }
