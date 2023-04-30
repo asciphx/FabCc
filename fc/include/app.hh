@@ -38,6 +38,7 @@ namespace fc {
     //set use max mem size(MB), The remaining memory size available to the system minus the maximum size of the uploaded files
     App& set_use_max_mem(float&& f);
     App& file_type(const std::vector<std::string_view>& line = { "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" });
+    App& set_keep_alive(int idle, int intvl = 1, unsigned char probes = 10);
+    void http_serve(int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");
   };
-  void http_serve(App& api, int port = 8080, int nthreads = std::thread::hardware_concurrency(), std::string ip = "");
 } // namespace fc

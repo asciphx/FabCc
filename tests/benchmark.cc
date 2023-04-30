@@ -21,6 +21,6 @@ int main() {
   };
   app["/updates"] = [](Req& req, Res& res) {
   };
-  http_serve(app, 8080);
+  app.http_serve(8080);
   return 0;
 }

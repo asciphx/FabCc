@@ -133,8 +133,11 @@ namespace fc {
     }
     return api;
   }
-  void http_serve(App& api, int port, int nthreads, std::string ip) {
-    std::function<void(Conn&)> make_http_processor = [&api](Conn& fiber) {
+  App& App::set_keep_alive(int idle, int intvl, unsigned char probes) {
+    RES_K_A[0] = idle, RES_K_A[1] = intvl, RES_K_A[2] = probes; return *this;
+  }
+  void App::http_serve(int port, int nthreads, std::string ip) {
+    std::function<void(Conn&)> make_http_processor = [this](Conn& fiber) {
       try {
         input_buffer rb; Ctx ctx(rb, fiber); ctx.socket_fd = fiber.socket_fd; std::random_device rd;
         while (true) {
@@ -169,7 +172,7 @@ namespace fc {
               mask << ss[0] << ss[2] << '/' << std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::high_resolution_clock::now() - RES_START_TIME).count() << ss[3] << ss[1];
               req.cache_file = new fc::cache_file(mask.data_, mask.size());
-              api._call(*((char*)(&req)), req.url, req, res); req.cache_file.reset();
+              this->_call(*((char*)(&req)), req.url, req, res); req.cache_file.reset();
             } catch (const http_error& e) {
               ctx.set_status(e.i()); ctx.respond(e.what());
             } catch (const std::exception& e) {
@@ -178,7 +181,7 @@ namespace fc {
             ctx.output_stream.flush(); return;//
           }
           try {
-            api._call(*((char*)(&req)), req.url, req, res);
+            this->_call(*((char*)(&req)), req.url, req, res);
           } catch (const http_error& e) {
             ctx.set_status(e.i()); ctx.respond(e.what());//If error code is equal 500, record the log
             if (e.i() == 500) std::cerr << "ERROR<" << e.i() << ">: " << e.what() << std::endl;

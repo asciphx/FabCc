@@ -36,7 +36,7 @@
 #include <tp/ctx.hh>
 namespace fc {
   enum sd_type { _READ, _WRITE, _BOTH };
-  static int RES_nodelay = 1;
+  static int RES_ON = 1;
 #if defined _WIN32
   typedef UINT_PTR socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
   static unsigned int RES_RCV = 5000;
@@ -116,7 +116,6 @@ namespace fc {
     bool write(const char* buf, int size);
     int shut(socket_type fd, sd_type type);
     int shut(sd_type type);
-    int set_keep_alive(socket_type fd, int idle, int intvl = 1, unsigned char probes = 10);
   };
 }
 #endif // CONN_HH

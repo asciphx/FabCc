@@ -29,6 +29,17 @@ namespace fc {
         if (setsockopt(sfd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&ipv6only, sizeof(ipv6only)) != 0) {
           std::cerr << "FATAL ERROR: setsockopt error when setting IPV6_V6ONLY to 0: " << strerror(errno) << std::endl;
         }
+#ifdef WIN32
+        setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&RES_ON, sizeof(int));
+        setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&RES_ON, sizeof(int));
+        setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&RES_RCV, sizeof(RES_RCV));
+        setsockopt(sfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&RES_SED, sizeof(RES_SED));
+#else
+        setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &RES_ON, sizeof(int));
+        setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, &RES_ON, sizeof(int));
+        setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, &RES_RCV, sizeof(RES_RCV));
+        setsockopt(sfd, SOL_SOCKET, SO_SNDTIMEO, &RES_SED, sizeof(RES_SED));
+#endif
         s = ::bind(sfd, rp->ai_addr, int(rp->ai_addrlen));
         if (s == 0) {
           /* We managed to bind successfully! */
@@ -48,6 +59,17 @@ namespace fc {
       addr.sin_family = AF_INET;
       //addr.sin_addr.s_addr;
       inet_pton(AF_INET, ip, (void*)&addr.sin_addr);
+#ifdef WIN32
+      setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&RES_ON, sizeof(int));
+      setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&RES_ON, sizeof(int));
+      setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&RES_RCV, sizeof(RES_RCV));
+      setsockopt(sfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&RES_SED, sizeof(RES_SED));
+#else
+      setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &RES_ON, sizeof(int));
+      setsockopt(sfd, IPPROTO_TCP, TCP_NODELAY, &RES_ON, sizeof(int));
+      setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, &RES_RCV, sizeof(RES_RCV));
+      setsockopt(sfd, SOL_SOCKET, SO_SNDTIMEO, &RES_SED, sizeof(RES_SED));
+#endif
       addr.sin_port = port;
       s = ::bind(sfd, (struct sockaddr*)&addr, sizeof(addr));
       if (s != 0) {
@@ -59,14 +81,14 @@ namespace fc {
     auto ret = ioctlsocket(sfd, FIONBIO, &set_on);
     if (ret) {
       std::cerr << "FATAL ERROR: Cannot set socket to non blocking mode with ioctlsocket" << std::endl;
-    }
+  }
 #else
     int flags = fcntl(sfd, F_GETFL, 0);
     fcntl(sfd, F_SETFL, flags | O_NONBLOCK);
 #endif
     ::listen(sfd, SOMAXCONN);
     return sfd;
-  }
+}
   co& Reactor::fd_to_fiber(socket_type fd) {
     assert(fd >= 0 && fd < fd_to_fiber_idx.size()); socket_type fiber_idx = fd_to_fiber_idx[fd];
     assert(fiber_idx >= 0 && fiber_idx < R_fibers.size()); return R_fibers[fiber_idx];
@@ -95,7 +117,7 @@ namespace fc {
     epoll_ctl(epoll_fd, new_fd, EV_ADD, flags);
 #endif
   // Associate new_fd to the fiber.找到一个新的传输光纤id
-    if (fd_to_fiber_idx.size() < new_fd + 1) fd_to_fiber_idx.resize(new_fd * 2, -1);
+    if (fd_to_fiber_idx.size() < new_fd + 1) fd_to_fiber_idx.resize(new_fd * 2 + 1, -1);
     fd_to_fiber_idx[new_fd] = fiber_idx;
   }
   void Reactor::epoll_mod(socket_type fd, int flags) {
@@ -105,4 +127,4 @@ namespace fc {
     epoll_ctl(epoll_fd, fd, 2, flags);
 #endif
   }
-}
+  }

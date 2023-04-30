@@ -47,7 +47,6 @@ namespace fc {
       // Add 16 to windowBits to write a simple gzip header and trailer around the compressed data instead of a zlib wrapper.
       GZIP = 15 | 16,
     };
-    fc::Buf zlib_cp_str;
     char buffer[8192];
     z_stream stream{};
     int is_file{ 0 };

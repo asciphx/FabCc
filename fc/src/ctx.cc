@@ -80,7 +80,7 @@ namespace fc {
   void Ctx::send_file(std::string& path) {
 #ifndef _WIN32 // Linux / Macos version with sendfile
   // Open the file in non blocking mode.
-    int fd = open(path.c_str(), O_RDONLY);
+    int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd == -1) throw err::not_found(Buf("File:", 5) << path << " not found.");
     size_t file_size = lseek(fd, (size_t)0, SEEK_END);
     // Writing the http headers.
@@ -110,7 +110,7 @@ namespace fc {
         throw err::not_found("Internal error: sendfile failed.");
       }
     }
-    close(fd);
+    if (fd >= 0) close(fd);
 #else // Windows impl with basic read write.
   // Open file.
     FILE* fd; if ((fd = fopen(path.c_str(), "rb")) == NULL) // C4996

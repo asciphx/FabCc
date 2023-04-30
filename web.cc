@@ -23,7 +23,7 @@ void funk(Req& req, Res& res) {
 int main() {
   App app; Timer t;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" })
-    .sub_api("/", app.serve_file("static")).set_use_max_mem(300.0);//Service file interface
+    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(300.0);//Service file interface
   app["/json"] = [](Req& req, Res& res) {
     Book b{ "ts", Person{"js",33, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
     b.person->book = Book{ "rs" };//Write C++ like Object-Oriented Programming
@@ -55,5 +55,5 @@ int main() {
     app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
-  http_serve(app, 8080);
+  app.http_serve(8080);
 }

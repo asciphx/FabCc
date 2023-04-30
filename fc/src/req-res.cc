@@ -71,14 +71,14 @@ namespace fc {
         stream.next_out = reinterpret_cast<Bytef*>(&buffer[0]);
         code = ::deflate(&stream, Z_FINISH); // Successful and non-fatal error code returned by deflate when used with Z_FINISH flush
         if (code == Z_OK || code == Z_STREAM_END) {
-          zlib_cp_str.insert(zlib_cp_str.end_, &buffer[0], &buffer[sizeof(buffer) - stream.avail_out]);
+          body.insert(body.end_, &buffer[0], &buffer[sizeof(buffer) - stream.avail_out]);
         }
       } while (code == Z_OK);
       if (code != Z_STREAM_END)
-        zlib_cp_str.reset();
+        body.reset();
       ::deflateEnd(&stream);
     }
-    return zlib_cp_str;
+    return body;
   }
   fc::Buf& Res::decompress_str(char* const str, size_t len) {
     stream.avail_in = (unsigned int)len; // Nasty const_cast but zlib won't alter its contents
@@ -90,14 +90,14 @@ namespace fc {
         stream.next_out = reinterpret_cast<Bytef*>(&buffer[0]);
         auto ret = ::inflate(&stream, Z_NO_FLUSH);
         if (ret == Z_OK || ret == Z_STREAM_END) {
-          zlib_cp_str.insert(zlib_cp_str.end_, &buffer[0], &buffer[sizeof(buffer) - stream.avail_out]);
+          body.insert(body.end_, &buffer[0], &buffer[sizeof(buffer) - stream.avail_out]);
         } else {
           // Something went wrong with inflate; make sure we return an empty string
-          zlib_cp_str.reset(); break;
+          body.reset(); break;
         }
       } while (stream.avail_out == 0); // Free zlib's internal memory
       ::inflateEnd(&stream);
     }
-    return zlib_cp_str;
+    return body;
   }
 }

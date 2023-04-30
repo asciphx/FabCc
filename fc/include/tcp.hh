@@ -21,6 +21,7 @@ namespace fc {
 #endif
   static int MAXEVENTS = 16;
   static volatile int quit_signal_catched = 0;
+  static int RES_K_A[3];
   /**
   * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)
   * to process each incomming connection. This handle takes 3 argments:
@@ -152,7 +153,7 @@ namespace fc {
 #endif
               fiber_idx = 0;// Find a free fiber for this new connection.找到一个空闲的来处理新连接
               while (fiber_idx < R_fibers.size()) { if (R_fibers[fiber_idx]) { ++fiber_idx; continue; } goto _; }
-              R_fibers.resize(R_fibers.size() * 2);
+              R_fibers.resize(R_fibers.size() * 2 + 1);
             _:
 #if __linux__
               this->epoll_add(socket_fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fiber_idx);
@@ -165,7 +166,6 @@ namespace fc {
               // Spawn a new co to handle the connection.继续处理，延续之前未处理的
               R_fibers[fiber_idx] = ctx::callcc([this, socket_fd, &handler](co&& sink) {
                 Conn c(this, std::move(sink), socket_fd, *in_addr);
-                c.set_keep_alive(socket_fd, 4, 3, 2);
                 try {
                   //if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
                   //std::cerr << "Error during SSL handshake" << std::endl; return std::move(c.sink);
@@ -225,6 +225,17 @@ namespace fc {
       while (!quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
       });
     socket_type server_fd = create_and_bind(listen_ip, port, socktype);
+#ifdef WIN32
+    RES_in_kavars.onoff = RES_K_A[0]; RES_in_kavars.keepalivetime = RES_K_A[1] * 1000; RES_in_kavars.keepaliveinterval = RES_K_A[2] * 1000;
+    if (WSAIoctl(server_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RES_in_kavars, RES_l_k, (LPVOID)&RES_out_kavars, RES_l_k, &RES_uBR, NULL, NULL) == SOCKET_ERROR) {
+      DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError());
+    }
+#else
+    if (setsockopt(server_fd, SOL_SOCKET, SO_KEEPALIVE, &RES_KEEP_Ai, sizeof(RES_KEEP_Ai)) != 0) return -1;
+    setsockopt(server_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&RES_K_A[0], sizeof(int));
+    setsockopt(server_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&RES_K_A[1], sizeof(int));
+    setsockopt(server_fd, SOL_TCP, TCP_KEEPCNT, (void*)&RES_K_A[2], sizeof(int));
+#endif
     std::vector<std::future<void>> fus;
     for (int i = 0; i < nthreads; ++i) {
       fus.push_back(std::async(std::launch::async, [&server_fd, &conn_handler, &nthreads, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
@@ -235,7 +246,6 @@ namespace fc {
         }));
     }
     date_thread.join();
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
     close_socket(server_fd);
     std::cout << std::endl;
   }
