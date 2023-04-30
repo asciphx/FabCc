@@ -14,8 +14,7 @@
 > 已发布的版本才是稳定版，而分支的可能无法在某些平台编译成功，因为分支是开发版。
 
 ## 原创
-- 从0-1设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】  
-  ，因此不需要使用原始指针，C++也可以用OOP方式编写
+- 从0-1设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】，因此不需要使用原始指针，C++也可以用OOP方式编写
 - 由box引申出并从0-1完美解决了循环依赖的问题，而且超级智能指针box可以替代optional，兼容了std::optional
 - 目前的box也可以替代原始指针，从0-1自动管理内存，无需考虑内存释放，相当于自动GC，旨在将c++脚本化
 - body_parser用于处理multi_part文件上传，不单支持单文件支持自定义大小，甚至还可以支持多文件上传并结合了mmap的零拷贝的存储映射
@@ -55,7 +54,7 @@
 - [ ] udp服务端
 - [ ] tcp客户端client
 
-## 説明
+## 说明
 - 如果机器翻译过来，FabCc可以是晶圆厂，所以FabCc象征着最复杂又最小化的芯片。
 - 命名空間采用FabCc的大寫駝峰fc來使用。
 - 协程的原理图
@@ -72,7 +71,7 @@ void funk(Req& req, Res& res) {
 int main() {
   App app; Timer t;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4" })
-    .sub_api("/", app.serve_file("static"));//服务文件接口
+    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(300.0);//服务文件接口
   app["/json"] = [](Req& req, Res& res) {
     Book b{ "ts", Person{"js",33, Book{ "plus" }, vec<Book>{ Book{"1", Person { "sb1" }},Book{"2", Person { "sb2" }} }} };
     b.person->book = Book{ "rs" };//C++中的面向对象开发
@@ -104,11 +103,11 @@ int main() {
     app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器
-  http_serve(app, 8080);
+  app.http_serve(8080);
 }
 ```
 
-### 建筑（测试、示例）
+### 构建（测试、示例）
 建议使用CMake进行源代码外构建。
 如果构建失败，请删除清理cmake缓存。
 ```
