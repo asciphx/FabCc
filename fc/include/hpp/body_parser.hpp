@@ -101,7 +101,7 @@ namespace fc {
           }
         }
       }
-      std::string_view content = const_cast<Req&>(req).cache_file->getStringView();
+      std::string_view content = content_length_ ? const_cast<Req&>(req).cache_file->getStringView() : value.b2v();
       std::string_view::size_type f = content.find(boundary);
       content = content.substr(f + boundary.length() + 2, content.size()); std::string_view s; _:;
       if (content.size() > 2) {
