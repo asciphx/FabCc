@@ -228,10 +228,10 @@ namespace fc {
 #ifdef WIN32
     RES_in_kavars.onoff = RES_K_A[0]; RES_in_kavars.keepalivetime = RES_K_A[1] * 1000; RES_in_kavars.keepaliveinterval = RES_K_A[2] * 1000;
     if (WSAIoctl(server_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RES_in_kavars, RES_l_k, (LPVOID)&RES_out_kavars, RES_l_k, &RES_uBR, NULL, NULL) == SOCKET_ERROR) {
-      DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError());
+      DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError()); std::cout << "@\n"; close_socket(server_fd); return;
     }
 #else
-    if (setsockopt(server_fd, SOL_SOCKET, SO_KEEPALIVE, &RES_KEEP_Ai, sizeof(RES_KEEP_Ai)) != 0) return -1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_KEEPALIVE, &RES_KEEP_Ai, sizeof(RES_KEEP_Ai)) != 0) { std::cout << "@\n"; close_socket(server_fd); return; }
     setsockopt(server_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&RES_K_A[0], sizeof(int));
     setsockopt(server_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&RES_K_A[1], sizeof(int));
     setsockopt(server_fd, SOL_TCP, TCP_KEEPCNT, (void*)&RES_K_A[2], sizeof(int));
