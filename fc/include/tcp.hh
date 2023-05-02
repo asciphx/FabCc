@@ -20,11 +20,11 @@ namespace fc {
   __declspec(selectany) http_top_header_builder http_top_header;
 #endif
   static int MAXEVENTS = 16, RES_K_A[3], RES_FD[8] = { 0 }, RES_I = 0;
-  static volatile int RES_quit_signal_catched = 0;
+  static volatile int RES_quit_signal_catched = 1;
   static bool RES_OFF = true;
   static std::vector<std::future<void>> RES_FUTURE;
   static std::thread RES_DATE_THREAD([]() {
-    while (!RES_quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
+    while (RES_quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
     RES_FUTURE.clear(); for (int i = 0; RES_FD[i] && i < sizeof(RES_FD) / sizeof(int); ++i) { close_socket(RES_FD[i]); }
 #ifdef _WIN32
     std::cout << "\n"; exit(0);
@@ -61,7 +61,6 @@ namespace fc {
     std::vector<co> R_fibers;
     typedef int epoll_handle_t;
 #endif
-    static void run() noexcept { RES_DATE_THREAD.join(); }
     std::vector<socket_type> fd_to_fiber_idx;
 #if __linux__ || _WIN32
     epoll_event* kevents;
@@ -103,7 +102,7 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      while (!RES_quit_signal_catched) {
+      while (RES_quit_signal_catched) {
 #if __linux__ || _WIN32
         n_events = epoll_wait(this->epoll_fd, kevents, MAXEVENTS, 1);
 #elif __APPLE__
@@ -120,7 +119,7 @@ namespace fc {
             if (event_fd == SIGINT) std::cout << "SIGINT" << std::endl;
             if (event_fd == SIGTERM) std::cout << "SIGTERM" << std::endl;
             if (event_fd == SIGKILL) std::cout << "SIGKILL" << std::endl;
-            RES_quit_signal_catched = true; break;
+            RES_quit_signal_catched = false; break;
           }
 #else
           event_flags = kevents[i].events, event_fd = kevents[i].data.fd;
@@ -133,7 +132,7 @@ namespace fc {
 #endif
             if (event_fd == listen_fd) {
               std::cout << "FATAL ERROR: Error on server socket " << event_fd << std::endl;
-              RES_quit_signal_catched = true;
+              RES_quit_signal_catched = false;
             } else {
               co& fiber = fd_to_fiber(event_fd);
               if (fiber)
@@ -213,7 +212,7 @@ namespace fc {
       free(kevents); std::cout << "@";
     }
   };
-  static void shutdown_handler(int sig) { RES_quit_signal_catched = 1; }
+  static void shutdown_handler(int sig) { RES_quit_signal_catched = 0; }
   static void start_init(int nthreads) {
 #ifdef _WIN32
     system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w); MAXEVENTS = nthreads << 1;
