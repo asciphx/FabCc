@@ -110,7 +110,7 @@ namespace fc {
         throw err::not_found("Internal error: sendfile failed.");
       }
     }
-    if (fd >= 0) close(fd);
+    close(fd);
 #else // Windows impl with basic read write.
   // Open file.
     FILE* fd; if ((fd = fopen(path.c_str(), "rb")) == NULL) // C4996

@@ -19,9 +19,14 @@ namespace fc {
 #else
   __declspec(selectany) http_top_header_builder http_top_header;
 #endif
-  static int MAXEVENTS = 16;
-  static volatile int quit_signal_catched = 0;
-  static int RES_K_A[3];
+  static int MAXEVENTS = 16, RES_K_A[3], RES_FD[8] = { 0 }, RES_I = 0;
+  static volatile int RES_quit_signal_catched = 0;
+  static bool RES_OFF = true;
+  static std::vector<std::future<void>> RES_FUTURE;
+  static std::thread RES_DATE_THREAD([]() {
+    while (!RES_quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
+    RES_FUTURE.clear(); for (int i = 0; RES_FD[i] && i < sizeof(RES_FD) / sizeof(int); ++i) { close_socket(RES_FD[i]); } exit(0);
+    });
   /**
   * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)
   * to process each incomming connection. This handle takes 3 argments:
@@ -73,10 +78,9 @@ namespace fc {
     void epoll_add(socket_type new_fd, int flags, socket_type fiber_idx = -1);
 #endif
     void epoll_mod(socket_type fd, int flags);
-    void event_loop(socket_type& listen_fd, std::function<void(Conn&)> handler, int nthreads) {
-      this->fd_to_fiber_idx.resize(1);
+    void event_loop(socket_type listen_fd, std::function<void(Conn&)> handler, int nthreads) {
 #if __linux__
-      this->epoll_fd = epoll_create1(0); R_fibers.resize(1);
+      this->epoll_fd = epoll_create1(0); R_fibers.resize(1); this->fd_to_fiber_idx.resize(1);
       epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET);
       this->kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif  _WIN32
@@ -84,7 +88,7 @@ namespace fc {
       epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN);
       this->kevents = static_cast<epoll_event*>(calloc(MAXEVENTS, sizeof(epoll_event)));
 #elif __APPLE__
-      this->epoll_fd = kqueue(); R_fibers.resize(1);
+      this->epoll_fd = kqueue(); R_fibers.resize(1); this->fd_to_fiber_idx.resize(1);
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ);
       epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGKILL, EV_ADD, EVFILT_SIGNAL);
@@ -93,7 +97,7 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      while (!quit_signal_catched) {
+      while (!RES_quit_signal_catched) {
 #if __linux__ || _WIN32
         n_events = epoll_wait(this->epoll_fd, kevents, MAXEVENTS, 1);
 #elif __APPLE__
@@ -110,7 +114,7 @@ namespace fc {
             if (event_fd == SIGINT) std::cout << "SIGINT" << std::endl;
             if (event_fd == SIGTERM) std::cout << "SIGTERM" << std::endl;
             if (event_fd == SIGKILL) std::cout << "SIGKILL" << std::endl;
-            quit_signal_catched = true; break;
+            RES_quit_signal_catched = true; break;
           }
 #else
           event_flags = kevents[i].events, event_fd = kevents[i].data.fd;
@@ -123,7 +127,7 @@ namespace fc {
 #endif
             if (event_fd == listen_fd) {
               std::cout << "FATAL ERROR: Error on server socket " << event_fd << std::endl;
-              quit_signal_catched = true;
+              RES_quit_signal_catched = true;
             } else {
               co& fiber = fd_to_fiber(event_fd);
               if (fiber)
@@ -203,9 +207,8 @@ namespace fc {
       free(kevents); std::cout << "@";
     }
   };
-  static void shutdown_handler(int sig) { quit_signal_catched = 1; }
-  static void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
-    std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
+  static void shutdown_handler(int sig) { RES_quit_signal_catched = 1; }
+  static void start_init(int nthreads) {
 #ifdef _WIN32
     system("chcp 65001 >nul"); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w); MAXEVENTS = nthreads << 1;
     if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
@@ -219,12 +222,14 @@ namespace fc {
 #if __linux__
     signal(SIGPIPE, SIG_IGN);
 #endif
+  }
+  static void start_server(std::string ip, int port, int socktype, int nthreads, std::function<void(Conn&)> conn_handler,
+    std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
+    if (RES_OFF) { RES_OFF = false; start_init(nthreads); }
     // Start the server threads.
     const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
-    std::thread date_thread([]() {
-      while (!quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
-      });
     socket_type server_fd = create_and_bind(listen_ip, port, socktype);
+    RES_FD[RES_I++] = server_fd;
 #ifdef WIN32
     RES_in_kavars.onoff = RES_K_A[0]; RES_in_kavars.keepalivetime = RES_K_A[1] * 1000; RES_in_kavars.keepaliveinterval = RES_K_A[2] * 1000;
     if (WSAIoctl(server_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RES_in_kavars, RES_l_k, (LPVOID)&RES_out_kavars, RES_l_k, &RES_uBR, NULL, NULL) == SOCKET_ERROR) {
@@ -236,18 +241,14 @@ namespace fc {
     setsockopt(server_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&RES_K_A[1], sizeof(int));
     setsockopt(server_fd, SOL_TCP, TCP_KEEPCNT, (void*)&RES_K_A[2], sizeof(int));
 #endif
-    std::vector<std::future<void>> fus;
     for (int i = 0; i < nthreads; ++i) {
-      fus.push_back(std::async(std::launch::async, [&server_fd, &conn_handler, &nthreads, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
+      RES_FUTURE.push_back(std::async(std::launch::async, [server_fd, conn_handler, nthreads, ssl_key_path, ssl_cert_path, ssl_ciphers] {
         Reactor reactor;
         // if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
         //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);
         reactor.event_loop(server_fd, conn_handler, nthreads);
         }));
     }
-    date_thread.join();
-    close_socket(server_fd);
-    std::cout << std::endl;
   }
 }
 #endif

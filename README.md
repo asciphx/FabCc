@@ -24,7 +24,8 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - string_ View is used to supplement the inability to use string in C++14 and older versions_ The pain points of view and the maximum expansion of features in the new version
 - text is used to store strings from 0 to 1 for utf8, and the capacity can be set independently. Each capacity is specific to utf8 and can handle varchar types in the database
 - timer is used from 0 to 1 to solve the problem of C++without JavaScript timers, and only uses header file source file separation to accelerate compilation speed
-- The above original components are a demonstration of personal technical strength. Of course, there are also some components, which are not entirely from 0 to 1, but those are not the most important components.
+- App allows multiple apps to exist at the same time, and each is bound to a different port number, which can avoid the trouble of writing multiple services.
+- The above original components are a demonstration of personal technical strength. Of course, there are also some components, which are not entirely from 0 to 1.
 
 ## Features
 - Full platform support based on epoll architecture [implemented by wepoll under windows]
@@ -104,6 +105,7 @@ int main() {
   };
   //Start the server
   app.http_serve(8080);
+  App::run();
 }
 ```
 

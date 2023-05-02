@@ -3,9 +3,6 @@
 using namespace fc;
 int main() {
   App app;
-  app["/"] = [](Req& req, Res& res) {
-    res.write("<p>Hello, world!</p>");
-  };
   app["/json"] = [](Req& req, Res& res) {
     res.write(Json({ {"message", "Hello, World!"} }).str());
   };

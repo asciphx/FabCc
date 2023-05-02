@@ -56,4 +56,5 @@ int main() {
   };
   //Start the server
   app.http_serve(8080);
+  App::run();
 }
