@@ -25,7 +25,12 @@ namespace fc {
   static std::vector<std::future<void>> RES_FUTURE;
   static std::thread RES_DATE_THREAD([]() {
     while (!RES_quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
-    RES_FUTURE.clear(); for (int i = 0; RES_FD[i] && i < sizeof(RES_FD) / sizeof(int); ++i) { close_socket(RES_FD[i]); } exit(0);
+    RES_FUTURE.clear(); for (int i = 0; RES_FD[i] && i < sizeof(RES_FD) / sizeof(int); ++i) { close_socket(RES_FD[i]); }
+#ifdef _WIN32
+    std::cout << "\n"; exit(0);
+#else
+    pthread_cancel(RES_DATE_THREAD.native_handle()); RES_DATE_THREAD.~thread();
+#endif
     });
   /**
   * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)
@@ -56,6 +61,7 @@ namespace fc {
     std::vector<co> R_fibers;
     typedef int epoll_handle_t;
 #endif
+    static void run() noexcept { RES_DATE_THREAD.join(); }
     std::vector<socket_type> fd_to_fiber_idx;
 #if __linux__ || _WIN32
     epoll_event* kevents;

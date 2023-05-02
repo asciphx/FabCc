@@ -19,5 +19,5 @@ int main() {
   app["/updates"] = [](Req& req, Res& res) {
   };
   app.http_serve(8080);
-  return 0;
+  App::run();
 }

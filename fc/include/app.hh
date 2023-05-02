@@ -18,7 +18,7 @@ namespace fc {
   const char* m2c(HTTP m);
   struct App {
     App();
-    static void run() { RES_DATE_THREAD.join(); }
+    static void run() noexcept { Reactor::run(); }
     VH& operator[](const char* r);
     VH& del(const char* r);
     VH& get(const char* r = "/");//"\0"//with skip the last / of the url.
