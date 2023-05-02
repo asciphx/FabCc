@@ -13,6 +13,9 @@
 #include <conn.hh>
 #include <buf.hh>
 #include <http_top_header_builder.hh>
+#ifndef _WIN32
+#include <pthread.h>
+#endif
 namespace fc {
 #ifndef _WIN32
   http_top_header_builder http_top_header [[gnu::weak]];
@@ -27,7 +30,7 @@ namespace fc {
     while (RES_quit_signal_catched) fc::http_top_header.tick(), std::this_thread::sleep_for(std::chrono::seconds(1));
     RES_FUTURE.clear(); for (int i = 0; RES_FD[i] && i < sizeof(RES_FD) / sizeof(int); ++i) { close_socket(RES_FD[i]); }
 #ifdef _WIN32
-    std::cout << "\n"; exit(0);
+    exit(0);
 #else
     pthread_cancel(RES_DATE_THREAD.native_handle()); RES_DATE_THREAD.~thread();
 #endif
