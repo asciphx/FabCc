@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to FabCc!</title>
+  <style>
+    body {
+      width: 35em;
+      margin: 0 auto;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+      font-size: 10pt;
+    }
+  </style>
+  <script type="text/javascript" src="s/pm/js/jquery.min.js"></script>
+  <script src="./index.min.js"></script>
+  <link rel="stylesheet" href="./index.min.css" />
+</head>
+
+<body onload="ajax('/get_upload', true)">
+  <h1>Welcome to FabCc!</h1>
+  <p>On June 26, the ultra-high-definition 8k Remastered version will arrive. To unlock playback of videos over 4GB in size (highlight)</p>
+  <img style="opacity: 0.3;position: absolute;z-index: -1;width: inherit" src="./1.jpg" alt="Alternate Text">
+  <button onclick="ajax('/get_upload', true)" style="">get_upload_files[refresh]</button>&nbsp;<a
+    href="/test.html">Test[[Postman]]</a>.<br> <div id="vid" style="margin-left: -34%;"></div>
+  <script>
+    var player = new Player({
+      id: 'vid', url: '', autoplay: true, loop: true, pip: true, fullscreen: true,// autoplayMuted: false,
+      playbackRate: [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.5, 2], plugin: [TextTrack],
+      texttrack: {
+        list: [{
+          id: 'srt1',
+          url: './test.srt',
+          text: 'subtitle',
+          default: true
+        }]
+      }
+    }), once = true;
+    function tv_play(src, text = true) {
+      var vi = document.getElementById("vid"); url = src.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
+      vi.firstChild.src = url; if(text){
+        url = url.substr(0,/\.[0-9a-zA-Z]+$/.exec(url).index) + '.srt';
+        player.plugins.texttrack.updateSubtitles([{ id: 'vtt1', url: url, text: 'subtitle', default: true }]);
+      } player.play();
+    }
+    function ext_(size, u=[ 'B','K','M','G','T' ]) {
+    var U;while((U=u.shift())&&size>1023){ size/=1024; } if(size<1000)return size.toFixed(2)+U;U=u.shift(),size/=1024;return size.toFixed(3)+U;
+    }
+    function ajax(url, bool) {
+      $.ajax({
+        url: url,
+        type: bool ? "get" : "post",
+        timeout: 300,
+        processData: false,
+        // dataType:'JSON',
+        // contentType:"application/json",
+        contentType: "text/plain;charset=UTF-8",
+        data: null,
+        //headers: {
+        //  a: document.getElementById("token").value
+        //},
+        async: true,
+        success: function (data) {
+          var s = "";
+          for (var i = 0; i < data.length; ++i) {
+            s += i + 1 + ":<a href=\"#\" onclick=\"tv_play(this.innerHTML)\">" + data[i].name + "</a> [ "+ext_(data[i].size)+" ]<br/>";
+          }
+          if(once&&data.length) once=false, tv_play(data[0].name, false);
+          document.getElementById("list").innerHTML = s;
+        },
+        error: function (data) {
+          document.getElementById("list").innerHTML = data.responseText;
+          // document.getElementById("text").innerHTML = data.responseText; console.log(data);
+        }
+      });
+    }
+  </script>
+  <br>
+  <label>List：</label>
+  <p id="list"></p>
+</body>
+
+</html>

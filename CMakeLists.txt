@@ -1,42 +1,105 @@
 cmake_minimum_required(VERSION 2.8)
 project(FabCc)
-set(CMAKE_BUILD_TYPE "Release")#如果是Debug，那么_DEBUG宏才會生效
-if (MSVC)
-	add_compile_options( /GA /O2 /Ob2 /utf-8 /std:c++17 )#只有是Release才会是O2優化，否則會被覆写
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-else ()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O2 -fexec-charset=utf-8 -finput-charset=utf-8")
-endif ()
-include_directories(${PROJECT_SOURCE_DIR}/fc/include)#添加掃描的頭文件目錄
-aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src cc_files)#添加需要生成庫的源文件目錄
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "No build type selected, default to Release")
+  set(CMAKE_BUILD_TYPE "Release") # 如果是Debug，那么_DEBUG宏才會生效
+endif()
+message(STATUS "CXX_COMPILER is ${CMAKE_CXX_COMPILER_ID}")
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+# cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
+include(CheckIncludeFileCXX)
+check_include_file_cxx(coroutine HAS_COROUTINE)
+check_include_file_cxx(any HAS_ANY)
+CHECK_INCLUDE_FILE_CXX(shared_mutex HAS_SHARED_MUTEX)
+if(HAS_COROUTINE)
+  set(CMAKE_CXX_STANDARD 20)
+elseif(HAS_ANY)
+  set(CMAKE_CXX_STANDARD 17)
+elseif(HAS_SHARED_MUTEX)
+  set(CMAKE_CXX_STANDARD 14)
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+add_subdirectory(third-party/ctx)
+add_subdirectory(third-party/zlib)
+if(MSVC)
+  cmake_host_system_information (RESULT CPU_NUMBER QUERY NUMBER_OF_LOGICAL_CORES)
+  add_compile_options(/GA /utf-8 /MP${CPU_NUMBER} /Zc:__cplusplus)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  message(STATUS "Build CORES : ${CPU_NUMBER}")
+else()
+  set(CMAKE_CXX_FLAGS -std=c++${CMAKE_CXX_STANDARD})
+  add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE)
+endif()
+message(STATUS "Build STANDARD: c++${CMAKE_CXX_STANDARD}"
+)
 
-if (MSVC)
-aux_source_directory(${PROJECT_SOURCE_DIR}/fc/src/c c_files)
+find_package(OpenSSL REQUIRED)
+if(OpenSSL_FOUND)
+message(STATUS "Build OpenSSL: ON")
+endif()
+include_directories(fc/include ${OPENSSL_INCLUDE_DIR})
+aux_source_directory(fc/src cc_files)
+aux_source_directory(fc/src/c c_files)
+aux_source_directory(fc/src/cc cc_files)
 add_library(Fab STATIC ${cc_files} ${c_files})
-include_directories(${PROJECT_SOURCE_DIR}/hh)
-set( FabCc_LIBRARIES
-Fab
-${PROJECT_SOURCE_DIR}/lib/AdvAPI32.lib
-${PROJECT_SOURCE_DIR}/lib/iphlpapi.lib
-${PROJECT_SOURCE_DIR}/lib/kernel32.lib
-${PROJECT_SOURCE_DIR}/lib/Psapi.lib
-${PROJECT_SOURCE_DIR}/lib/Secur32.lib
-${PROJECT_SOURCE_DIR}/lib/User32.lib
-${PROJECT_SOURCE_DIR}/lib/UserEnv.lib
-${PROJECT_SOURCE_DIR}/lib/uv.lib
-${PROJECT_SOURCE_DIR}/lib/WS2_32.lib
-${PROJECT_SOURCE_DIR}/lib/WSock32.lib
+if(APPLE)
+  set(libraries
+    z
+    iconv)
+elseif(WIN32)
+  set(libraries
+    PSAPI
+    wsock32
+    ws2_32)
+else()
+  set(libraries
+    pthread)
+endif()
+# ${PROJECT_SOURCE_DIR}/
+# 添加第三方的库, 而第三方库的头文件集中复制到include/tp下使用
+set(FabCc_LIBRARIES
+  Fab ${libraries}
+  ctx
+  zlibstatic
 )
-add_executable(FabCc tcpServer.cc
-)#添加庫文件，可以利用bat脚本，在當前目錄運行一鍵生成上面的複製過來
-else ()
-#Linux后续即将支持网络库
-add_library(Fab STATIC ${cc_files})#如果是動態庫那么SHARED
-set( FabCc_LIBRARIES
-Fab
+if(WIN32)
+  set(SUF .exe)
+  if(MSVC)
+  set(DIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  else()
+  set(DIR ${CMAKE_BINARY_DIR})
+  endif()
+else()
+  set(DIR ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+message(STATUS "to: ${PROJECT_SOURCE_DIR}/HttpWeb")
+message(STATUS "selected to ${CMAKE_BUILD_TYPE}")
+if(CMAKE_CXX_STANDARD STREQUAL 11)
+  add_executable(HttpWeb webC11.cc)
+else()
+  add_executable(HttpWeb web.cc)
+endif()
+add_custom_command(TARGET HttpWeb
+  COMMAND ${CMAKE_COMMAND} -E copy ${DIR}/HttpWeb${SUF} ${PROJECT_SOURCE_DIR}/HttpWeb${SUF}
 )
-add_executable(FabCc w.cc
-#${PROJECT_SOURCE_DIR}/fc/src/lexical_cast.cc
+target_link_libraries(HttpWeb ${FabCc_LIBRARIES})
+
+add_executable(test tests.cc)
+add_custom_command(TARGET test
+  COMMAND ${CMAKE_COMMAND} -E copy ${DIR}/test${SUF} ${PROJECT_SOURCE_DIR}/test${SUF}
 )
-endif ()
-target_link_libraries( FabCc ${FabCc_LIBRARIES})
+target_link_libraries(test PUBLIC Fab ctx)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+message(STATUS "OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+add_subdirectory(tests)
+
+# cmake .. -DBUILD_UNITEST=ON 来打开
+option(BUILD_UNITEST "Build UNITEST" OFF)
+if(BUILD_UNITEST)
+  message(STATUS "Build UNITEST: ${BUILD_UNITEST}")
+  enable_testing()
+  add_subdirectory(unitest)
+endif()

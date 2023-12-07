@@ -4,6 +4,10 @@ CMakeSettings.json
 .vscode/
 build/
 lib/
-build/
 out/
+logs/
+etc/
 *.obj
+*.exe
+static/upload/
+buildGW/

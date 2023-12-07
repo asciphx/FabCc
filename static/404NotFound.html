@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome to 404 Not Found!</title>
+  <style>
+    body {
+      width: 35em;
+      margin: 0 auto;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to FabCc!</h1>
+{{#bug}}
+{{/bug}}
+
+{{#items}}
+  {{#first}}
+    <li><strong>{{name}}</strong></li>
+  {{/first}}
+  {{#link}}
+    <li><a href="{{url}}">{{name}}</a></li>
+  {{/link}}
+{{/items}}
+
+{{#empty}}
+  <p>The list is empty.</p>
+{{/empty}}
+  <p>
+    If you see this page, must be not found.
+  </p>
+  <p>
+    For online documentation and support please refer to
+    <a href="https://github.com/asciphx/FabCc/">FabCc WebServer</a>.<br />
+  <p><em>Thank '{{header}}' for using FabCc.🌐 </em></p>
+</body>
+</html>
