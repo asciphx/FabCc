@@ -160,7 +160,7 @@ namespace fc {
 #endif
                   i64 l = range.find('=') + 1, r = range.rfind('-'), pos = std::lexical_cast<long long>(range.substr(l, r - l));
                   ctx->output_stream.append("Accept-Ranges: bytes\r\n", 22); range = range.substr(++r);
-                  l = std::lexical_cast<long long>(range); r = l > 0 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
+                  l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
 //#if __cplusplus < 202002L
