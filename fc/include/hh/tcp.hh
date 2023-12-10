@@ -7,7 +7,7 @@
 #include <future>
 #include <atomic>
 #include <thread>
-#include <list>
+#include <stack>
 #include <vector>
 #include <fstream>
 #include <set>
@@ -35,7 +35,7 @@ namespace fc {
   socket_type create_and_bind(const char* ip, int port, int socktype);
   static int RESmaxEVENTS = 16, REScore = 16; static std::once_flag RESonce_flag;
   static volatile int RESquit_signal_catched = 1;
-  static std::vector<std::future<void>> RESfus;
+  static std::stack<std::future<void>> RESfus;
   static void create_init(int n) {};
 #if _WIN32
   __declspec(selectany) http_top_header_builder REStop_h;
@@ -57,13 +57,12 @@ namespace fc {
     std::chrono::system_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
     socket_type event_flags, event_fd;
-    //Reactor(int n):flag(n) {}; int flag;
     int n_events, i, idex;
     //std::unique_ptr<ssl_context> ssl_ctx = nullptr;
     void epoll_ctl(epoll_handle_t epoll_fd, socket_type fd, int action, socket_type flags, void* ptr = NULL);
     _FORCE_INLINE void epoll_del(socket_type fd) {
 #if __linux__ || _WIN32
-      epoll_event e; memset(&e, 0, sizeof(e)); e.data.fd = static_cast<int>(fd); e.events = 0; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e); --this->idex;
+      epoll_event e; memset(&e, 0, sizeof(e)); e.events = 0; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e); --this->idex;
 #elif __APPLE__
       struct kevent ev_set; EV_SET(&ev_set, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &ev_set, 1, NULL, 0, NULL); --this->idex;
 #endif
@@ -121,8 +120,7 @@ namespace fc {
             if (_unlikely(this->event_flags & EV_ERROR)) {
 #endif
               //if (this->event_fd != listen_fd) {
-                if (ro->_)
-                  ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
+                if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
               //}
@@ -148,11 +146,7 @@ namespace fc {
                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 #endif
-                std::unordered_map<socket_type, ROG>::iterator id = this->clients.find(socket_fd); u16 idx;
-                if (_unlikely(id == this->clients.end())) {
-                  id = this->clients.emplace(socket_fd, std::move(ROG{ socket_fd })).first; idx = 0;
-                } else { idx = id->second.idx; }//clients
-                ROG* fib = &id->second;
+                ROG* fib = &this->clients[socket_fd]; u16 idx = fib->idx;
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
@@ -161,15 +155,7 @@ namespace fc {
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
               // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-#if _WIN32
-                this->loop_timer.add_s(k_a + 1, [fib, idx] {
-                  if (fib->idx == idx) { if (fib->_)fib->_ = fib->_.yield(); }
-                  });
-#else
-                this->loop_timer.add_s(k_a + 1, [socket_fd, fib, idx] {
-                  if (fib->idx == idx) { ::shutdown(socket_fd, _READ); }
-                  });
-#endif
+                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_ = fib->_.yield(); } });
                 ++this->idex; fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib](co&& sink) {
                   Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
                   try {
@@ -231,7 +217,7 @@ namespace fc {
 #endif
       , sizeof(RESkeep_AI));
     for (int i = 0; i < n; ++i) {
-      RESfus.push_back(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
+      RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
         // if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
         Reactor reactor;
         //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);

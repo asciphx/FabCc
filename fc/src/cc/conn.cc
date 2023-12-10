@@ -12,29 +12,21 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
       rpg->_ = rpg->_.yield(); t = time(NULL) - hrt;
       if (is_idle) {
         if (is_f) {
-          if(t >= k_a) {
+          if (t >= k_a) {
 #ifdef _WIN32
             ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
             return 0;
           }
-#if _WIN32
-          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n) { if (fib->_)fib->_ = fib->_.yield(); } });
-#else
-          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n) { ::shutdown(fib->$, _READ); } });
-#endif
-        } else if(t) {
+          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a, [n, fib] { if (fib->idx == n && fib->_) { fib->_ = fib->_.yield(); } });
+        } else if (t) {
           if (t > k_a) {
 #ifdef _WIN32
             ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
             return 0;
           }
-#if _WIN32
-          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n) { if (fib->_)fib->_ = fib->_.yield(); } });
-#else
-          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n) { ::shutdown(fib->$, _READ); } });
-#endif
+          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_ = fib->_.yield(); } });
         }
       }
       count = read_impl(buf, max_size);

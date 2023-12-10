@@ -17,10 +17,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmultichar"
 #endif
-#if __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmultichar"
-#endif
 namespace fc {
   HTTP c2m(const char* m, size_t l) {
     switch (hack_str(m, l)) {
@@ -284,12 +280,8 @@ namespace fc {
             } catch (const std::exception& e) {
               ctx.set_status(500); ctx.respond(e.what());
             }
-            ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); ctx.output_stream.flush();
-#ifdef _WIN32
-            f.rpg->_ = f.rpg->_.yield(); time(&f.hrt); struct linger ling { 1, 0 }; ::setsockopt(f.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&ling, sizeof(linger)); continue;
-#else
-            time(&f.hrt); ROG* fib = f.rpg; f.timer.add_s(f.k_a - 1, [n, fib]{ if (fib->idx == n) { ::shutdown(fib->$, _READ); } }); continue;
-#endif // _WIN32
+            ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); ctx.output_stream.flush(); time(&f.hrt);
+            ROG* fib = f.rpg; f.timer.add_s(f.k_a - 1, [n, fib]{ if (fib->idx == n && fib->_) { fib->_ = fib->_.yield(); } }); continue;
           }
           try {
             this->_call(*reinterpret_cast<char*>(&req), url, req, res);
@@ -353,7 +345,4 @@ namespace fc {
 } // namespace fc
 #if __clang__
 #pragma clang diagnostic pop
-#endif
-#if __GNUC__
-#pragma GCC diagnostic pop
 #endif
