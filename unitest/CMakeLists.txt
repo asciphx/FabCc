@@ -1,4 +1,4 @@
 file(GLOB SRC_FILES *.cc)
 add_executable(unitest ${SRC_FILES})
-target_link_libraries(unitest PRIVATE Fab)
+target_link_libraries(unitest PRIVATE Nod)
 add_test(NAME unitest COMMAND unitest)

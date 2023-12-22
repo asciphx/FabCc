@@ -64,7 +64,6 @@ Inspired by other well-known C++ web frameworks, Nod's positioning is a network 
 - [x] TCP client
 
 ## Description
-- The namespace uses the uppercase hump fc of Nod.
 - Principle of Coroutines
 - ![yield](./yield.gif)
 - [Demo site](http://8.129.58.72:8080/)🚀
