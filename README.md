@@ -1,4 +1,4 @@
-# FabCc(v0.9 UHD 8K REMASTERED)
+# Nod(v1.0)
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -6,9 +6,9 @@
 [license-badge]: https://img.shields.io/badge/License-AGPL%20v3-gold.svg
 [license-link]: LICENSE
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
-[release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
-[release-link]: https://github.com/asciphx/FabCc/releases
-Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome.
+[release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
+[release-link]: https://github.com/asciphx/Nod/releases
+Inspired by other well-known C++ web frameworks, Nod's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome. The old name was FabCc. Now after updating the logo, the v1.0 version is called Nod.
 ## Eng | [简中](./README-zh_CN.md)
 > On December 8, the ultra-high-definition 8k Remastered version will arrive. Supports Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern json, multi-core compilation, C++11, fixed the keep-alive mechanism.
 
@@ -64,8 +64,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - [x] TCP client
 
 ## Description
-- If translated by machine, FabCc can be a wafer factory, so FabCc symbolizes the most sophisticated and minimal chip.
-- The namespace uses the uppercase hump fc of FabCc.
+- The namespace uses the uppercase hump fc of Nod.
 - Principle of Coroutines
 - ![yield](./yield.gif)
 - [Demo site](http://8.129.58.72:8080/)🚀

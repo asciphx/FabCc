@@ -50,12 +50,12 @@ class box {
 public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
-  box(box<T>&& _) noexcept: p(_.p), b(true) { _.p = nullptr; }
-  box(box<T>& _) noexcept: p(_.p), b(_.b) { _.b = false; }
-  box(T&& _) noexcept: p(new T{ std::move(_) }), b(true) {}
-  box(T& _) noexcept: p(std::addressof(_)), b(false) {}
-  box(const box<T>& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; }
-  explicit box(T* _) noexcept: p(std::addressof(*_)), b(false) {}//not use
+  explicit box(box<T>&& _) noexcept: p(_.p), b(true) { _.p = nullptr; }
+  explicit box(box<T>& _) noexcept: p(_.p), b(_.b) { _.b = false; }
+  explicit box(T&& _) noexcept: p(new T{ std::move(_) }), b(true) {}
+  explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}
+  explicit box(const box<T>& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; }
+  explicit box(T* _) noexcept: p(std::addressof(*_)), b(false) {}
   template<typename... X> box(X&&... _) noexcept: p(new T{ std::forward<X>(_)... }), b(true) {}
   ~box() noexcept { if (this->b) { delete this->p; this->p = null; } }
   //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};

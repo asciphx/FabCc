@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
-project(FabCc)
+project(Nod)
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
-  set(CMAKE_BUILD_TYPE "Release") # 如果是Debug，那么_DEBUG宏才會生效
+  set(CMAKE_BUILD_TYPE "Release") # 如果是Debug，那么_DEBUG宏生效
 endif()
 message(STATUS "CXX_COMPILER is ${CMAKE_CXX_COMPILER_ID}")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
@@ -42,7 +42,7 @@ include_directories(fc/include ${OPENSSL_INCLUDE_DIR})
 aux_source_directory(fc/src cc_files)
 aux_source_directory(fc/src/c c_files)
 aux_source_directory(fc/src/cc cc_files)
-add_library(Fab STATIC ${cc_files} ${c_files})
+add_library(Nod STATIC ${cc_files} ${c_files})
 if(APPLE)
   set(libraries
     z
@@ -58,8 +58,8 @@ else()
 endif()
 # ${PROJECT_SOURCE_DIR}/
 # 添加第三方的库, 而第三方库的头文件集中复制到include/tp下使用
-set(FabCc_LIBRARIES
-  Fab ${libraries}
+set(Nod_LIBRARIES
+  Nod ${libraries}
   ctx
   zlibstatic
 )
@@ -83,13 +83,13 @@ endif()
 add_custom_command(TARGET HttpWeb
   COMMAND ${CMAKE_COMMAND} -E copy ${DIR}/HttpWeb${SUF} ${PROJECT_SOURCE_DIR}/HttpWeb${SUF}
 )
-target_link_libraries(HttpWeb ${FabCc_LIBRARIES})
+target_link_libraries(HttpWeb ${Nod_LIBRARIES})
 
 add_executable(test tests.cc)
 add_custom_command(TARGET test
   COMMAND ${CMAKE_COMMAND} -E copy ${DIR}/test${SUF} ${PROJECT_SOURCE_DIR}/test${SUF}
 )
-target_link_libraries(test PUBLIC Fab ctx)
+target_link_libraries(test PUBLIC Nod ctx)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
