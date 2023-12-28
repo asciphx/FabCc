@@ -10,6 +10,7 @@
 [release-link]: https://github.com/asciphx/Nod/releases
 灵感来自于其他c++知名web框架, Nod的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。旧的名字叫FabCc，更新logo之后，自v1.0版本起叫Nod。
 
+![Nod](./static/1.png)
 ## [Eng](./README.md) | 简中
 > 12月8日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、多核编译、C++11，修复了keep-alive保活机制。
 
@@ -64,7 +65,6 @@
 - [x] tcp客户端
 
 ## 说明
-- 命名空间采用Nod的大写駝峰fc來使用。
 - 协程的原理图
 - ![yield](./yield.gif)
 - [示例](http://8.129.58.72:8080/)🚀
