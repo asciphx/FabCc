@@ -324,6 +324,10 @@ namespace json {
       if (*p == '.') {
         if (++p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; };
         if (p == e) goto $;
+        if (*p == 'e' || *p == 'E') {
+          if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
+          while (++p < e) { c = *p; if (0X2f < c && c < 0X3a)continue; break; };
+        } goto $;
       }
       if (*p == 'e' || *p == 'E') {
         if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
@@ -337,6 +341,10 @@ namespace json {
       if (*p == '.') {
         if (++p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; };
         if (p == e) goto $;
+        if (*p == 'e' || *p == 'E') {
+          if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
+          while (++p < e) { c = *p; if (0X2f < c && c < 0X3a)continue; break; };
+        } goto $;
       }
       if (*p == 'e' || *p == 'E') {
         if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
@@ -348,8 +356,7 @@ namespace json {
     }
   $:
     {
-      std::string s(b, p - b); const char* d = s.data(); char* $; double _ = ::strtod(d, &$);
-      if (*$ == 0 || *d == 0) { v = new(_a.alloc()) Json::_H(_); return p - 1; }
+      std::string s(b, p - b); const char* d = s.data(); char* $; double _ = ::strtod(d, &$); if (*$ == 0 || *d == 0) { v = new(_a.alloc()) Json::_H(_); return p - 1; }
     }
     return 0;
   }
