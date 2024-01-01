@@ -58,8 +58,8 @@ static _ALIGN(2) const char _c2DigitsLut[100][2] = {
 };
 // The fastest htoa fuction
 _FORCE_INLINE static char* h2a(char* c, unsigned char i) {
-  const char* r; if (i < 100) { r = _c2DigitsLut[i]; if (i > 9) *c++ = r[0]; *c = r[1]; return ++c; }
-  unsigned char u = i / 100; *c = u + 0x30; r = _c2DigitsLut[i -= u * 100]; *++c = r[0]; *++c = r[1]; return ++c;
+  const char* r; if (i < 100) { r = _c2DigitsLut[i]; if (i > 9) *c++ = *r; *c = *++r; return ++c; }
+  unsigned char u = i / 100; *c = u + 0x30; r = _c2DigitsLut[i -= u * 100]; *++c = *r; *++c = *++r; return ++c;
 }
 // The fastest atoa fuction
 _FORCE_INLINE static char* a2a(char* c, char i) { if (i < 0) { *c = 45; return h2a(++c, ~--i); } return h2a(c, i); }
@@ -67,15 +67,15 @@ _FORCE_INLINE static char* a2a(char* c, char i) { if (i < 0) { *c = 45; return h
 _FORCE_INLINE static char* t2a(char* c, unsigned short i) {
   const char* r;
   if (i < 10000) {
-    if (i < 100) { r = _c2DigitsLut[i]; if (i > 9) *c++ = r[0]; *c++ = r[1]; return c; }
+    if (i < 100) { r = _c2DigitsLut[i]; if (i > 9) *c++ = *r; *c++ = *++r; return c; }
     unsigned char u = i / 100; r = _c2DigitsLut[u];
-    if (i > 999) *c++ = r[0]; *c++ = r[1]; i -= u * 100; r = _c2DigitsLut[i]; *c++ = r[0]; *c++ = r[1]; return c;
+    if (i > 999) *c++ = *r; *c++ = *++r; i -= u * 100; r = _c2DigitsLut[i]; *c++ = *r; *c++ = *++r; return c;
   }
   // unsigned char u = static_cast<char>(i / 10000); *c++ = u + 0x30; i -= u * 10000; u = i / 100; r = _c2DigitsLut[u];
-  // *c++ = r[0]; *c++ = r[1]; i -= u * 100; r = _c2DigitsLut[i]; *c++ = r[0]; *c++ = r[1]; return c; return c;
-  u64 $ = 0x68dB9ULL * i; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[1];
-  $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-  $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
+  // *c++ = *r; *c++ = *++r; i -= u * 100; r = _c2DigitsLut[i]; *c++ = *r; *c++ = *++r; return c; return c;
+  u64 $ = 0x68dB9ULL * i; r = _c2DigitsLut[$ >> 0x20]; *c++ = *++r;
+  $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+  $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
   return c;
 }
 // The fastest stoa fuction
@@ -84,27 +84,27 @@ _FORCE_INLINE static char* s2a(char* c, short i) { if (i < 0) { *c = 45; return 
 _FORCE_INLINE static char* u2a(char* c, unsigned int i) {
   const char* r;
   if (i < 10000) {
-    if (i < 100) { r = _c2DigitsLut[i]; if (i > 9) *c++ = r[0]; *c++ = r[1]; return c; }
-    u32 $ = 0X28F5DU * i; r = _c1DigitsLut[$ >> 0X18]; *c++ = r[0]; *c++ = r[1]; c -= i < 1000;
-    $ = ($ & 0xFFFFFF) * 100; r = _c2DigitsLut[$ >> 0X18]; *c++ = r[0]; *c++ = r[1]; return c;
+    if (i < 100) { r = _c2DigitsLut[i]; if (i > 9) *c++ = *r; *c++ = *++r; return c; }
+    u32 $ = 0X28F5DU * i; r = _c1DigitsLut[$ >> 0X18]; *c++ = *r; *c++ = *++r; c -= i < 1000;
+    $ = ($ & 0xFFFFFF) * 100; r = _c2DigitsLut[$ >> 0X18]; *c++ = *r; *c++ = *++r; return c;
   } else if (i < 100000000) {
     if (i < 1000000) {
-      u64 $ = 0X68Db9ULL * i; r = _c1DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; c -= i < 100000;
-      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; return c;
+      u64 $ = 0X68Db9ULL * i; r = _c1DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; c -= i < 100000;
+      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; return c;
     }
-    u64 $ = 0x10C6F7A1ULL * i >> 16; r = _c1DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; c -= i < 10000000;
-    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; return c;
+    u64 $ = 0x10C6F7A1ULL * i >> 16; r = _c1DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; c -= i < 10000000;
+    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; return c;
   } else {
-    u64 $ = 0X55E63B89ULL * i; r = _c1DigitsLut[$ >> 0x39]; *c++ = r[0]; *c++ = r[1]; c -= i < 1000000000;
-    $ = ($ & 0x1FFFFFFFFFFFFFF) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0X1ffffffffffffff) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0X1ffffffffffffff) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0x1FFFFFFFFFFFFFF) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = r[0]; *c++ = r[1]; return c;
+    u64 $ = 0X55E63B89ULL * i; r = _c1DigitsLut[$ >> 0x39]; *c++ = *r; *c++ = *++r; c -= i < 1000000000;
+    $ = ($ & 0x1FFFFFFFFFFFFFF) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0X1ffffffffffffff) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0X1ffffffffffffff) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0x1FFFFFFFFFFFFFF) * 100; r = _c2DigitsLut[$ >> 0x39]; *c++ = *r; *c++ = *++r; return c;
     // const unsigned int $ = i / 100000000; i -= $ * 100000000;
-    // if ($ > 9)  r = _c2DigitsLut[$], *c++ = r[0], *c++ = r[1]; else *c++ = static_cast<char>($ + 0x30);
+    // if ($ > 9)  r = _c2DigitsLut[$], *c++ = *r, *c++ = *++r; else *c++ = static_cast<char>($ + 0x30);
     // _mm_storel_epi64(reinterpret_cast<__m128i*>(c), _mm_srli_si128(_mm_add_epi8(_mm_packus_epi16(_mm_setzero_si128(),
     //   U2ASSE(i)), reinterpret_cast<const __m128i*>(K_Ascii0)[0]), 8));//c[8] = 0;
     // return c + 8;
@@ -116,19 +116,19 @@ _FORCE_INLINE static char* i2a(char* c, int i) { if (i < 0) { *c = 45; return u2
 _FORCE_INLINE static char* u64toa(char* c, unsigned long long i) {
   if (_likely(i < 100000000)) {
 	  if (i < 10000) {
-      if (i < 100) { const char* r = _c2DigitsLut[i]; if (i > 9) *c++ = r[0]; *c++ = r[1]; return c; }
-      u64 $ = 0X28F5DULL * i; const char* r = _c1DigitsLut[$ >> 0X18]; *c++ = r[0]; *c++ = r[1]; c -= i < 1000;
-      $ = ($ & 0xFFFFFF) * 100; r = _c2DigitsLut[$ >> 0X18]; *c++ = r[0]; *c++ = r[1]; return c;
+      if (i < 100) { const char* r = _c2DigitsLut[i]; if (i > 9) *c++ = *r; *c++ = *++r; return c; }
+      u64 $ = 0X28F5DULL * i; const char* r = _c1DigitsLut[$ >> 0X18]; *c++ = *r; *c++ = *++r; c -= i < 1000;
+      $ = ($ & 0xFFFFFF) * 100; r = _c2DigitsLut[$ >> 0X18]; *c++ = *r; *c++ = *++r; return c;
     }
     if (i < 1000000) {
-      u64 $ = 0X68Db9ULL * i; const char* r = _c1DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; c -= i < 100000;
-      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; return c;
+      u64 $ = 0X68Db9ULL * i; const char* r = _c1DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; c -= i < 100000;
+      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+      $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; return c;
     }
-    u64 $ = 0x10C6F7A1ULL * i >> 16; const char* r = _c1DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; c -= i < 10000000;
-    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1];
-    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = r[0]; *c++ = r[1]; return c;
+    u64 $ = 0x10C6F7A1ULL * i >> 16; const char* r = _c1DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; c -= i < 10000000;
+    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r;
+    $ = ($ & 0Xffffffff) * 100; r = _c2DigitsLut[$ >> 0x20]; *c++ = *r; *c++ = *++r; return c;
   } else if (_likely(i < 10000000000000000)) {
     const __m128i va = _mm_add_epi8(_mm_packus_epi16(U2ASSE(static_cast<unsigned int>(i / 100000000)),
      U2ASSE(static_cast<unsigned int>(i % 100000000))), reinterpret_cast<const __m128i*>(K_Ascii0)[0]);
@@ -142,9 +142,9 @@ _FORCE_INLINE static char* u64toa(char* c, unsigned long long i) {
     return c + 16 - digit;
   } else {
     const unsigned int z = static_cast<unsigned int>(i / 10000000000000000); i %= 10000000000000000;
-    if (z < 100) { if (z > 9) *c++ = _c2DigitsLut[z][0]; *c++ = _c2DigitsLut[z][1]; } else {
-      unsigned int $ = 0X28F5DU * z; const char* r = _c1DigitsLut[$ >> 0X18]; *c++ = r[0]; *c++ = r[1]; c -= z < 1000;
-      $ = ($ & 0xFFFFFF) * 100; r = _c2DigitsLut[$ >> 0X18]; *c++ = r[0]; *c++ = r[1];
+    if (z < 100) { const char* r = _c2DigitsLut[z]; if (z > 9) *c++ = *r; *c++ = *++r; } else {
+      unsigned int $ = 0X28F5DU * z; const char* r = _c1DigitsLut[$ >> 0X18]; *c++ = *r; *c++ = *++r; c -= z < 1000;
+      $ = ($ & 0xFFFFFF) * 100; r = _c2DigitsLut[$ >> 0X18]; *c++ = *r; *c++ = *++r;
     }
     _mm_storeu_si128(reinterpret_cast<__m128i*>(c), _mm_add_epi8(_mm_packus_epi16(U2ASSE(static_cast<unsigned int>(i / 100000000)),
       U2ASSE(static_cast<unsigned int>(i % 100000000))), reinterpret_cast<const __m128i*>(K_Ascii0)[0])); // c[16] = '\0';

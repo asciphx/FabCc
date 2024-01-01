@@ -68,15 +68,15 @@ namespace fc {
 #endif
     }
     void event_loop(socket_type listen_fd, std::function<void(Conn&)> handler, int nthreads, int k_a, int* k_A) {
-      std::call_once(RESonce_flag, create_init, k_a); ROG rpg{ listen_fd };
+      std::call_once(RESonce_flag, create_init, k_a);
 #if __linux__
-      this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET , &rpg);
+      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET , &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
 #elif  _WIN32
-      this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN , &rpg);
+      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN , &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
 #elif __APPLE__
-      this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
+      ROG rpg{}; this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ , &rpg); epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGKILL, EV_ADD, EVFILT_SIGNAL); epoll_ctl(this->epoll_fd, SIGTERM, EV_ADD, EVFILT_SIGNAL);
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
