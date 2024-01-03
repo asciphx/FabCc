@@ -31,15 +31,21 @@ namespace fc {
     _FORCE_INLINE output_buffer& operator<<(unsigned long long& v) {
       if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, u64toa(c, v) - c));
     }
-    _FORCE_INLINE output_buffer& operator<<(unsigned long& v) {
-      if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, u64toa(c, v) - c));
-    }
 #ifdef _WIN32
     _FORCE_INLINE output_buffer& operator<<(long long& v) {
       if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, i64toa(c, v) - c));
     }
     _FORCE_INLINE output_buffer& operator<<(long& v) {
       if (v == 0) operator<<('0'); char c[11]; return operator<<(std::string_view(c, i2a(c, v) - c));
+    }
+    _FORCE_INLINE output_buffer& operator<<(long&& v) {
+      if (v == 0) operator<<('0'); char c[11]; return operator<<(std::string_view(c, i2a(c, std::move(v)) - c));
+    }
+    _FORCE_INLINE output_buffer& operator<<(unsigned long& v) {
+      if (v == 0) operator<<('0'); char c[10]; return operator<<(std::string_view(c, u2a(c, v) - c));
+    }
+    _FORCE_INLINE output_buffer& operator<<(unsigned long&& v) {
+      if (v == 0) operator<<('0'); char c[10]; return operator<<(std::string_view(c, u2a(c, std::move(v)) - c));
     }
 #else
     _FORCE_INLINE output_buffer& operator<<(long long& v) {
@@ -48,11 +54,17 @@ namespace fc {
     _FORCE_INLINE output_buffer& operator<<(long& v) {
       if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, i64toa(c, v) - c));
     }
-#endif // _WIN32
-    _FORCE_INLINE output_buffer& operator<<(unsigned long long&& v) {
-      if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, u64toa(c, std::move(v)) - c));
+    _FORCE_INLINE output_buffer& operator<<(long&& v) {
+      if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, i64toa(c, std::move(v)) - c));
+    }
+    _FORCE_INLINE output_buffer& operator<<(unsigned long& v) {
+      if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, u64toa(c, v) - c));
     }
     _FORCE_INLINE output_buffer& operator<<(unsigned long&& v) {
+      if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, u64toa(c, std::move(v)) - c));
+    }
+#endif // _WIN32
+    _FORCE_INLINE output_buffer& operator<<(unsigned long long&& v) {
       if (v == 0) operator<<('0'); char c[20]; return operator<<(std::string_view(c, u64toa(c, std::move(v)) - c));
     }
     _FORCE_INLINE output_buffer& append(const char c) { return (*this) << c; }

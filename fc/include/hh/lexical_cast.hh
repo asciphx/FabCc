@@ -170,8 +170,13 @@ namespace std {
   template <> inline string lexical_cast<string>(int i) { char s[11]; return string(s, i2a(s, i) - s); }
   template <> inline string lexical_cast<string>(unsigned int i) { char s[10]; return string(s, u2a(s, i) - s); }
   template <> inline string lexical_cast<string>(bool b) { return b ? STD_TURE : STD_FALSE; }
+#ifdef _WIN32
+  template <> inline string lexical_cast<string>(long i) { char s[11]; return string(s, i2a(s, i) - s); }
+  template <> inline string lexical_cast<string>(long unsigned i) { char s[10]; return string(s, u2a(s, i) - s); }
+#else
   template <> inline string lexical_cast<string>(long i) { char s[20]; return string(s, i64toa(s, i) - s); }
   template <> inline string lexical_cast<string>(long unsigned i) { char s[20]; return string(s, u64toa(s, i) - s); }
+#endif // _WIN32
 }
 #undef _INLINE
 #endif // LEXICAL_CAST_H
