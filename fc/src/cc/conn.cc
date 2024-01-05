@@ -1,6 +1,5 @@
 #include <hh/conn.hh>
 namespace fc {//If it exceeds 6(k_a) seconds by default, the established connection will be closed but writing has not yet started
-  static struct linger RESling { 1, 0 };
   int Conn::read(char* buf, int max_size) {
     int count = read_impl(buf, max_size); int64_t t = 0;
     while (count < 0) {
@@ -49,7 +48,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
   };
   bool Conn::writen(const char* buf, int size) {
     const char* end = buf + size; is_idle = false;
-    int count = ::send(socket_fd, buf, size, 0); if (count > 0) buf += count;
+    int count = write_impl(buf, size); if (count > 0) buf += count;
     while (buf != end) {
 #ifndef _WIN32
       if (count == 0 || count < 0 && (errno == EPIPE || errno != EAGAIN)) { return false; }
@@ -57,7 +56,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
       if (count == 0 || count < 0 && (errno == EPIPE || (errno != EINVAL && errno != EINPROGRESS))) { return false; }
 #endif // !_WIN32
       rpg->_ = rpg->_.yield();
-      if ((count = ::send(socket_fd, buf, int(end - buf), 0)) > 0) buf += count;
+      if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
     } time(&hrt);
     return is_idle = true;
   };

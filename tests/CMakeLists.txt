@@ -15,8 +15,9 @@ add_executable(UrlResolution UrlResolution.cc)
 target_link_libraries(UrlResolution)
 
 add_executable(client client.cc)
+target_link_libraries(client ${Nod_LIBRARIES})
+
 if(${OPENSSL})
-  target_link_libraries(client Nod ${libraries} ${OPENSSL_LIBRARIES})
-else()
-  target_link_libraries(client Nod ${libraries})
+add_executable(https https.cc)
+target_link_libraries(https ${Nod_LIBRARIES})
 endif()

@@ -45,7 +45,7 @@ namespace fc {
     _FORCE_INLINE void tick() {
       RES_TP = std::chrono::system_clock::now();
 #if defined(_MSC_VER)
-      if (++i == 70) {
+      if (++i == 60) {
         i = 0; time(&RES_TIME_T); localtime_s(RES_NOW, &RES_TIME_T);
         top_header_size = int(strftime(tmp.p2, 32, "%a, %d %b %Y %T", RES_NOW)); std::swap(tmp.p1, tmp.p2);
       }

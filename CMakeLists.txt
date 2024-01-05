@@ -58,25 +58,18 @@ aux_source_directory(fc/src/c c_files)
 aux_source_directory(fc/src/cc cc_files)
 add_library(Nod STATIC ${cc_files} ${c_files})
 if(APPLE)
-  set(libraries
-    z
-    iconv)
+  set(libraries z iconv)
 elseif(WIN32)
-  set(libraries
-    PSAPI
-    wsock32
-    ws2_32)
+  set(libraries PSAPI wsock32 ws2_32)
 else()
-  set(libraries
-    pthread)
+  set(libraries pthread)
 endif()
 # ${PROJECT_SOURCE_DIR}/
-# 添加第三方的库, 而第三方库的头文件集中复制到include/tp下使用
-set(Nod_LIBRARIES
-  Nod ${libraries}
-  ctx
-  zlibstatic
-)
+if(${OPENSSL})
+  set(Nod_LIBRARIES Nod ${libraries} ctx zlibstatic ${OPENSSL_LIBRARIES})
+else()
+  set(Nod_LIBRARIES Nod ${libraries} ctx zlibstatic)
+endif()
 if(WIN32)
   set(SUF .exe)
   if(MSVC)
@@ -110,7 +103,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 message(STATUS "OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 add_subdirectory(tests)
 
-# cmake .. -DBUILD_UNITEST=ON 来打开
+# cmake .. -DBUILD_UNITEST=ON
 option(BUILD_UNITEST "Build UNITEST" OFF)
 if(BUILD_UNITEST)
   message(STATUS "Build UNITEST: ${BUILD_UNITEST}")

@@ -36,7 +36,37 @@
 #include <h/config.h>
 #include <tp/ctx.hh>
 #include <hpp/http_top_header_builder.hpp>
+#ifndef _OPENSSL
+#define _OPENSSL 0
+#endif
+#if _OPENSSL
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 namespace fc {
+  static bool RES_OPENSSL_INIT = false;
+  struct ssl_context {
+    SSL_CTX* ctx = nullptr;
+    ssl_context(const std::string& key, const std::string& cert, const std::string& cipher) {
+      if (!RES_OPENSSL_INIT) { SSL_load_error_strings(); OpenSSL_add_ssl_algorithms(); RES_OPENSSL_INIT = true; }
+      const SSL_METHOD* method = SSLv23_server_method(); ctx = SSL_CTX_new(method);
+      if (!ctx) { perror("Fail!"); ERR_print_errors_fp(stderr); exit(EXIT_FAILURE); }
+      SSL_CTX_set_ecdh_auto(ctx, 1); /* Set the cipheruite if provided */
+      if (cipher.size() && SSL_CTX_set_cipher_list(ctx, cipher.c_str()) <= 0) {
+        ERR_print_errors_fp(stderr); exit(EXIT_FAILURE);
+      } /* Set the key and cert */
+      if (SSL_CTX_use_certificate_file(ctx, cert.c_str(), SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr); exit(EXIT_FAILURE);
+      }
+      if (SSL_CTX_use_PrivateKey_file(ctx, key.c_str(), SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr); exit(EXIT_FAILURE);
+      }
+    }
+    ~ssl_context() { if (ctx) SSL_CTX_free(ctx); }
+  };
+}
+#endif
+namespace fc {
+  static struct linger RESling { 1, 0 };
   enum sd_type { _READ, _WRITE, _BOTH };
   static int RESon = 1; static int RESkeep_AI = 1;//keepalive
 #if defined _WIN32
@@ -83,44 +113,48 @@ namespace fc {
     int64_t hrt;
     epoll_handle_t epoll_fd;
     socket_type socket_fd;
+#if _OPENSSL
+    SSL* ssl = nullptr;
+    inline bool ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
+      if (!ssl_ctx) return false;
+      ssl = SSL_new(ssl_ctx->ctx);
+      SSL_set_fd(ssl, static_cast<int>(socket_fd));
+      while (int ret = SSL_accept(ssl)) {
+        if (ret == 1) { return true; } int e = SSL_get_error(ssl, ret);
+        if (e == SSL_ERROR_WANT_WRITE || e == SSL_ERROR_WANT_READ) rpg->_ = rpg->_.yield();
+        else {
+#if _DEBUG
+          ERR_print_errors_fp(stderr);
+#endif
+          return false;
+        }
+      }
+      return false;
+    }
+#endif
     int k_a;
     bool is_f = false, is_idle = true;
     _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e):
       timer(t), k_a(k), socket_fd(fd), in_addr(a), hrt(RES_TIME_T), rpg(r), epoll_fd(e) {}
     _FORCE_INLINE ~Conn() {
-      //if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+#if _OPENSSL
+      if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+#endif
       close_socket(socket_fd); rpg = nullptr;
     }
-
     //if (0 != close_socket(socket_fd)) std::cerr << "Error when closing file descriptor " << socket_fd << ": " << strerror(errno) << std::endl;
-    //SSL* ssl = nullptr;
-    //inline bool ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
-    //  if (!ssl_ctx)
-    //	return false;
-    //  ssl = SSL_new(ssl_ctx->ctx);
-    //  SSL_set_fd(ssl, socket_fd);
-    //  while (int ret = SSL_accept(ssl)) {
-    //	if (ret == 1)
-    //	  return true;
-    //	int err = SSL_get_error(ssl, ret);
-    //	if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ)
-    //	  this->sink.yield();
-    //	else {
-    //	  ERR_print_errors_fp(stderr);
-    //	  return false;// throw std::runtime_error("Error during https handshake.");
-    //	}
-    //  }
-    //  return false;
-    //}
     _FORCE_INLINE int read_impl(char* buf, int size) {
-      //if (ssl) return SSL_read(ssl, buf, size); else
+#if _OPENSSL
+      if (ssl) return SSL_read(ssl, buf, size);
+#endif
       return ::recv(socket_fd, buf, size, 0);
     }
     _FORCE_INLINE int write_impl(const char* buf, int size) {
-      //if (ssl) return SSL_write(ssl, buf, size); else
+#if _OPENSSL
+      if (ssl) return SSL_write(ssl, buf, size);
+#endif
       return ::send(socket_fd, buf, size, 0);
     }
-    //
     int read(char* buf, int max_size);
     bool write(const char* buf, int size);
     bool writen(const char* buf, int size);

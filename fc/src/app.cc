@@ -218,6 +218,8 @@ namespace fc {
     llParser* $ = static_cast<llParser*>(_); $->headers.emplace($->header_field, std::string_view(c, l)); return 0;
   }
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value };
+
+  App& App::set_ssl(std::string ciphers, std::string key, std::string cert){ ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
   void App::http_serve(int port, std::string ip, int nthreads) {
     std::function<void(Conn&)> make_http_processor = [this](Conn& f) -> void {
       fc::str_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
@@ -336,17 +338,7 @@ namespace fc {
     if (!fc::is_directory("_/")) fc::create_directory("_/"); RES_START_TIME = std::chrono::high_resolution_clock::now();
     for (int i = -1; i < 0xff;) { char c[4]; snprintf(c, 4, "%02x", ++i); fc::create_directory(std::string("_/", 2) + c); }
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
-    start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor), k_A);//SOCK_DGRAM
-    // if constexpr (has_key<decltype(options)>(s::ssl_key)) {
-    //static_assert(has_key<decltype(options)>(s::ssl_certificate),
-    //			  "You need to provide both the ssl_certificate option and the ssl_key option.");
-    //std::string ssl_key = options.ssl_key;
-    //std::string ssl_cert = options.ssl_certificate;
-    //std::string ssl_ciphers = get_or(options, s::ssl_ciphers, "");
-    //start_tcp_server(ip, port, SOCK_STREAM, nthreads,
-    //				 fc::make_http_processor(std::move(handler)), ssl_key, ssl_cert, ssl_ciphers);
-    // } else {
-    // }
+    start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor), k_A, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
   }
 } // namespace fc
 #if __clang__

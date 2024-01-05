@@ -58,7 +58,9 @@ namespace fc {
     socklen_t in_len{ sizeof(sockaddr_storage) };
     socket_type event_flags, event_fd;
     int n_events, i, idex;
-    //std::unique_ptr<ssl_context> ssl_ctx = nullptr;
+#if _OPENSSL
+    std::unique_ptr<ssl_context> ssl_ctx = nullptr;
+#endif
     void epoll_ctl(epoll_handle_t epoll_fd, socket_type fd, int action, socket_type flags, void* ptr = NULL);
     _FORCE_INLINE void epoll_del(socket_type fd) {
 #if __linux__ || _WIN32
@@ -157,12 +159,17 @@ namespace fc {
               // Spawn a new co to handle the connection.继续处理，延续之前未处理的
                 this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_ = fib->_.yield(); } });
                 ++this->idex; fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib](co&& sink) {
-                  Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
+                  fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
                   try {
-                    //if (ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
-                    //std::cerr << "Error during SSL handshake" << std::endl; return std::move(c.sink);
-                    //}
-                    fib->_ = std::move(sink); handler(c); ++fib->idx; epoll_del(socket_fd);
+#if _OPENSSL
+                    if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
+#ifdef _WIN32
+                      ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
+#endif
+                      ++fib->idx; epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
+                    }
+#endif
+                    handler(c); ++fib->idx; epoll_del(socket_fd);
                   } catch (fiber_exception& ex) {
                     ++fib->idx; epoll_del(socket_fd); return std::move(ex.c);
                   } catch (const std::exception&) {
@@ -218,9 +225,10 @@ namespace fc {
       , sizeof(RESkeep_AI));
     for (int i = 0; i < n; ++i) {
       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
-        // if (ssl_cert_path.size()) // Initialize the SSL/TLS context.
         Reactor reactor;
-        //reactor.ssl_ctx = std::make_unique<ssl_context>(ssl_key_path, ssl_cert_path, ssl_ciphers);
+#if _OPENSSL
+        if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ssl_key_path, ssl_cert_path, ssl_ciphers});// Initialize the SSL/TLS context.
+#endif
         reactor.event_loop(sfd, conn_handler, n, k_A, k_a);
         }));
     }

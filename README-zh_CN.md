@@ -9,6 +9,7 @@
 [release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
 [release-link]: https://github.com/asciphx/Nod/releases
 灵感来自于其他c++知名web框架, Nod的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。旧的名字叫FabCc，更新logo之后，自v1.0版本起叫Nod。
+
 ![Nod](./static/Nod_logo.png)
 ## [Eng](./README.md) | 简中
 > 12月8日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、多核编译、C++11，修复了keep-alive保活机制。
@@ -57,7 +58,7 @@
 - [x] 动态路由
 - [x] gzip压缩
 - [x] body-parser的支持
-- [ ] ssl证书
+- [x] ssl证书
 - [ ] websocket
 - [x] 协程
 - [ ] udp服务端

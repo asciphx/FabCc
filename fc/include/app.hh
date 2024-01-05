@@ -10,7 +10,7 @@ namespace fc {
   HTTP c2m(const char* m, size_t l);
   const char* m2c(HTTP m);
   struct App {
-    App(); VH _ = [](Req&, Res&) { throw err::not_found(); };
+    App();
     VH& operator[](const char* r);
     VH& del(const char* r);
     VH& get(const char* r = "/");//"\0"//with skip the last / of the url.
@@ -22,18 +22,12 @@ namespace fc {
     ///Process the Req and generate a Res for it
     std::string _print_routes();
     void _call(char m, std::string& r, Req& request, Res& response) const;
-    DRT map_;
-    double USE_MAX_MEM_SIZE_MB = 400.0;
-    int k_A[3] = { 4,3,2 };
-    bool file_download = true;
     std::string get_cache(std::string& u);
     void set_cache(std::string& u, std::string& v, short i = CACHE_HTML_TIME_SECOND);
     //Whether to open file download, set to true will allow
     App& set_file_download(bool&& b);
     //Set not_found route;
     _FORCE_INLINE VH& default_route() { return _; }
-    std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
-    std::unordered_map<std::string_view, std::string_view> content_types;
     App& sub_api(const char* prefix, const App& subapi);
     //Serve static directory
     App serve_file(const char* r);
@@ -46,7 +40,18 @@ namespace fc {
       "json","svg","png","jpg","jpeg","gif","txt","wasm","mp4","webm","mp3","wav","aac","mkv","vtt" });
     // keep-alive time seconds = (idle + intvl * probes) >> 1, RESk_A is the total time written. time seconds default = 6s
     App& set_keep_alive(int idle, int intvl = 1, unsigned char probes = 10);
+    //std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt"
+    App& set_ssl(std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt");
     void http_serve(int port = 8080, std::string ip = "", int nthreads = std::thread::hardware_concurrency());
+  private:
+    VH _ = [](Req&, Res&) { throw err::not_found(); };
+    DRT map_;
+    std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
+    std::unordered_map<std::string_view, std::string_view> content_types;
+    double USE_MAX_MEM_SIZE_MB = 400.0;
+    int k_A[3] = { 4,3,2 };
+    bool file_download = true;
+    std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";
   };
 } // namespace fc
 #endif

@@ -9,6 +9,7 @@
 [release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
 [release-link]: https://github.com/asciphx/Nod/releases
 Inspired by other well-known C++ web frameworks, Nod's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome. The old name was FabCc. Now after updating the logo, the v1.0 version is called Nod.
+
 ![Nod](./static/Nod_logo.png)
 ## Eng | [简中](./README-zh_CN.md)
 > On December 8, the ultra-high-definition 8k Remastered version will arrive. Supports Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern json, multi-core compilation, C++11, fixed the keep-alive mechanism.
@@ -58,7 +59,7 @@ Inspired by other well-known C++ web frameworks, Nod's positioning is a network 
 - [x] Dynamic routing
 - [x] Gzip compression
 - [x] Body parser
-- [ ] SSL certificate support
+- [x] SSL certificate support
 - [ ] WebSocket
 - [x] Coroutines
 - [ ] UDP server
