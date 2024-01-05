@@ -9,7 +9,7 @@
 [release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
 [release-link]: https://github.com/asciphx/Nod/releases
 Inspired by other well-known C++ web frameworks, Nod's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome. The old name was FabCc. Now after updating the logo, the v1.0 version is called Nod.
-![Nod](./static/1.png)
+![Nod](./static/Nod_logo.png)
 ## Eng | [简中](./README-zh_CN.md)
 > On December 8, the ultra-high-definition 8k Remastered version will arrive. Supports Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern json, multi-core compilation, C++11, fixed the keep-alive mechanism.
 
@@ -128,7 +128,11 @@ int main() {
 ### Building (Tests, Examples)
 Out-of-source build with CMake is recommended.
 delete clean cmake cache if build fails.
+`cmake -B build` followed by additional compilation options.
+Use vcpkg `-DCMAKE_TOOLCHAIN_FILE=../vcpkg.cmake`
+Use llhttp parser `-DLLHTTP=1`
+Use openssl `-DOPENSSL=1`
 ```
-cmake -B build
+cmake -B build -DLLHTTP=0 -DOPENSSL=0
 cmake --build ./build --config Release -j
 ```

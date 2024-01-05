@@ -27,8 +27,13 @@
 #endif
 #include <hpp/string_view.hpp>
 #include <hh/picohttpparser.hh>
+#ifndef _OPENSSL
+#define _OPENSSL 0
+#endif
+#if _OPENSSL
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#endif
 namespace fc {
   enum HTTPS {
     DEL = 0, GET, HEAD, POST, PUT, OPTIONS, PATCH, CONNECT, INVALID
@@ -48,10 +53,12 @@ namespace fc {
   private:
     std::string header;
     sockaddr_in sa;
+#if _OPENSSL
     BIO* sbio = NULL;
     SSL_CTX* ctx;
     SSL_CONF_CTX* cctx;
     SSL* ssl;
+#endif
     int fd;
     int seed_int[100];
     int l, r, conn;

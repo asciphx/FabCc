@@ -9,8 +9,7 @@
 [release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
 [release-link]: https://github.com/asciphx/Nod/releases
 灵感来自于其他c++知名web框架, Nod的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。旧的名字叫FabCc，更新logo之后，自v1.0版本起叫Nod。
-
-![Nod](./static/1.png)
+![Nod](./static/Nod_logo.png)
 ## [Eng](./README.md) | 简中
 > 12月8日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、多核编译、C++11，修复了keep-alive保活机制。
 
@@ -128,7 +127,11 @@ int main() {
 ### 构建（测试、示例）
 建议使用CMake进行源代码外构建。
 如果构建失败，请删除清理cmake缓存。
+`cmake -B build`后的额外编译选项。
+使用vcpkg `-DCMAKE_TOOLCHAIN_FILE=../vcpkg.cmake`
+使用llhttp解析器 `-DLLHTTP=1`
+使用openssl `-DOPENSSL=1`
 ```
-cmake -B build
+cmake -B build -DLLHTTP=0 -DOPENSSL=0
 cmake --build ./build --config Release -j
 ```

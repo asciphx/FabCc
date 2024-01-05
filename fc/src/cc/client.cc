@@ -3,7 +3,9 @@
 #include <iostream>
 #include <stdio.h>
 #include <hpp/i2a.hpp>
+#if _OPENSSL
 #include "openssl/rand.h"
+#endif
 #if defined(__MINGW32__)
 static void inet_pton(int af, const char* src, void* dst) {
   struct sockaddr_in ip4; struct sockaddr_in6 ip6; char ipaddr[64]; sprintf(ipaddr, "%s:2020", src);
@@ -29,9 +31,13 @@ namespace fc {
     return "";
   }
   client::client(const char* i, u_short p, HTTPS h): _port(p), _ip(i), conn(true), l(0), r(3), method(h), body(512, '\0') {
+#if _OPENSSL
     if (!openssl_init) { SSL_load_error_strings(); OpenSSL_add_ssl_algorithms(); openssl_init = true; }
+#endif
 #if defined _WIN32
+#if _OPENSSL
     srand((unsigned)time(NULL)); for (int i = 0; i < 100; i++)  seed_int[i] = rand(); RAND_seed(seed_int, sizeof(seed_int));
+#endif
     fd = (int)socket(AF_INET, SOCK_STREAM, 0); if (fd == -1) { WSACleanup(); conn = 0; }
 #else
     fd = socket(AF_INET, SOCK_STREAM, 0); if (fd == -1) { conn = 0; }
@@ -43,13 +49,16 @@ namespace fc {
 #else
       ::close(fd);
 #endif
-      conn = 0; ctx = SSL_CTX_new(TLS_client_method()); cctx = SSL_CONF_CTX_new();
+      conn = 0;
+#if _OPENSSL
+      ctx = SSL_CTX_new(TLS_client_method()); cctx = SSL_CONF_CTX_new();
       SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT); SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
       SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL); sbio = BIO_new_ssl_connect(ctx); if (_port == 80) _port = 443;
       BIO_get_ssl(sbio, &ssl); char t[5]; t2a(t, _port); body.clear(); body.append(_ip).append({ ':' }).append(t);
       BIO_set_conn_hostname(sbio, body.data()); if (BIO_do_connect(sbio) <= 0) {
         fprintf(stderr, "Err!\n"); SSL_free(ssl); SSL_CTX_free(ctx); SSL_CONF_CTX_free(cctx); BIO_free_all(sbio);
       } else conn = 1;
+#endif
     } else conn = 2;
   }
   std::string& client::get(const std::string& url, const std::string& body, int n) {
@@ -58,6 +67,7 @@ namespace fc {
     } else {
       wb.append(" HTTP/1.1\r\n", 11).append("Host: ", 6).append(_ip).append("\r\n\r\n", 4);
     } wb += body;
+#if _OPENSSL
     if (conn == 1) {
       r = SSL_write(ssl, wb.data(), (int)wb.size()); if (r > 0) l += r;
       while (l > 0 && l < wb.size() && --n) {
@@ -117,7 +127,9 @@ namespace fc {
         } while ((r = SSL_read(ssl, const_cast<char*>(this->body.data()) + i, static_cast<int>(this->body.size() - i))) != 0);
         if(i == this->body.size()) return this->body = "";
       }
-    } else if (conn == 2) {
+    } else 
+#endif
+    if (conn == 2) {
       r = send(fd, wb.data(), (int)wb.size(), 0); if (r > 0) l += r;
       while (l > 0 && l < wb.size() && --n) {
         r = send(fd, wb.data() + l, (int)wb.size() - l, 0); if (r > 0) l += r;
@@ -169,13 +181,16 @@ namespace fc {
     return this->body;
   }
   client::~client() {
+#if _OPENSSL
     if (conn == 1) {
       if (ssl) {
         SSL_CTX_free(ctx);
         SSL_CONF_CTX_free(cctx);
         BIO_free_all(sbio);
       }
-    } else if (conn == 2) {
+    } else
+#endif
+    if (conn == 2) {
 #if defined _WIN32
       closesocket(fd);
 #else
@@ -184,6 +199,7 @@ namespace fc {
     }
   };
   int client::close() {
+#if _OPENSSL
     if (conn == 1) {
       conn = 0;
       if (ssl) {
@@ -193,7 +209,9 @@ namespace fc {
         SSL_CONF_CTX_free(cctx);
         BIO_free_all(sbio);
       }
-    } else if (conn == 2) {
+    } else
+#endif
+    if (conn == 2) {
       conn = 0;
 #if defined _WIN32
       return closesocket(fd);

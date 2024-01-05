@@ -218,11 +218,13 @@ namespace fc {
     llParser* $ = static_cast<llParser*>(_); $->headers.emplace($->header_field, std::string_view(c, l)); return 0;
   }
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value };
-#define _USE_LLHTTP 0
   void App::http_serve(int port, std::string ip, int nthreads) {
     std::function<void(Conn&)> make_http_processor = [this](Conn& f) -> void {
       fc::str_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
-#if _USE_LLHTTP
+#ifndef _LLHTTP
+#define _LLHTTP 0
+#endif
+#if _LLHTTP
       llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r;
 #else
       const char* method, * path; size_t method_len, path_len, num; int flag, r, end = 0;
@@ -234,7 +236,7 @@ namespace fc {
         //        char id[11]; id[i2a(id, f.socket_fd) - id] = 0;
         //#endif // _WIN32
         while (RESon) {
-#if !_USE_LLHTTP
+#if !_LLHTTP
           num = flag = 0;
 #endif
           // Read until there is a complete header.
@@ -244,18 +246,22 @@ namespace fc {
             // Look for end of header && save header lines.
             do {
               switch (*cur) {
-              case '\r':if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; break;
-              case '\n':if (*(cur - 3) == '\r' && *(cur - 2) == '\n' && *(cur - 1) == '\r') { cur += 1; of = cur - rb; goto _; }
-              default:cur += 2;
+              case '\r':
+                if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }
+                if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto _; } cur += 4; continue;
+              case '\n':
+                if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
+                if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { cur += 1; of = cur - rb; goto _; } cur += 1; continue; }
+              default:cur += 4;
               }
-            } while ((cur - rb) <= end);
+            } while (cur - rb <= end);
             // Read more data from the socket if the headers are not complete.
             r = f.read(rb + end, static_cast<int>(sizeof(rb) - end)); end += r; if (0 == r || end == sizeof(rb)) return;
           }_:
 #ifdef _WIN32
           f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
-#if _USE_LLHTTP
+#if _LLHTTP
           if (llhttp__internal_execute(&ll, rb, rb + of)) { f.shut(_READ); return; } Res res(ctx, this); ctx.content_length_ = ll.content_length;
           Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
           req.body = std::string_view(rb + of, end - of);
