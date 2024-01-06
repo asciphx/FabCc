@@ -130,7 +130,7 @@ namespace fc {
       timer(t), k_a(k), socket_fd(fd), in_addr(a), hrt(RES_TIME_T), rpg(r), epoll_fd(e) {}
     _FORCE_INLINE ~Conn() {
 #if _OPENSSL
-      if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); }
+      if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
 #endif
       close_socket(socket_fd); rpg = nullptr;
     }
@@ -156,6 +156,6 @@ namespace fc {
   };
 }
 namespace std {
-  template <>struct hash<fc::ROG> { size_t operator()(const fc::ROG& o) const { return hash<fc::socket_type>()(o.$); } };
+  template <>struct hash<fc::ROG> { size_t operator()(const fc::ROG& o) const { return hash<u16>()(o.idx); } };
 }
 #endif // CONN_HH

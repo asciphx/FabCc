@@ -74,11 +74,9 @@ namespace fc {
 #if __linux__
       ROG rpg{ listen_fd }; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET , &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
-      for (size_t i = ids; i < 0x4000; i += nthreads) { clients[i] = ROG{ static_cast<socket_type>(i) }; }
 #elif  _WIN32
       ROG rpg{ listen_fd }; this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN , &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
-      for (size_t i = ids; i < 0x8000; i += nthreads) { clients[i] = ROG{ static_cast<socket_type>(i) }; }
 #elif __APPLE__
       ROG rpg{}; this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ , &rpg); epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
