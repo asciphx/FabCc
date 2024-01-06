@@ -114,28 +114,30 @@ namespace fc {
     if (errno == EAGAIN) fiber.shut(_WRITE);
     close(fd);
 #else // Windows impl with basic sned_file method.(not support larger than 4GB)
-    DWORD g_BytesTransferred = 0;
-    OVERLAPPED overlap;
     HANDLE fd; LARGE_INTEGER fileSize;
-#ifdef __MINGW32__
-    auto af = RES_FILES.find(path);
-    if (af == RES_FILES.end()) {
-#else
-    if ((fd = RES_FILES.find(path)->second) == nullptr) {
-#endif
-      int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
-      WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
-      fd = ::CreateFileW(pwsz, FILE_GENERIC_READ, FILE_SHARE_READ, NULL,
-        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL); delete[] pwsz; pwsz = nullptr;
-      if (fd == INVALID_HANDLE_VALUE) {
-        content_type = RES_NIL; throw err::not_found(path << " => not found.");
-      }
-      RES_FILES[path] = fd;
+    int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
+    WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
+    fd = ::CreateFileW(pwsz, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
+    if (fd == INVALID_HANDLE_VALUE) {
+      content_type = RES_NIL; throw err::not_found(path << " => not found.");
     }
-#ifdef __MINGW32__
-    else fd = af->second;
-#endif
-    memset(&overlap, 0, sizeof(overlap)); overlap.Offset = pos; overlap.OffsetHigh = (DWORD)((pos >> 0x20) & 0xFFFFFFFFL);
+// #ifdef __MINGW32__
+//     auto af = RES_FILES.find(path);
+//     if (af == RES_FILES.end()) {
+// #else
+//     if ((fd = RES_FILES.find(path)->second) == nullptr) {
+// #endif
+//       int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
+//       WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
+//       fd = ::CreateFileW(pwsz, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
+//       if (fd == INVALID_HANDLE_VALUE) {
+//         content_type = RES_NIL; throw err::not_found(path << " => not found.");
+//       }
+//       RES_FILES[path] = fd;
+//     }
+// #ifdef __MINGW32__
+//     else fd = af->second;
+// #endif
     GetFileSizeEx(fd, &fileSize); if (fileSize.QuadPart > UINT32_MAX) {
       CloseHandle(fd); content_type = RES_NIL; throw err::not_extended("Can't larger than 4GB!");
     }
@@ -144,27 +146,29 @@ namespace fc {
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
     output_stream.flush();
-    while (overlap.Offset < sizer) {
-      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_BytesTransferred, &overlap);
+    OVERLAPPED ov = {0}; ov.Offset = pos;
+    DWORD g_BytesTransferred = 0;
+    while (ov.Offset < sizer) {
+      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_BytesTransferred, &ov);
       if (rc) {
-        overlap.Offset += g_BytesTransferred; if(!this->fiber.writen(output_stream.buffer_, g_BytesTransferred)) break;
+        ov.Offset += g_BytesTransferred; if(!this->fiber.writen(output_stream.buffer_, g_BytesTransferred)) break;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
           if (errno == EPIPE) break;
           if (errno == EINPROGRESS || errno == EINVAL) {
             WaitForSingleObject(fd, INFINITE);//INFINITE
-            rc = GetOverlappedResult(fd, &overlap, &g_BytesTransferred, FALSE);
+            rc = GetOverlappedResult(fd, &ov, &g_BytesTransferred, FALSE);
             if (rc) {
-              overlap.Offset += g_BytesTransferred;
-              if(this->fiber.writen(output_stream.buffer_, overlap.Offset > sizer ? overlap.Offset - sizer : g_BytesTransferred)) continue;
+              ov.Offset += g_BytesTransferred;
+              if(this->fiber.writen(output_stream.buffer_, ov.Offset > sizer ? ov.Offset - sizer : g_BytesTransferred)) continue;
             }
           }
         }
-        throw err::bad_request(":Err!");
+        break;
       }
-    }
+    } CloseHandle(fd);
     if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE);
-    content_length_ = 0;
+    content_length_ = 0; ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
   }
   // Send a file.
@@ -249,7 +253,7 @@ namespace fc {
             }
           }
         }
-        throw err::bad_request(":Err!");
+        break;
       }
     }
     content_length_ = 0;

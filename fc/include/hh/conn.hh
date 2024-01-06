@@ -49,17 +49,10 @@ namespace fc {
     ssl_context(const std::string& key, const std::string& cert, const std::string& cipher) {
       if (!RES_OPENSSL_INIT) { SSL_load_error_strings(); OpenSSL_add_ssl_algorithms(); RES_OPENSSL_INIT = true; }
       const SSL_METHOD* method = SSLv23_server_method(); ctx = SSL_CTX_new(method);
-      if (!ctx) { perror("Fail!"); ERR_print_errors_fp(stderr); exit(EXIT_FAILURE); }
-      SSL_CTX_set_ecdh_auto(ctx, 1); /* Set the cipheruite if provided */
-      if (cipher.size() && SSL_CTX_set_cipher_list(ctx, cipher.c_str()) <= 0) {
-        ERR_print_errors_fp(stderr); exit(EXIT_FAILURE);
-      } /* Set the key and cert */
-      if (SSL_CTX_use_certificate_file(ctx, cert.c_str(), SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stderr); exit(EXIT_FAILURE);
-      }
-      if (SSL_CTX_use_PrivateKey_file(ctx, key.c_str(), SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stderr); exit(EXIT_FAILURE);
-      }
+      if (!ctx) { perror("Fail!"); ERR_print_errors_fp(stderr); exit(EXIT_FAILURE); } SSL_CTX_set_ecdh_auto(ctx, 1); /* Set the cipheruite if provided */
+      if (cipher.size() && SSL_CTX_set_cipher_list(ctx, cipher.c_str()) <= 0) { ERR_print_errors_fp(stderr); exit(EXIT_FAILURE); } /* Set the key and cert */
+      if (SSL_CTX_use_certificate_file(ctx, cert.c_str(), SSL_FILETYPE_PEM) <= 0) { ERR_print_errors_fp(stderr); exit(EXIT_FAILURE); }
+      if (SSL_CTX_use_PrivateKey_file(ctx, key.c_str(), SSL_FILETYPE_PEM) <= 0) { ERR_print_errors_fp(stderr); exit(EXIT_FAILURE); }
     }
     ~ssl_context() { if (ctx) SSL_CTX_free(ctx); }
   };
@@ -116,19 +109,18 @@ namespace fc {
 #if _OPENSSL
     SSL* ssl = nullptr;
     inline bool ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
-      if (!ssl_ctx) return false;
-      ssl = SSL_new(ssl_ctx->ctx);
-      SSL_set_fd(ssl, static_cast<int>(socket_fd));
-      while (int ret = SSL_accept(ssl)) {
-        if (ret == 1) { return true; } int e = SSL_get_error(ssl, ret);
+      ssl = SSL_new(ssl_ctx->ctx); SSL_set_fd(ssl, static_cast<int>(socket_fd));
+      int ret = SSL_accept(ssl); if (ret == 1) { return true; } int e = SSL_get_error(ssl, ret);
+      do {
         if (e == SSL_ERROR_WANT_WRITE || e == SSL_ERROR_WANT_READ) rpg->_ = rpg->_.yield();
         else {
-#if _DEBUG
+// #if _DEBUG
           ERR_print_errors_fp(stderr);
-#endif
+// #endif
           return false;
         }
-      }
+        ret = SSL_accept(ssl); if (ret == 1) { return true; } e = SSL_get_error(ssl, ret);
+      } while (ret);
       return false;
     }
 #endif

@@ -69,14 +69,16 @@ namespace fc {
       struct kevent ev_set; EV_SET(&ev_set, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &ev_set, 1, NULL, 0, NULL); --this->idex;
 #endif
     }
-    void event_loop(socket_type listen_fd, std::function<void(Conn&)> handler, int nthreads, int k_a, int* k_A) {
+    void event_loop(socket_type listen_fd, std::function<void(Conn&)> handler, int nthreads, int k_a, int* k_A, int ids) {
       std::call_once(RESonce_flag, create_init, k_a);
 #if __linux__
       ROG rpg{ listen_fd }; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET , &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
+      for (size_t i = ids; i < 0x4000; i += nthreads) { clients[i] = ROG{ static_cast<socket_type>(i) }; }
 #elif  _WIN32
       ROG rpg{ listen_fd }; this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN , &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
+      for (size_t i = ids; i < 0x8000; i += nthreads) { clients[i] = ROG{ static_cast<socket_type>(i) }; }
 #elif __APPLE__
       ROG rpg{}; this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ , &rpg); epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
@@ -84,7 +86,7 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int bigsize = REScore;
+      int bigsize = REScore + ids;
       while (RESquit_signal_catched) {
         if (RES_TP > t) {
           loop_timer.tick();
@@ -229,7 +231,7 @@ namespace fc {
 #if _OPENSSL
         if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ssl_key_path, ssl_cert_path, ssl_ciphers});// Initialize the SSL/TLS context.
 #endif
-        reactor.event_loop(sfd, conn_handler, n, k_A, k_a);
+        reactor.event_loop(sfd, conn_handler, n, k_A, k_a, i);
         }));
     }
     date_thread.join(); close_socket(sfd);

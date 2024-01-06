@@ -337,7 +337,11 @@ namespace fc {
     if (!fc::is_directory(fc::directory_ + fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
     if (!fc::is_directory("_/")) fc::create_directory("_/"); RES_START_TIME = std::chrono::high_resolution_clock::now();
     for (int i = -1; i < 0xff;) { char c[4]; snprintf(c, 4, "%02x", ++i); fc::create_directory(std::string("_/", 2) + c); }
+#if _OPENSSL
+    std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => ht" << (ssl_cert.size() ? "tps" : "tp") << "://127.0.0.1:" << port << std::endl;
+#else
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
+#endif
     start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor), k_A, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
   }
 } // namespace fc
