@@ -164,9 +164,7 @@ namespace fc {
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
 //#if __cplusplus < 202002L
-                  if (statbuf_.st_size > 0x10000000 && statbuf_.st_size < 0x100000000) {
-                    ctx->send_file_p(_, pos, ++r); return;
-                  }
+                  if (statbuf_.st_size < 0x100000000) { ctx->send_file_p(_, pos, ++r); return; }
 //#endif
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
@@ -248,12 +246,12 @@ namespace fc {
             // Look for end of header && save header lines.
             do {
               switch (*cur) {
-              case '\r':
-                if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }
-                if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto _; } cur += 4; continue;
               case '\n':
                 if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
                 if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { cur += 1; of = cur - rb; goto _; } cur += 1; continue; }
+              case '\r':
+                if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }
+                if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto _; }
               default:cur += 4;
               }
             } while (cur - rb <= end);
