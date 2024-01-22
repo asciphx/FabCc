@@ -115,10 +115,8 @@ namespace test {
       EXPECT(s.is_string());
       EXPECT_EQ(s.size(), 531);
       EXPECT_EQ(s.str(), std::string("\"").append(30, 'x').append("\\n").append(500, 'x').append({'"'}));
-      EXPECT_EQ(s.dbg(), std::string("\"").append(30, 'x').append("\\n").append(1, 'x').append(3, '.').append({'"'}));
       s = std::string(600, 'x');
       EXPECT_EQ(s.str(), std::string("\"").append(600, 'x').append({'"'}));
-      EXPECT_EQ(s.dbg(), std::string("\"").append(32, 'x').append(3, '.').append({'"'}));
       s = std::string("hello world");
       EXPECT(s.is_string());
       EXPECT_EQ(s.size(), 11);

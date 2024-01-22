@@ -334,8 +334,8 @@ namespace json {
         while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }; goto $;
       }
       c = static_cast<char>(p - ++b); if (c > 19) goto $;// { double d; if (str2double(b, d)) { v = new(_a.alloc()) Json::_H(d); return p - 1; } return 0; }
-      if (c == 19) { if (memcmp(b, "9223372036854775808", 20) > 0) goto $; goto X; }
-    X:while (++b < p) { u = u * 10 + '0' - *b; } v = new(_a.alloc()) Json::_H(u); return --p;
+      if (c == 19) { if (memcmp(b, "9223372036854775808", 20) > 0) goto $; }
+      while (++b < p) { u = u * 10 + '0' - *b; } v = new(_a.alloc()) Json::_H(u); return --p;
     } else {
       u64 u = *p - '0'; if (u > 9) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }
       if (*p == '.') {
@@ -351,8 +351,8 @@ namespace json {
         while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }; goto $;
       }
       c = static_cast<char>(p - b); if (c > 20) goto $;
-      if (c == 20) { if (memcmp(b, "18446744073709551615", 20) > 0) goto $; goto _; }
-    _:while (++b < p) { u = u * 10 + *b - '0'; } v = u > INT64_MAX ? new(_a.alloc()) Json::_H(u) : new(_a.alloc()) Json::_H(static_cast<i64>(u)); return --p;
+      if (c == 20) { if (memcmp(b, "18446744073709551615", 20) > 0) goto $; }
+      while (++b < p) { u = u * 10 + *b - '0'; } v = u > INT64_MAX ? new(_a.alloc()) Json::_H(u) : new(_a.alloc()) Json::_H(static_cast<i64>(u)); return --p;
     }
   $:
     {
@@ -489,22 +489,20 @@ namespace json {
     return e;
 #endif
   }
-  std::string& Json::_json2str(std::string& fs, bool debug, int mdp) const {
+  std::string& Json::str(std::string& fs, int mdp) const {
     if (!_h) return fs.append("null", 4);
     switch (_h->type) {
     case t_string: {
       fs << '"';
       const u32 len = _h->size;
-      const bool trunc = debug && len > 512;
       const char* s = _h->s;
-      const char* e = trunc ? s + 32 : s + len;
+      const char* e = s + len;
       char c;
       for (const char* p; (p = find_escapse(s, e, c)) < e;) {
         fs.append(s, p - s).append({ '\\', c });
         s = p + 1;
       }
       if (s != e) fs.append(s, e - s);
-      if (trunc) fs.append(3, '.');
       fs << '"';
       break;
     }
@@ -514,7 +512,7 @@ namespace json {
         xx::Array& a = *(xx::Array*)&_h->p;
         for (u32 i = 0; i < a.size(); i += 2) {
           fs << '"' << static_cast<const char*>(a[i]) << '"' << ':';
-          ((Json*)&a[i + 1])->_json2str(fs, debug, mdp) << ',';
+          ((Json*)&a[i + 1])->str(fs, mdp) << ',';
         }
       }
       fs.back() == ',' ? (void)(fs.back() = '}') : (void)(fs.append({ '}' }));
@@ -525,7 +523,7 @@ namespace json {
       if (_h->p) {
         xx::Array& a = *(xx::Array*)&_h->p;
         for (u32 i = 0; i < a.size(); ++i) {
-          ((Json*)&a[i])->_json2str(fs, debug, mdp) << ',';
+          ((Json*)&a[i])->str(fs, mdp) << ',';
         }
       }
       fs.back() == ',' ? (void)(fs.back() = ']') : (void)(fs.append({ ']' }));
@@ -570,7 +568,7 @@ namespace json {
       }
       fs << ']'; break;
     }
-    default: _json2str(fs, false, mdp);
+    default: str(fs, mdp);
     }
     return fs;
   }

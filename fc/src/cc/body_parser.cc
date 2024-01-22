@@ -120,10 +120,10 @@ namespace fc {
     lines.erase(0, f + 2);
     char b = 0;
     while (!line.empty()) {
-      const char* c = line.c_str() + 7; f = 9; while (*++c != '"' && ++f);
+      const char* c = line.c_str() + 6; f = 0x9; while (*++c != '"' && ++f);
       std::string value = line.substr(0, f);
       if (b == '\0') {
-        if (*++c == ';') { f += 2; }
+        if (*++c == ';') { f += 2; value = value.substr(0, f - 3); }
         line.erase(0, f + 2); f = value.find('=');
         value = value.substr(f + 2); value.pop_back();
         p.key = value; ++b;

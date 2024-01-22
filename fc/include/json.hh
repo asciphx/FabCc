@@ -426,13 +426,11 @@ namespace json {
     _FORCE_INLINE u32 count(const std::string& key) const {
       for (iterator it = this->begin(); it != this->end(); ++it) { if (it.key() == key) { return 1; } } return 0;
     }
-// the begin iterator.
-//   - If Json is not array or object type, the return value is equal to the 
-//     end iterator.
+    // the begin iterator.
+    //   - If Json is not array or object type, the return value is equal to the end iterator.
     iterator begin() const {
       if (_h && _h->p && (_h->type & (t_array | t_object))) {
-        static_assert(t_array == 16 && t_object == 32, ""); xx::Array& a = _array();
-        return iterator(a.data(), a.data() + a.size(), _h->type >> 4);
+        xx::Array& a = _array(); return iterator(a.data(), a.data() + a.size(), _h->type >> 4);
       }
       return iterator(0, 0, 0);
     }
@@ -440,14 +438,11 @@ namespace json {
     _FORCE_INLINE const iterator::End& end() const { return iterator::end(); }
     // Stringify.
     //   - str() converts Json to minified string.
-    //   - dbg() like the str(), but will truncate long string type (> 512 bytes).
     //   - dump() converts Json to human readable string with indent.
     //   - mdp: max decimal places for float point numbers.
-    _FORCE_INLINE std::string& str(std::string& s, int mdp = 16) const { return this->_json2str(s, false, mdp); }
-    _FORCE_INLINE std::string& dbg(std::string& s, int mdp = 16) const { return this->_json2str(s, true, mdp); }
+    std::string& str(std::string& fs, int mdp = 16) const;
     _FORCE_INLINE std::string& dump(std::string& s, int indent = 4, int mdp = 16) const { return this->_json2pretty(s, indent, indent, mdp); }
-    _FORCE_INLINE std::string str(int mdp = 16) const { std::string s(0xe0, 0); s.clear(); return this->_json2str(s, false, mdp); }
-    _FORCE_INLINE std::string dbg(int mdp = 16) const { std::string s(0xe0, 0); s.clear(); return this->_json2str(s, true, mdp); }
+    _FORCE_INLINE std::string str(int mdp = 16) const { std::string s(0xe0, 0); s.clear(); return this->str(s, mdp); }
     _FORCE_INLINE std::string dump(int i = 2, int m = 16) const { std::string s(0xe0, 0); s.clear(); return this->_json2pretty(s, i, i, m); }
     _FORCE_INLINE std::string pretty(int indent = 4, int mdp = 16) const { std::string s; s.reserve(0xe0); this->dump(s, indent, mdp); return s; }
     // Parse Json from string, inverse to stringify.
@@ -457,7 +452,7 @@ namespace json {
   private:
     friend class Parser; _H* _h; void* _dup() const; _FORCE_INLINE xx::Array& _array() const { return (xx::Array&)_h->p; }
     Json& _set(u32 i); _FORCE_INLINE Json& _set(int i) { return this->_set(static_cast<u32>(i)); } Json& _set(const char* key);
-    std::string& _json2str(std::string& fs, bool debug, int mdp) const; std::string& _json2pretty(std::string& fs, int indent, int n, int mdp) const;
+    std::string& _json2pretty(std::string& fs, int indent, int n, int mdp) const;
   };
   // make an empty array
   _FORCE_INLINE Json array() { return Json(Json::_arr_t()); }
@@ -481,7 +476,7 @@ namespace json {
   }
   static const json::Json empty_str("", 1), nullContext;
 } // json
-typedef json::Json Json; _FORCE_INLINE std::string& operator<<(std::string& fs, const json::Json& x) { return x.dbg(fs); }
+typedef json::Json Json; _FORCE_INLINE std::string& operator<<(std::string& fs, const json::Json& x) { return x.str(fs); }
 template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
 _FORCE_INLINE std::string& operator<<(std::string& b, const box<T>& _v) {
   if (_v) { Json j; std::Tuple<T>::to_json(j, const_cast<T*>(_v.operator->())); return b << j.str(); } return b.append("null", 4);
