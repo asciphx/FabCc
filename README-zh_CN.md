@@ -1,4 +1,4 @@
-# Nod(v1.0)
+# FabCc(v1.0)
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -6,11 +6,11 @@
 [license-badge]: https://img.shields.io/badge/License-AGPL%20v3-gold.svg
 [license-link]: LICENSE
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
-[release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
-[release-link]: https://github.com/asciphx/Nod/releases
-灵感来自于其他c++知名web框架, Nod的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。旧的名字叫FabCc，更新logo之后，自v1.0版本起叫Nod。
+[release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
+[release-link]: https://github.com/asciphx/FabCc/releases
+灵感来自于其他c++知名web框架, Nod的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。logo采用Nod的logo，设计来自命令与征服（CNC）。
 
-![Nod](./static/Nod_logo.png)
+![FabCc](./static/logo.png)
 ## [Eng](./README.md) | 简中
 > 12月8日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、多核编译、C++11，修复了keep-alive保活机制。
 

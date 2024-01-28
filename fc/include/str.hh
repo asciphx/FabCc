@@ -98,13 +98,7 @@ namespace fc {
     char* subStr_f(const char* c, int i, int e);
     char* to8Str_f(unsigned long long i);
     char* to4Str_f(int i);
-    inline unsigned long long hack_str(const char* s, size_t l) {
-      unsigned long long r = s[0]; for (signed char i = 0; ++i < l && s[i]; r <<= 8, r += s[i]); return r;
-    }//Only url with string_view
-    inline unsigned long long hack8Str(const char* s) {
-      unsigned long long r = s[0]; for (signed char i = 0; ++i < 8 && s[i]; r <<= 8, r += s[i]); return r;
-    }//If only the first four digits need to be matched and there is no conflict, it is recommended to use hack4Str to improve efficiency
-    inline int hack4Str(const char* s) { int r = s[0]; for (signed char i = 0; ++i < 4 && s[i]; r <<= 8, r += s[i]); return r; }
+    inline unsigned long long hack_str(const char* s, size_t l) { unsigned long long r = *s; for (; --l; r <<= 8, r += *++s); return r; }
     //Hack8str is downward compatible with hack4str, however, it is not compatible with the hackstr method
     inline unsigned long long hackStr(const char* s) {
       unsigned long long r = s[0] > 0x5c ? s[0] - 0x5d : s[0] - 0x12;

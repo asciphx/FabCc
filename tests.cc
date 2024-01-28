@@ -75,7 +75,7 @@ int main() {
   constexpr bool bb = std::is_reg<Book>::value;
   v = j.get<Person>();//like fc::from_json(j, &v);
   std::string str = j["name"].get<std::string>(); std::cout << str << "; " << bb;
-  std::cout << '{' << v.age << ':' << v.name << '}' << std::endl; j.reset();// v is Person, not Book. so reset for Book.
+  std::cout << '{' << v.age << ':' << v.name << '}' << std::endl;
   Book b{ null, Person{"ts",23, Book{"js", Person{"fucker"}, std::set<Person>{ {"mdzz"}}}, std::set<Book>{ {null,Person{"joker", 9, Book{"wtf"}}},{"",Person{"ojbk"}} }} };
   fc::to_json(j, &b); std::string js = j.dump();
   std::cout << std::boolalpha << js << std::endl;//compare json, true

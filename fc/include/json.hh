@@ -107,10 +107,7 @@ namespace json {
     Json(const std::stack<T>& v) : _h(new(xx::alloc()) _H(_arr_t())) { std::stack<T> $ = v; while (!$.empty())this->push_back($.top()), $.pop(); }
     template<typename T, std::enable_if_t<std::is_arr<T>::value || std::is_set<T>::value>* = null>
     Json(const T & v) : _h(new(xx::alloc()) _H(_arr_t())) {
-      Json j; std::string b; b.reserve(0x1e0); b << '['; using K = std::arr_pack_t<T>; auto t = v.begin(); if (t != v.end()) {
-        j = const_cast<K*>(&*t); b << j.str(); while (++t != v.end()) { j = const_cast<K*>(&*t); b << ',' << j.str(); }
-      }
-      b << ']'; this->parse_from(b.data(), b.size());
+      auto t = v.begin(); if (t != v.end()) { this->push_back(*t); while (++t != v.end()) this->push_back(*t); }
     }
     template<typename T, std::enable_if_t<std::is_mmp<std::remove_const_t<T>>::value>* = null>
     Json(std::remove_const_t<T>& v): _h(new(xx::alloc()) _H(_obj_t())) {
@@ -470,7 +467,7 @@ namespace json {
   _FORCE_INLINE Json parse(const std::string& s) { Json r; r.parse(s.data(), s.size()); return r; }
   static Json read_file(const char* p) {
     struct stat t; if (-1 == stat(p, &t)) throw std::runtime_error("File not exist.");
-    if (t.st_size > 10485760) throw std::runtime_error("Can‘t be greater than 10M.");
+    if (t.st_size > 10485760) throw std::runtime_error("Can't be greater than 10M.");
     std::ifstream f(p, std::ios::in | std::ios::binary); if (!f.is_open() || f.fail()) throw std::runtime_error("Failed to open!");
     char* s = new char[t.st_size]; f.read(s, t.st_size); Json r; r.parse(s, t.st_size); delete[] s; return r;
   }

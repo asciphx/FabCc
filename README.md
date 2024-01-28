@@ -1,4 +1,4 @@
-# Nod(v1.0)
+# FabCc(v1.0)
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -6,11 +6,11 @@
 [license-badge]: https://img.shields.io/badge/License-AGPL%20v3-gold.svg
 [license-link]: LICENSE
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
-[release-badge]: https://img.shields.io/github/release/asciphx/Nod.svg?style=flat-square
-[release-link]: https://github.com/asciphx/Nod/releases
-Inspired by other well-known C++ web frameworks, Nod's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome. The old name was FabCc. Now after updating the logo, the v1.0 version is called Nod.
+[release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
+[release-link]: https://github.com/asciphx/FabCc/releases
+Inspired by other well-known C++ web frameworks, FabCc's positioning is a network framework, which is characterized by low code, high performance, strong type, super standard, safest and awesome. The logo uses Nod's logo, and the design comes from Command and Conquer(CNC).
 
-![Nod](./static/Nod_logo.png)
+![FabCc](./static/logo.png)
 ## Eng | [简中](./README-zh_CN.md)
 > On December 8, the ultra-high-definition 8k Remastered version will arrive. Supports Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern json, multi-core compilation, C++11, fixed the keep-alive mechanism.
 
