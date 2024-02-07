@@ -163,9 +163,7 @@ namespace fc {
                   l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
-//#if __cplusplus < 202002L
-                  if (statbuf_.st_size < 0x100000000) { ctx->send_file_p(_, pos, ++r); return; }
-//#endif
+                  if (statbuf_.st_size <= 0x100000000) { ctx->send_file_p(_, pos, ++r); return; }
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
@@ -241,7 +239,7 @@ namespace fc {
 #endif
           // Read until there is a complete header.
           r = f.read(rb, static_cast<int>(sizeof(rb))); if (!r) { return; } end += r;
-          const char* cur = rb + 0XE; f.is_f = false; int of = end;
+          const char* cur = rb + (r > 19 ? 0x14 : end); f.is_f = false; int of = end;
           while (RESon) {
             // Look for end of header && save header lines.
             do {
@@ -262,14 +260,14 @@ namespace fc {
           f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
-          if (llhttp__internal_execute(&ll, rb, rb + of)) { f.shut(_READ); return; } Res res(ctx, this); ctx.content_length_ = ll.content_length;
+          if (llhttp__internal_execute(&ll, rb, rb + of)) { return; } Res res(ctx, this); ctx.content_length_ = ll.content_length;
           Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
           req.body = std::string_view(rb + of, end - of);
           if (ll.finish) {
 #else
           flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
-          if (flag < 0) { f.shut(_READ); return; } Res res(ctx, this); ru = DecodeURL(path, path_len);
-          path_len = ru.find('?'); if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
+          if (flag < 0) { return; } Res res(ctx, this); ru = DecodeURL(path, path_len); path_len = ru.find('?');
+          if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
             url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
           }
           Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
