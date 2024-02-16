@@ -39,14 +39,14 @@ int main() {
   };
   app["/read_file"] = [](Req& req, Res& res) { res.write_async(req, [] { Json x = json::read_file("test.json"); return x; }); };
   app["/json"] = [](Req& req, Res& res) {
-    Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
+    Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"mojo!🔥🔥" }} }} };
     b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x);
   };
   app["/serialization"] = [](Req& req, Res& res) {
     Json x = json::parse(R"(
-    {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
+    {"name":"ts","person":{"name":"٩(•̤̀ᵕ•̤́๑)ᵒᵏᵎ","age":33,"book":{"name":"😂ojbk","person":{"name":"fucker🤣","age":0},
     "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump());
+    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "CRAZIERRR🔥"; x = b; res.write(x.dump());
   };
   app["/api"] = [](Req& req, Res& res) { res.write(res.app._print_routes()); };
   app.post("/api") = [](Req& req, Res& res) {

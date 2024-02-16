@@ -238,15 +238,14 @@ namespace fc {
           num = flag = 0;
 #endif
           // Read until there is a complete header.
-          r = f.read(rb, static_cast<int>(sizeof(rb))); if (!r) { return; } end += r;
-          const char* cur = rb + (r > 19 ? 0x14 : end); f.is_f = false; int of = end;
+          if (!(r = f.read(rb, static_cast<int>(sizeof(rb)))))return; int of = end += r; const char* cur = rb + (*rb == 71 ? r - 1 : r > 256 ? 127 : r >> 1);
           while (RESon) {
             // Look for end of header && save header lines.
             do {
               switch (*cur) {
               case '\n':
-                if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
                 if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { cur += 1; of = cur - rb; goto _; } cur += 1; continue; }
+                if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
               case '\r':
                 if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }
                 if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto _; }
@@ -255,14 +254,14 @@ namespace fc {
             } while (cur - rb <= end);
             // Read more data from the socket if the headers are not complete.
             r = f.read(rb + end, static_cast<int>(sizeof(rb) - end)); end += r; if (0 == r || end == sizeof(rb)) return;
-          }_:
+          }_: f.is_f = false;
 #ifdef _WIN32
           f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
           if (llhttp__internal_execute(&ll, rb, rb + of)) { return; } Res res(ctx, this); ctx.content_length_ = ll.content_length;
           Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
-          req.body = std::string_view(rb + of, end - of);
+          req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor;
           if (ll.finish) {
 #else
           flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
@@ -275,10 +274,9 @@ namespace fc {
           if (end == flag && ctx.content_length_) {
 #endif
           //ctx.set_header("ip", req.ip_address().c_str()); ctx.set_header("id", id);
-            int n = ++f.rpg->idx;
+            int n = ++f.rpg->idx; f.is_idle = false;
             try {
-              req.length = std::move(ctx.content_length_); f.is_idle = false;
-              this->_call(*reinterpret_cast<char*>(&req), url, req, res); f.is_idle = true;
+              req.length = std::move(ctx.content_length_); this->_call(*reinterpret_cast<char*>(&req), url, req, res); f.is_idle = true;
             } catch (const http_error& e) {
               ctx.set_status(e.i()); ctx.respond(e.what());
             } catch (const std::exception& e) {
