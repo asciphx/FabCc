@@ -33,6 +33,7 @@ namespace fc {
     App serve_file(const char* r);
     //set use max mem size(MB), The remaining memory size available to the system minus the maximum size of the uploaded files
     //A quarter of this value is used as a limit, less than that will use memory, and then gradually decreases.
+    //Due to certain cache settings, the minimum value can only be 512MB. But it's best not to exceed 30% of the maximum memory.
     App& set_use_max_mem(const float& f);
     //In case there are not enough file descriptors, set the maximum number of connections to prevent reaching the maximum file descriptor
     //Maybe the input bandwidth of the server is much greater than the output bandwidth

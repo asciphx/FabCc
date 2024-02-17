@@ -61,9 +61,8 @@ namespace fc {
   VH& App::put(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
   VH& App::patch(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
   //Set the file size allowed for POST according to the host memory
-  //for example, 2G memory can be set to 128MB, because the idle memory is about 600+MB
-  //Each connection occupies approximately 0.128mb, multiply the concurrency limit by 0.128
-  App& App::set_use_max_mem(const float& v) { USE_MAX_MEM_SIZE_MB = v; return *this; }// < 600 - limit * 0.128
+  //for example, 2G memory can be set to 512MB, because the idle memory is about 600+MB
+  App& App::set_use_max_mem(const float& v) { USE_MAX_MEM_SIZE_MB = v < 0x1ff ? 0x200 : v; return *this; }// < 600
 
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
