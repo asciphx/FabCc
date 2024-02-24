@@ -51,7 +51,7 @@ int main() {
   };
   app.default_route() = [](Req& req, Res& res) {
     res.set_content_type("text/html;charset=UTF-8", 23);
-    res.write_async_s(req, [] {
+    res.write_async_s([] {
       char name[64]; gethostname(name, 64);
       Json x{
         {"header", name},
@@ -66,7 +66,7 @@ int main() {
       });
   };
   app["/get_upload"] = [](Req& req, Res& res) {
-    res.write_async(req, [] {
+    res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
       std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
       for (auto v : f) {
@@ -77,7 +77,7 @@ int main() {
       });
   };
   app["/read_file"] = [](Req& req, Res& res) {
-    res.write_async(req, [] { Json x = json::read_file("test.json"); return x; });
+    res.write_async([] { Json x = json::read_file("test.json"); return x; });
   };
   app["/json"] = [](Req& req, Res& res) {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
@@ -100,10 +100,10 @@ int main() {
     s.pop_back(); s.pop_back(); res.write(s);
   };
   app["/del"] = [&app](Req&, Res& res) { app["/"] = nullptr; res.write("The routing of the home page is delete！！"); };
-  app["/timer"] = [&](Req& req, Res& res) {
+  app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000);
     res.write("Turn off the server timer and start the countdown！");
-    app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server, also supports ipv6
   app.http_serve(8080);

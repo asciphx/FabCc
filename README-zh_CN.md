@@ -81,12 +81,12 @@ int main() {
     .set_file_download(true);//设置启用文件下载，这是新的接口
   app.default_route() = [](Req& req, Res& res) {
     res.set_content_type("text/html;charset=UTF-8", 23);
-    res.write_async_s(req, [] {
+    res.write_async_s([] {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
       });//设置默认的路由
   };
   app["/get_upload"] = [](Req& req, Res& res) {
-    res.write_async(req, [] {
+    res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
       std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
       for (auto v : f) {
@@ -96,7 +96,7 @@ int main() {
       } return x;
       });//获取上传的文件列表
   };
-  app["/read_file"] = [](Req& req, Res& res) { res.write_async(req, [] { Json x = json::read_file("test.json"); return x; }); };
+  app["/read_file"] = [](Req& req, Res& res) { res.write_async([] { Json x = json::read_file("test.json"); return x; }); };
   app["/json"] = [](Req& req, Res& res) {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
     b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x);//json请求
@@ -115,10 +115,10 @@ int main() {
     }
     s.pop_back(); s.pop_back(); res.write(s);
   };
-  app["/del"] = [&app](Req&, Res& res) { app["/"] = nullptr; res.write("主页的路由已被删除！！"); };
-  app["/timer"] = [&](Req& req, Res& res) {
+  app["/del"] = [](Req&, Res& res) { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); };
+  app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！");
-    app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器，同样支持ipv6
   app.http_serve(8080);

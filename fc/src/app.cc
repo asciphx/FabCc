@@ -258,18 +258,18 @@ namespace fc {
           f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
-          if (llhttp__internal_execute(&ll, rb, rb + of)) { return; } Res res(ctx, this); ctx.content_length_ = ll.content_length;
+          if (llhttp__internal_execute(&ll, rb, rb + of)) { return; } ctx.content_length_ = ll.content_length;
           Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
-          req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor;
+          req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor; Res res(ctx, req, this);
           if (ll.finish) {
 #else
           flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
-          if (flag < 0) { return; } Res res(ctx, this); ru = DecodeURL(path, path_len); path_len = ru.find('?');
+          if (flag < 0) { return; } ru = DecodeURL(path, path_len); path_len = ru.find('?');
           if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
             url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
           }
           Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
-          req.body = std::string_view(rb + of, end - of);
+          req.body = std::string_view(rb + of, end - of); Res res(ctx, req, this);
           if (end == flag && ctx.content_length_) {
 #endif
           //ctx.set_header("ip", req.ip_address().c_str()); ctx.set_header("id", id);

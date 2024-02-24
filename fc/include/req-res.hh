@@ -52,6 +52,7 @@ namespace fc {
 
   class Res {
     fc::Ctx& Ctx;
+    fc::Req& req;
     friend class fc::Conn;
     friend struct fc::App;
     enum algorithm { // 15 is the default value for deflate
@@ -67,14 +68,14 @@ namespace fc {
       Ctx.set_header(std::forward<std::string_view>(k), std::forward<std::string_view>(v));
     }
     _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
-    _FORCE_INLINE Res(fc::Ctx& ctx, App* ap): Ctx(ctx), app(*ap) {}
+    _FORCE_INLINE Res(fc::Ctx& ctx, fc::Req& re, App* ap): Ctx(ctx), req(re), app(*ap) {}
     std::string body;
     int is_file{ 3 };
     uint16_t code{ 200 };// Check whether the response has a static file defined.
     //Generally used to read configuration files, or slow io operations, return Json
-    void write_async(Req& r, std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
+    void write_async(std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
     //Generally used to read configuration files, or slow io operations, return string
-    void write_async_s(Req& r, std::function<std::string()>&& f, short i = CACHE_HTML_TIME_SECOND);
+    void write_async_s(std::function<std::string()>&& f, short i = CACHE_HTML_TIME_SECOND);
     _FORCE_INLINE void write(json::Json&& j) { Ctx.set_content_type("application/json", 16); Ctx.respond(j.str()); };
     _FORCE_INLINE void write(const json::Json& j) { Ctx.set_content_type("application/json", 16); Ctx.respond(j.str()); };
     _FORCE_INLINE void write(const std::string& b) { Ctx.set_content_type("text/plain;charset=UTF-8", 24); Ctx.respond(b); };

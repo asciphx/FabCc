@@ -8,7 +8,7 @@ int main() {
     .set_use_max_mem(300.0)
     .set_file_download(false);//Disable file downloads to protect certain videos or audio
   app["/get_upload"] = [](Req& req, Res& res) {
-    res.write_async(req, [] {
+    res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
       std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
       for (auto v : f) {
