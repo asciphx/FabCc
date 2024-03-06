@@ -32,7 +32,8 @@ namespace fc {
 #else
   float GetMemUsage(int pid = getpid());
 #endif
-  class param;
+  struct BP;
+  class param { std::string_view data; public:std::string key; std::string value; size_t size = 0; /*string type;*/friend BP; };
   static std::set<std::string> RES_menu = {};
   ///The parsed multipart Req/Res (Length[ MB for file, KB for without file ]),(Bool is_file)// MAX_SIZE < 4GB
   struct BP {
@@ -46,14 +47,13 @@ namespace fc {
     BP(Req& req, const char* m, unsigned short mb = 32);
     BP(Req& req, unsigned short mb = 32, bool b = false);
     ~BP() { if (content_length_) { req.cache_file.reset(); } }
+    //parse_body
+    _CTX_TASK(void) run();
   private:
     //get_boundary
     std::string_view g_b(const std::string_view& h) const;
-    //parse_body
-    void p_b(std::string_view& value);
     //parse_section
     param p_s(std::string_view& s);
   };
-  class param { std::string_view data; public:std::string key; std::string value; size_t size = 0; /*string type;*/friend BP; };
 }
 #endif

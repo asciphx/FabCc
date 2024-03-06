@@ -21,7 +21,7 @@ namespace fc {
     //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
     ///Process the Req and generate a Res for it
     std::string _print_routes();
-    void _call(char m, std::string& r, Req& request, Res& response) const;
+    _CTX_TASK(void) _call(char m, std::string& r, Req& request, Res& response) const;
     std::string get_cache(std::string& u);
     void set_cache(std::string& u, std::string& v, short i = CACHE_HTML_TIME_SECOND);
     //Whether to open file download, set to true will allow
@@ -44,12 +44,12 @@ namespace fc {
     //std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt"
     App& set_ssl(std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt");
     void http_serve(int port = 8080, std::string ip = "", int nthreads = std::thread::hardware_concurrency());
+    double USE_MAX_MEM_SIZE_MB = 400.0;
   private:
-    VH _ = [](Req&, Res&) { throw err::not_found(); };
+    VH _ = [](Req&, Res&)_ctx { throw err::not_found(); };
     DRT map_;
     std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
     std::unordered_map<std::string_view, std::string_view> content_types;
-    double USE_MAX_MEM_SIZE_MB = 400.0;
     int k_A[3] = { 4,3,2 };
     bool file_download = true;
     std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";

@@ -1,5 +1,6 @@
 #include <hh/conn.hh>
 namespace fc {//If it exceeds 6(k_a) seconds by default, the established connection will be closed but writing has not yet started
+#if __cplusplus < 202002L
   int Conn::read(char* buf, int max_size) {
     int count = read_impl(buf, max_size); int64_t t = 0;
     while (count < 0) {
@@ -60,6 +61,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
     } time(&hrt);
     return is_idle = true;
   };
+#endif
   int Conn::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }
   int Conn::shut(sd_type type) { return ::shutdown(this->socket_fd, type); }
   void Conn::epoll_mod(socket_type flags) {

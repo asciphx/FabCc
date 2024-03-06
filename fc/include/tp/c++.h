@@ -4,6 +4,8 @@
 #include <functional>
 #include <type_traits>
 #include <utility>
+#include <time.h>
+#include <exception>
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
 #define _unlikely(x) __builtin_expect((x),0)
 #define _likely(x) __builtin_expect(!!(x),1)
@@ -22,6 +24,55 @@ typedef unsigned char  u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long long u64;
+#if __cplusplus >= 202002L
+#include <coroutine>
+#define _yield(x) ()
+namespace ctx {
+  template <typename T>
+  struct Task {
+    struct promise_type;
+    Task() noexcept = default; Task(Task const& other) noexcept = delete; Task& operator=(Task const& other) noexcept = delete;
+    Task& operator=(Task&& _) noexcept { $ = _.$; _.$ = nullptr; return *this; }
+    Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; } using Handle = std::coroutine_handle<promise_type>;
+    Task(promise_type* p): $(Handle::from_promise(*p)) {} mutable Handle $;
+    struct promise_type {
+      T _; Handle l, r; T value() { return _; } std::suspend_never initial_suspend() { return {}; }
+      std::suspend_always final_suspend() noexcept { return {}; } void return_value(T v) { _ = v; }
+      Task get_return_object() { return Task{ this }; } void unhandled_exception() { std::terminate(); }
+    };
+    bool await_ready() { return !$ || $.done(); } void await_suspend(Handle _) { _.promise().l = $, $.promise().r = _; }
+    T await_resume() { return $.promise()._; } explicit operator bool() { return $ && !$.done(); } void await_suspend(std::coroutine_handle<> _) {}
+    void operator()() {
+      if (!$.promise().l) {
+        while (!$.done()) { $.resume(); if (!$.done())break; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr; } return;
+      }
+      $ = $.promise().l;
+    }
+    ~Task() { if ($) $.destroy(); } T get() { return std::move($.promise()._); }
+  };
+  template <> struct Task<void> {
+    Task() noexcept = default; Task(Task const& other) noexcept = delete; Task& operator=(Task const& other) noexcept = delete;
+    Task& operator=(Task&& _) noexcept { $ = _.$; _.$ = nullptr; return *this; }
+    struct promise_type; using Handle = std::coroutine_handle<promise_type>; Task(promise_type* p): $(Handle::from_promise(*p)) {} mutable Handle $;
+    struct promise_type {
+      Handle l, r; std::suspend_never initial_suspend() { return {}; } void unhandled_exception() { std::terminate(); }
+      std::suspend_always final_suspend() noexcept { return {}; } Task get_return_object() { return Task{ this }; } void return_void() {}
+    };
+    bool await_ready() { return !$ || $.done(); } void await_suspend(Handle _) { _.promise().l = $, $.promise().r = _; } void await_resume() {}
+    explicit operator bool() { return $ && !$.done(); } ~Task() { if ($) $.destroy(); } void await_suspend(std::coroutine_handle<> _) {}
+    void operator()() {
+      if (!$.promise().l) {
+        while (!$.done()) { $.resume(); if (!$.done())break; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr; } return;
+      }
+      $ = $.promise().l;
+    }
+  };
+}
+#else
+#define _yield(x)  = x->_.yield()
+#define co_return
+#define co_await
+#endif
 #ifdef _MSVC_LANG
 #ifdef _WIN64
 typedef signed __int64 ssize_t;

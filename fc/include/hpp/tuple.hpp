@@ -56,18 +56,18 @@ namespace std {
   constexpr T make_from_tuple(C<I...>& t) { return detail::make_from_tuple_impl<T>(t, fc::make_index_sequence<sizeof...(I)>{}); }
 #elif __cplusplus < 201702L
   namespace detail {
-    template <class Fn, class T, size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, index_sequence<I...>) {
-      return invoke(forward<Fn>(f), get<I>(forward<T>(t))...);
+    template <class Fn, class T, size_t... I> constexpr decltype(auto) apply_impl(Fn&& f, T&& t, std::index_sequence<I...>) {
+      return std::invoke(std::forward<Fn>(f), std::get<I>(std::forward<T>(t))...);
     }
     template <class T, class Tuple, size_t... I>
-    constexpr T make_from_tuple_impl(Tuple&& t, index_sequence<I...>) { return T{ get<I>(forward<Tuple>(t))... }; }
+    constexpr T make_from_tuple_impl(Tuple&& t, std::index_sequence<I...>) { return T{ std::get<I>(std::forward<Tuple>(t))... }; }
   }
   template <class Fn, class T> constexpr decltype(auto) apply(Fn&& f, T&& t) {
-    return detail::apply_impl(forward<Fn>(f), forward<T>(t), make_index_sequence<tuple_size<remove_reference_t<T>>::value>{});
+    return detail::apply_impl(std::forward<Fn>(f), std::forward<T>(t), std::make_index_sequence<std::tuple_size<std::remove_reference_t<T>>::value>{});
   }
   template <class T, class Tuple>
   constexpr T make_from_tuple(Tuple&& t) {
-    return detail::make_from_tuple_impl<T>(forward<Tuple>(t), make_index_sequence<tuple_size<remove_reference_t<Tuple>>::value>{});
+    return detail::make_from_tuple_impl<T>(std::forward<Tuple>(t), std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
   }
 #endif
 }

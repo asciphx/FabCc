@@ -35,16 +35,15 @@ namespace fc {
     menu += m; if (menu[menu.size() - 1] != '/')menu.push_back('/'); if (RES_menu.find(menu) == RES_menu.end()) {
       std::string ss(fc::directory_); ss += menu; RES_menu.insert(menu); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
     }//if (L > 4096) throw err::internal_server_error(std::string("not support!", 12));
-    p_b(req.body);
   }
   BP::BP(Req & req, unsigned short mb, bool b): menu(fc::upload_path_), L(mb), req(req), ban_file(b),
-    boundary(g_b(req.header(RES_CT))), content_length_(req.length) { p_b(req.body); }
+    boundary(g_b(req.header(RES_CT))), content_length_(req.length) {}
   std::string_view BP::g_b(const std::string_view & h) const {
     //std::cout << "<" << h << ">" << h.size() << std::endl;
     size_t f = h.find("=----"); if (f != -1) return h.substr(f + 0xe); return h;//raw
   }
-  void BP::p_b(std::string_view & v) {//std::cout<<boundary<<std::endl;
-    std::string value(v.data(), v.size());
+  _CTX_TASK(void) BP::run() {//std::cout<<boundary<<std::endl;
+    std::string value(req.body.data(), req.body.size());
     if (content_length_) {
       if (ban_file) { req.fiber.shut(_READ); throw err::not_implemented("File not allowed!"); }
       if (content_length_ > L * 1048576u) {
@@ -54,14 +53,14 @@ namespace fc {
       if (mem > req.USE_MAX_MEM_SIZE_MB) {
         req.fiber.shut(_READ); std::string es; throw err::internal_server_error(es << "insufficient memory!" << mem);
       }//More possibility to use memory. If the conditions are met in memory, there is no need to use disk.
-      long long o = v.size();
+      long long o = req.body.size();
       if (content_length_ < 65536 || (content_length_ >> 18) < req.USE_MAX_MEM_SIZE_MB - mem) {
         value.resize(content_length_);
-        int N = req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N > 0 ? N : 0;
+        int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N > 0 ? N : 0;
         while (content_length_ > o) {
           if (N > 0) {
-            N = req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N;
-          } else N = req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o);
+            N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N;
+          } else N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o);
         }
         value.end() += content_length_; content_length_ = 0;
       } else {
@@ -69,10 +68,10 @@ namespace fc {
         std::string ss{ os.str() }; mask.append({ ss[3], ss[2], '/', ss[1] }) << (std::chrono::duration_cast<std::chrono::microseconds>(
           std::chrono::high_resolution_clock::now() - RES_START_TIME).count() - ss[2] * ss[3] - ss[1]) << ss[0];
         req.cache_file = std::unique_ptr<cache_file>(new cache_file{ mask.data(), mask.size() });
-        value.resize(65536); int N = req.fiber.read(const_cast<char*>(value.data() + o), 65536 - o); N += o;
+        value.resize(65536); int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), 65536 - o); N += o;
         do {
           if (N > 0) const_cast<Req&>(req).cache_file->append(const_cast<char*>(value.data()), N), o += N;
-        } while (content_length_ > o && (N = req.fiber.read(const_cast<char*>(value.data()), 65536)));
+        } while (content_length_ > o && (N = co_await req.fiber.read(const_cast<char*>(value.data()), 65536)));
       }
     } else {
       std::string es;
@@ -93,7 +92,7 @@ namespace fc {
           throw std::runtime_error(e.what());
         }
       }
-      if (value.size() < 45u) throw err::bad_request("Wrong size!");
+      if (value.size() < 45u) throw err::bad_request("Wrong size!"); co_return;
     }
     std::string_view content = content_length_ ? const_cast<Req&>(req).cache_file->getStringView() : std::string_view(value.c_str(), value.length());
     std::string_view::size_type f = content.find(boundary);

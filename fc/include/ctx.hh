@@ -17,9 +17,9 @@
 #include <unordered_map>
 #include <hh/lexical_cast.hh>
 #include <hh/http_error.hh>
+#include <hpp/output_buffer.hpp>
 #include <hh/tcp.hh>
 #include <h/any_types.h>
-#include <hpp/output_buffer.hpp>
 #include <hpp/string_view.hpp>
 #include <hh/str_map.hh>
 #include <hh/cache_file.hh>
@@ -45,7 +45,7 @@ namespace fc {
     _Fsize_t content_length_;
     int http_minor{ 0 };
     Ctx(Conn& _fiber, char* rb, size_t l): fiber(_fiber), content_type("", 1), content_length_(0),
-      output_stream(rb, static_cast<int>(l), [this](const char* d, int s) { fiber.write(d, s); }), status_("200 OK\r\n", 8) {}
+      output_stream(rb, static_cast<int>(l), &_fiber), status_("200 OK\r\n", 8) {}
     Ctx& operator=(const Ctx&) = delete;
     Ctx(const Ctx&) = delete;
     void format_top_headers();
@@ -60,11 +60,11 @@ namespace fc {
     void set_cookie(std::string_view k, std::string_view v);
     void set_status(int status);
     // Send a file_sptr.(can support larger than 4GB)
-    void send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t pos, long long size);
+    _CTX_TASK(int) send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t pos, long long size);
     // Send file with pos
-    void send_file_p(std::string& path, _Fsize_t pos, long long size);
+    _CTX_TASK(int) send_file_p(std::string& path, _Fsize_t pos, long long size);
     // Send a file.
-    void send_file(std::string& path, bool pos = true);
+    _CTX_TASK(int) send_file(std::string& path, bool pos = true);
     // split a string, starting from cur && ending with split_char.
     // Advance cur to the end of the split.
     void prepare_next_request();

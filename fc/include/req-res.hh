@@ -52,7 +52,7 @@ namespace fc {
 
   class Res {
     fc::Ctx& Ctx;
-    fc::Req& req;
+    std::string& url;
     friend class fc::Conn;
     friend struct fc::App;
     enum algorithm { // 15 is the default value for deflate
@@ -68,7 +68,7 @@ namespace fc {
       Ctx.set_header(std::forward<std::string_view>(k), std::forward<std::string_view>(v));
     }
     _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
-    _FORCE_INLINE Res(fc::Ctx& ctx, fc::Req& re, App* ap): Ctx(ctx), req(re), app(*ap) {}
+    _FORCE_INLINE Res(fc::Ctx& ctx, std::string& u, App* ap): Ctx(ctx), url(u), app(*ap) {}
     std::string body;
     int is_file{ 3 };
     uint16_t code{ 200 };// Check whether the response has a static file defined.

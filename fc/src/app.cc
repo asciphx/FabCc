@@ -17,6 +17,9 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmultichar"
 #endif
+#ifndef _LLHTTP
+#define _LLHTTP 0
+#endif
 namespace fc {
   HTTP c2m(const char* m, size_t l) {
     switch (hack_str(m, l)) {
@@ -93,14 +96,14 @@ namespace fc {
       if (sv != "") { content_types.emplace(*iter, sv); } else { content_types.emplace(*iter, RES_oct); }
     } return *this;
   }
-  void App::_call(char m, std::string& r, Req& req, Res& res) const {
+  _CTX_TASK(void) App::_call(char m, std::string& r, Req& req, Res& res) const {
     //if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
     //std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
     //  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
     std::string g(1, m + 0x30); g.append(r.data(), r.size());// std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
     fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
-      it->second(req, res);
-    } else { this->_.operator()(req, res); }
+      co_await it->second(req, res);
+    } else { co_await this->_.operator()(req, res); }
   }
   App& App::sub_api(const char* prefix, const App& app) {
     char m; if ((prefix[0] == '/' || prefix[0] == '\\') && prefix[1] == 0)++prefix;
@@ -122,17 +125,17 @@ namespace fc {
       }
       std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
-      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
+      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx {
         std::string _($); res.is_file = 1; reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
-        reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10); res.body = std::move(_);
+        reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10); res.body = std::move(_); co_return;
       };
 #endif // !__linux__
-      api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
+      api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx {
         std::string _($); _.append(req.url.data() + 1, req.url.size() - 1);
         std::string::iterator i = _.end() - 1; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-        this->_.operator()(req, res); return;
+        co_await this->_.operator()(req, res); _CTX_back
       _:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
         if (last_dot) {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
@@ -162,33 +165,37 @@ namespace fc {
                   l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
-                  if (statbuf_.st_size <= 0x100000000) { ctx->send_file_p(_, pos, ++r); return; }
+#if __cplusplus < 202002L
+                  if (statbuf_.st_size <= 0x100000000) { co_await ctx->send_file_p(_, pos, ++r); _CTX_back; }
+#endif
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                    ctx->send_file_sptr(p->second, pos, ++r); return;
+                    co_await ctx->send_file_sptr(p->second, pos, ++r); _CTX_back;
                   } else {
-                    ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); return;
+                    co_await ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_back;
                   }
 #else
                   //Very large files will directly call the '::sendfile' method, which is faster than mmap
-                  ctx->send_file_p(_, pos, ++r); return;
+                  co_await ctx->send_file_p(_, pos, ++r); _CTX_back;
 #endif
                 }
-                ctx->format_top_headers(); ctx->send_file(_, this->file_download); return;
+                ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_back;
               } //Non-media formats will only use the strategy of caching for one week
-              ctx->format_top_headers(); req.fiber.is_f = true; ctx->output_stream.append("Cache-Control: max-age=604800,immutable\r\n", 41); ctx->send_file(_); time(&req.fiber.hrt);
+              ctx->format_top_headers(); req.fiber.is_f = true; ctx->output_stream.append("Cache-Control: max-age=604800,immutable\r\n", 41);
+              co_await ctx->send_file(_); time(&req.fiber.hrt);
             }//0.77 day ctx->output_stream.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib]{ if (fib->idx == n) { if (fib->_)fib->_ = fib->_.yield(); } }); return;
+            // ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib]{ if (fib->idx == n) { if (fib->_)fib->_ _yield(fib); } });
+            _CTX_back;
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
         }
         throw err::not_found();
       };
 #ifdef __linux__
-      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res) {
+      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx {
         std::string _($); res.is_file = 1; reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
-        reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10); res.body = std::move(_);
+        reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10); res.body = std::move(_); co_return;
       };
 #endif // __linux__
     } catch (const http_error& e) {
@@ -215,12 +222,113 @@ namespace fc {
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert){ ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
+#if __cplusplus >= 202002L
+  ctx::Task<int> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer& ft, ROG* re, epoll_handle_t eh _CTX_ARG) {
+    Conn f(fd, sa, k, ft, re, eh); fc::str_map hd; cc::query_string up; std::string_view ru; std::string url;
+    char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
+#if _LLHTTP
+      llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r;
+#else
+      const char* method, * path; size_t method_len, path_len, num; int flag, r, end = 0;
+#endif
+      try {
+        while (RESon) {
+#if !_LLHTTP
+          num = flag = 0;
+#endif
+          if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb)))))co_return 0;
+          int of = end += r; const char* cur = rb + (*rb == 71 ? r - 1 : r > 256 ? 127 : r >> 1);
+          while (RESon) {
+            do {
+              switch (*cur) {
+              case '\n':
+                if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { cur += 1; of = cur - rb; goto _; } cur += 1; continue; }
+                if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
+              case '\r':
+                if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }
+                if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto _; }
+              default:cur += 4;
+              }
+            } while (cur - rb <= end);
+            end += r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end)); if (0 == r || end == sizeof(rb)) co_return 0;
+          }_: f.is_f = false;//std::cout<<rb<<':' << end<<"#";
+#ifdef _WIN32
+          f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
+#endif // _WIN32
+#if _LLHTTP
+          if (llhttp__internal_execute(&ll, rb, rb + of)) { co_return 0; } ctx.content_length_ = ll.content_length;
+          Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
+          req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor; Res res(ctx, url, static_cast<App*>(ap));
+          if (ll.finish) {
+#else
+          flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
+          if (flag < 0) { co_return 0; } ru = DecodeURL(path, path_len); path_len = ru.find('?');
+          if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
+            url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
+          }
+          Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
+          req.body = std::string_view(rb + of, end - of); Res res(ctx, url, static_cast<App*>(ap));
+          if (end == flag && ctx.content_length_) {
+#endif
+            int n = ++f.rpg->idx; f.is_idle = false;
+            try {
+              req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(*reinterpret_cast<char*>(&req), url, req, res); f.is_idle = true;
+            } catch (const http_error& e) {
+              ctx.set_status(e.i()); ctx.respond(e.what());
+            } catch (const std::exception& e) {
+              ctx.set_status(500); ctx.respond(e.what());
+            }
+            ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); co_await ctx.output_stream.flush(); time(&f.hrt); ROG* fib = f.rpg;
+            // f.timer.add_s(f.k_a - 1, [n, fib]{ if (fib->idx == n && fib->_) { fib->_ _yield(fib); } });
+            co_await std::suspend_always{}; time(&f.hrs); continue;
+          }
+          try {
+            co_await static_cast<App*>(ap)->_call(*reinterpret_cast<char*>(&req), url, req, res);
+            if (res.is_file == 1) {
+              unsigned int l = 0;
+              if (RES_CACHE_TIME[url] > nowStamp()) {
+                std::string& bo = RES_CACHE_MENU[url]; l = static_cast<unsigned int>(bo.size()); ctx.prepare_next_request();
+                ctx.output_stream.append("Access-Control-Allow-origin: *\r\n", 32) << RES_CE << RES_seperator << RES_gzip
+                  << RES_crlf << RES_content_length_tag << l << RES_crlf;
+                co_await ctx.output_stream.append("Content-Type: text/html;charset=UTF-8", 37).append("\r\n\r\n", 4).flush();
+                co_await f.write(bo.data(), static_cast<int>(l)); end = 0; hd.clear(); up.clear();
+#ifndef _WIN32
+                co_await std::suspend_always{};
+#endif // !_WIN32
+                time(&f.hrt); continue;
+              } else {
+                std::ifstream inf(res.body, std::ios::in | std::ios::binary); if (!inf.is_open()) throw err::not_found(); res.body.clear();
+                inf.seekg(0, std::ios_base::end); auto file_size = inf.tellg();//default 300kb for html's max size
+                if (file_size >> 10 > static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB) { inf.close(); throw err::forbidden("Html file too large!"); } inf.seekg(0, std::ios_base::beg);
+                std::stringstream fb; fb << inf.rdbuf(); std::string bo = std::move(fb.str()); bo = res.compress_str((char*)bo.data(), (u32)bo.size());
+                inf.close(); l = static_cast<unsigned int>(bo.size()); bo.shrink_to_fit(); RES_CACHE_TIME[url] = nowStamp(CACHE_HTML_TIME_SECOND);
+                RES_CACHE_MENU[url] = bo; ctx.prepare_next_request(); ctx.output_stream.append("Access-Control-Allow-origin: *\r\n", 32);
+                ctx.output_stream << RES_CE << RES_seperator << RES_gzip << RES_crlf << RES_content_length_tag << l << RES_crlf; end = 0;
+                co_await ctx.output_stream.append("Content-Type: text/html;charset=UTF-8", 37).append("\r\n\r\n", 4).flush();
+                co_await f.write(bo.data(), static_cast<int>(l)); hd.clear(); up.clear();
+#ifndef _WIN32
+                co_await std::suspend_always{};
+#endif // !_WIN32
+                time(&f.hrt); continue;
+              }
+            }
+          } catch (const http_error& e) {
+            ctx.set_status(e.i()); ctx.respond(e.what());// If error code is equal 500, record the log
+            if (e.i() == 500) std::cout << "ERROR<" << e.i() << ">: " << e.what() << std::endl;
+          } catch (const std::exception& e) {
+            ctx.set_status(500); ctx.respond(e.what());//No logging is required as log takes up disk space
+          }
+          ctx.prepare_next_request(); co_await ctx.output_stream.flush(); end = 0; hd.clear(); up.clear(); co_await std::suspend_always{}; time(&f.hrs); 
+        }
+      } catch (const std::runtime_error& e) {
+        std::cerr << "Err: " << e.what() << std::endl;
+      } co_return 0;
+  };
+#endif
   void App::http_serve(int port, std::string ip, int nthreads) {
+#if __cplusplus < 202002L
     std::function<void(Conn&)> make_http_processor = [this](Conn& f) -> void {
       fc::str_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
-#ifndef _LLHTTP
-#define _LLHTTP 0
-#endif
 #if _LLHTTP
       llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r;
 #else
@@ -252,7 +360,7 @@ namespace fc {
               }
             } while (cur - rb <= end);
             // Read more data from the socket if the headers are not complete.
-            r = f.read(rb + end, static_cast<int>(sizeof(rb) - end)); end += r; if (0 == r || end == sizeof(rb)) return;
+            end += r = f.read(rb + end, static_cast<int>(sizeof(rb) - end)); if (0 == r || end == sizeof(rb)) return;
           }_: f.is_f = false;
 #ifdef _WIN32
           f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
@@ -260,7 +368,7 @@ namespace fc {
 #if _LLHTTP
           if (llhttp__internal_execute(&ll, rb, rb + of)) { return; } ctx.content_length_ = ll.content_length;
           Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
-          req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor; Res res(ctx, req, this);
+          req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor; Res res(ctx, url, this);
           if (ll.finish) {
 #else
           flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
@@ -269,7 +377,7 @@ namespace fc {
             url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
           }
           Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, this->USE_MAX_MEM_SIZE_MB };
-          req.body = std::string_view(rb + of, end - of); Res res(ctx, req, this);
+          req.body = std::string_view(rb + of, end - of); Res res(ctx, url, this);
           if (end == flag && ctx.content_length_) {
 #endif
           //ctx.set_header("ip", req.ip_address().c_str()); ctx.set_header("id", id);
@@ -326,6 +434,7 @@ namespace fc {
         std::cerr << "Err: " << e.what() << std::endl; return;
       }
     };
+#endif
     if (!fc::is_directory(fc::directory_)) fc::create_directory(fc::directory_);
     if (!fc::is_directory(fc::directory_ + fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
     if (!fc::is_directory("_/")) fc::create_directory("_/"); RES_START_TIME = std::chrono::high_resolution_clock::now();
@@ -335,7 +444,7 @@ namespace fc {
 #else
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 #endif
-    start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor), k_A, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
+    start_server(ip, port, SOCK_STREAM, nthreads, std::move(make_http_processor), k_A _CTX_TIHS, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
   }
 } // namespace fc
 #if __clang__

@@ -73,11 +73,10 @@
 ## 例子
 ```c++
 using namespace fc;
-void funk(Req& req, Res& res) { res.write("主页路由被std::bind复写！"); };
 int main() {
   App app; Timer t;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","aac" })
-    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(300.0)
+    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
     .set_file_download(true);//设置启用文件下载，这是新的接口
   app.default_route() = [](Req& req, Res& res) {
     res.set_content_type("text/html;charset=UTF-8", 23);
@@ -118,7 +117,6 @@ int main() {
   app["/del"] = [](Req&, Res& res) { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); };
   app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！");
-    res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //启动服务器，同样支持ipv6
   app.http_serve(8080);

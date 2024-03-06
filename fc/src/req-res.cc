@@ -53,12 +53,12 @@ namespace fc {
   /******************************** ************************************/
   void Res::write(std::string&& b) { Ctx.set_content_type("text/plain;charset=UTF-8", 24); Ctx.respond(std::move(b)); };
   void Res::write_async(std::function<json::Json()>&& f, short i) {
-    std::string b = app.get_cache(req.url); if (!b.empty()) { Ctx.set_content_type("application/json", 16); Ctx.respond(b); return; }
-    b = std::move(f().str()); Ctx.set_content_type("application/json", 16); Ctx.respond(b); b.shrink_to_fit(); app.set_cache(req.url, b, i);
+    std::string b = app.get_cache(url); if (!b.empty()) { Ctx.set_content_type("application/json", 16); Ctx.respond(b); return; }
+    b = std::move(f().str()); Ctx.set_content_type("application/json", 16); Ctx.respond(b); b.shrink_to_fit(); app.set_cache(url, b, i);
   };
   void Res::write_async_s(std::function<std::string()>&& f, short i) {
-    std::string b = app.get_cache(req.url); if (!b.empty()) { Ctx.respond(b); return; }
-    b = std::move(f()); Ctx.respond(b); b.shrink_to_fit(); app.set_cache(req.url, b, i);
+    std::string b = app.get_cache(url); if (!b.empty()) { Ctx.respond(b); return; }
+    b = std::move(f()); Ctx.respond(b); b.shrink_to_fit(); app.set_cache(url, b, i);
   };
   std::string& Res::compress_str(char* const str, unsigned int len) {
     // Initialize with the default values, level default 8

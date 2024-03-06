@@ -3,7 +3,6 @@ struct Person;
 struct Book {
   std::string name = "BOOK!";
   box<Person> person; vec<Person> persons;
-  Book(std::string n = "", box<Person> p = null, vec<Person> ps = {}): name(n), person(p), persons(ps) {}//C++11
   REG
 };
 REGIS(Book, name, person, persons)
@@ -11,7 +10,6 @@ struct Person {
   std::string name;
   int age;
   box<Book> book; vec<Book> books;
-  Person(std::string n = "", int a = 0, box<Book> b = null, vec<Book> bs = {}): name(n), age(a), book(b), books(bs) {}//C++11
   REG
 };
 REGIS(Person, name, age, book, books)

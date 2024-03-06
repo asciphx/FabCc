@@ -69,7 +69,7 @@ namespace fc {
       struct kevent ev_set; EV_SET(&ev_set, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &ev_set, 1, NULL, 0, NULL); --this->idex;
 #endif
     }
-    void event_loop(socket_type listen_fd, std::function<void(Conn&)> handler, int nthreads, int k_a, int* k_A, int ids) {
+    void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids _CTX_ARG) {
       std::call_once(RESonce_flag, create_init, k_a);
 #if __linux__
       ROG rpg{ listen_fd }; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET , &rpg);
@@ -85,7 +85,11 @@ namespace fc {
 #endif
       // Main loop.
       int bigsize = REScore + ids;
+#if defined(_WIN32) && __cplusplus >= 202002L
+      while (true) {
+#else
       while (RESquit_signal_catched) {
+#endif
         if (RES_TP > t) {
           loop_timer.tick();
           if (nthreads > 1) {
@@ -122,7 +126,11 @@ namespace fc {
             if (_unlikely(this->event_flags & EV_ERROR)) {
 #endif
               //if (this->event_fd != listen_fd) {
+#if __cplusplus < 202002L
                 if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
+#else
+                ctx::Task<int> v = std::move(ro->_); epoll_del(this->event_fd); if (v) v(); ++ro->idx;
+#endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
               //}
@@ -157,8 +165,10 @@ namespace fc {
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
               // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_ = fib->_.yield(); } });
-                ++this->idex; fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib](co&& sink) {
+                ++this->idex;
+#if __cplusplus < 202002L
+                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_ _yield(fib); } });
+                fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib](co&& sink) {
                   fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
                   try {
 #if _OPENSSL
@@ -178,8 +188,12 @@ namespace fc {
                   }
                   return std::move(fib->_);
                   });
+#else
+                ctx::Task<int> v = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd _CTX_APP);
+                fib->_ = std::move(v);
+#endif
               }
-            } else if (ro->_)ro->_ = ro->_.yield();// Data available on existing sockets. Wake up the fiber associated with event_fd.
+            } else if (ro->_)ro->_ _yield(ro);// Data available on existing sockets. Wake up the fiber associated with event_fd.
           }
         }
       }
@@ -192,7 +206,7 @@ namespace fc {
     }
   };
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
-  static void start_server(std::string ip, int port, int socktype, int n, std::function<void(Conn&)> conn_handler, int* k_a,
+  static void start_server(std::string ip, int port, int socktype, int n, std::function<_CTX_FUNC> conn_handler, int* k_a _CTX_ARG, 
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = (k_a[0] + k_a[1] * k_a[2]) >> 1;
 #ifdef _WIN32
@@ -224,12 +238,12 @@ namespace fc {
 #endif
       , sizeof(RESkeep_AI));
     for (int i = 0; i < n; ++i) {
-      RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers] {
+      RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers _CTX_APP] {
         Reactor reactor;
 #if _OPENSSL
         if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ssl_key_path, ssl_cert_path, ssl_ciphers});// Initialize the SSL/TLS context.
 #endif
-        reactor.event_loop(sfd, conn_handler, n, k_A, k_a, i);
+        reactor.event_loop(sfd, conn_handler, n, k_A, k_a, i _CTX_APP);
         }));
     }
     date_thread.join(); close_socket(sfd);
