@@ -19,7 +19,7 @@ int main() {
       }); co_return;
   };
   app.post("/api") = [](Req& req, Res& res)_ctx {
-    BP bp(req, 1000); std::string s;//Support for uploading files with a total size of 1000MB
+    BP bp(req, 1000); co_await bp.run(); std::string s;//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
