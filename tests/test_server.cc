@@ -23,7 +23,7 @@ int main() {
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(300.0)
     .set_file_download(true);//Set to enable file downloads, this is the new interface.
   // localhost:8080/params?foo=%27dg%27&pew=4&count[]=a&count[]=b&mydict[a]=b&mydict[abcd]=42
-  app["/params"] = [](Req& req, Res& res)_ctx {
+  app["/params"] = [](Req& req, Res& res) {
     std::string s;
     // To get a simple string from the url params
     // To see it in action /params?foo='blabla'
@@ -49,9 +49,9 @@ int main() {
     for (const auto& mydictVal : mydict) {
       s << " - " << mydictVal.first << " -> " << mydictVal.second << '\n';
     }
-    res.write(s); co_return;
+    res.write(s);
   };
-  app.default_route() = [](Req& req, Res& res)_ctx {
+  app.default_route() = [](Req& req, Res& res) {
     res.set_content_type("text/html;charset=UTF-8", 23);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64);
@@ -65,9 +65,9 @@ int main() {
         {"empty", false}
       };
       return mustache::load("404NotFound.html").render(x);
-      }); co_return;
+      });
   };
-  app["/get_upload"] = [](Req& req, Res& res)_ctx {
+  app["/get_upload"] = [](Req& req, Res& res) {
     res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
       std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
@@ -76,35 +76,35 @@ int main() {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
         }
       } return x;
-      }); co_return;
+      });
   };
-  app["/read_file"] = [](Req& req, Res& res)_ctx {
-    res.write_async([] { Json x = json::read_file("test.json"); return x; }); co_return;
+  app["/read_file"] = [](Req& req, Res& res) {
+    res.write_async([] { Json x = json::read_file("test.json"); return x; });
   };
-  app["/json"] = [](Req& req, Res& res)_ctx {
+  app["/json"] = [](Req& req, Res& res) {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
-    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); co_return;
+    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x);
   };
-  app["/serialization"] = [](Req& req, Res& res)_ctx {
+  app["/serialization"] = [](Req& req, Res& res) {
     Json x = json::parse(R"(
     {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
     "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); co_return;
+    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump());
   };
-  app["/api"] = [](Req& req, Res& res)_ctx {
-    res.write(res.app._print_routes()); co_return;//Return to routing list
+  app["/api"] = [](Req& req, Res& res) {
+    res.write(res.app._print_routes());//Return to routing list
   };
-  app.post("/api") = [](Req& req, Res& res)_ctx {
-    BP bp(req, 1000); co_await bp.run(); std::string s;//Support for uploading files with a total size of 1000MB
+  app.post("/api") = [](Req& req, Res& res) {
+    BP bp(req, 1000); bp.run(); std::string s;//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
-    s.pop_back(); s.pop_back(); res.write(s); co_return;
+    s.pop_back(); s.pop_back(); res.write(s);
   };
-  app["/del"] = [&app](Req&, Res& res)_ctx { app["/"] = nullptr; res.write("The routing of the home page is delete！！"); co_return; };
-  app["/timer"] = [](Req& req, Res& res)_ctx {
+  app["/del"] = [&app](Req&, Res& res) { app["/"] = nullptr; res.write("The routing of the home page is delete！！"); };
+  app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000);
-    res.write("Turn off the server timer and start the countdown！"); co_return;
+    res.write("Turn off the server timer and start the countdown！");
   };
   //Start the server, also supports ipv6
   app.http_serve(8080);

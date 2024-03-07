@@ -41,25 +41,19 @@
 #endif
 
 #if __cplusplus < 202002L
-#define _CTX_FUNC void(Conn&)
-#define _CTX_ARG
-#define _CTX_TIHS
-#define _CTX_APP
+#define _CTX_FUNC void(Conn&,void*)
 #define _CTX_TASK(_) void
 #define _CTX_back return;
-#define _CTX_return(_)
+#define _CTX_return(_) return;
 #define _ctx -> void
 #define _CTX_file
 #else
-#define _CTX_FUNC ctx::Task<int>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*)
-#define _CTX_ARG , void* ap
-#define _CTX_TIHS , this
-#define _CTX_APP , ap
-#define _CTX_TASK(_) ctx::Task<_>
+#define _CTX_FUNC fc::Task<int>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*)
+#define _CTX_TASK(_) fc::Task<_>
 #define _CTX_back co_return;
 #define _CTX_return(_) co_return _;
-#define _ctx -> ctx::Task<void>
-#define _CTX_file -> ctx::Task<int>
+#define _ctx -> fc::Task<void>
+#define _CTX_file -> fc::Task<int>
 #endif
 #if _OPENSSL
 #include <openssl/err.h>
@@ -113,7 +107,7 @@ namespace fc {
 #if __cplusplus < 202002L
     ctx::co _;
 #else
-    ctx::Task<int> _;
+    fc::Task<int> _;
 #endif
     u16 idx;
   };
@@ -181,8 +175,8 @@ namespace fc {
     int read(char* buf, int max_size);
     bool write(const char* buf, int size);
     bool writen(const char* buf, int size);
-#else
-    ctx::Task<int> read(char* buf, int max_size) {
+#else//The timer must be called externally to destroy the coroutine, which is completely asynchronous and unavailable.
+    fc::Task<int> read(char* buf, int max_size) {
       int count = read_impl(buf, max_size);// int64_t t = hrt - hrs;
       while (count < 0) {
 #ifndef _WIN32
@@ -191,16 +185,6 @@ namespace fc {
         if (errno != EINPROGRESS && errno != EINVAL && errno != ENOENT) { co_return 0; }
 #endif // !_WIN32
         co_await std::suspend_always{};
-//         t = time(NULL) - hrt;
-//         if (is_idle && t) {
-//             if (t > k_a) {
-// #ifdef _WIN32
-//               ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
-// #endif
-//               co_return 0;
-//             }
-//             u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_ _yield(fib); } });
-//         }
         count = read_impl(buf, max_size);
       }
 //       if (t) {
@@ -214,7 +198,7 @@ namespace fc {
 //       }
       co_return count;
     }
-    ctx::Task<int> write(const char* buf, int size) {
+    fc::Task<int> write(const char* buf, int size) {
       const char* end = buf + size; is_idle = false;
       int count = write_impl(buf, size); if (count > 0) buf += count;
       while (buf != end) {
@@ -228,7 +212,7 @@ namespace fc {
       } time(&hrt); is_idle = true;
       co_return 1;
     }
-    ctx::Task<int> writen(const char* buf, int size) {
+    fc::Task<int> writen(const char* buf, int size) {
       const char* end = buf + size; is_idle = false;
       int n = write_impl(buf, size);
       if (n > 0) buf += n;
