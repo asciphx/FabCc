@@ -125,26 +125,28 @@ namespace fc {
       }
       std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
-      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx {
-        std::string _($); res.is_file = 1; reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
-        reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10); res.body = std::move(_); co_return;
+      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
+        std::string _($); reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
+        *reinterpret_cast<int*>(&req) = 1; reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10);
+        *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
       };
 #endif // !__linux__
-      api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx {
+      api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
         std::string _($); _.append(req.url.data() + 1, req.url.size() - 1);
         std::string::iterator i = _.end() - 1; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-        co_await this->_.operator()(req, res); _CTX_back
-      _:std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
+        co_await this->_.operator()(req, res); _CTX_back;
+      _ : std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
         if (last_dot) {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
           if (content_types.find(extension) != content_types.end()) {
             Ctx*& ctx = reinterpret_cast<Ctx*&>(res); std::string_view& sv{ content_types.at(extension) }; ctx->content_type = sv;
             u16 n = ++req.fiber.rpg->idx;
             if (extension[0] == 'h' && extension[1] == 't') {
-              res.is_file = 1; req.fiber.is_f = true; ctx->format_top_headers(); res.body = std::move(_);//maybe with zlib
+              *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);//maybe with zlib
             } else {
+              *reinterpret_cast<int*>(&req) = 2;
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
                 std::string range{ req.header("range") };
                 if (!range.empty()) {
@@ -152,11 +154,11 @@ namespace fc {
 #ifdef __MINGW32__
                   int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
                   WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
-                  struct stat64 statbuf_; if ((res.is_file = _wstat64(pwsz, &statbuf_)) != 0) {
+                  struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &statbuf_)) != 0) {
                     delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; throw err::not_found("Not Found!");
                   } delete[] pwsz; pwsz = null;
 #else
-                  struct stat64 statbuf_; if ((res.is_file = stat64(_.c_str(), &statbuf_)) != 0) {
+                  struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = stat64(_.c_str(), &statbuf_)) != 0) {
                     ctx->content_type = RES_NIL; throw err::not_found("Not Found!");
                   }
 #endif
@@ -165,7 +167,7 @@ namespace fc {
                   l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
-#if __cplusplus < 202002L
+#if __cplusplus < _cpp20_date
                   if (statbuf_.st_size <= 0x100000000) { co_await ctx->send_file_p(_, pos, ++r); _CTX_back; }
 #endif
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
@@ -182,10 +184,10 @@ namespace fc {
                 }
                 ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_back;
               } //Non-media formats will only use the strategy of caching for one week
-              ctx->format_top_headers(); req.fiber.is_f = true; ctx->output_stream.append("Cache-Control: max-age=604800,immutable\r\n", 41);
+              ctx->format_top_headers(); ctx->output_stream.append("Cache-Control: max-age=604800,immutable\r\n", 41);
               co_await ctx->send_file(_); time(&req.fiber.hrt);
             }//0.77 day ctx->output_stream.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            // ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib]{ if (fib->idx == n) { if (fib->_)fib->_ _yield(fib); } });
+            ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib] { if (fib->idx == n) { if (fib->_)fib->_.operator()(); } });
             _CTX_back;
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
@@ -193,9 +195,10 @@ namespace fc {
         throw err::not_found();
       };
 #ifdef __linux__
-      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx {
-        std::string _($); res.is_file = 1; reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
-        reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10); res.body = std::move(_); co_return;
+      api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
+        std::string _($); reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
+        *reinterpret_cast<int*>(&req) = 1; reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10);
+        *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
       };
 #endif // __linux__
     } catch (const http_error& e) {
@@ -222,11 +225,19 @@ namespace fc {
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
-#if __cplusplus < 202002L
+#if __cplusplus < _cpp20_date
   static void make_http_processor(Conn& f, void* ap) {
 #else
-  fc::Task<int> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer& ft, ROG* re, epoll_handle_t eh, void* ap) {
-    Conn f(fd, sa, k, ft, re, eh); 
+  fc::Task<int> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, int& idx, Reactor* rc) {
+    Conn f(fd, sa, k, ft, re, eh, idx);
+#if _OPENSSL
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) {
+#ifdef _WIN32
+      ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
+#endif
+      ++re->idx; _CTX_return(0)
+    }
+#endif
 #endif
     fc::str_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP
@@ -245,7 +256,7 @@ namespace fc {
         num = flag = 0;
 #endif
         // Read until there is a complete header.
-        if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb)))))_CTX_return(0) int of = end += r;
+        if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return(0) } int of = end += r;
         const char* cur = rb + (*rb == 71 ? r - 1 : r > 256 ? 127 : r >> 1);
         while (RESon) {
           // Look for end of header && save header lines.
@@ -261,8 +272,8 @@ namespace fc {
             }
           } while (cur - rb <= end);
           // Read more data from the socket if the headers are not complete.
-          end += r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end)); if (0 == r || end == sizeof(rb)) _CTX_return(0)
-        }_: f.is_f = false;
+          end += r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end)); if (0 == r || end == sizeof(rb)) { _CTX_return(0) }
+        }_:
 #ifdef _WIN32
         f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
@@ -270,6 +281,7 @@ namespace fc {
         if (llhttp__internal_execute(&ll, rb, rb + of)) { _CTX_return(0) } ctx.content_length_ = ll.content_length;
         Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
         req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor; Res res(ctx, url, static_cast<App*>(ap));
+        std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
         if (ll.finish) {
 #else
         flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
@@ -279,57 +291,73 @@ namespace fc {
         }
         Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
         req.body = std::string_view(rb + of, end - of); Res res(ctx, url, static_cast<App*>(ap));
+        std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
         if (end == flag && ctx.content_length_) {
 #endif
           //ctx.set_header("ip", req.ip_address().c_str()); ctx.set_header("id", id);
           int n = ++f.rpg->idx; f.is_idle = false;
           try {
-            req.length = std::move(ctx.content_length_);
-            co_await static_cast<App*>(ap)->_call(*reinterpret_cast<char*>(&req), url, req, res); f.is_idle = true;
+            req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
+            ctx.respond(res_body->size()); f.is_idle = true;
           } catch (const http_error& e) {
-            ctx.set_status(e.i()); ctx.respond(e.what());
+            ctx.set_status(e.i()); *res_body = e.what();
+            ctx.respond(res_body->size());
           } catch (const std::exception& e) {
-            ctx.set_status(500); ctx.respond(e.what());
+            ctx.set_status(500); *res_body = e.what();
+            ctx.respond(res_body->size());
           }
-          ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); co_await ctx.output_stream.flush(); time(&f.hrt);
-#if __cplusplus < 202002L
-          ROG* fib = f.rpg; f.timer.add_s(f.k_a - 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_ = fib->_.yield(); } });
-#else
-          time(&f.hrs);
-#endif
+          ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
+          co_await (ctx.output_stream << *res_body).flush();  res_body->clear(); time(&f.hrt);
+          ROG* fib = f.rpg; f.timer.add_s(f.k_a - 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_.operator()(); } });
           continue;
         }
         try {
-          co_await static_cast<App*>(ap)->_call(*reinterpret_cast<char*>(&req), url, req, res);
-          if (res.is_file == 1) {
-            unsigned int l = 0;
+          co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
+          switch (*reinterpret_cast<int*>(&req)) {
+          case 1:
+          {
+            std::string _ = *res_body;
+#ifdef __MINGW32__
+            int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
+            WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
+            struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &statbuf_)) != 0) {
+              delete[] pwsz; ctx.content_type = RES_NIL; pwsz = null; throw err::not_found("Not Found!");
+            } delete[] pwsz; pwsz = null;
+#else
+            struct stat statbuf_; if ((*reinterpret_cast<int*>(&req) = stat(_.c_str(), &statbuf_)) != 0) {
+              ctx.content_type = RES_NIL; throw err::not_found(_ << " -> Not Found!");
+            }
+#endif
+            unsigned int l = 0; ctx.format_top_headers();
             if (RES_CACHE_TIME[url] > nowStamp()) {
               std::string& bo = RES_CACHE_MENU[url]; l = static_cast<unsigned int>(bo.size()); ctx.prepare_next_request();
               ctx.output_stream.append("Access-Control-Allow-origin: *\r\n", 32) << RES_CE << RES_seperator << RES_gzip
-                << RES_crlf << RES_content_length_tag << l << RES_crlf;
+                << RES_crlf << RES_content_length_tag << l << RES_crlf; end = 0; hd.clear(); up.clear();
               co_await ctx.output_stream.append("Content-Type: text/html;charset=UTF-8", 37).append("\r\n\r\n", 4).flush();
-              co_await f.write(bo.data(), static_cast<int>(l)); end = 0; hd.clear(); up.clear();
+              co_await f.write(bo.data(), static_cast<int>(l));
 #ifndef _WIN32
-#if __cplusplus < 202002L
-              f.rpg->_ = f.rpg->_.yield();
+#if __cplusplus < _cpp20_date
+              f.rpg->_.operator()();
 #else
               co_await std::suspend_always{};
 #endif
 #endif // !_WIN32
               time(&f.hrt); continue;
             } else {
-              std::ifstream inf(res.body, std::ios::in | std::ios::binary); if (!inf.is_open()) throw err::not_found(); res.body.clear();
-              inf.seekg(0, std::ios_base::end); auto file_size = inf.tellg();//default 300kb for html's max size
-              if (file_size >> 10 > static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB) { inf.close(); throw err::forbidden("Html file too large!"); } inf.seekg(0, std::ios_base::beg);
-              std::stringstream fb; fb << inf.rdbuf(); std::string bo = std::move(fb.str()); bo = res.compress_str((char*)bo.data(), (u32)bo.size());
-              inf.close(); l = static_cast<unsigned int>(bo.size()); bo.shrink_to_fit(); RES_CACHE_TIME[url] = nowStamp(CACHE_HTML_TIME_SECOND);
-              RES_CACHE_MENU[url] = bo; ctx.prepare_next_request(); ctx.output_stream.append("Access-Control-Allow-origin: *\r\n", 32);
-              ctx.output_stream << RES_CE << RES_seperator << RES_gzip << RES_crlf << RES_content_length_tag << l << RES_crlf; end = 0;
+              std::ifstream inf(_, std::ios::in | std::ios::binary); if (!inf.is_open()) throw err::not_found();
+              res_body->clear();
+              inf.seekg(0, std::ios_base::end); auto file_size = inf.tellg();//default 600kb for html's max size
+              if (file_size >> 10 > static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB) { inf.close(); throw err::forbidden("Html file too large!"); }
+              inf.seekg(0, std::ios_base::beg); std::stringstream fb; fb << inf.rdbuf(); std::string bo = std::move(fb.str());
+              bo = res.compress_str((char*)bo.data(), (u32)bo.size()); inf.close(); l = static_cast<unsigned int>(bo.size()); bo.shrink_to_fit();
+              RES_CACHE_TIME[url] = nowStamp(CACHE_HTML_TIME_SECOND); RES_CACHE_MENU[url] = bo; ctx.prepare_next_request();
+              ctx.output_stream.append("Access-Control-Allow-origin: *\r\n", 32) << RES_CE << RES_seperator
+                << RES_gzip << RES_crlf << RES_content_length_tag << l << RES_crlf; end = 0; hd.clear(); up.clear();
               co_await ctx.output_stream.append("Content-Type: text/html;charset=UTF-8", 37).append("\r\n\r\n", 4).flush();
-              co_await f.write(bo.data(), static_cast<int>(l)); hd.clear(); up.clear();
+              co_await f.write(bo.data(), static_cast<int>(l));
 #ifndef _WIN32
-#if __cplusplus < 202002L
-              f.rpg->_ = f.rpg->_.yield();
+#if __cplusplus < _cpp20_date
+              f.rpg->_.operator()();
 #else
               co_await std::suspend_always{};
 #endif
@@ -337,16 +365,20 @@ namespace fc {
               time(&f.hrt); continue;
             }
           }
-        } catch (const http_error& e) {
-          ctx.set_status(e.i()); ctx.respond(e.what());// If error code is equal 500, record the log
+          break;
+          case 2: break;
+          default: ctx.respond(res_body->size());
+          }
+        } catch (const http_error& e) {// If error code is equal 500, record the log
+          ctx.set_status(e.i()); *res_body = e.what();
+          ctx.respond(res_body->size());
           if (e.i() == 500) std::cout << "ERROR<" << e.i() << ">: " << e.what() << std::endl;
-        } catch (const std::exception& e) {
-          ctx.set_status(500); ctx.respond(e.what());//No logging is required as log takes up disk space
+        } catch (const std::exception& e) {//No logging is required as log takes up disk space
+          ctx.set_status(500); *res_body = e.what();
+          ctx.respond(res_body->size());
         }
-        ctx.prepare_next_request(); co_await ctx.output_stream.flush(); end = 0; hd.clear(); up.clear();
-#if __cplusplus >= 202002L
-        time(&f.hrs);
-#endif
+        ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
+        co_await (ctx.output_stream << *res_body).flush(); res_body->clear();
       }
     } catch (const std::runtime_error& e) {
       std::cerr << "Err: " << e.what() << std::endl; _CTX_return(0)

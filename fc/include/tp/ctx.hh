@@ -131,6 +131,7 @@ namespace ctx {
     co(co const& other) noexcept = delete;
     co& operator=(co const& other) noexcept = delete;
     _FORCE_INLINE co yield()& { return std::move(*this).resume(); }
+    _FORCE_INLINE void operator()() { *this = std::move(*this).resume(); }
     template< typename Fn >
     co resume_with(Fn&& fn)& { return std::move(*this).resume_with(std::forward< Fn >(fn)); }
     template< typename Fn >

@@ -11,21 +11,9 @@ namespace fc {
     output_stream.append("Date: ", 5) << REStop_h.top_header(); output_stream.append(" GMT\r\n", 6);
 #endif
   }
-  void Ctx::respond(const char* s) {
-    format_top_headers(); size_t l = strlen(s); if (content_type[0]) output_stream.append("Content-Type: ", 14)
-      .append(content_type).append("\r\n", 2); (output_stream << RES_content_length_tag << l).append("\r\n\r\n", 4).append(s, l);
-  }
-  void Ctx::respond(std::string&& s) {
+  void Ctx::respond(size_t s) {
     format_top_headers(); if (content_type[0]) output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << s.size()).append("\r\n\r\n", 4) << std::move(s);
-  }
-  void Ctx::respond(const std::string& s) {
-    format_top_headers(); if (content_type[0]) output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << s.size()).append("\r\n\r\n", 4) << s;
-  }
-  void Ctx::respond(const std::string_view& s) {
-    format_top_headers(); if (content_type[0]) output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << s.size()).append("\r\n\r\n", 4) << const_cast<std::string_view&>(s);
+    (output_stream << RES_content_length_tag << s).append("\r\n\r\n", 4);
   }
   void Ctx::set_header(std::string_view& k, std::string_view& v) { output_stream.append(k).append(": ", 2).append(v).append("\r\n", 2); }
   void Ctx::set_header(std::string_view&& k, std::string_view&& v) { output_stream.append(k).append(": ", 2).append(v).append("\r\n", 2); }
@@ -68,8 +56,8 @@ namespace fc {
   _CTX_TASK(int) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << __->size_).append("\r\n\r\n", 4); co_await output_stream.flush();
-    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size), [this](const char* s, int l, std::function<void()> d)_CTX_file {
-      if (l > 0) { if ((co_await this->fiber.writen(s, l)) && d != nullptr) d(); } _CTX_return(1)});
+    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size), [this](const char* s, int l, std::function<void()> d) {
+      if (l > 0) { if ((this->fiber.writen(s, l)) && d != nullptr) d(); } });
 #ifdef _WIN32
     if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE);
 #else
@@ -89,6 +77,9 @@ namespace fc {
     (output_stream << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
     co_await output_stream.flush();
     off_t offset = pos; lseek(fd, pos, SEEK_SET);
+#if __cplusplus >= _cpp20_date
+    int64_t t = time(NULL) + 1;
+#endif
     while (offset < sizer) {
 #if __APPLE__ // sendfile on macos is slightly different...
       off_t nwritten = 0;
@@ -100,7 +91,10 @@ namespace fc {
 #endif
       if (ret != -1) {
         if (offset < sizer) {
-          continue; // this->fiber.rpg->_ = this->fiber.rpg->_.yield();
+#if __cplusplus >= _cpp20_date
+          if(time(NULL) - t > 0) { time(&t); co_await std::suspend_always{}; }
+#endif
+          continue;
         }
       } else if (errno == EPIPE) {
         break;
@@ -109,10 +103,8 @@ namespace fc {
           close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
           throw err::not_found("sendfile failed.");
         }
-#if __cplusplus >= 202002L
-        co_await std::suspend_always{};
-#else
-        this->fiber.rpg->_ = this->fiber.rpg->_.yield();
+#if __cplusplus < _cpp20_date
+        this->fiber.rpg->_.operator()();
 #endif
       }
     }
@@ -207,15 +199,11 @@ namespace fc {
 #else
       int ret = ::sendfile(fiber.socket_fd, fd, &offset, file_size - offset);
 #endif
-      if (ret != -1) {
-        if (offset < file_size) {
-          continue; // this->fiber.rpg->_ = this->fiber.rpg->_.yield();
-        }
+      if (ret != -1 && offset < file_size) {
+        continue;
       } else if (errno == EAGAIN) {
-#if __cplusplus >= 202002L
-        co_await std::suspend_always{};
-#else
-        this->fiber.rpg->_ = this->fiber.rpg->_.yield();
+#if __cplusplus < _cpp20_date
+        this->fiber.rpg->_.operator()();
 #endif
       } else {
         close(fd);

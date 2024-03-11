@@ -49,10 +49,7 @@ namespace fc {
     Ctx& operator=(const Ctx&) = delete;
     Ctx(const Ctx&) = delete;
     void format_top_headers();
-    void respond(const char* s);
-    void respond(std::string&& s);
-    void respond(const std::string& s);
-    void respond(const std::string_view& s);
+    void respond(size_t s);
     _FORCE_INLINE void set_content_type(const std::string_view& sv) { if (!content_type[0])content_type = sv; };
     _FORCE_INLINE void set_content_type(const char* v, size_t&& l) { if (!content_type[0])content_type = std::string_view(v, l); };
     void set_header(std::string_view& k, std::string_view& v);

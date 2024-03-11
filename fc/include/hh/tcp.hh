@@ -57,7 +57,7 @@ namespace fc {
     std::chrono::system_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
     socket_type event_flags, event_fd;
-    int n_events, i, idex;
+    int n_events, i, idex = 0;
 #if _OPENSSL
     std::unique_ptr<ssl_context> ssl_ctx = nullptr;
 #endif
@@ -72,26 +72,22 @@ namespace fc {
     void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids, void* ap) {
       std::call_once(RESonce_flag, create_init, k_a);
 #if __linux__
-      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET , &rpg);
+      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET, &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
 #elif  _WIN32
-      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN , &rpg);
+      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN, &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
 #elif __APPLE__
       ROG rpg{}; this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
-      epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ , &rpg); epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
+      epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ, &rpg); epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGKILL, EV_ADD, EVFILT_SIGNAL); epoll_ctl(this->epoll_fd, SIGTERM, EV_ADD, EVFILT_SIGNAL);
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int bigsize = REScore + ids;
-#if defined(_WIN32) && __cplusplus >= 202002L
-      while (true) {
-#else
+      int bigsize = REScore + ids; int64_t sj = time(NULL), dq = time(NULL); bool fresh_end = false;
       while (RESquit_signal_catched) {
-#endif
         if (RES_TP > t) {
-          loop_timer.tick();
+          loop_timer.tick(); if (!(fresh_end = dq > sj)) time(&dq);
           if (nthreads > 1) {
             if (this->idex > bigsize) { bigsize += RESmaxEVENTS; std::this_thread::yield(); }
           }
@@ -104,6 +100,16 @@ namespace fc {
         this->n_events = kevent(this->epoll_fd, NULL, 0, this->kevents, RESmaxEVENTS, &timeout);
 #endif
         if (_likely(this->n_events == 0)) {
+          if (fresh_end) {
+            if (this->idex > bigsize) bigsize += RESmaxEVENTS;
+#if __cplusplus >= _cpp20_date
+            for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
+              if (ider->second.on == 2) continue; if (ider->second.on == 1) { if (ider->second._)ider->second._.operator()(); }
+              if (ider->second.on == 0) { ider->second.on = 2; Task<int> t = std::move(ider->second._); }
+            }
+#endif
+            time(&sj);
+          }
           if (bigsize > REScore)--bigsize;
         } else {
           epoll_event* kevents;
@@ -115,21 +121,21 @@ namespace fc {
               if (event_fd == SIGINT) std::cout << "SIGINT" << std::endl; if (event_fd == SIGTERM) std::cout << "SIGTERM" << std::endl;
               if (this->event_fd == SIGKILL) std::cout << "SIGKILL" << std::endl; RESquit_signal_catched = false; break;
             }
-            ROG * ro = static_cast<ROG*>(kevents->udata);
+            ROG* ro = static_cast<ROG*>(kevents->udata);
 #else
-            this->event_flags = kevents->events; ROG * ro = static_cast<ROG*>(kevents->data.ptr); this->event_fd = ro->$;
+            this->event_flags = kevents->events; ROG* ro = static_cast<ROG*>(kevents->data.ptr); this->event_fd = ro->$;
 #endif
-          // Handle errors on sockets.
+            // Handle errors on sockets.
 #if __linux__ || _WIN32
             if (_unlikely(this->event_flags & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))) {
 #elif __APPLE__
             if (_unlikely(this->event_flags & EV_ERROR)) {
 #endif
               //if (this->event_fd != listen_fd) {
-#if __cplusplus < 202002L
-                if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
+#if __cplusplus < _cpp20_date
+              if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-                fc::Task<int> v = std::move(ro->_); epoll_del(this->event_fd); if (v) v(); ++ro->idx;
+              ++ro->idx; epoll_del(this->event_fd); ro->on = 0; fc::Task<int> v = std::move(ro->_); if (v) v.operator()(); v.$.destroy(); v.$ = nullptr;
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -140,7 +146,7 @@ namespace fc {
               // ACCEPT INCOMMING CONNECTION
               while (RESon) {
                 socket_type socket_fd = accept(listen_fd, this->in_addr, &this->in_len);
-              // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
+                // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
 #ifndef _WIN32
                 if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
 #else
@@ -164,10 +170,10 @@ namespace fc {
 #elif __APPLE__
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
-              // Spawn a new co to handle the connection.继续处理，延续之前未处理的
+                // Spawn a new co to handle the connection.继续处理，延续之前未处理的
                 ++this->idex;
-#if __cplusplus < 202002L
-                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_ _yield(fib); } });
+#if __cplusplus < _cpp20_date
+                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_.operator()(); } });
                 fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
                   fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
                   try {
@@ -189,10 +195,12 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                fib->_ = std::move(handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap));
+                if (fib->_.$) fib->_.$.destroy();
+                Task<int> magic_coro = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
+                fib->on = 1; fib->_ = std::move(magic_coro); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
 #endif
               }
-            } else if (ro->_)ro->_ _yield(ro);// Data available on existing sockets. Wake up the fiber associated with event_fd.
+            } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
           }
         }
       }
@@ -205,7 +213,7 @@ namespace fc {
     }
   };
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
-  static void start_server(std::string ip, int port, int socktype, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap, 
+  static void start_server(std::string ip, int port, int socktype, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = (k_a[0] + k_a[1] * k_a[2]) >> 1;
 #ifdef _WIN32
@@ -240,7 +248,7 @@ namespace fc {
       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {
         Reactor reactor;
 #if _OPENSSL
-        if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ssl_key_path, ssl_cert_path, ssl_ciphers});// Initialize the SSL/TLS context.
+        if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ ssl_key_path, ssl_cert_path, ssl_ciphers });// Initialize the SSL/TLS context.
 #endif
         reactor.event_loop(sfd, conn_handler, n, k_A, k_a, i, ap);
         }));

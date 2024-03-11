@@ -39,21 +39,28 @@
 #ifndef _OPENSSL
 #define _OPENSSL 0
 #endif
-
-#if __cplusplus < 202002L
+#if __cplusplus < _cpp20_date
 #define _CTX_FUNC void(Conn&,void*)
 #define _CTX_TASK(_) void
-#define _CTX_back return;
+#define _CTX_TASKER(_) _
+#define _CTX_back return
 #define _CTX_return(_) return;
+#define _CTX_returnER(_) return _;
 #define _ctx -> void
 #define _CTX_file
+#define _CTX_idx
+#define _CTX_idex
 #else
-#define _CTX_FUNC fc::Task<int>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*)
+#define _CTX_FUNC fc::Task<int>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,int&,Reactor*)
 #define _CTX_TASK(_) fc::Task<_>
-#define _CTX_back co_return;
+#define _CTX_TASKER(_) fc::Task<_>
+#define _CTX_back co_return
 #define _CTX_return(_) co_return _;
+#define _CTX_returnER(_) co_return _;
 #define _ctx -> fc::Task<void>
 #define _CTX_file -> fc::Task<int>
+#define _CTX_idx , int& idx
+#define _CTX_idex , idex(idx)
 #endif
 #if _OPENSSL
 #include <openssl/err.h>
@@ -100,14 +107,22 @@ namespace fc {
     return close(sock);
 #endif
   }
+  static void epoll_del_cpp20(epoll_handle_t ef, socket_type fd, int& idex) {
+#if __linux__ || _WIN32
+    epoll_event e; memset(&e, 0, sizeof(e)); e.events = 0; ::epoll_ctl(ef, EPOLL_CTL_DEL, fd, &e); --idex;
+#elif __APPLE__
+    struct kevent ev_set; EV_SET(&ev_set, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(ef, &ev_set, 1, NULL, 0, NULL); --idex;
+#endif
+  }
   struct ROG {
 #if __linux__ || _WIN32
     socket_type $;
 #endif
-#if __cplusplus < 202002L
+#if __cplusplus < _cpp20_date
     ctx::co _;
 #else
     fc::Task<int> _;
+    u16 on;
 #endif
     u16 idx;
   };
@@ -115,8 +130,13 @@ namespace fc {
   // Epoll based Reactor:
   // Orchestrates a set of fiber (ctx::co).
   struct fiber_exception {
+#if __cplusplus < _cpp20_date
     std::string what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
     fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
+#else
+    std::string what; fc::Task<int> c; fiber_exception(fiber_exception&& e) = default;
+    fiber_exception(fc::Task<int>&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
+#endif
   };
   class Conn {
     Conn& operator=(const Conn&) = delete; Conn(const Conn&) = delete;
@@ -125,8 +145,8 @@ namespace fc {
     fc::timer& timer;
     ROG* rpg;
     int64_t hrt;
-#if __cplusplus >= 202002L
-    int64_t hrs = time(NULL);
+#if __cplusplus >= _cpp20_date
+    int& idex; u16 mask_id;
 #endif
     epoll_handle_t epoll_fd;
     socket_type socket_fd;
@@ -136,7 +156,12 @@ namespace fc {
       ssl = SSL_new(ssl_ctx->ctx); SSL_set_fd(ssl, static_cast<int>(socket_fd));
       int ret = SSL_accept(ssl); if (ret == 1) { return true; } int e = SSL_get_error(ssl, ret);
       do {
-        if (e == SSL_ERROR_WANT_WRITE || e == SSL_ERROR_WANT_READ) rpg->_ _yield(rpg);
+        if (e == SSL_ERROR_WANT_WRITE || e == SSL_ERROR_WANT_READ)
+#if __cplusplus >= _cpp20_date
+          co_await std::suspend_always{};
+#else
+          rpg->_.operator()();
+#endif
         else {
 // #if _DEBUG
           ERR_print_errors_fp(stderr);
@@ -149,12 +174,15 @@ namespace fc {
     }
 #endif
     int k_a;
-    bool is_f = false, is_idle = true;
-    _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e):
-      timer(t), k_a(k), socket_fd(fd), in_addr(a), hrt(RES_TIME_T), rpg(r), epoll_fd(e) {}
+    bool is_idle = true;
+    _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e _CTX_idx):
+      timer(t), k_a(k), socket_fd(fd), in_addr(a), hrt(RES_TIME_T), rpg(r), epoll_fd(e) _CTX_idex {}
     _FORCE_INLINE ~Conn() {
 #if _OPENSSL
       if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
+#endif
+#if __cplusplus >= _cpp20_date
+      if (rpg->on) epoll_del_cpp20(epoll_fd, socket_fd, idex), rpg->on = 0;
 #endif
       close_socket(socket_fd); rpg = nullptr;
     }
@@ -171,42 +199,56 @@ namespace fc {
 #endif
       return ::send(socket_fd, buf, size, 0);
     }
-#if __cplusplus < 202002L
-    int read(char* buf, int max_size);
+#if __cplusplus < _cpp20_date
+    int read(char* buf, int size);
     bool write(const char* buf, int size);
     bool writen(const char* buf, int size);
 #else//The timer must be called externally to destroy the coroutine, which is completely asynchronous and unavailable.
-    fc::Task<int> read(char* buf, int max_size) {
-      int count = read_impl(buf, max_size);// int64_t t = hrt - hrs;
+    fc::Task<int> reading(char* buf, int max_size) {
+      int count = read_impl(buf, max_size);
       while (count < 0) {
 #ifndef _WIN32
         if (errno != EAGAIN) { co_return 0; }
 #else
-        if (errno != EINPROGRESS && errno != EINVAL && errno != ENOENT) { co_return 0; }
+        if (errno != EINPROGRESS) { co_return 0; }
 #endif // !_WIN32
-        co_await std::suspend_always{};
         count = read_impl(buf, max_size);
       }
-//       if (t) {
-//         if (t > k_a) {
-// #ifdef _WIN32
-//           ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
-// #endif
-//           co_return 0;
-//         }
-//         u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_ _yield(fib); } });
-//       }
+      co_return count;
+    }
+    fc::Task<int> read(char* buf, int max_size) {
+      int count = read_impl(buf, max_size); int64_t t = 0;
+      while (count < 0) {
+#ifndef _WIN32
+        if (errno != EAGAIN) { co_return 0; }
+#else
+        if (errno != EINPROGRESS && errno != EINVAL) { co_return 0; }// && errno != ENOENT
+#endif // !_WIN32
+#if __cplusplus >= _cpp20_date
+        co_await std::suspend_always{}; t = time(NULL) - hrt;
+#endif
+        if (is_idle && t) {
+          if (t > k_a) {
+#ifdef _WIN32
+            ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
+#endif
+            co_return 0;
+          }
+          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_.operator()(); } });
+        }
+        count = read_impl(buf, max_size);
+      }
       co_return count;
     }
     fc::Task<int> write(const char* buf, int size) {
       const char* end = buf + size; is_idle = false;
       int count = write_impl(buf, size); if (count > 0) buf += count;
       while (buf != end) {
-  #ifndef _WIN32
+#ifndef _WIN32
         if (count == 0 || count < 0 && errno != EAGAIN) { co_return 0; }
-  #else
+#else
         if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { co_return 0; }
-  #endif // !_WIN32
+#endif // !_WIN32
         co_await std::suspend_always{};
         if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
       } time(&hrt); is_idle = true;
@@ -214,17 +256,15 @@ namespace fc {
     }
     fc::Task<int> writen(const char* buf, int size) {
       const char* end = buf + size; is_idle = false;
-      int n = write_impl(buf, size);
-      if (n > 0) buf += n;
+      int count = write_impl(buf, size); if (count > 0) buf += count;
       while (buf != end) {
 #ifndef _WIN32
-        if (n == 0 || n < 0 && (errno == EPIPE || errno != EAGAIN))co_return 0;
+        if (count == 0 || count < 0 && (errno == EPIPE || errno != EAGAIN)) { co_return 0; }
 #else
-        if (n == 0 || n < 0 && (errno == EPIPE || errno != EINPROGRESS)) { co_return 0; }
+        if (count == 0 || count < 0 && (errno == EPIPE || (errno != EINVAL && errno != EINPROGRESS))) { co_return 0; }
 #endif // !_WIN32
         co_await std::suspend_always{};
-        n = write_impl(buf, int(end - buf));
-        if (n > 0) buf += n;
+        if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
       } time(&hrt); is_idle = true;
       co_return 1;
     };

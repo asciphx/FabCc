@@ -20,7 +20,10 @@ namespace fc {
     }
     _FORCE_INLINE void reset() { cursor_ = buffer_; }
     _FORCE_INLINE std::size_t size() { return cursor_ - buffer_; }
-    _FORCE_INLINE _CTX_TASK(int) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
+#if __cplusplus < _cpp20_date
+    _FORCE_INLINE
+#endif
+    _CTX_TASK(int) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
     _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(operator<<, std::string&)_OPT(append, std::string_view&);
     _FORCE_INLINE output_buffer& append(const char* s, size_t size) {
       if (cursor_ + size > end_) flush(); memcpy(cursor_, s, size); cursor_ += size; return *this;

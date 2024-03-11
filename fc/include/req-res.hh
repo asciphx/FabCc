@@ -24,9 +24,10 @@ namespace fc {
   struct App;
   class Res;
   class Req {
-    HTTP method; friend Res;
+    int is_file{ 0 }; friend Res;
     void index_cookies();
   public:
+    HTTP method;
     std::string_view header(const std::string_view& k) const;
     std::string_view cookie(const char* k);
     std::string ip_address() const;
@@ -36,11 +37,7 @@ namespace fc {
     std::string_view& raw_url;
     cc::query_string& params;
     double& USE_MAX_MEM_SIZE_MB;
-#ifdef _WIN32
-    long long length;
-#else
-    long length;
-#endif // _WIN32
+    _Fsize_t length;
     str_map& headers;
     Conn& fiber;
     std::unique_ptr<fc::cache_file>& cache_file;
@@ -51,7 +48,8 @@ namespace fc {
   };// request
 
   class Res {
-    fc::Ctx& Ctx;
+    fc::Ctx& ctx;
+    std::string body;
     std::string& url;
     friend class fc::Conn;
     friend struct fc::App;
@@ -62,27 +60,24 @@ namespace fc {
     };
   public:
     fc::App& app;
-    _FORCE_INLINE void set_content_type(const char* v) { Ctx.set_content_type(v, strlen(v)); };
-    _FORCE_INLINE void set_content_type(const char* v, size_t l) { Ctx.set_content_type(v, std::move(l)); };
+    _FORCE_INLINE void set_content_type(const char* v) { ctx.set_content_type(v, strlen(v)); };
+    _FORCE_INLINE void set_content_type(const char* v, size_t l) { ctx.set_content_type(v, std::move(l)); };
     _FORCE_INLINE void set_header(std::string_view&& k, std::string_view&& v) {
-      Ctx.set_header(std::forward<std::string_view>(k), std::forward<std::string_view>(v));
+      ctx.set_header(std::forward<std::string_view>(k), std::forward<std::string_view>(v));
     }
-    _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { Ctx.set_cookie(k, v); }
-    _FORCE_INLINE Res(fc::Ctx& ctx, std::string& u, App* ap): Ctx(ctx), url(u), app(*ap) {}
-    std::string body;
-    int is_file{ 3 };
+    _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { ctx.set_cookie(k, v); }
+    _FORCE_INLINE Res(fc::Ctx& ctx, std::string& u, App* ap): ctx(ctx), url(u), app(*ap) {}
     uint16_t code{ 200 };// Check whether the response has a static file defined.
     //Generally used to read configuration files, or slow io operations, return Json
     void write_async(std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
     //Generally used to read configuration files, or slow io operations, return string
     void write_async_s(std::function<std::string()>&& f, short i = CACHE_HTML_TIME_SECOND);
-    _FORCE_INLINE void write(json::Json&& j) { Ctx.set_content_type("application/json", 16); Ctx.respond(j.str()); };
-    _FORCE_INLINE void write(const json::Json& j) { Ctx.set_content_type("application/json", 16); Ctx.respond(j.str()); };
-    _FORCE_INLINE void write(const std::string& b) { Ctx.set_content_type("text/plain;charset=UTF-8", 24); Ctx.respond(b); };
-    _FORCE_INLINE void write(const std::string_view& b) { Ctx.respond(b); };
-    _FORCE_INLINE void write(const char* b) { Ctx.respond(b); };
+    _FORCE_INLINE void write(json::Json&& j) { ctx.set_content_type("application/json", 16); body = j.str(); };
+    _FORCE_INLINE void write(const json::Json& j) { ctx.set_content_type("application/json", 16); body = j.str(); };
+    _FORCE_INLINE void write(const std::string& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body = std::move(b); };
+    _FORCE_INLINE void write(const char* b) { body = b; };
     void write(std::string&& body_part);
-    inline void set_status(int s) { Ctx.set_status(s); }
+    inline void set_status(int s) { ctx.set_status(s); }
     std::string& compress_str(char* const str, unsigned int len);
     std::string& decompress_str(char* const str, unsigned int len);
   };// response
