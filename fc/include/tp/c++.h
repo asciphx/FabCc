@@ -53,16 +53,16 @@ namespace fc {
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
-    ~Task() { if ($) $.destroy(), $ = nullptr; }
+    ~Task() { if ($) $.destroy(); }
     struct promise_type {
-      mutable T _; Handle l, r; std::exception_ptr e;
+      T _; Handle l, r; std::exception_ptr e;
       void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() noexcept { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
       std::suspend_always yield_value(T&& v) { _ = std::move(v); return {}; }
-      std::suspend_always yield_value(T& v) { _ = v; return {}; }
+      std::suspend_always yield_value(const T& v) { _ = v; return {}; }
       Task get_return_object() { return Task{ this }; }
-      void return_value(T& v) { _ = v; }
+      void return_value(const T& v) { _ = v; }
       void return_value(T&& v) { _ = T(std::move(v)); }
     };
     bool await_ready() const noexcept { return !$ || $.done(); }
@@ -74,7 +74,7 @@ namespace fc {
       while ($) {
         if (_unlikely(!$.promise().l)) {
           while (!$.done()) {
-            $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r;
+            $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr;
           } return;
         } else $ = $.promise().l;
       }
@@ -88,7 +88,7 @@ namespace fc {
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
-    ~Task() { if ($) $.destroy(), $ = nullptr; }
+    ~Task() { if ($) $.destroy(); }
     struct promise_type {
       Handle l, r; std::exception_ptr e; void return_void() {}
       void unhandled_exception() { e = std::current_exception(); }
@@ -101,11 +101,12 @@ namespace fc {
     void await_suspend(Handle _) noexcept { _.promise().l = $, $.promise().r = _; }
     void await_suspend(std::coroutine_handle<> _) noexcept {}
     explicit operator bool() const noexcept { return $ && !$.done(); }
+    int get() { return 0; }
     void operator()() noexcept {
       while ($) {
         if (_unlikely(!$.promise().l)) {
           while (!$.done()) {
-            $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r;
+            $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr;
           } return;
         } else $ = $.promise().l;
       }

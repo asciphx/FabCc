@@ -195,7 +195,6 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                if (fib->_.$) fib->_.$.destroy();
                 Task<int> magic_coro = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
                 fib->on = 1; fib->_ = std::move(magic_coro); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
 #endif
