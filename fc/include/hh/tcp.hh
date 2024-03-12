@@ -109,7 +109,7 @@ namespace fc {
 #if __cplusplus >= _cpp20_date
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
               if (ider->second.on == 1) { if (ider->second._)ider->second._.operator()(); }
-              if (ider->second.on == 0) { Task<int> t = std::move(ider->second._); }
+              if (ider->second.on == 0) { ider->second.on = 2; Task<int> t = std::move(ider->second._); }
             }
 #endif
             time(&sj);

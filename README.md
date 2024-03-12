@@ -13,7 +13,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 ![FabCc](./static/logo.png)
 ## Eng | [简中](./README-zh_CN.md)
 > On March 12th, the ultra high definition 8k remastered version arrived. Support Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern JSON and C++11, fixed keep alive mechanism, and launched best C++20 stack less coroutine. The following is a comparison chart.
-> ![coroutine](./co vs Task.jpg)
+> ![coroutine](./co%20vs%20Task.jpg)
 
 ## Be Original
 - Supports c++20 stack free coroutines, currently compatible with the original project's stack based asymmetric coroutines, and is perfectly integrated, requiring almost minimal macro modifications.
