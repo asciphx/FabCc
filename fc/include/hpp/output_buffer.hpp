@@ -5,11 +5,7 @@
 #include <hpp/string_view.hpp>
 #include <hh/lexical_cast.hh>
 #include <hh/conn.hh>
-#define _OPT(z, x) _FORCE_INLINE output_buffer& z(x s) { size_t S = s.size(); if (this->cursor_ + S > end_) {\
-size_t G = this->cap_ - this->size(); memcpy(cursor_, s.data(), G); this->cursor_ += G; S -= G; this->flush();\
-bool b = this->cap_ < S; _:if (b) { memcpy(this->cursor_, s.data() + G, this->cap_); this->cursor_ += this->cap_;\
-G += this->cap_; this->flush(); S -= this->cap_; b = this->cap_ < S; goto _; } memcpy(this->cursor_, s.data() + G, S);\
-this->cursor_ += S; return *this;} memcpy(this->cursor_, s.data(), S); this->cursor_ += S; return *this; }
+#define _OPT(z, x) _FORCE_INLINE output_buffer& z(x s){memcpy(this->cursor_,s.data(),s.size());this->cursor_+=s.size();return *this; }
 namespace fc {
   struct output_buffer {
     output_buffer(): buffer_(nullptr), cursor_(nullptr), end_(nullptr), cap_(0), flush_(nullptr) {}
@@ -23,10 +19,24 @@ namespace fc {
 #if __cplusplus < _cpp20_date
     _FORCE_INLINE
 #endif
-    _CTX_TASK(int) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
-    _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(operator<<, std::string&)_OPT(append, std::string_view&);
+      _CTX_TASK(int) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
+    _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(append, std::string_view&);
+#if __cplusplus < _cpp20_date
+    _FORCE_INLINE
+#endif
+      _CTX_TASK(int) flush(std::string& s) {
+      size_t S = s.size(); if (this->cursor_ + S > end_) {
+        size_t G = this->cap_ - this->size(); memcpy(cursor_, s.data(), G); this->cursor_ += G; S -= G;
+        this->flush();bool b = this->cap_ < S; _:if (b) {
+          memcpy(this->cursor_, s.data() + G, this->cap_);
+          this->cursor_ += this->cap_;G += this->cap_; co_await this->flush(); S -= this->cap_; b = this->cap_ < S; goto _;
+        }
+        memcpy(this->cursor_, s.data() + G, S);this->cursor_ += S; co_await this->flush(); _CTX_return(1)
+      }
+      memcpy(this->cursor_, s.data(), S); this->cursor_ += S; co_return co_await this->flush();
+    }
     _FORCE_INLINE output_buffer& append(const char* s, size_t size) {
-      if (cursor_ + size > end_) flush(); memcpy(cursor_, s, size); cursor_ += size; return *this;
+      memcpy(cursor_, s, size); cursor_ += size; return *this;
     }
     _FORCE_INLINE output_buffer& operator<<(unsigned int v) {
       if (v == 0) operator<<('0'); char c[10]; return operator<<(std::string_view(c, u2a(c, v) - c));
@@ -75,7 +85,7 @@ namespace fc {
     template <typename I, std::enable_if_t<std::is_fundamental<I>::value>* = nullptr>
     _FORCE_INLINE output_buffer& operator<<(std::remove_reference_t<I>&& v) {
       std::string s(std::move(std::lexical_cast<std::string>(std::forward<I>(v))));
-      if (cursor_ + s.size() > end_) flush(); memcpy(cursor_, s.data(), s.size()); cursor_ += s.size(); return *this;
+      memcpy(cursor_, s.data(), s.size()); cursor_ += s.size(); return *this;
     }
     _FORCE_INLINE std::string_view to_string_view() { return std::string_view(buffer_, cursor_ - buffer_); }
     Conn* flush_; char* buffer_, * cursor_, * end_; size_t cap_;

@@ -85,7 +85,11 @@ namespace fc {
 #endif
       // Main loop.
       int bigsize = REScore + ids; int64_t sj = time(NULL), dq = time(NULL); bool fresh_end = false;
+#if _WIN32 && __cplusplus >= _cpp20_date
+      while (true) {
+#else
       while (RESquit_signal_catched) {
+#endif
         if (RES_TP > t) {
           loop_timer.tick(); if (!(fresh_end = dq > sj)) time(&dq);
           if (nthreads > 1) {
@@ -104,8 +108,8 @@ namespace fc {
             if (this->idex > bigsize) bigsize += RESmaxEVENTS;
 #if __cplusplus >= _cpp20_date
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
-              if (ider->second.on == 2) continue; if (ider->second.on == 1) { if (ider->second._)ider->second._.operator()(); }
-              if (ider->second.on == 0) { ider->second.on = 2; Task<int> t = std::move(ider->second._); }
+              if (ider->second.on == 1) { if (ider->second._)ider->second._.operator()(); }
+              if (ider->second.on == 0) { Task<int> t = std::move(ider->second._); }
             }
 #endif
             time(&sj);
@@ -135,7 +139,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              ++ro->idx; epoll_del(this->event_fd); ro->on = 0; fc::Task<int> v = std::move(ro->_); if (v) v.operator()(); v.$.destroy(); v.$ = nullptr;
+              ++ro->idx; epoll_del(this->event_fd); ro->on = 0; fc::Task<int> v = std::move(ro->_); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;

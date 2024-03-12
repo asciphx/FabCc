@@ -167,9 +167,9 @@ namespace fc {
                   l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
-#if __cplusplus < _cpp20_date
+// #if __cplusplus < _cpp20_date
                   if (statbuf_.st_size <= 0x100000000) { co_await ctx->send_file_p(_, pos, ++r); _CTX_back; }
-#endif
+// #endif
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
@@ -307,7 +307,7 @@ namespace fc {
             ctx.respond(res_body->size());
           }
           ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
-          co_await (ctx.output_stream << *res_body).flush();  res_body->clear(); time(&f.hrt);
+          co_await ctx.output_stream.flush(*res_body); res_body->clear(); time(&f.hrt);
           ROG* fib = f.rpg; f.timer.add_s(f.k_a - 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_.operator()(); } });
           continue;
         }
@@ -378,7 +378,7 @@ namespace fc {
           ctx.respond(res_body->size());
         }
         ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
-        co_await (ctx.output_stream << *res_body).flush(); res_body->clear();
+        co_await ctx.output_stream.flush(*res_body); res_body->clear();
       }
     } catch (const std::runtime_error& e) {
       std::cerr << "Err: " << e.what() << std::endl; _CTX_return(0)

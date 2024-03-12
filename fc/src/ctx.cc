@@ -78,7 +78,7 @@ namespace fc {
     co_await output_stream.flush();
     off_t offset = pos; lseek(fd, pos, SEEK_SET);
 #if __cplusplus >= _cpp20_date
-    int64_t t = time(NULL) + 1;
+    int64_t t = time(NULL) + 1, cs = 0;
 #endif
     while (offset < sizer) {
 #if __APPLE__ // sendfile on macos is slightly different...
@@ -89,22 +89,19 @@ namespace fc {
 #else
       int ret = ::sendfile(fiber.socket_fd, fd, &offset, sizer - offset);
 #endif
-      if (ret != -1) {
-        if (offset < sizer) {
-#if __cplusplus >= _cpp20_date
-          if(time(NULL) - t > 0) { time(&t); co_await std::suspend_always{}; }
+      if (ret != -1 && offset < sizer) {
+#if __cplusplus < _cpp20_date
+        this->fiber.rpg->_.operator()();
 #endif
-          continue;
-        }
-      } else if (errno == EPIPE) {
-        break;
+        continue;
       } else {
+        if (errno == EPIPE) fiber.shut(_WRITE);
         if (errno != EAGAIN) {
           close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
           throw err::not_found("sendfile failed.");
         }
-#if __cplusplus < _cpp20_date
-        this->fiber.rpg->_.operator()();
+#if __cplusplus >= _cpp20_date
+        if(time(NULL) - t > 0) { if(ret > 8388608 || ++cs > 2){ co_await std::suspend_always{}; cs = 0; } time(&t); }
 #endif
       }
     }

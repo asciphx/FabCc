@@ -42,10 +42,8 @@
 #if __cplusplus < _cpp20_date
 #define _CTX_FUNC void(Conn&,void*)
 #define _CTX_TASK(_) void
-#define _CTX_TASKER(_) _
 #define _CTX_back return
 #define _CTX_return(_) return;
-#define _CTX_returnER(_) return _;
 #define _ctx -> void
 #define _CTX_file
 #define _CTX_idx
@@ -53,10 +51,8 @@
 #else
 #define _CTX_FUNC fc::Task<int>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,int&,Reactor*)
 #define _CTX_TASK(_) fc::Task<_>
-#define _CTX_TASKER(_) fc::Task<_>
 #define _CTX_back co_return
 #define _CTX_return(_) co_return _;
-#define _CTX_returnER(_) co_return _;
 #define _ctx -> fc::Task<void>
 #define _CTX_file -> fc::Task<int>
 #define _CTX_idx , int& idx
@@ -122,7 +118,7 @@ namespace fc {
     ctx::co _;
 #else
     fc::Task<int> _;
-    u16 on;
+    u16 on = 2;
 #endif
     u16 idx;
   };

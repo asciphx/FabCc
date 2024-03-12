@@ -12,9 +12,11 @@
 
 ![FabCc](./static/logo.png)
 ## [Eng](./README.md) | 简中
-> 12月8日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、多核编译、C++11，修复了keep-alive保活机制。
+> 3月12日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、c++11，修复了keep-alive保活机制, 推出最强c++20无栈协程，以下是对比图。
+> ![coroutine](./co vs Task.jpg)
 
 ## 原创
+- 支持c++20无栈协程，目前兼容了原项目的有栈非对称协程，并且是完美对接，几乎只需要少量的宏改动。
 - 新增带字幕的播放器【字幕与文件同名，但文件格式也就是后缀不同，（支持srt，vtt，ass格式）】功能
 - 增强型字段反射，例如`std::string_view sv = k(&O::id);`将返回"`O`.`id`",(在C++14及更高版本可用constexpr修饰)。
 - 基于openssl的tcp客户端，由于是初步支持，尚且功能有限，大部分测试也可以通过。
@@ -36,7 +38,7 @@
 - 以上部件是个人技术实力的展示。当然，也有一些部件，其中并不完全是从0到1，但那些不是最重要的部件。
 
 ## 特征
-- 前端播放器才用西瓜播放器，并且新增字幕功能，西瓜来自【[xgplayer](https://github.com/bytedance/xgplayer)】
+- 前端播放器采用西瓜播放器，并且新增字幕功能，西瓜来自【[xgplayer](https://github.com/bytedance/xgplayer)】
 - 基于epoll架构的全平台支持[windows下由wepoll实现]
 - 现在最低编译器版本支持到了c++11, 目前兼容了c++17的许多特性包括any, optional, string_view, 以及部分的扩展
 - 最少的第三方库，均以源文件形式存放项目中
@@ -60,7 +62,7 @@
 - [x] body-parser的支持
 - [x] ssl证书
 - [ ] websocket
-- [x] 协程
+- [x] 协程(c++11 ~ c++20)
 - [ ] udp服务端
 - [x] tcp客户端
 
@@ -78,13 +80,13 @@ int main() {
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","aac" })
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
     .set_file_download(true);//设置启用文件下载，这是新的接口
-  app.default_route() = [](Req& req, Res& res) {
+  app.default_route() = [](Req& req, Res& res)_ctx {
     res.set_content_type("text/html;charset=UTF-8", 23);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
-      });//设置默认的路由
+      }); co_return;//设置默认的路由
   };
-  app["/get_upload"] = [](Req& req, Res& res) {
+  app["/get_upload"] = [](Req& req, Res& res)_ctx {
     res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
       std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
@@ -93,30 +95,30 @@ int main() {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
         }
       } return x;
-      });//获取上传的文件列表
+      }); co_return;//获取上传的文件列表
   };
-  app["/read_file"] = [](Req& req, Res& res) { res.write_async([] { Json x = json::read_file("test.json"); return x; }); };
-  app["/json"] = [](Req& req, Res& res) {
+  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); co_return; };
+  app["/json"] = [](Req& req, Res& res)_ctx {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
-    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x);//json请求
+    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); co_return;//json请求
   };
-  app["/serialization"] = [](Req& req, Res& res) {
+  app["/serialization"] = [](Req& req, Res& res)_ctx {
     Json x = json::parse(R"(
     {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
     "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump());//反序列化与序列化
+    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); co_return;//反序列化与序列化
   };
-  app["/api"] = [](Req& req, Res& res) { res.write(res.app._print_routes()); };//返回路由列表
-  app.post("/api") = [](Req& req, Res& res) {
+  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); co_return; };//返回路由列表
+  app.post("/api") = [](Req& req, Res& res)_ctx {
     BP bp(req, 1000); std::string s;//支持上传的文件总大小1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
-    s.pop_back(); s.pop_back(); res.write(s);
+    s.pop_back(); s.pop_back(); res.write(s); co_return;
   };
-  app["/del"] = [](Req&, Res& res) { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); };
-  app["/timer"] = [](Req& req, Res& res) {
-    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！");
+  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); co_return; };
+  app["/timer"] = [](Req& req, Res& res)_ctx {
+    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！"); co_return;
   };
   //启动服务器，同样支持ipv6
   app.http_serve(8080);

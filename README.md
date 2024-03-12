@@ -12,9 +12,11 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 
 ![FabCc](./static/logo.png)
 ## Eng | [简中](./README-zh_CN.md)
-> On December 8, the ultra-high-definition 8k Remastered version will arrive. Supports Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern json, multi-core compilation, C++11, fixed the keep-alive mechanism.
+> On March 12th, the ultra high definition 8k remastered version arrived. Support Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern JSON and C++11, fixed keep alive mechanism, and launched best C++20 stack less coroutine. The following is a comparison chart.
+> ![coroutine](./co vs Task.jpg)
 
 ## Be Original
+- Supports c++20 stack free coroutines, currently compatible with the original project's stack based asymmetric coroutines, and is perfectly integrated, requiring almost minimal macro modifications.
 - Added a new player with subtitles [The subtitles have the same name as the file, but the file format is different, that is, the suffix is different (supports srt, vtt, ass formats)] func.
 - Enhanced field reflection, for example`std::string_view sv = k(&O::id);` will return "`O`.`id`"(can be modified by constexpr in C++14 and higher versions).
 - The tcp client based on openssl has preliminary support and limited functions, so most tests can pass.
@@ -61,7 +63,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - [x] Body parser
 - [x] SSL certificate support
 - [ ] WebSocket
-- [x] Coroutines
+- [x] Coroutines(c++11 ~ c++20)
 - [ ] UDP server
 - [x] TCP client
 
@@ -79,13 +81,13 @@ int main() {
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","aac" })
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
     .set_file_download(true);//Set to enable file downloads, this is the new interface.
-  app.default_route() = [](Req& req, Res& res) {
+  app.default_route() = [](Req& req, Res& res)_ctx {
     res.set_content_type("text/html;charset=UTF-8", 23);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
-      });//Set default route
+      }); co_return;//Set default route
   };
-  app["/get_upload"] = [](Req& req, Res& res) {
+  app["/get_upload"] = [](Req& req, Res& res)_ctx {
     res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
       std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
@@ -94,30 +96,30 @@ int main() {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
         }
       } return x;
-      });//Get the list of uploaded files
+      }); co_return;//Get the list of uploaded files
   };
-  app["/read_file"] = [](Req& req, Res& res) { res.write_async([] { Json x = json::read_file("test.json"); return x; }); };
-  app["/json"] = [](Req& req, Res& res) {
+  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); co_return; };
+  app["/json"] = [](Req& req, Res& res)_ctx {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
-    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x);//Return json
+    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); co_return;//Return json
   };
-  app["/serialization"] = [](Req& req, Res& res) {
+  app["/serialization"] = [](Req& req, Res& res)_ctx {
     Json x = json::parse(R"(
     {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
     "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump());//Deserialization and serialization
+    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); co_return;//Deserialization and serialization
   };
-  app["/api"] = [](Req& req, Res& res) { res.write(res.app._print_routes()); };//Return to routing list
-  app.post("/api") = [](Req& req, Res& res) {
+  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); co_return; };//Return to routing list
+  app.post("/api") = [](Req& req, Res& res)_ctx {
     BP bp(req, 1000); std::string s;//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
-    s.pop_back(); s.pop_back(); res.write(s);
+    s.pop_back(); s.pop_back(); res.write(s); co_return;
   };
-  app["/del"] = [](Req&, Res& res) { res.app["/"] = nullptr; res.write("The routing of the home page is delete！！"); };
-  app["/timer"] = [](Req& req, Res& res) {
-    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("Turn off the server timer and start the countdown！");
+  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("The routing of the home page is delete！！"); co_return; };
+  app["/timer"] = [](Req& req, Res& res)_ctx {
+    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("Turn off the server timer and start the countdown！"); co_return;
   };
   //Start the server, also supports ipv6
   app.http_serve(8080);

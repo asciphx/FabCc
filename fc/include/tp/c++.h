@@ -31,7 +31,6 @@ typedef unsigned long long u64;
 #endif
 #if __cplusplus >= _cpp20_date
 #include <coroutine>
-#define _yield(x) ()
 /*
 * This software is licensed under the AGPL-3.0 License.
 *
@@ -114,7 +113,6 @@ namespace fc {
   };
 }
 #else
-#define _yield(x)  = x->_.yield()
 #define co_return
 #define co_await
 #endif

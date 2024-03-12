@@ -25,8 +25,8 @@ namespace {
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     struct promise_type {
-      T _; Handle l, r; T value() { return _; }
-      void unhandled_exception() { std::terminate(); }
+      T _; Handle l, r; std::exception_ptr e;
+      void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
       std::suspend_always yield_value(T&& v) { _ = std::move(v); return {}; }
@@ -35,7 +35,8 @@ namespace {
       void return_value(const T& v) { _ = v; }
       void return_value(T&& v) { _ = T(std::move(v)); }
     };
-    bool await_ready() { return !$ || $.done(); } T await_resume() { return $.promise()._; }
+    bool await_ready() { return !$ || $.done(); }
+    T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return std::move($.promise()._); }
     void await_suspend(Handle _) { _.promise().l = $, $.promise().r = _; }
     explicit operator bool() { return $ && !$.done(); } void await_suspend(std::coroutine_handle<> _) {}
     void operator()() {
@@ -56,13 +57,14 @@ namespace {
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     struct promise_type {
-      Handle l, r; void return_void() {}
-      void unhandled_exception() { std::terminate(); }
+      Handle l, r; std::exception_ptr e; void return_void() {}
+      void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
       Task get_return_object() { return Task{ this }; }
     };
-    bool await_ready() { return !$ || $.done(); } void await_resume() {}
+    bool await_ready() { return !$ || $.done(); }
+    void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
     void await_suspend(Handle _) { _.promise().l = $, $.promise().r = _; }
     explicit operator bool() { return $ && !$.done(); } ~Task() { if ($) $.destroy(); }
     void await_suspend(std::coroutine_handle<> _) {}
