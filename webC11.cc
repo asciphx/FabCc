@@ -52,7 +52,7 @@ int main() {
   };
   app["/api"] = [](Req& req, Res& res) { res.write(res.app._print_routes()); };
   app.post("/api") = [](Req& req, Res& res) {
-    BP bp(req, 1000); std::string s;//Support for uploading files with a total size of 1000MB
+    BP bp(req, 1000); bp.run(); std::string s;//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }

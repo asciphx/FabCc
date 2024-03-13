@@ -12,11 +12,11 @@
 
 ![FabCc](./static/logo.png)
 ## [Eng](./README.md) | 简中
-> 3月12日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、c++11，修复了keep-alive保活机制, 推出最强c++20无栈协程，以下是对比图。
+> 3月13日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、c++11，修复了keep-alive保活机制, 推出最强c++20无栈协程，以下是对比图。
 > ![coroutine](./co%20vs%20Task.jpg)
 
 ## 原创
-- 支持c++20无栈协程，目前兼容了原项目的有栈非对称协程，并且是完美对接，几乎只需要少量的宏改动。
+- 支持c++20无栈协程，目前兼容了原项目的有栈非对称协程，并且是完美对接，几乎只需要少量的宏改动, 性能比有栈协程强了5%左右。
 - 新增带字幕的播放器【字幕与文件同名，但文件格式也就是后缀不同，（支持srt，vtt，ass格式）】功能
 - 增强型字段反射，例如`std::string_view sv = k(&O::id);`将返回"`O`.`id`",(在C++14及更高版本可用constexpr修饰)。
 - 基于openssl的tcp客户端，由于是初步支持，尚且功能有限，大部分测试也可以通过。
@@ -84,7 +84,7 @@ int main() {
     res.set_content_type("text/html;charset=UTF-8", 23);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
-      }); co_return;//设置默认的路由
+      }); _return//设置默认的路由
   };
   app["/get_upload"] = [](Req& req, Res& res)_ctx {
     res.write_async([] {
@@ -95,30 +95,30 @@ int main() {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
         }
       } return x;
-      }); co_return;//获取上传的文件列表
+      }); _return//获取上传的文件列表
   };
-  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); co_return; };
+  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); _return };
   app["/json"] = [](Req& req, Res& res)_ctx {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
-    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); co_return;//json请求
+    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); _return//json请求
   };
   app["/serialization"] = [](Req& req, Res& res)_ctx {
     Json x = json::parse(R"(
     {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
     "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); co_return;//反序列化与序列化
+    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); _return//反序列化与序列化
   };
-  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); co_return; };//返回路由列表
+  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); _return };//返回路由列表
   app.post("/api") = [](Req& req, Res& res)_ctx {
-    BP bp(req, 1000); std::string s;//支持上传的文件总大小1000MB
+    BP bp(req, 1000); co_await bp.run(); std::string s;//支持上传的文件总大小1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
-    s.pop_back(); s.pop_back(); res.write(s); co_return;
+    s.pop_back(); s.pop_back(); res.write(s); _return
   };
-  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); co_return; };
+  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); _return };
   app["/timer"] = [](Req& req, Res& res)_ctx {
-    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！"); co_return;
+    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！"); _return
   };
   //启动服务器，同样支持ipv6
   app.http_serve(8080);
@@ -127,7 +127,7 @@ int main() {
 
 ### 构建（测试、示例）
 建议使用CMake进行源代码外构建。
-如果构建失败，请删除清理cmake缓存。
+如果构建失败，请删除清理cmake缓存, 建议先删除build目录。
 `cmake -B build`后的额外编译选项。
 使用vcpkg `-DCMAKE_TOOLCHAIN_FILE=../vcpkg.cmake`
 使用llhttp解析器 `-DLLHTTP=1`

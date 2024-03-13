@@ -19,12 +19,12 @@ namespace fc {
 #if __cplusplus < _cpp20_date
     _FORCE_INLINE
 #endif
-      _CTX_TASK(int) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
+      _CTX_TASK(void) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
     _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(append, std::string_view&);
 #if __cplusplus < _cpp20_date
     _FORCE_INLINE
 #endif
-      _CTX_TASK(int) flush(std::string& s) {
+      _CTX_TASK(void) flush(std::string& s) {
       size_t S = s.size(); if (this->cursor_ + S > end_) {
         size_t G = this->cap_ - this->size(); memcpy(cursor_, s.data(), G); this->cursor_ += G; S -= G;
         this->flush();bool b = this->cap_ < S; _:if (b) {

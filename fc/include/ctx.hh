@@ -57,11 +57,11 @@ namespace fc {
     void set_cookie(std::string_view k, std::string_view v);
     void set_status(int status);
     // Send a file_sptr.(can support larger than 4GB)
-    _CTX_TASK(int) send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t pos, long long size);
+    _CTX_TASK(void) send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t pos, long long size);
     // Send file with pos
-    _CTX_TASK(int) send_file_p(std::string& path, _Fsize_t pos, long long size);
+    _CTX_TASK(void) send_file_p(std::string& path, _Fsize_t pos, long long size);
     // Send a file.
-    _CTX_TASK(int) send_file(std::string& path, bool pos = true);
+    _CTX_TASK(void) send_file(std::string& path, bool pos = true);
     // split a string, starting from cur && ending with split_char.
     // Advance cur to the end of the split.
     void prepare_next_request();

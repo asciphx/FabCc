@@ -103,7 +103,7 @@ namespace fc {
     std::string g(1, m + 0x30); g.append(r.data(), r.size());// std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
     fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
       co_await it->second(req, res);
-    } else { co_await this->_.operator()(req, res); }
+    } else { co_await this->_.operator()(req, res); } _CTX_return(1)
   }
   App& App::sub_api(const char* prefix, const App& app) {
     char m; if ((prefix[0] == '/' || prefix[0] == '\\') && prefix[1] == 0)++prefix;
@@ -128,7 +128,7 @@ namespace fc {
       api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
         std::string _($); reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
         *reinterpret_cast<int*>(&req) = 1; reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10);
-        *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
+        *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); _CTX_return(1)
       };
 #endif // !__linux__
       api.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
@@ -136,7 +136,7 @@ namespace fc {
         std::string::iterator i = _.end() - 1; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-        co_await this->_.operator()(req, res); _CTX_back;
+        co_await this->_.operator()(req, res); _CTX_return(1)
       _ : std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
         if (last_dot) {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
@@ -168,27 +168,27 @@ namespace fc {
                   (ctx->output_stream.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
 // #if __cplusplus < _cpp20_date
-                  if (statbuf_.st_size <= 0x100000000) { co_await ctx->send_file_p(_, pos, ++r); _CTX_back; }
+                  if (statbuf_.st_size <= 0x100000000) { co_await ctx->send_file_p(_, pos, ++r); time(&req.fiber.hrt); _CTX_return(1) }
 // #endif
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                    co_await ctx->send_file_sptr(p->second, pos, ++r); _CTX_back;
+                    co_await ctx->send_file_sptr(p->second, pos, ++r); _CTX_return(1)
                   } else {
-                    co_await ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_back;
+                    co_await ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return(1)
                   }
 #else
                   //Very large files will directly call the '::sendfile' method, which is faster than mmap
-                  co_await ctx->send_file_p(_, pos, ++r); _CTX_back;
+                  co_await ctx->send_file_p(_, pos, ++r); _CTX_return(1)
 #endif
                 }
-                ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_back;
+                ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_return(1)
               } //Non-media formats will only use the strategy of caching for one week
               ctx->format_top_headers(); ctx->output_stream.append("Cache-Control: max-age=604800,immutable\r\n", 41);
               co_await ctx->send_file(_); time(&req.fiber.hrt);
             }//0.77 day ctx->output_stream.append("Cache-Control: " FILE_TIME"\r\n", 40);
             ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib] { if (fib->idx == n) { if (fib->_)fib->_.operator()(); } });
-            _CTX_back;
+            _CTX_return(1)
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
         }
@@ -198,7 +198,7 @@ namespace fc {
       api.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
         std::string _($); reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
         *reinterpret_cast<int*>(&req) = 1; reinterpret_cast<Ctx*&>(res)->format_top_headers(); _.append("index.html", 10);
-        *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
+        *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); _CTX_return(1)
       };
 #endif // __linux__
     } catch (const http_error& e) {
@@ -381,8 +381,8 @@ namespace fc {
         co_await ctx.output_stream.flush(*res_body); res_body->clear();
       }
     } catch (const std::runtime_error& e) {
-      std::cerr << "Err: " << e.what() << std::endl; _CTX_return(0)
-    }
+      std::cerr << "Err: " << e.what() << std::endl;
+    } _CTX_return(1)
   }
   void App::http_serve(int port, std::string ip, int nthreads) {
     if (!fc::is_directory(fc::directory_)) fc::create_directory(fc::directory_);

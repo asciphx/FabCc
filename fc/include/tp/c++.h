@@ -58,27 +58,22 @@ namespace fc {
       void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() noexcept { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
-      std::suspend_always yield_value(T&& v) { _ = std::move(v); return {}; }
+      std::suspend_always yield_value(T&& v) { _ = std::move(v);return {}; }
       std::suspend_always yield_value(const T& v) { _ = v; return {}; }
       Task get_return_object() { return Task{ this }; }
       void return_value(const T& v) { _ = v; }
       void return_value(T&& v) { _ = T(std::move(v)); }
     };
-    bool await_ready() const noexcept { return !$ || $.done(); }
-    void await_suspend(std::coroutine_handle<> _) noexcept {}
+    bool await_ready() const noexcept { return $.done(); }
     void await_suspend(Handle _) noexcept { _.promise().l = $, $.promise().r = _; }
-    T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return std::move($.promise()._); }
-    explicit operator bool() const noexcept { return $ && !$.done(); }
-    void operator()() noexcept {
-      while ($) {
-        if (_unlikely(!$.promise().l)) {
-          while (!$.done()) {
-            $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr;
-          } return;
-        } else $ = $.promise().l;
-      }
+    T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return $.promise()._; }
+    explicit operator bool() const noexcept {
+      if ($) { while ($.promise().l) { if (($ = $.promise().l))continue; return false; }; return !$.done(); } else return false;
     }
-    T get() { while ($.promise().l && _likely($ = $.promise().l)) {}; return std::move($.promise()._); }
+    void operator()() noexcept {
+      do { $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr; } while (!$.done());
+    }
+    T get() { return $.promise()._; }
   };
   template <> struct Task<void> {
     Task() noexcept = default; Task(Task const& other) = delete;
@@ -95,20 +90,14 @@ namespace fc {
       std::suspend_always final_suspend() noexcept { return {}; }
       Task get_return_object() { return Task{ this }; }
     };
-    bool await_ready() const noexcept { return !$ || $.done(); }
+    bool await_ready() const noexcept { return $.done(); }
     void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
     void await_suspend(Handle _) noexcept { _.promise().l = $, $.promise().r = _; }
-    void await_suspend(std::coroutine_handle<> _) noexcept {}
-    explicit operator bool() const noexcept { return $ && !$.done(); }
-    int get() { return 0; }
+    explicit operator bool() const noexcept {
+      if ($) { while ($.promise().l) { if (($ = $.promise().l))continue; return false; }; return !$.done(); } else return false;
+    }
     void operator()() noexcept {
-      while ($) {
-        if (_unlikely(!$.promise().l)) {
-          while (!$.done()) {
-            $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr;
-          } return;
-        } else $ = $.promise().l;
-      }
+      do { $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr; } while (!$.done());
     }
   };
 }

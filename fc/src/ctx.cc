@@ -53,11 +53,11 @@ namespace fc {
     }
   }
   // Send a file_sptr.(can support larger than 4GB)
-  _CTX_TASK(int) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
+  _CTX_TASK(void) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << __->size_).append("\r\n\r\n", 4); co_await output_stream.flush();
-    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size), [this](const char* s, int l, std::function<void()> d) {
-      if (l > 0) { if ((this->fiber.writen(s, l)) && d != nullptr) d(); } });
+    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size), [this](const char* s, int l, std::function<void()> d)_ctx {
+      if (l > 0) { if ((co_await this->fiber.writen(s, l)) && d != nullptr) d(); }_CTX_return(1) });
 #ifdef _WIN32
     if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE);
 #else
@@ -66,7 +66,7 @@ namespace fc {
      _CTX_return(1)
   }
   // send file with pos
-  _CTX_TASK(int) Ctx::send_file_p(std::string& path, _Fsize_t pos, long long sizer) {
+  _CTX_TASK(void) Ctx::send_file_p(std::string& path, _Fsize_t pos, long long sizer) {
 #ifndef _WIN32 // Linux / Macos version with sendfile(can support larger than 4GB)
     // Open the file in non blocking mode.
     int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
@@ -92,6 +92,8 @@ namespace fc {
       if (ret != -1 && offset < sizer) {
 #if __cplusplus < _cpp20_date
         this->fiber.rpg->_.operator()();
+#else
+        co_await std::suspend_always{};
 #endif
         continue;
       } else {
@@ -100,9 +102,6 @@ namespace fc {
           close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
           throw err::not_found("sendfile failed.");
         }
-#if __cplusplus >= _cpp20_date
-        if(time(NULL) - t > 0) { if(ret > 8388608 || ++cs > 2){ co_await std::suspend_always{}; cs = 0; } time(&t); }
-#endif
       }
     }
     if (errno == EAGAIN) fiber.shut(_WRITE);
@@ -137,32 +136,32 @@ namespace fc {
     // Writing the http headers.
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    OVERLAPPED ov = {0}; ov.Offset = pos; DWORD g_BytesTransferred = 0; size_t z = output_stream.size();
-    bool rc = ReadFile(fd, output_stream.cursor_, static_cast<DWORD>(output_stream.cap_ - z), &g_BytesTransferred, &ov);
+    OVERLAPPED ov = {0}; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = output_stream.size();
+    bool rc = ReadFile(fd, output_stream.cursor_, static_cast<DWORD>(output_stream.cap_ - z), &g_Bytes, &ov);
     if (rc) {
-      ov.Offset += g_BytesTransferred; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_BytesTransferred)) goto _;
+      ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
     } else {
       if (GetLastError() == ERROR_IO_PENDING) {
         WaitForSingleObject(fd, 1000);//INFINITE
-        rc = GetOverlappedResult(fd, &ov, &g_BytesTransferred, FALSE);
+        rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
         if (rc) {
-          ov.Offset += g_BytesTransferred; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_BytesTransferred)) goto _;
+          ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
         }
       }
     }
     while (ov.Offset < sizer) {
-      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_BytesTransferred, &ov);
+      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_BytesTransferred; if(!co_await this->fiber.writen(output_stream.buffer_, g_BytesTransferred)) goto _;
+        ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) goto _;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
-          if (errno == EPIPE) break;
+          if (errno == EPIPE) { break; }
           if (errno == EINPROGRESS || errno == EINVAL) {
             WaitForSingleObject(fd, INFINITE);//INFINITE
-            rc = GetOverlappedResult(fd, &ov, &g_BytesTransferred, FALSE);
+            rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
             if (rc) {
-              ov.Offset += g_BytesTransferred;
-              if(co_await this->fiber.writen(output_stream.buffer_, ov.Offset > sizer ? ov.Offset - sizer : g_BytesTransferred)) continue;
+              ov.Offset += g_Bytes;
+              if(co_await this->fiber.writen(output_stream.buffer_, ov.Offset > sizer ? ov.Offset - sizer : g_Bytes)) continue;
             }
           }
         }
@@ -175,7 +174,7 @@ namespace fc {
     _CTX_return(1)
   }
   // Send a file.
-  _CTX_TASK(int) Ctx::send_file(std::string & path, bool is_download) {
+  _CTX_TASK(void) Ctx::send_file(std::string & path, bool is_download) {
 #ifndef _WIN32 // Linux / Macos version with sendfile
     // Open the file in non blocking mode.
     int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
@@ -201,6 +200,8 @@ namespace fc {
       } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
         this->fiber.rpg->_.operator()();
+#else
+        co_await std::suspend_always{};
 #endif
       } else {
         close(fd);
@@ -237,24 +238,24 @@ namespace fc {
     else output_stream.append("Transfer-Encoding: chunked\r\n\r\n", 30);
     co_await output_stream.flush();
     //::TransmitFile(socket_fd, fd, 0, 16777216, &ov, NULL, TF_DISCONNECT | TF_REUSE_SOCKET);//CloseHandle(fd);
-    DWORD g_BytesTransferred = 0; OVERLAPPED ov; memset(&ov, 0, sizeof(ov)); ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
+    DWORD g_Bytes = 0; OVERLAPPED ov; memset(&ov, 0, sizeof(ov)); ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
     while (ov.Offset < content_length_) {
-      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_BytesTransferred, &ov);
+      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_BytesTransferred; co_await this->fiber.write(output_stream.buffer_, g_BytesTransferred);
-      } else {
-        if (GetLastError() == ERROR_IO_PENDING) {
-          if (errno == EINPROGRESS || errno == EINVAL) {
-            WaitForSingleObject(fd, 1000);//INFINITE
-            rc = GetOverlappedResult(fd, &ov, &g_BytesTransferred, FALSE);
-            if (rc) {
-              if (co_await this->fiber.write(output_stream.buffer_, g_BytesTransferred)) { ov.Offset += g_BytesTransferred; continue; }
-            }
-          }
-        }
-        break;
-      }
-    }
+         ov.Offset += g_Bytes; co_await this->fiber.write(output_stream.buffer_, g_Bytes);
+       } else {
+         if (GetLastError() == ERROR_IO_PENDING) {
+           if (errno == EINPROGRESS || errno == EINVAL) {
+             WaitForSingleObject(fd, 1000);//INFINITE
+             rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
+             if (rc) {
+               if (co_await this->fiber.write(output_stream.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
+             }
+           }
+         }
+         break;
+       }
+     }
     content_length_ = 0;
 #endif
     _CTX_return(1)

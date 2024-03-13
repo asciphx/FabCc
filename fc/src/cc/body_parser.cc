@@ -18,11 +18,6 @@
 #include <hh/http_error.hh>
 #include <hh/body_parser.hh>
 #include <random>
-#if __cplusplus < _cpp20_date
-#define _read read
-#else
-#define _read reading
-#endif
 namespace fc {
 #ifdef WIN32
   float GetMemUsage(int pid) {
@@ -64,8 +59,8 @@ namespace fc {
         int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N > 0 ? N : 0;
         while (content_length_ > o) {
           if (N > 0) {
-           N = co_await req.fiber._read(const_cast<char*>(value.data() + o), content_length_ - o); o += N;
-          } else N = co_await req.fiber._read(const_cast<char*>(value.data() + o), content_length_ - o);
+           N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N;
+          } else N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o);
         }
         value.end() += content_length_; content_length_ = 0;
       } else {
@@ -76,7 +71,7 @@ namespace fc {
         value.resize(65536); int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), 65536 - o); N += o;
         do {
           if (N > 0) const_cast<Req&>(req).cache_file->append(const_cast<char*>(value.data()), N), o += N;
-        } while (content_length_ > o && (N = co_await req.fiber._read(const_cast<char*>(value.data()), 65536)));
+        } while (content_length_ > o && (N = co_await req.fiber.read(const_cast<char*>(value.data()), 65536)));
       }
     } else {
       std::string es;
@@ -97,7 +92,7 @@ namespace fc {
           throw std::runtime_error(e.what());
         }
       }
-      if (value.size() < 45u) throw err::bad_request("Wrong size!"); co_return;
+      if (value.size() < 45u) throw err::bad_request("Wrong size!");
     }
     std::string_view content = content_length_ ? const_cast<Req&>(req).cache_file->getStringView() : std::string_view(value.c_str(), value.length());
     std::string_view::size_type f = content.find(boundary);
@@ -108,7 +103,7 @@ namespace fc {
       params.emplace_back(p_s(s));
       content = content.substr(f + boundary.size() + 2, content.size()); goto _;
     }
-    if (params.size() == 0) throw err::not_found("Not Found!");
+    if (params.size() == 0) throw err::not_found("Not Found!"); _CTX_return(1)
   }
   param BP::p_s(std::string_view & s) {
     class param p;

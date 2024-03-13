@@ -16,14 +16,14 @@ int main() {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
         }
       } return x;
-      }); co_return;
+      }); _return
   };
   app.post("/api") = [](Req& req, Res& res)_ctx {
     BP bp(req, 1000); co_await bp.run(); std::string s;//Support for uploading files with a total size of 1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
-    s.pop_back(); s.pop_back(); res.write(s); co_return;
+    s.pop_back(); s.pop_back(); res.write(s); _return
   };
   app.http_serve(8080, "0.0.0.0");
 }

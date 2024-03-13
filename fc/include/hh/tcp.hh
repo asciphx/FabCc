@@ -85,13 +85,9 @@ namespace fc {
 #endif
       // Main loop.
       int bigsize = REScore + ids; int64_t sj = time(NULL), dq = time(NULL); bool fresh_end = false;
-#if _WIN32 && __cplusplus >= _cpp20_date
-      while (true) {
-#else
       while (RESquit_signal_catched) {
-#endif
         if (RES_TP > t) {
-          loop_timer.tick(); if (!(fresh_end = dq > sj)) time(&dq);
+          loop_timer.tick(); if (!(fresh_end = dq > sj + 2)) time(&dq);
           if (nthreads > 1) {
             if (this->idex > bigsize) { bigsize += RESmaxEVENTS; std::this_thread::yield(); }
           }
@@ -108,8 +104,7 @@ namespace fc {
             if (this->idex > bigsize) bigsize += RESmaxEVENTS;
 #if __cplusplus >= _cpp20_date
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
-              if (ider->second.on == 1) { if (ider->second._)ider->second._.operator()(); }
-              if (ider->second.on == 0) { ider->second.on = 2; Task<int> t = std::move(ider->second._); }
+              if (ider->second.on == 0) { ider->second.on = 2; Task<int> v = std::move(ider->second._); if (v) v.operator()(); }
             }
 #endif
             time(&sj);
@@ -170,7 +165,7 @@ namespace fc {
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
-                epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLRDHUP, fib);
+                epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP, fib);
 #elif __APPLE__
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
@@ -257,6 +252,9 @@ namespace fc {
         }));
     }
     date_thread.join(); close_socket(sfd);
+#if _WIN32
+    WSACleanup();
+#endif
     std::cout << std::endl;
   }
 }
