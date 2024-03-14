@@ -144,7 +144,7 @@ namespace fc {
     ROG* rpg;
     int64_t hrt;
 #if __cplusplus >= _cpp20_date
-    int& idex; u16 mask_id;
+    int& idex;
 #endif
     epoll_handle_t epoll_fd;
     socket_type socket_fd;
@@ -181,9 +181,6 @@ namespace fc {
 #endif
 #if __cplusplus >= _cpp20_date
       if (rpg->on) epoll_del_cpp20(epoll_fd, socket_fd, idex), rpg->on = 0;
-#endif
-#ifdef _WIN32
-      ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
       close_socket(socket_fd); rpg = nullptr;
     }

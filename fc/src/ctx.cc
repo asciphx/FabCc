@@ -77,9 +77,6 @@ namespace fc {
     (output_stream << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
     co_await output_stream.flush();
     off_t offset = pos; lseek(fd, pos, SEEK_SET);
-#if __cplusplus >= _cpp20_date
-    int64_t t = time(NULL) + 1, cs = 0;
-#endif
     while (offset < sizer) {
 #if __APPLE__ // sendfile on macos is slightly different...
       off_t nwritten = 0;
@@ -89,19 +86,22 @@ namespace fc {
 #else
       int ret = ::sendfile(fiber.socket_fd, fd, &offset, sizer - offset);
 #endif
-      if (ret != -1 && offset < sizer) {
+      if (ret != -1) {
+        if (offset < sizer) {
+          continue; // this->fiber.sink.yield();
+        }
+      } else if (errno == EPIPE) {
+        break;
+      } else {
+        if (errno != EAGAIN) {
+          close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
+          throw err::not_found("sendfile failed.");
+        }
 #if __cplusplus < _cpp20_date
         this->fiber.rpg->_.operator()();
 #else
         co_await std::suspend_always{};
 #endif
-        continue;
-      } else {
-        if (errno == EPIPE) fiber.shut(_WRITE);
-        if (errno != EAGAIN) {
-          close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
-          throw err::not_found("sendfile failed.");
-        }
       }
     }
     if (errno == EAGAIN) fiber.shut(_WRITE);
@@ -142,6 +142,7 @@ namespace fc {
       ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
     } else {
       if (GetLastError() == ERROR_IO_PENDING) {
+        if (errno == EPIPE) { goto _; }
         WaitForSingleObject(fd, 1000);//INFINITE
         rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
         if (rc) {
@@ -155,13 +156,13 @@ namespace fc {
         ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) goto _;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
-          if (errno == EPIPE) { break; }
+          if (errno == EPIPE) { goto _; }
           if (errno == EINPROGRESS || errno == EINVAL) {
             WaitForSingleObject(fd, INFINITE);//INFINITE
             rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
             if (rc) {
               ov.Offset += g_Bytes;
-              if(co_await this->fiber.writen(output_stream.buffer_, ov.Offset > sizer ? ov.Offset - sizer : g_Bytes)) continue;
+              if(co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) continue;
             }
           }
         }

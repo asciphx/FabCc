@@ -28,6 +28,11 @@
 #  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
 #endif
 #endif
+#if _OPENSSL
+#define CTX_MIN_SIZE stack_traits::default_size()
+#else
+#define CTX_MIN_SIZE 65536
+#endif
 namespace ctx {
   struct forced_unwind {
     fcontext_t fctx{ nullptr }; forced_unwind() = default; forced_unwind(fcontext_t fctx_) : fctx(fctx_) {}
@@ -114,7 +119,7 @@ namespace ctx {
     //template<typename Fn, typename = std::disable_overload< co, Fn >>
     //co(fixedsize_stack& salloc): co{ std::allocator_arg, salloc } {}
     template<typename Fn, typename = std::disable_overload< co, Fn >>
-    co(Fn&& fn) : co{ std::allocator_arg, fixedsize_stack(65536), std::forward< Fn >(fn) } {}
+    co(Fn&& fn) : co{ std::allocator_arg, fixedsize_stack(CTX_MIN_SIZE), std::forward< Fn >(fn) } {}
     template<typename Fn>
     co(std::allocator_arg_t, fixedsize_stack&& salloc, Fn&& fn) :
       fctx_{ add_ctx< record< co, Fn > >(std::forward< fixedsize_stack >(salloc), std::forward< Fn >(fn)) } {}
@@ -150,7 +155,7 @@ namespace ctx {
     }
   };
   template<typename Fn>
-  co callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(65536)) {
+  co callcc(Fn&& fn, fixedsize_stack&& s = fixedsize_stack(CTX_MIN_SIZE)) {
     return callcc(std::allocator_arg, std::forward<fixedsize_stack>(s), std::forward<Fn>(fn));
   };
   template<typename Fn>
@@ -159,9 +164,8 @@ namespace ctx {
   }
   typedef co fiber;
 }
-namespace fc {
-  typedef ctx::co co;
-}
+namespace fc { typedef ctx::co co; }
+#undef CTX_MIN_SIZE
 #if defined _MSC_VER
 # pragma warning(pop)
 #pragma pack(pop)
