@@ -27,7 +27,7 @@ typedef unsigned long long u64;
 #ifdef _MSVC_LANG
 #define _cpp20_date 201705L
 #else
-#define _cpp20_date 202002L
+#define _cpp20_date 201709L
 #endif
 #if __cplusplus >= _cpp20_date
 #include <coroutine>

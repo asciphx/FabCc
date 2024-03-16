@@ -5,6 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release") # 如果是Debug，那么_DEBUG宏生效
 endif()
 message(STATUS "CXX_COMPILER is ${CMAKE_CXX_COMPILER_ID}")
+# gcc/g++ >= 9.4.0, clang >= 10.1, msvc >= 19.28
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 # cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 include(CheckIncludeFileCXX)
@@ -38,7 +39,7 @@ else()
   endif()
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "GNU")
     if(CMAKE_CXX_STANDARD STREQUAL 20)
-      add_compile_options("-fcoroutines")
+      set(CMAKE_CXX_FLAGS -fcoroutines)
     endif()
   endif()
 endif()

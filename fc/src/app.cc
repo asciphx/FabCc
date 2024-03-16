@@ -231,12 +231,7 @@ namespace fc {
   fc::Task<int> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, int& idx, Reactor* rc) {
     Conn f(fd, sa, k, ft, re, eh, idx);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) {
-#ifdef _WIN32
-      ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
-#endif
-      ++re->idx; _CTX_return(0)
-    }
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { ++re->idx; if (re->on) epoll_del_cpp20(eh, fd, idx), re->on = 0; _CTX_return(0) }
 #endif
 #endif
     fc::str_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));

@@ -152,8 +152,9 @@ namespace fc {
     SSL* ssl = nullptr;
     inline _CTX_TASK(bool) ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
       ssl = SSL_new(ssl_ctx->ctx); SSL_set_fd(ssl, static_cast<int>(socket_fd));
-      int ret = SSL_accept(ssl); if (ret == 1) { _CTX_back(true) } int e = SSL_get_error(ssl, ret);
+      int ret, e;
       do {
+        ret = SSL_accept(ssl); if (ret == 1) { _CTX_back(true) } e = SSL_get_error(ssl, ret);
         if (e == SSL_ERROR_WANT_WRITE || e == SSL_ERROR_WANT_READ)
 #if __cplusplus >= _cpp20_date
           co_await std::suspend_always{};
@@ -161,12 +162,11 @@ namespace fc {
           rpg->_.operator()();
 #endif
         else {
-// #if _DEBUG
+#if _DEBUG
           ERR_print_errors_fp(stderr);
-// #endif
+#endif
           _CTX_back(false)
         }
-        ret = SSL_accept(ssl); if (ret == 1) { _CTX_back(true) } e = SSL_get_error(ssl, ret);
       } while (ret);
       _CTX_back(false)
     }
@@ -176,11 +176,11 @@ namespace fc {
     _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e _CTX_idx):
       timer(t), k_a(k), socket_fd(fd), in_addr(a), hrt(RES_TIME_T), rpg(r), epoll_fd(e) _CTX_idex {}
     _FORCE_INLINE ~Conn() {
-#if _OPENSSL
-      if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
-#endif
 #if __cplusplus >= _cpp20_date
       if (rpg->on) epoll_del_cpp20(epoll_fd, socket_fd, idex), rpg->on = 0;
+#endif
+#if _OPENSSL
+      if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
 #endif
       close_socket(socket_fd); rpg = nullptr;
     }
@@ -210,9 +210,7 @@ namespace fc {
 #else
         if (errno != EINPROGRESS && errno != EINVAL && errno != ENOENT) { co_return 0; }
 #endif // !_WIN32
-#if __cplusplus >= _cpp20_date
         co_await std::suspend_always{}; t = time(NULL) - hrt;
-#endif
         if (is_idle && t) {
           if (t > k_a) {
 #ifdef _WIN32

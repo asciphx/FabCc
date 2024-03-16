@@ -165,7 +165,7 @@ namespace fc {
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
-                epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP, fib);
+                epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLRDHUP, fib);
 #elif __APPLE__
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
@@ -178,9 +178,6 @@ namespace fc {
                   try {
 #if _OPENSSL
                     if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
-#ifdef _WIN32
-                      ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
-#endif
                       ++fib->idx; epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
                     }
 #endif
@@ -194,8 +191,8 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                Task<int> magic_coro = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
-                fib->on = 1; fib->_ = std::move(magic_coro); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
+                Task<int> magic = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this); fib->on = 1;
+                fib->_ = std::move(magic); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
 #endif
               }
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
