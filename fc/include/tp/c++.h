@@ -25,8 +25,15 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long long u64;
 #ifdef _MSVC_LANG
+#define _FORCE_INLINE __forceinline
+#define _ALIGN(s) __declspec(align(s))
+#define _NEVER_INLINE __declspec(noinline)
+#define __thread __declspec(thread)
 #define _cpp20_date 201705L
 #else
+#define _ALIGN(s) __attribute__((aligned(s)))
+#define _FORCE_INLINE inline __attribute__((always_inline))
+#define _NEVER_INLINE inline __attribute__((noinline))
 #define _cpp20_date 201709L
 #endif
 #if __cplusplus >= _cpp20_date
@@ -46,58 +53,64 @@ typedef unsigned long long u64;
 namespace fc {
   template <typename T>
   struct Task {
-    Task() noexcept = default; Task(Task const& other) = delete;
-    struct promise_type; Task& operator=(Task const& other) = delete;
+    Task() noexcept = default; Task(Task const&) = delete;
+    struct promise_type; Task& operator=(Task const&) = delete;
     Task& operator=(Task&& _) noexcept { $ = _.$; _.$ = nullptr; return *this; }
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
     ~Task() { if ($) $.destroy(); }
     struct promise_type {
-      T _; Handle l, r; std::exception_ptr e;
+      std::coroutine_handle<> l, r; mutable T _{}; std::exception_ptr e;
       void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() noexcept { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
-      std::suspend_always yield_value(T&& v) { _ = std::move(v);return {}; }
+      std::suspend_always yield_value(T&& v) { _ = std::move(v); return {}; }
       std::suspend_always yield_value(const T& v) { _ = v; return {}; }
-      Task get_return_object() { return Task{ this }; }
-      void return_value(const T& v) { _ = v; }
-      void return_value(T&& v) { _ = T(std::move(v)); }
+      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
+      _FORCE_INLINE void return_value(const T& v) { _ = v; }
+      _FORCE_INLINE void return_value(T&& v) { _ = T(std::move(v)); }
     };
-    bool await_ready() const noexcept { return $.done(); }
-    void await_suspend(Handle _) noexcept { _.promise().l = $, $.promise().r = _; }
-    T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return $.promise()._; }
-    explicit operator bool() const noexcept {
-      if ($) { while ($.promise().l) { if (($ = $.promise().l))continue; return false; }; return !$.done(); } else return false;
-    }
+    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
+    _FORCE_INLINE T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return std::move($.promise()._); }
+    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
+    template<typename S> void await_suspend(std::coroutine_handle<S> _) noexcept { _.promise().l = $; $.promise().r = _; }
+    explicit operator bool() const noexcept { return $ && !$.done(); }
     void operator()() noexcept {
-      do { $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr; } while (!$.done());
+      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
+      do {
+        $.resume(); if (!$.done())return;
+        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
+      } while (!$.done());
     }
-    T get() { return $.promise()._; }
+    _FORCE_INLINE T get() { while ($.promise().l && ($ = Handle::from_address($.promise().l.address()))){}; return $.promise()._; }
   };
   template <> struct Task<void> {
-    Task() noexcept = default; Task(Task const& other) = delete;
-    struct promise_type; Task& operator=(Task const& other) = delete;
+    Task() noexcept = default; Task(Task const&) = delete;
+    struct promise_type; Task& operator=(Task const&) = delete;
     Task& operator=(Task&& _) noexcept { $ = _.$; _.$ = nullptr; return *this; }
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
     ~Task() { if ($) $.destroy(); }
     struct promise_type {
-      Handle l, r; std::exception_ptr e; void return_void() {}
-      void unhandled_exception() { e = std::current_exception(); }
+      std::coroutine_handle<> l, r; std::exception_ptr e; void return_void() {}
+      _FORCE_INLINE void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() noexcept { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
-      Task get_return_object() { return Task{ this }; }
+      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
     };
-    bool await_ready() const noexcept { return $.done(); }
-    void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
-    void await_suspend(Handle _) noexcept { _.promise().l = $, $.promise().r = _; }
-    explicit operator bool() const noexcept {
-      if ($) { while ($.promise().l) { if (($ = $.promise().l))continue; return false; }; return !$.done(); } else return false;
-    }
+    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
+    _FORCE_INLINE void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
+    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
+    template<typename T> void await_suspend(std::coroutine_handle<T> _) noexcept { _.promise().l = $; $.promise().r = _; }
+    explicit operator bool() const noexcept { return $ && !$.done(); }
     void operator()() noexcept {
-      do { $.resume(); if (!$.done())return; if ($.promise().r) $ = $.promise().r, $.promise().l = nullptr; } while (!$.done());
+      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
+      do {
+        $.resume(); if (!$.done())return;
+        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
+      } while (!$.done());
     }
   };
 }
@@ -200,15 +213,7 @@ namespace std {
     typename std::decay< Y >::type
     >::value
     >::type;
-#ifdef _MSVC_LANG
-#define _FORCE_INLINE __forceinline
-#define _ALIGN(s) __declspec(align(s))
-#define _NEVER_INLINE __declspec(noinline)
-#define __thread __declspec(thread)
-#else
-#define _ALIGN(s) __attribute__((aligned(s)))
-#define _FORCE_INLINE inline __attribute__((always_inline))
-#define _NEVER_INLINE inline __attribute__((noinline))
+#ifndef _MSVC_LANG
 #if (defined(__cplusplus) && __cplusplus < 201402L)
   template <typename T, typename U = T> inline T exchange(T& _, U&& $) { return std::__exchange(_, std::forward<U>($)); }
 #endif

@@ -9,7 +9,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #else
       if (errno != EINPROGRESS && errno != EINVAL && errno != ENOENT) { return 0; }
 #endif // !_WIN32
-      rpg->_.operator()(); t = time(NULL) - hrt;
+      rpg->_.operator()(); t = time(NULL) - rpg->hrt;
       if (is_idle && t) {
         if (t > k_a) {
 #ifdef _WIN32
@@ -34,7 +34,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #endif // !_WIN32
       rpg->_.operator()();
       if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
-    } time(&hrt);
+    } time(&rpg->hrt);
     return is_idle = true;
   };
   bool Conn::writen(const char* buf, int size) {
@@ -48,7 +48,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #endif // !_WIN32
       rpg->_.operator()();
       if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
-    } time(&hrt);
+    }
     return is_idle = true;
   };
 #endif

@@ -20,7 +20,7 @@ void funk(Req& req, Res& res) { res.write("Homepage route is replicated by std::
 int main() {
   App app;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","mkv","srt","vtt" })
-    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(300.0)
+    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
     .set_file_download(true);//Set to enable file downloads, this is the new interface.
   // localhost:8080/params?foo=%27dg%27&pew=4&count[]=a&count[]=b&mydict[a]=b&mydict[abcd]=42
   app["/params"] = [](Req& req, Res& res) {
@@ -52,7 +52,7 @@ int main() {
     res.write(s);
   };
   app.default_route() = [](Req& req, Res& res) {
-    res.set_content_type("text/html;charset=UTF-8", 23);
+    res.set_content_type("text/html;charset=UTF-8", 23); res.set_status(404);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64);
       Json x{
@@ -101,10 +101,11 @@ int main() {
     }
     s.pop_back(); s.pop_back(); res.write(s);
   };
-  app["/del"] = [&app](Req&, Res& res) { app["/"] = nullptr; res.write("The routing of the home page is delete！！"); };
+  app["/del"] = [&app](Req&, Res& res) { app["/"] = nullptr; res.write("The routing of the home page is delete!!"); };
   app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000);
-    res.write("Turn off the server timer and start the countdown！");
+    res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    res.write("Turn off the server timer and start the countdown!");
   };
   //Start the server, also supports ipv6
   app.http_serve(8080);

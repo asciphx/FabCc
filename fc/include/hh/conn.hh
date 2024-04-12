@@ -43,20 +43,18 @@
 #define _CTX_FUNC void(Conn&,void*)
 #define _CTX_TASK(_) _
 #define _CTX_back(_) return _;
-#define _CTX_return(_) return;
+#define _CTX_return return;
 #define _ctx -> void
 //co_return
-#define _return
 #define _CTX_idx
 #define _CTX_idex
 #else
-#define _CTX_FUNC fc::Task<int>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,int&,Reactor*)
-#define _CTX_TASK(_) fc::Task<int>
+#define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,int&,Reactor*)
+#define _CTX_TASK(_) fc::Task<_>
 #define _CTX_back(_) co_return _;
-#define _CTX_return(_) co_return _;
-#define _ctx -> fc::Task<int>
+#define _CTX_return co_return;
+#define _ctx -> fc::Task<void>
 //co_return
-#define _return co_return 1;
 #define _CTX_idx , int& idx
 #define _CTX_idex , idex(idx)
 #endif
@@ -116,13 +114,13 @@ namespace fc {
 #if __linux__ || _WIN32
     socket_type $;
 #endif
+    int64_t hrt;
 #if __cplusplus < _cpp20_date
     ctx::co _;
 #else
-    fc::Task<int> _;
-    u16 on = 2;
+    fc::Task<void> _;
 #endif
-    u16 idx;
+    u16 on = 2, idx;
   };
   struct Reactor;
   // Epoll based Reactor:
@@ -132,8 +130,8 @@ namespace fc {
     std::string what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
     fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
 #else
-    std::string what; fc::Task<int> c; fiber_exception(fiber_exception&& e) = default;
-    fiber_exception(fc::Task<int>&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
+    std::string what; fc::Task<void> c; fiber_exception(fiber_exception&& e) = default;
+    fiber_exception(fc::Task<void>&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
 #endif
   };
   class Conn {
@@ -142,7 +140,6 @@ namespace fc {
     sockaddr in_addr;
     fc::timer& timer;
     ROG* rpg;
-    int64_t hrt;
 #if __cplusplus >= _cpp20_date
     int& idex;
 #endif
@@ -174,10 +171,14 @@ namespace fc {
     int k_a;
     bool is_idle = true;
     _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e _CTX_idx):
-      timer(t), k_a(k), socket_fd(fd), in_addr(a), hrt(RES_TIME_T), rpg(r), epoll_fd(e) _CTX_idex {}
+      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e) _CTX_idex {
+      r->hrt = RES_TIME_T;
+    }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
       if (rpg->on) epoll_del_cpp20(epoll_fd, socket_fd, idex), rpg->on = 0;
+#else
+      rpg->on = 0;
 #endif
 #if _OPENSSL
       if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
@@ -210,7 +211,7 @@ namespace fc {
 #else
         if (errno != EINPROGRESS && errno != EINVAL && errno != ENOENT) { co_return 0; }
 #endif // !_WIN32
-        co_await std::suspend_always{}; t = time(NULL) - hrt;
+        co_await std::suspend_always{}; t = time(NULL) - rpg->hrt;
         if (is_idle && t) {
           if (t > k_a) {
 #ifdef _WIN32
@@ -224,33 +225,33 @@ namespace fc {
       }
       co_return count;
     }
-    fc::Task<int> write(const char* buf, int size) {
+    fc::Task<bool> write(const char* buf, int size) {
       const char* end = buf + size; is_idle = false;
       int count = write_impl(buf, size); if (count > 0) buf += count;
       while (buf != end) {
 #ifndef _WIN32
-        if (count == 0 || count < 0 && errno != EAGAIN) { co_return 0; }
+        if (count == 0 || count < 0 && errno != EAGAIN) { co_return false; }
 #else
-        if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { co_return 0; }
+        if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { co_return false; }
 #endif // !_WIN32
         co_await std::suspend_always{};
         if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
-      } time(&hrt); is_idle = true;
-      co_return 1;
+      } time(&rpg->hrt);
+      co_return is_idle = true;
     }
-    fc::Task<int> writen(const char* buf, int size) {
+    fc::Task<bool> writen(const char* buf, int size) {
       const char* end = buf + size; is_idle = false;
       int count = write_impl(buf, size); if (count > 0) buf += count;
       while (buf != end) {
 #ifndef _WIN32
-        if (count == 0 || count < 0 && (errno == EPIPE || errno != EAGAIN)) { co_return 0; }
+        if (count == 0 || count < 0 && (errno == EPIPE || errno != EAGAIN)) { co_return false; }
 #else
-        if (count == 0 || count < 0 && (errno == EPIPE || (errno != EINVAL && errno != EINPROGRESS))) { co_return 0; }
+        if (count == 0 || count < 0 && (errno == EPIPE || (errno != EINVAL && errno != EINPROGRESS))) { co_return false; }
 #endif // !_WIN32
         co_await std::suspend_always{};
         if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
-      } time(&hrt); is_idle = true;
-      co_return 1;
+      }
+      co_return is_idle = true;
     };
 #endif
     int shut(socket_type fd, sd_type type);

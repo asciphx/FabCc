@@ -1,4 +1,4 @@
-# FabCc(v1.0)
+# FabCc(v1.0-UHD)
 [![license][license-badge]][license-link]
 ![platform][supported-platforms-badge]
 [![release][release-badge]][release-link]
@@ -8,11 +8,11 @@
 [supported-platforms-badge]: https://img.shields.io/badge/platform-Win32%20|%20GNU/Linux%20|%20macOS%20|%20FreeBSD%20-maroon
 [release-badge]: https://img.shields.io/github/release/asciphx/FabCc.svg?style=flat-square
 [release-link]: https://github.com/asciphx/FabCc/releases
-灵感来自于其他c++知名web框架, Nod的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。logo采用Nod的logo，设计来自命令与征服（CNC）。
+灵感来自于其他c++知名web框架, FabCc的定位是一个网络框架, 其特点是低代码, 高性能, 强类型, 超标准, 最安全, 很牛逼。logo采用Nod的logo，设计来自命令与征服（CNC）。
 
 ![FabCc](./static/logo.png)
 ## [Eng](./README.md) | 简中
-> 3月13日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、c++11，修复了keep-alive保活机制, 推出最强c++20无栈协程，以下是对比图。
+> 4月12日，超高清8k重制版到来。支持Gzip压缩网页降低流量消耗。修复各种bug，兼容了现代json、c++11，修复了keep-alive保活机制, 推出最强c++20无栈协程，以下是对比图。
 > ![coroutine](./co%20vs%20Task.jpg)
 
 ## 原创
@@ -81,10 +81,10 @@ int main() {
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
     .set_file_download(true);//设置启用文件下载，这是新的接口
   app.default_route() = [](Req& req, Res& res)_ctx {
-    res.set_content_type("text/html;charset=UTF-8", 23);
+    res.set_content_type("text/html;charset=UTF-8", 23); res.set_status(404);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
-      }); _return//设置默认的路由
+      }); co_return;//设置默认的路由
   };
   app["/get_upload"] = [](Req& req, Res& res)_ctx {
     res.write_async([] {
@@ -95,30 +95,30 @@ int main() {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
         }
       } return x;
-      }); _return//获取上传的文件列表
+      }); co_return;//获取上传的文件列表
   };
-  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); _return };
+  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); co_return; };
   app["/json"] = [](Req& req, Res& res)_ctx {
     Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
-    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); _return//json请求
+    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); co_return;//json请求
   };
   app["/serialization"] = [](Req& req, Res& res)_ctx {
     Json x = json::parse(R"(
     {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
     "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); _return//反序列化与序列化
+    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); co_return;//反序列化与序列化
   };
-  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); _return };//返回路由列表
+  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); co_return; };//返回路由列表
   app.post("/api") = [](Req& req, Res& res)_ctx {
     BP bp(req, 1000); co_await bp.run(); std::string s;//支持上传的文件总大小1000MB
     for (auto p : bp.params) {
       s << (p.key + ": ") << p.value << ", ";
     }
-    s.pop_back(); s.pop_back(); res.write(s); _return
+    s.pop_back(); s.pop_back(); res.write(s); co_return;
   };
-  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); _return };
+  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("主页的路由已被删除！！"); co_return; };
   app["/timer"] = [](Req& req, Res& res)_ctx {
-    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！"); _return
+    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("关闭服务倒计时启动！"); co_return;
   };
   //启动服务器，同样支持ipv6
   app.http_serve(8080);

@@ -23,7 +23,7 @@ int main() {
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
     .set_file_download(true);//Set to enable file downloads, this is the new interface.
   app.default_route() = [](Req& req, Res& res) {
-    res.set_content_type("text/html;charset=UTF-8", 23);
+    res.set_content_type("text/html;charset=UTF-8", 23); res.set_status(404);
     res.write_async_s([] {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
       });

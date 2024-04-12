@@ -19,19 +19,19 @@ namespace fc {
 #if __cplusplus < _cpp20_date
     _FORCE_INLINE
 #endif
-      _CTX_TASK(void) flush() { co_await flush_->write(buffer_, int(size())); reset(); _CTX_return(1) }
+      _CTX_TASK(void) flush() { co_await flush_->write(buffer_, int(size())); reset(); co_return; }
     _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(append, std::string_view&);
 #if __cplusplus < _cpp20_date
     _FORCE_INLINE
 #endif
-      _CTX_TASK(void) flush(std::string& s) {
+      _CTX_TASK(void) flush(const std::string& s) {
       size_t S = s.size(); if (this->cursor_ + S > end_) {
         size_t G = this->cap_ - this->size(); memcpy(cursor_, s.data(), G); this->cursor_ += G; S -= G;
         this->flush();bool b = this->cap_ < S; _:if (b) {
           memcpy(this->cursor_, s.data() + G, this->cap_);
           this->cursor_ += this->cap_;G += this->cap_; co_await this->flush(); S -= this->cap_; b = this->cap_ < S; goto _;
         }
-        memcpy(this->cursor_, s.data() + G, S);this->cursor_ += S; co_await this->flush(); _CTX_return(1)
+        memcpy(this->cursor_, s.data() + G, S);this->cursor_ += S; co_await this->flush(); _CTX_return
       }
       memcpy(this->cursor_, s.data(), S); this->cursor_ += S; co_return co_await this->flush();
     }

@@ -56,14 +56,15 @@ namespace fc {
   _CTX_TASK(void) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << __->size_).append("\r\n\r\n", 4); co_await output_stream.flush();
-    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size), [this](const char* s, int l, std::function<void()> d)_ctx {
-      if (l > 0) { if ((co_await this->fiber.writen(s, l)) && d != nullptr) d(); }_CTX_return(1) });
+    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size),
+      [this](const char* s, int l, std::function<void()> d)_ctx{
+      if (l > 0) { if ((co_await this->fiber.writen(s, l)) && d != nullptr) d(); }co_return; });
 #ifdef _WIN32
     if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE);
 #else
     if (errno == EAGAIN) fiber.shut(_WRITE);
 #endif
-     _CTX_return(1)
+    time(&fiber.rpg->hrt); co_return;
   }
   // send file with pos
   _CTX_TASK(void) Ctx::send_file_p(std::string& path, _Fsize_t pos, long long sizer) {
@@ -87,9 +88,7 @@ namespace fc {
       int ret = ::sendfile(fiber.socket_fd, fd, &offset, sizer - offset);
 #endif
       if (ret != -1) {
-        if (offset < sizer) {
-          continue; // this->fiber.sink.yield();
-        }
+        if (offset < sizer) continue;
       } else if (errno == EPIPE) {
         break;
       } else {
@@ -110,25 +109,25 @@ namespace fc {
     HANDLE fd; int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
     WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
     fd = ::CreateFileW(pwsz, FILE_GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
-        OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
+      OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
     if (fd == INVALID_HANDLE_VALUE) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
-// #ifdef __MINGW32__
-//     auto af = RES_FILES.find(path);
-//     if (af == RES_FILES.end()) {
-// #else
-//     if ((fd = RES_FILES.find(path)->second) == nullptr) {
-// #endif
-//       int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
-//       WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
-//       fd = ::CreateFileW(pwsz, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
-//       if (fd == INVALID_HANDLE_VALUE) {
-//         content_type = RES_NIL; throw err::not_found(path << " => not found.");
-//       }
-//       RES_FILES[path] = fd;
-//     }
-// #ifdef __MINGW32__
-//     else fd = af->second;
-// #endif
+    // #ifdef __MINGW32__
+    //     auto af = RES_FILES.find(path);
+    //     if (af == RES_FILES.end()) {
+    // #else
+    //     if ((fd = RES_FILES.find(path)->second) == nullptr) {
+    // #endif
+    //       int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
+    //       WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
+    //       fd = ::CreateFileW(pwsz, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
+    //       if (fd == INVALID_HANDLE_VALUE) {
+    //         content_type = RES_NIL; throw err::not_found(path << " => not found.");
+    //       }
+    //       RES_FILES[path] = fd;
+    //     }
+    // #ifdef __MINGW32__
+    //     else fd = af->second;
+    // #endif
     LARGE_INTEGER fileSize; GetFileSizeEx(fd, &fileSize); if (fileSize.QuadPart > UINT32_MAX) {
       CloseHandle(fd); content_type = RES_NIL; throw err::not_extended("Can't larger than 4GB!");
     }
@@ -136,24 +135,24 @@ namespace fc {
     // Writing the http headers.
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    OVERLAPPED ov = {0}; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = output_stream.size();
+    OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = output_stream.size();
     bool rc = ReadFile(fd, output_stream.cursor_, static_cast<DWORD>(output_stream.cap_ - z), &g_Bytes, &ov);
     if (rc) {
-      ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
+      ov.Offset += g_Bytes; if (!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
     } else {
       if (GetLastError() == ERROR_IO_PENDING) {
         if (errno == EPIPE) { goto _; }
         WaitForSingleObject(fd, 1000);//INFINITE
         rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
         if (rc) {
-          ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
+          ov.Offset += g_Bytes; if (!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
         }
       }
     }
     while (ov.Offset < sizer) {
       bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_Bytes; if(!co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) goto _;
+        ov.Offset += g_Bytes; if (!co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) goto _;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
           if (errno == EPIPE) { goto _; }
@@ -162,7 +161,7 @@ namespace fc {
             rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
             if (rc) {
               ov.Offset += g_Bytes;
-              if(co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) continue;
+              if (co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) continue;
             }
           }
         }
@@ -172,10 +171,10 @@ namespace fc {
     if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE); _: CloseHandle(fd);
     content_length_ = 0; ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
-    _CTX_return(1)
+    co_return;
   }
   // Send a file.
-  _CTX_TASK(void) Ctx::send_file(std::string & path, bool is_download) {
+  _CTX_TASK(void) Ctx::send_file(std::string& path, bool is_download) {
 #ifndef _WIN32 // Linux / Macos version with sendfile
     // Open the file in non blocking mode.
     int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
@@ -243,23 +242,23 @@ namespace fc {
     while (ov.Offset < content_length_) {
       bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_Bytes, &ov);
       if (rc) {
-         ov.Offset += g_Bytes; co_await this->fiber.write(output_stream.buffer_, g_Bytes);
-       } else {
-         if (GetLastError() == ERROR_IO_PENDING) {
-           if (errno == EINPROGRESS || errno == EINVAL) {
-             WaitForSingleObject(fd, 1000);//INFINITE
-             rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
-             if (rc) {
-               if (co_await this->fiber.write(output_stream.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
-             }
-           }
-         }
-         break;
-       }
-     }
+        ov.Offset += g_Bytes; co_await this->fiber.write(output_stream.buffer_, g_Bytes);
+      } else {
+        if (GetLastError() == ERROR_IO_PENDING) {
+          if (errno == EINPROGRESS || errno == EINVAL) {
+            WaitForSingleObject(fd, 1000);//INFINITE
+            rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
+            if (rc) {
+              if (co_await this->fiber.write(output_stream.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
+            }
+          }
+        }
+        break;
+      }
+    }
     content_length_ = 0;
 #endif
-    _CTX_return(1)
+    co_return;
   }
   void Ctx::prepare_next_request() {
     status_ = std::string_view("200 OK\r\n", 8); content_type = RES_NIL;

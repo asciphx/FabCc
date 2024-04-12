@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Welcome to 404 Not Found!</title>
   <style>
     body {
       width: 35em;
@@ -9,31 +7,28 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
   </style>
+<head>
+  <title>Welcome to 404 Not Found!</title>
 </head>
 <body>
-  <h1>Welcome to FabCc!</h1>
-{{#bug}}
-{{/bug}}
-
-{{#items}}
+  <center><h1>404 Not Found<img style="opacity: 0.55;position: relative;z-index: -1;margin: -36px 140px -99px 85px;padding-left: 67px;width: -webkit-fill-available"
+    src="./1.png" alt="Alternate Text" /></h1><p><em style="font-size: larger;">Thank '{{header}}' for using <a href="https://github.com/asciphx/FabCc/">FabCc🌐</a>. </em></p></center>
+  
+  {{#bug}}
+  {{/bug}}
+  
+  {{#items}}
   {{#first}}
     <li><strong>{{name}}</strong></li>
   {{/first}}
   {{#link}}
     <li><a href="{{url}}">{{name}}</a></li>
   {{/link}}
-{{/items}}
-
-{{#empty}}
+  {{/items}}
+  
+  {{#empty}}
   <p>The list is empty.</p>
-{{/empty}}
-  <p>
-    If you see this page, must be not found.
-  </p>
-  <p>
-    For online documentation and support please refer to
-    <a href="https://github.com/asciphx/FabCc/">FabCc WebServer</a>.<br />
-  <p><em>Thank '{{header}}' for using FabCc.🌐 </em></p>
-  <img style="opacity: 0.6;position: absolute;z-index: -1;width: initial" src="./1.png" alt="Alternate Text" />
+  {{/empty}}
+  <hr>
 </body>
 </html>

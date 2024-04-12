@@ -50,7 +50,7 @@ namespace fc {
   class Res {
     fc::Ctx& ctx;
     std::string body;
-    std::string& url;
+    std::string mask_url;
     friend class fc::Conn;
     friend struct fc::App;
     enum algorithm { // 15 is the default value for deflate
@@ -66,8 +66,7 @@ namespace fc {
       ctx.set_header(std::forward<std::string_view>(k), std::forward<std::string_view>(v));
     }
     _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { ctx.set_cookie(k, v); }
-    _FORCE_INLINE Res(fc::Ctx& ctx, std::string& u, App* ap): ctx(ctx), url(u), app(*ap) {}
-    uint16_t code{ 200 };// Check whether the response has a static file defined.
+    _FORCE_INLINE Res(fc::Ctx& ctx, App* ap): ctx(ctx), app(*ap) {}
     //Generally used to read configuration files, or slow io operations, return Json
     void write_async(std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
     //Generally used to read configuration files, or slow io operations, return string
@@ -80,6 +79,8 @@ namespace fc {
     inline void set_status(int s) { ctx.set_status(s); }
     std::string& compress_str(char* const str, unsigned int len);
     std::string& decompress_str(char* const str, unsigned int len);
+  private:
+    uint16_t code{ 200 };// Check whether the response has a static file defined.
   };// response
 }
 

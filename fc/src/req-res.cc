@@ -53,12 +53,12 @@ namespace fc {
   /******************************** ************************************/
   void Res::write(std::string&& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body = std::move(b); };
   void Res::write_async(std::function<json::Json()>&& f, short i) {
-    std::string b = app.get_cache(url); if (!b.empty()) { ctx.set_content_type("application/json", 16); body = std::move(b); return; }
-    b = std::move(f().str()); ctx.set_content_type("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(url, b, i);
+    std::string b = app.get_cache(mask_url); if (!b.empty()) { ctx.set_content_type("application/json", 16); body = std::move(b); return; }
+    b = std::move(f().str()); ctx.set_content_type("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };
   void Res::write_async_s(std::function<std::string()>&& f, short i) {
-    std::string b = app.get_cache(url); if (!b.empty()) { body = std::move(b); return; }
-    b = std::move(f()); b.shrink_to_fit(); body = b; app.set_cache(url, b, i);
+    std::string b = app.get_cache(mask_url); if (!b.empty()) { body = std::move(b); return; }
+    b = std::move(f()); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };
   std::string& Res::compress_str(char* const str, unsigned int len) {
     // Initialize with the default values, level default 8

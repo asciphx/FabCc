@@ -84,10 +84,10 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int bigsize = REScore + ids; int64_t sj = time(NULL), dq = time(NULL); bool fresh_end = false;
+      int bigsize = REScore + ids; int64_t sj = RES_TIME_T;
       while (RESquit_signal_catched) {
         if (RES_TP > t) {
-          loop_timer.tick(); if (!(fresh_end = dq > sj)) time(&dq);
+          loop_timer.tick();
           if (nthreads > 1) {
             if (this->idex > bigsize) { bigsize += RESmaxEVENTS; std::this_thread::yield(); }
           }
@@ -100,14 +100,15 @@ namespace fc {
         this->n_events = kevent(this->epoll_fd, NULL, 0, this->kevents, RESmaxEVENTS, &timeout);
 #endif
         if (_likely(this->n_events == 0)) {
-          if (fresh_end) {
+          if (RES_TIME_T > sj) {
             if (this->idex > bigsize) bigsize += RESmaxEVENTS << 1;
-#if __cplusplus >= _cpp20_date
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
-              if (ider->second.on == 0) { ider->second.on = 2; Task<int> v = std::move(ider->second._); if (v) v.operator()(); }
-            }
+#if __cplusplus >= _cpp20_date
+              if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
 #endif
-            sj = time(NULL) + 3;
+              if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0] && ider->second._) { ider->second.on = 2; ider->second._.operator()(); }
+            }
+            sj = RES_TIME_T + k_A[0];
           }
           if (bigsize > REScore)--bigsize;
         } else {
@@ -134,7 +135,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              ++ro->idx; epoll_del(this->event_fd); ro->on = 0; fc::Task<int> v = std::move(ro->_); if (v) v.operator()();
+              ++ro->idx; epoll_del(this->event_fd); ro->on = 0; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -170,7 +171,7 @@ namespace fc {
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-                ++this->idex;
+                ++this->idex; fib->on = 1;
 #if __cplusplus < _cpp20_date
                 this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_.operator()(); } });
                 fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
@@ -191,7 +192,7 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                Task<int> magic = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this); fib->on = 1;
+                Task<void> magic = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
                 fib->_ = std::move(magic); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
 #endif
               }

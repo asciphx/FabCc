@@ -4,14 +4,14 @@ using namespace fc;
 int main() {
   App app;
   app["/"] = [](Req& req, Res& res)_ctx {
-    res.write("<p>Hello, world!</p>"); _return
+    res.write("<p>Hello, world!</p>"); co_return;
   };
   app["/json"] = [](Req& req, Res& res)_ctx {
-    res.write(Json({ {"message", "Hello, World!"} })); _return
+    res.write(Json({ {"message", "Hello, World!"} })); co_return;
   };
   app["/plaintext"] = [](Req& req, Res& res)_ctx {
     res.set_content_type("text/plain;charset=UTF-8");
-    res.write("Hello, World!"); _return
+    res.write("Hello, World!"); co_return;
   };
   //app["/db"] = [](Req& req, Res& res)_ctx {
   //};

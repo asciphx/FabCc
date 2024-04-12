@@ -69,7 +69,7 @@
           document.getElementById("list").innerHTML = s;
         },
         error: function (data) {
-          document.getElementById("list").innerHTML = data.responseText;
+          document.getElementById("list").innerHTML = data.responseText;console.log(data.responseText);
           // document.getElementById("text").innerHTML = data.responseText; console.log(data);
         }
       });
