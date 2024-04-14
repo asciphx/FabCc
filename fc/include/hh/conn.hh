@@ -53,7 +53,7 @@
 #define _CTX_TASK(_) fc::Task<_>
 #define _CTX_back(_) co_return _;
 #define _CTX_return co_return;
-#define _ctx -> fc::Task<void>
+#define _ctx -> fc::Task<>
 //co_return
 #define _CTX_idx , int& idx
 #define _CTX_idex , idex(idx)

@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release") # 如果是Debug，那么_DEBUG宏生效
 endif()
 message(STATUS "CXX_COMPILER is ${CMAKE_CXX_COMPILER_ID}")
-# gcc/g++ >= 9.4.0, clang >= 10.1, msvc >= 19.28
+# gcc/g++ >= 9.4.0(x86-64 gcc >= 10.1), clang >= 10.1, msvc >= 19.28
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 # cmake --build ./ -- /p:Configuration=Release  ||  cmake --build ./ --config Release
 include(CheckIncludeFileCXX)
@@ -26,7 +26,7 @@ add_subdirectory(third-party/zlib)
 if(MSVC)
   cmake_host_system_information (RESULT CPU_NUMBER QUERY NUMBER_OF_LOGICAL_CORES)
   if(${CPU_NUMBER} VERSION_GREATER 6)
-    set(CPU_NUMBER 6)
+    set(CPU_NUMBER 5)
   endif()
   message(STATUS "Build CORES : ${CPU_NUMBER}")
   add_compile_options(/GA /utf-8 /MP${CPU_NUMBER} /Zc:__cplusplus)

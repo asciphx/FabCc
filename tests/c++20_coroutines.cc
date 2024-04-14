@@ -14,7 +14,7 @@
 * the modified version must be made available.
 */
 // C++20 Coroutine - Asciphx
-template <typename T>
+template <typename T = void>
 struct Task {
   Task() noexcept = default; Task(Task const&) noexcept = delete;
   struct promise_type; Task& operator=(Task const&) noexcept = delete;
@@ -89,7 +89,7 @@ template <> struct Task<void> {
     }
   }
 };
-Task<void> coro_0() {
+Task<> coro_0() {
   std::cout << '4'; co_await std::suspend_always{}; std::cout << '5'; co_return;
 }
 Task<int> coro_1() {

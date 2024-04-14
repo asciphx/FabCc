@@ -106,7 +106,7 @@ namespace fc {
 #if __cplusplus >= _cpp20_date
               if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
 #endif
-              if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0] && ider->second._) { ider->second.on = 2; ider->second._.operator()(); }
+              if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
             }
             sj = RES_TIME_T + k_A[0];
           }

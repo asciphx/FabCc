@@ -51,7 +51,7 @@ typedef unsigned long long u64;
 * the modified version must be made available.
 */// C++20 Coroutine for task - Asciphx
 namespace fc {
-  template <typename T>
+  template <typename T = void>
   struct Task {
     Task() noexcept = default; Task(Task const&) = delete;
     struct promise_type; Task& operator=(Task const&) = delete;
