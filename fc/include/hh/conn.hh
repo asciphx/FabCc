@@ -176,7 +176,7 @@ namespace fc {
     }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
-      if (rpg->on) epoll_del_cpp20(epoll_fd, socket_fd, idex), rpg->on = 0;
+      if (rpg->on) ++rpg->idx, rpg->on = 0, epoll_del_cpp20(epoll_fd, socket_fd, idex);
 #else
       rpg->on = 0;
 #endif
