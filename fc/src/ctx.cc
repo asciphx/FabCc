@@ -5,14 +5,12 @@
 static std::unordered_map<std::string, HANDLE> RES_FILES;
 #endif
 namespace fc {
-  void Ctx::format_top_headers() {
+  void Ctx::respond(size_t s) {
     (output_stream << RES_http_status << status_ << RES_server_tag << fc::server_name_).append("\r\n", 2);
 #if ! defined(__MINGW32__)
     output_stream.append("Date: ", 5) << REStop_h.top_header(); output_stream.append(" GMT\r\n", 6);
 #endif
-  }
-  void Ctx::respond(size_t s) {
-    format_top_headers(); if (content_type[0]) output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    if (content_type[0]) output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << s).append("\r\n\r\n", 4);
   }
   void Ctx::set_header(std::string_view& k, std::string_view& v) { output_stream.append(k).append(": ", 2).append(v).append("\r\n", 2); }

@@ -102,15 +102,15 @@ namespace fc {
         if (_likely(this->n_events == 0)) {
           if (RES_TIME_T > sj) {
             if (this->idex > bigsize) bigsize += RESmaxEVENTS << 1;
-            for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
 #if __cplusplus >= _cpp20_date
+            for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
               if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
-#endif
-              if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
+              // if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
             }
+#endif
             sj = RES_TIME_T + k_A[0];
+            if (bigsize > REScore)bigsize -= RESmaxEVENTS;
           }
-          if (bigsize > REScore)--bigsize;
         } else {
           epoll_event* kevents;
           for (i = 0; i < this->n_events; ++i) {

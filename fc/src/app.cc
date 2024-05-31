@@ -265,7 +265,7 @@ namespace fc {
             }
           } while (cur - rb <= end);
           // Read more data from the socket if the headers are not complete.
-          end += r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end)); if (0 == r || end == sizeof(rb)) { _CTX_return }
+          end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r || end == sizeof(rb)) { _CTX_return }
         }_:
 #ifdef _WIN32
         f.epoll_mod(EPOLLOUT | EPOLLRDHUP);

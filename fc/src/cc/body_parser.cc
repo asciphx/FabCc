@@ -46,7 +46,7 @@ namespace fc {
     std::string value(req.body.data(), req.body.size());
     if (content_length_) {
       if (ban_file) { req.fiber.shut(_READ); throw err::not_implemented("File not allowed!"); }
-      if (content_length_ > L * 1048576u) {
+      if (content_length_ > L * 1048576ll) {
         req.fiber.shut(_READ); std::string es; throw err::too_large(es << "Body size can't be biger than : " << L << "MB");
       }
       float mem{ GetMemUsage() };//not finish read
@@ -154,21 +154,21 @@ namespace fc {
         if (ps.st_size == p.size) return p;
         std::ofstream of(h, std::ios::trunc | std::ios::out | std::ios::binary);
         if (!of.is_open() || of.fail()) {
-          throw std::runtime_error("Failed to open;");
+          throw std::runtime_error("Failed to open1;");
         }
         of << p.data;
         if (of.fail()) {
-          throw std::runtime_error("Failed to write;");
+          throw std::runtime_error("Failed to write1;");
         }
         of.close(); return p;
       };
       std::ofstream of(h, std::ios::out | std::ios::app | std::ios::binary);
       if (!of.is_open() || of.fail()) {
-        throw std::runtime_error("Failed to open;");
+        throw std::runtime_error("Failed to open2;");
       }
       of << p.data;
       if (of.fail()) {
-        throw std::runtime_error("Failed to write;");
+        throw std::runtime_error("Failed to write2;");
       }
       of.close();
     } else { p.value += p.data; }
