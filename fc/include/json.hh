@@ -441,7 +441,7 @@ namespace json {
     _FORCE_INLINE std::string& dump(std::string& s, int indent = 4, int mdp = 16) const { return this->_json2pretty(s, indent, indent, mdp); }
     _FORCE_INLINE std::string str(int mdp = 16) const { std::string s(0xe0, 0); s.clear(); return this->str(s, mdp); }
     _FORCE_INLINE std::string dump(int i = 2, int m = 16) const { std::string s(0xe0, 0); s.clear(); return this->_json2pretty(s, i, i, m); }
-    _FORCE_INLINE std::string pretty(int indent = 4, int mdp = 16) const { std::string s; s.reserve(0xe0); this->dump(s, indent, mdp); return s; }
+    _FORCE_INLINE std::string pretty(int indent = 4, int mdp = 16) const { std::string s; s.reserve(0xe0); return this->_json2pretty(s, indent, indent, mdp); }
     // Parse Json from string, inverse to stringify.
     bool parse_from(const char* s, size_t n); _FORCE_INLINE bool parse_from(const char* s) { return this->parse_from(s, strlen(s)); } void reset();
     _FORCE_INLINE bool parse_from(const std::string& s) { return this->parse_from(s.data(), s.size()); } bool parse(const char* s, size_t n);
@@ -473,20 +473,21 @@ namespace json {
   }
   static const json::Json empty_str("", 1), nullContext;
 } // json
-typedef json::Json Json; _FORCE_INLINE std::string& operator<<(std::string& fs, const json::Json& x) { return x.str(fs); }
+_FORCE_INLINE std::string& operator<<(std::string& fs, const json::Json& x) { return x.str(fs); }
 template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
 _FORCE_INLINE std::string& operator<<(std::string& b, const box<T>& _v) {
-  if (_v) { Json j; std::Tuple<T>::to_json(j, const_cast<T*>(_v.operator->())); return b << j.str(); } return b.append("null", 4);
+  if (_v) { json::Json j; std::Tuple<T>::to_json(j, const_cast<T*>(_v.operator->())); return b << j.str(); } return b.append("null", 4);
 };
 template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
-_FORCE_INLINE std::string& operator<<(std::string& b, const T& _v) { Json j; std::Tuple<T>::to_json(j, const_cast<T*>(&_v)); return b << j.str(); };
+_FORCE_INLINE std::string& operator<<(std::string& b, const T& _v) { json::Json j; std::Tuple<T>::to_json(j, const_cast<T*>(&_v)); return b << j.str(); };
 template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
 _FORCE_INLINE std::ostream& operator<<(std::ostream& os, T& v) { std::string b; b << v; return os.write(b.data(), b.size()); }
 namespace fc {
+  typedef json::Json Json;
   template<typename T> static void to_json(json::Json& c, const box<T>* v) { if (c.size())c.reset(); if (*v) c = **v; else c = null; }
   template<typename T, std::enable_if_t<std::is_arr<T>::value>* = null>
   static void to_json(json::Json& c, T* v) {
-    using K = std::arr_pack_t<T>; if (c.size()) c = Json(Json::_arr_t()); Json j; auto t = v->begin(); if (t != v->end()) {
+    using K = std::arr_pack_t<T>; if (c.size()) c = Json(Json::_arr_t()); json::Json j; auto t = v->begin(); if (t != v->end()) {
       j = static_cast<K>(*t); c.push_back(j); while (++t != v->end())j = static_cast<K>(*t), c.push_back(j);
     }
   }
@@ -595,8 +596,8 @@ template <typename E>constexpr static int _idex(const E& e) { return fc::count_f
 #define REGIS(__VA_ARGS_,...) const std::string __VA_ARGS_::_name=fc::toSqlCase(#__VA_ARGS_);template<>struct std::Tuple<__VA_ARGS_>{\
 const constexpr static u32 _s=NUM_ARGS(__VA_ARGS__);constexpr static _FC_F_T $[]{ _EXP(_R$(_FC_FIELD,__VA_ARGS__)) };\
 static const constexpr std::tuple<_EXP(_M_$(_FC_TYPE,__VA_ARGS_,__VA_ARGS__))> __(){return std::make_tuple(_EXP(_M_$(_FC_PTR,__VA_ARGS_,__VA_ARGS__)));}\
-static void from_json(const Json& c,__VA_ARGS_* _) { _EXP(_R$(_FC_FROM,__VA_ARGS__)); }\
-static void to_json(Json& c,__VA_ARGS_* _) { if (c.size())c.reset(); _EXP(_R$(_FC_TO,__VA_ARGS__)); }\
+static void from_json(const fc::Json& c,__VA_ARGS_* _) { _EXP(_R$(_FC_FROM,__VA_ARGS__)); }\
+static void to_json(fc::Json& c,__VA_ARGS_* _) { if (c.size())c.reset(); _EXP(_R$(_FC_TO,__VA_ARGS__)); }\
   };
 #if __clang__
 #pragma clang diagnostic pop

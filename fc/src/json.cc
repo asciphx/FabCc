@@ -356,7 +356,7 @@ namespace json {
     }
   $:
     {
-      std::string s(b, p - b); const char* d = s.data(); char* $; double _ = ::strtod(d, &$); if (*$ == 0 || *d == 0) { v = new(_a.alloc()) Json::_H(_); return p - 1; }
+      std::string s(b, p - b); char* $; double _ = ::strtod(s.data(), &$); if (*$ == 0 || *s.data() == 0) { v = new(_a.alloc()) Json::_H(_); return p - 1; }
     }
     return 0;
   }

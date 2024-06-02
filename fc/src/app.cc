@@ -256,7 +256,7 @@ namespace fc {
           do {
             switch (*cur) {
             case '\n':
-              if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { cur += 1; of = cur - rb; goto _; } cur += 1; continue; }
+              if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { ++cur; of = cur - rb; goto _; } ++cur; continue; }
               if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
             case '\r':
               if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }

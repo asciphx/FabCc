@@ -3,7 +3,7 @@
 namespace test {
   DEF_test(json) {
     DEF_case(null) {
-      Json n;
+      fc::Json n;
       EXPECT(n.is_null());
       EXPECT_EQ(n.str(), "null");
       EXPECT_EQ(n.pretty(), "null");
@@ -16,7 +16,7 @@ namespace test {
       EXPECT_EQ(n.object_size(), 0);
     }
     DEF_case(bool) {
-      Json b = true;
+      fc::Json b = true;
       EXPECT(b.is_bool());
       EXPECT(b == true);
       EXPECT(b != false);
@@ -35,7 +35,7 @@ namespace test {
       EXPECT(b.is_null());
     }
     DEF_case(int) {
-      Json i = 0;
+      fc::Json i = 0;
       EXPECT(i.is_int());
       EXPECT(i == 0);
       EXPECT(i != 1);
@@ -48,7 +48,7 @@ namespace test {
       EXPECT_EQ(i.as_bool(), true);
       EXPECT_EQ(i.as_double(), 123.0);
       EXPECT_EQ(i.as_string(), "123");
-      Json x = (i64)12345;
+      fc::Json x = (i64)12345;
       EXPECT(x.is_int());
       EXPECT(x == (i64)12345);
       EXPECT_EQ(x.as_int64(), 12345);
@@ -59,7 +59,7 @@ namespace test {
       EXPECT(x.is_null());
     }
     DEF_case(uint) {
-      Json i = 0u;
+      fc::Json i = 0u;
       EXPECT(i.is_uint());
       EXPECT(i == 0);
       EXPECT(i != 1u);
@@ -72,7 +72,7 @@ namespace test {
       EXPECT_EQ(i.as_bool(), true);
       EXPECT_EQ(i.as_double(), 123.0);
       EXPECT_EQ(i.as_string(), "123");
-      Json x = UINT64_MAX;
+      fc::Json x = UINT64_MAX;
       EXPECT(x.is_uint());
       EXPECT(x == UINT64_MAX);
       EXPECT_EQ(x.as_int64(), -1);
@@ -83,7 +83,7 @@ namespace test {
       EXPECT(x.is_null());
     }
     DEF_case(double) {
-      Json d = 3.14;
+      fc::Json d = 3.14;
       EXPECT(d.is_double());
       EXPECT(d == 3.14);
       EXPECT_EQ(d.as_double(), 3.14);
@@ -102,7 +102,7 @@ namespace test {
       EXPECT_EQ(d.as_double(), 1.2e5);
     }
     DEF_case(string) {
-      Json s = "hello world";
+      fc::Json s = "hello world";
       EXPECT(s.is_string());
       EXPECT(s == "hello world");
       EXPECT(s == std::string("hello world"));
@@ -135,7 +135,7 @@ namespace test {
       EXPECT_EQ(s.as_bool(), true);
     }
     DEF_case(operator=) {
-      Json s = "hello world";
+      fc::Json s = "hello world";
       EXPECT(s.is_string());
       s = 1;
       EXPECT(s.is_int());
@@ -151,15 +151,15 @@ namespace test {
       EXPECT_EQ(s.as_string(), "xxx");
     }
     DEF_case(copy) {
-      Json x = 1;
-      Json y = x;
+      fc::Json x = 1;
+      fc::Json y = x;
       EXPECT(x.is_null());
       EXPECT_EQ(y.as_int(), 1);
-      Json o;
+      fc::Json o;
       o.add_member("y", y);
       EXPECT(y.is_null());
       EXPECT_EQ(o["y"].as_int(), 1);
-      Json a;
+      fc::Json a;
       a.push_back(o);
       EXPECT(o.is_null());
       EXPECT_EQ(a[0]["y"].as_int(), 1);
@@ -168,10 +168,10 @@ namespace test {
       EXPECT_EQ(o["a"][0]["y"].as_int(), 1);
     }
     DEF_case(initializer_list) {
-      Json a = { 1, 2, 3 };
+      fc::Json a = { 1, 2, 3 };
       EXPECT(a.is_array());
       EXPECT_EQ(a.size(), 3);
-      Json o = {
+      fc::Json o = {
         { "x", 3 },
         { "y", 7 },
         { "z", { 1, 2, 3 } },
@@ -193,24 +193,24 @@ namespace test {
       EXPECT_EQ(a[1][0].as_string(), "y");
     }
     DEF_case(dup) {
-      Json x = {
+      fc::Json x = {
         1, "xxx", 3.14
       };
-      Json y = x.dup();
+      fc::Json y = x.dup();
       EXPECT(!x.is_null());
       EXPECT(!y.is_null());
       EXPECT_EQ(x.str(), y.str());
-      Json o = {
+      fc::Json o = {
         { "x", 3 },
         { "y", "888" },
         { "z", { 1, 2, 3 } },
       };
-      Json v = o.dup();
+      fc::Json v = o.dup();
       EXPECT(!o.is_null());
       EXPECT_EQ(o.str(), v.str());
     }
     DEF_case(array) {
-      Json a = json::array();
+      fc::Json a = json::array();
       EXPECT(a.is_array());
       EXPECT_EQ(a.str(), "[]");
       EXPECT_EQ(a.pretty(), "[]");
@@ -218,7 +218,7 @@ namespace test {
       EXPECT_EQ(a.str(), "[0,1,2,3,4,5,6,7,8,9]");
       EXPECT_EQ(a[0].as_int(), 0);
       EXPECT_EQ(a[9].as_int(), 9);
-      Json v;
+      fc::Json v;
       v.push_back(1);
       v.push_back("hello");
       v.push_back(1.23);
@@ -231,11 +231,11 @@ namespace test {
       EXPECT_EQ(v["x"].as_int(), 23);
     }
     DEF_case(object) {
-      Json o = json::object();
+      fc::Json o = json::object();
       EXPECT(o.is_object());
       EXPECT_EQ(o.str(), "{}");
       EXPECT_EQ(o.pretty(), "{}");
-      Json v;
+      fc::Json v;
       v.add_member("name", "vin");
       v.add_member("age", 29);
       v.add_member("phone", "1234567");
@@ -244,12 +244,12 @@ namespace test {
       EXPECT_EQ(v.str(), "{\"name\":\"vin\",\"age\":29,\"phone\":\"1234567\"}");
       EXPECT_EQ(v["name"].as_string(), "vin");
       EXPECT_EQ(v["age"].as_int(), 29);
-      Json u = json::parse(v.str());
+      fc::Json u = json::parse(v.str());
       EXPECT(u.is_object());
       EXPECT_EQ(u.size(), 3);
       EXPECT_EQ(u["name"].as_string(), "vin");
       EXPECT_EQ(u["age"].as_int(), 29);
-      Json x = json::parse(v.pretty());
+      fc::Json x = json::parse(v.pretty());
       EXPECT(x.is_object());
       EXPECT_EQ(x.size(), 3);
       EXPECT_EQ(x["name"].as_string(), "vin");
@@ -267,7 +267,7 @@ namespace test {
       EXPECT_EQ(o.size(), 10);
       EXPECT_EQ(o.object_size(), 10);
       EXPECT_EQ(o["9"].as_int(), 9);
-      Json a = { 1, 2, 3 };
+      fc::Json a = { 1, 2, 3 };
       o.add_member("a", a);
       EXPECT(o["a"].is_array());
       EXPECT_EQ(o["a"][0].as_int(), 1);
@@ -277,14 +277,14 @@ namespace test {
       EXPECT_EQ(o[1].as_int(), 2);
     }
     DEF_case(has_member) {
-      Json v;
+      fc::Json v;
       v.add_member("apple", "666");
       EXPECT(v.has_member("apple"));
       EXPECT(!v.has_member("666"));
       EXPECT_EQ(v["apple"].as_string(), "666");
     }
     DEF_case(get) {
-      Json o = {
+      fc::Json o = {
         { "x", 3 },
         { "y", 7 },
         { "z", { 1, 2, 3 } },
@@ -301,9 +301,9 @@ namespace test {
     }
     DEF_case(set) {
       // {"a":1,"b":[0,1,2],"c":{"d":["oo"]}}
-      Json x;
+      fc::Json x;
       x.set("a", 1);
-      x.set("b", Json({ 0,1,2 }));
+      x.set("b", fc::Json({ 0,1,2 }));
       x.set("c", "d", 0, "oo");
       EXPECT_EQ(x.get("a").as_int(), 1);
       EXPECT_EQ(x.get("b", 0).as_int(), 0);
@@ -323,7 +323,7 @@ namespace test {
       EXPECT_EQ(x.get("a", 3).as_int(), 88);
     }
     DEF_case(remove) {
-      Json x = {
+      fc::Json x = {
         { "a", 1 },
         { "b", 2 },
         { "c", {1,2,3} },
@@ -347,7 +347,7 @@ namespace test {
       EXPECT_EQ(c[0].as_int(), 3);
     }
     DEF_case(erase) {
-      Json x = {
+      fc::Json x = {
         { "a", 1 },
         { "b", 2 },
         { "c", {1,2,3} },
@@ -371,7 +371,7 @@ namespace test {
       EXPECT_EQ(c[0].as_int(), 2);
     }
     DEF_case(iterator) {
-      Json v;
+      fc::Json v;
       EXPECT(v.begin() == v.end());
       v = 3;
       EXPECT(v.begin() == v.end());
@@ -381,7 +381,7 @@ namespace test {
       EXPECT(v.begin() == v.end());
       v = "hello";
       EXPECT(v.begin() == v.end());
-      Json a;
+      fc::Json a;
       a.push_back(1);
       a.push_back(2);
       a.push_back(3);
@@ -395,12 +395,12 @@ namespace test {
       EXPECT(it == a.end());
     }
     DEF_case(parse_null) {
-      Json v;
+      fc::Json v;
       EXPECT(v.parse_from("null"));
       EXPECT(v.is_null());
     }
     DEF_case(parse_bool) {
-      Json v = json::parse("false");
+      fc::Json v = json::parse("false");
       EXPECT(v.is_bool());
       EXPECT_EQ(v.as_bool(), false);
       v = json::parse("true");
@@ -408,7 +408,7 @@ namespace test {
       EXPECT_EQ(v.as_bool(), true);
     }
     DEF_case(parse_int) {
-      Json v = json::parse("32");
+      fc::Json v = json::parse("32");
       EXPECT(v.is_int());
       EXPECT_EQ(v.as_int(), 32);
       v = json::parse("-32");
@@ -432,7 +432,7 @@ namespace test {
       EXPECT(json::parse("2a").is_null());
     }
     DEF_case(parse_double) {
-      Json v = json::parse("0.3");
+      fc::Json v = json::parse("0.3");
       EXPECT(v.is_double());
       EXPECT_EQ(v.as_double(), 0.3);
       v = json::parse("7e-5");
@@ -463,7 +463,7 @@ namespace test {
       EXPECT(json::parse("123.4 56").is_null());
     }
     DEF_case(parse_string) {
-      Json v = json::parse("\"\"");
+      fc::Json v = json::parse("\"\"");
       EXPECT(v.is_string());
       EXPECT_EQ(v.str(), "\"\"");
       v = json::parse("\"hello world\"");
@@ -474,7 +474,7 @@ namespace test {
       EXPECT_EQ(v.str(), std::string().append({'"'}).append(300, 'x').append({'"'}));
     }
     DEF_case(parse_array) {
-      Json v = json::parse("[]");
+      fc::Json v = json::parse("[]");
       EXPECT(v.is_array());
       EXPECT_EQ(v.str(), "[]");
       v = json::parse("[ 1, 2 , \"hello\", [3,4,5] ]");
@@ -490,7 +490,7 @@ namespace test {
       EXPECT(json::parse(s).is_null());
     }
     DEF_case(parse_object) {
-      Json v = json::parse("{}");
+      fc::Json v = json::parse("{}");
       EXPECT(v.is_object());
       EXPECT_EQ(v.str(), "{}");
       v = json::parse("{\"key\": []}");
@@ -508,14 +508,14 @@ namespace test {
       v = json::parse(ss.data(), ss.size());
       EXPECT(v.is_object());
       EXPECT_EQ(v["hello"].as_int(), 23);
-      Json& u = v["world"];
+      fc::Json& u = v["world"];
       EXPECT_EQ(u["xxx"].str(), "99");
       std::string s("{}");
       s.resize(1);
       EXPECT(json::parse(s).is_null());
     }
     DEF_case(parse_escape) {
-      Json v;
+      fc::Json v;
       v.parse_from("{ \"a\":23, \n \r \t  \"b\":\"str\", \r\n }");
       EXPECT_EQ(v.str(), "{\"a\":23,\"b\":\"str\"}");
       v = json::parse("{ \"s\":\"\\\\s\" }");
@@ -529,7 +529,7 @@ namespace test {
       EXPECT_EQ(v["key"].as_string(), s);
     }
     DEF_case(parse_error) {
-      Json v;
+      fc::Json v;
       v.parse_from("");
       EXPECT(v.is_null());
       EXPECT(json::parse("").is_null());
