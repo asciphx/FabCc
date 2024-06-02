@@ -71,7 +71,7 @@ int main() {
   SetConsoleOutputCP(65001);
 #endif
   std::map<int, int> mp{ {1, 2}, { 2,3 }, { 3,4 } };
-  Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; fc::to_json(j, &mp); std::cout << j.str(); fc::to_json(j, &p);
+  fc::Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; fc::to_json(j, &mp); std::cout << j.str(); fc::to_json(j, &p);
   constexpr bool bb = std::is_reg<Book>::value;
   v = j.get<Person>();//like fc::from_json(j, &v);
   std::string str = j["name"].get<std::string>(); std::cout << str << "; " << bb;
