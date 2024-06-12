@@ -24,10 +24,17 @@ namespace json {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
+    static const char tb_table[] = { 16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
+    16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,0,1,2,3,4,5,6,7,8,9,16,16,16,16,16,16,16,10,11,12,13,14,15,
+    16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,10,11,12,13,14,15,16,16,16,16,16,16,16,16,
+    16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
+    16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
+    16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
+    16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16 };
     class Alloc {
       Array _a[4], _stack, _ustack; friend Parser; std::string _fs;
     public:
-      static const u32 N = 8192; Alloc(): _stack(), _ustack(0x20), _fs(0x60, '\0') {}
+      static const u32 N = 8192; Alloc(): _stack(), _ustack(0x20), _fs(0x80, '\0') {}
       _FORCE_INLINE void* alloc() { if (_a[0].empty()) { return ::malloc(16); } return _a[0].pop_back(); }
       _FORCE_INLINE void free(void* p) { _a[0].size() < ((N - Array::R) << 3) ? _a[0].push_back(p) : ::free(p); }
       _FORCE_INLINE void* alloc(u32 n) {
@@ -72,7 +79,7 @@ namespace json {
       char* s = static_cast<char*>(jalloc().alloc(static_cast<u32>(n) + 1)); memcpy(s, p, n); s[n] = '\0'; return s;
     }
     _FORCE_INLINE void* alloc_array(void** p, u32 n) {
-      _H* h = static_cast<_H*>(::malloc(sizeof(_H) + _PTR_LEN * n)); h->cap = h->size = n; memcpy(h->p, p, _PTR_LEN * n); return h;
+      _A* h = static_cast<_A*>(::malloc(sizeof(_A) + _PTR_LEN * n)); h->cap = h->size = n; memcpy(h->p, p, _PTR_LEN * n); return h;
     }
   } // xx
   _FORCE_INLINE char* make_key(xx::Alloc& a, const char*& p, size_t n) {
@@ -202,8 +209,7 @@ namespace json {
     }
     if (b == 0) goto err; s.push_back(val);
   arr_val_end:
-    skip_white_space(b, e);
-    //if (b == e) goto err;
+    skip_white_space(b, e); //if (b == e) goto err;
     if (*b == ',') goto arr_val_beg; if (*b == ']') goto val_end; goto err;
   val_end:
     if (s.size() > size) {
@@ -252,22 +258,11 @@ namespace json {
       }
     } while (true);
   }
-  _FORCE_INLINE const char* init_hex_table() {
-    static char tb[256];
-    memset(tb, 16, 256);
-    for (char c = '0'; c <= '9'; ++c) tb[static_cast<u8>(c)] = c - '0';
-    for (char c = 'A'; c <= 'F'; ++c) tb[static_cast<u8>(c)] = c - 'A' + 10;
-    for (char c = 'a'; c <= 'f'; ++c) tb[static_cast<u8>(c)] = c - 'a' + 10;
-    return tb;
-  }
   _FORCE_INLINE const char* parse_hex(const char* b, const char* e, u32& u) {
-    static const char* const tb = init_hex_table();
     u32 u0, u1, u2, u3;
     if (b + 4 <= e) {
-      u0 = tb[static_cast<u8>(b[0])];
-      u1 = tb[static_cast<u8>(b[1])];
-      u2 = tb[static_cast<u8>(b[2])];
-      u3 = tb[static_cast<u8>(b[3])];
+      u0 = xx::tb_table[static_cast<u8>(b[0])]; u1 = xx::tb_table[static_cast<u8>(b[1])];
+      u2 = xx::tb_table[static_cast<u8>(b[2])]; u3 = xx::tb_table[static_cast<u8>(b[3])];
       if (u0 == 16 || u1 == 16 || u2 == 16 || u3 == 16) return 0;
       u = (u0 << 12) | (u1 << 8) | (u2 << 4) | u3;
       return b + 3;
@@ -362,8 +357,7 @@ namespace json {
   }
   bool Parser::parse_comments(const char* b, const char* e, void*& val) {
     union { u32 state; void* pstate; }; union { u32 size;  void* psize; }; void* key; const char* p; size_t l = 0; char m;
-    xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0;
-    while (b < e && is_white_space(*b)) ++b; if (_unlikely(b == e)) return false;
+    xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0; while (b < e && is_white_space(*b)) ++b; if (b == e) return false;
   obj_txt:
     switch (*b) {
     case '/': ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; break; } } while (b < e && is_white_space(*b)) ++b; goto obj_txt; }
@@ -396,7 +390,7 @@ namespace json {
     skip_white_space(b, e); if (b == e) goto err; m = *b; if (m == ',') goto obj_val_beg; if (m == '}' || m == ']') goto val_end;
     if (*b == '/') {
       ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
-        while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } } goto err;
+        while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } }
       }
     }
     goto err;
@@ -423,7 +417,7 @@ namespace json {
     skip_white_space(b, e); m = *b; if (m == ',') goto arr_val_beg; if (m == ']') goto val_end;
     if (*b == '/') {
       ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
-        while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } } goto err;
+        while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } }
       }
     }
     goto err;
@@ -445,14 +439,9 @@ namespace json {
     }
     return false;
   }
-  //Quick parsing without annotations
-  bool Json::parse_from(const char* s, size_t n) {
-    if (_h) this->reset(); Parser parser; bool r = parser.parse(s, s + n, *(void**)&_h); if (_unlikely(!r && _h)) this->reset(); return r;
-  }
   //Parsing with comments (usually used to read configuration files)
   bool Json::parse(const char* s, size_t n) {
-    if (_h) this->reset(); Parser parser; bool r = parser.parse_comments(s, s + n, *(void**)&_h);
-    if (_unlikely(!r && _h)) this->reset(); return r;
+    Parser parser; bool r = parser.parse_comments(s, s + n, *(void**)&_h); if (_unlikely(!r && _h)) this->reset(); return r;
   }
   _FORCE_INLINE const char* find_escapse(const char* b, const char* e, char& c) {
 #if 1
@@ -483,8 +472,8 @@ namespace json {
       }
     }
 #else
-    for (const char* p = b; p < e; ++p) {
-      if ((c = xx::e2s_table[(u8)*p])) return p;
+    for (; b < e; ++b) {
+      if ((c = xx::e2s_table[static_cast<u8>(*b)])) return b;
     }
     return e;
 #endif

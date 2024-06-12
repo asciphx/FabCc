@@ -31,25 +31,25 @@
 namespace json {
   static const std::string RES_NULL("null", 4);
   namespace xx {
-    struct _H { u32 cap; u32 size; void* p[]; };
+    struct _A { u32 cap; u32 size; void* p[]; };
     class Array {
-      _H* _h;
+      _A* _a;
     public:
-      static constexpr const u32 N = _PTR_LEN, R = sizeof(_H) / _PTR_LEN, Z = 1024 - R; Array(): Array(Z) {} ~Array() { ::free(_h); }
-      _FORCE_INLINE explicit Array(u32 cap) { _h = (_H*) ::malloc(N * (R + cap)); _h->cap = cap; _h->size = 0; }
-      _FORCE_INLINE bool empty() const { return this->_h->size == 0; } _FORCE_INLINE void resize(u32 n) { _h->size = n; }
-      _FORCE_INLINE void** data() const { return _h->p; } _FORCE_INLINE u32 size() const { return _h->size; }
-      _FORCE_INLINE void* pop_back() { return _h->p[--_h->size]; } _FORCE_INLINE void*& back() const { return _h->p[this->_h->size - 1]; }
-      _FORCE_INLINE void*& operator[](u32 i) const { return _h->p[i]; }
+      static constexpr const u32 N = _PTR_LEN, R = sizeof(_A) / _PTR_LEN, Z = 1024 - R; Array(): Array(Z) {} ~Array() { ::free(_a); }
+      _FORCE_INLINE explicit Array(u32 cap) { _a = (_A*) ::malloc(N * (R + cap)); _a->cap = cap; _a->size = 0; }
+      _FORCE_INLINE bool empty() const { return this->_a->size == 0; } _FORCE_INLINE void resize(u32 n) { _a->size = n; }
+      _FORCE_INLINE void** data() const { return _a->p; } _FORCE_INLINE u32 size() const { return _a->size; }
+      _FORCE_INLINE void* pop_back() { return _a->p[--_a->size]; } _FORCE_INLINE void*& back() const { return _a->p[this->_a->size - 1]; }
+      _FORCE_INLINE void*& operator[](u32 i) const { return _a->p[i]; }
       void push_back(void* v) {
-        if (_h->size == _h->cap) { const size_t n = N * _h->cap, o = sizeof(_H) + n; _h = (_H*) ::realloc(_h, o + n); _h->cap <<= 1; }
-        _h->p[_h->size++] = v;
+        if (_a->size == _a->cap) { const size_t n = N * _a->cap, o = sizeof(_A) + n; _a = (_A*) ::realloc(_a, o + n); _a->cap <<= 1; }
+        _a->p[_a->size++] = v;
       }
-      _FORCE_INLINE void remove(u32 i) { if (i != --_h->size) _h->p[i] = _h->p[_h->size]; }
-      void remove_pair(u32 i) { if (i != (_h->size -= 2)) { _h->p[i] = _h->p[_h->size]; _h->p[i + 1] = _h->p[_h->size + 1]; } }
-      void erase(u32 i) { if (i != --_h->size) { memmove(_h->p + i, _h->p + i + 1, (_h->size - i) * N); } }
-      void erase_pair(u32 i) { if (i != (_h->size -= 2)) { memmove(_h->p + i, _h->p + i + 2, (_h->size - i) * N); } }
-      _FORCE_INLINE void reset() { _h->size = 0; if (_h->cap > 8192) { ::free(_h); new(this) Array(); } }
+      _FORCE_INLINE void remove(u32 i) { if (i != --_a->size) _a->p[i] = _a->p[_a->size]; }
+      void remove_pair(u32 i) { if (i != (_a->size -= 2)) { _a->p[i] = _a->p[_a->size]; _a->p[i + 1] = _a->p[_a->size + 1]; } }
+      void erase(u32 i) { if (i != --_a->size) { memmove(_a->p + i, _a->p + i + 1, (_a->size - i) * N); } }
+      void erase_pair(u32 i) { if (i != (_a->size -= 2)) { memmove(_a->p + i, _a->p + i + 2, (_a->size - i) * N); } }
+      _FORCE_INLINE void reset() { _a->size = 0; if (_a->cap > 8192) { ::free(_a); new(this) Array(); } }
     };
     void* alloc(); char* alloc_string(const void* p, size_t n);
   } // xx
@@ -61,8 +61,8 @@ namespace json {
       _H(u64& v) noexcept: type(t_uint), i(static_cast<i64>(v)) {} _H(u64&& v) noexcept: type(t_uint), i(std::move(static_cast<i64>(v))) {}
       _H(f64& v) noexcept: type(t_double), d(v) {} _H(f64&& v) noexcept: type(t_double), d(std::move(v)) {} _H(const char* p): _H(p, strlen(p)) {}
       _H(_obj_t&&) noexcept: type(t_object), p(0) {} _H(_arr_t&&) noexcept: type(t_array), p(0) {}
-      _H(const void* p, size_t&& n): type(t_string), size(std::move(static_cast<u32&&>(n))) { s = xx::alloc_string(p, size); }
-      _H(const void* p, size_t& n): type(t_string), size(static_cast<u32>(n)) { s = xx::alloc_string(p, size); }
+      _H(const void* p, size_t&& n): type(t_string), size(std::move(static_cast<u32&&>(n))), s(xx::alloc_string(p, size)) {}
+      _H(const void* p, size_t& n): type(t_string), size(static_cast<u32>(n)), s(xx::alloc_string(p, size)) {}
       u32 type, size; // size of string
       union {
         bool b;   // for bool
@@ -111,11 +111,11 @@ namespace json {
     }
     template<typename T, std::enable_if_t<std::is_mmp<std::remove_const_t<T>>::value>* = null>
     Json(std::remove_const_t<T>& v): _h(new(xx::alloc()) _H(_obj_t())) {
-      Json j; std::string b; b.reserve(0xe0); b << '{'; auto t = v.begin(); if (t != v.end()) {
+      Json j; std::string b; b.reserve(0x100); b << '{'; auto t = v.begin(); if (t != v.end()) {
         j = &t->second; b << '"' << t->first << '"' << ':' << j.str();
         while (++t != v.end()) { j = &t->second; b << ',' << '"' << t->first << '"' << ':' << j.str(); }
       }
-      b << '}'; this->parse_from(b.data(), b.size());
+      b << '}'; this->parse(b.data(), b.size());
     }
     Json(_obj_t&& $): _h(new(xx::alloc()) _H(std::move($))) {} Json(_arr_t&& $): _h(new(xx::alloc()) _H(std::move($))) {}
     // make Json from initializer_list
@@ -209,7 +209,7 @@ namespace json {
     std::string as_string() const {
       if (_h) {
         switch (_h->type) {
-        case t_double: { char s[16]; return std::string(s, milo::dtoa(_h->d, s, 0x10)); }
+        case t_double: { char s[20]; return std::string(s, milo::dtoa(_h->d, s, 0x10)); }
         case t_int: { char b[20]; return std::string(b, i64toa(b, _h->i) - b); }
         case t_uint: { char b[20]; return std::string(b, u64toa(b, static_cast<u64>(_h->i)) - b); }
         case t_string: return std::string(_h->s, _h->size);
@@ -327,7 +327,7 @@ namespace json {
     template <typename T, std::enable_if_t<std::is_mmp<T>::value>* = null>
     _FORCE_INLINE void operator=(const T& v) {
       *this = Json(Json::_obj_t()); if (!v.empty()) {
-        std::string b(0xe0, 0); for (auto& t : v) { b.clear(); b << t.first; this->add_member(b.c_str(), t.second); }
+        std::string b(0x100, 0); for (auto& t : v) { b.clear(); b << t.first; this->add_member(b.c_str(), t.second); }
       }
     }
     // set value for Json.
@@ -439,12 +439,11 @@ namespace json {
     //   - mdp: max decimal places for float point numbers.
     std::string& str(std::string& fs, int mdp = 16) const;
     _FORCE_INLINE std::string& dump(std::string& s, int indent = 4, int mdp = 16) const { return this->_json2pretty(s, indent, indent, mdp); }
-    _FORCE_INLINE std::string str(int mdp = 16) const { std::string s(0xe0, 0); s.clear(); return this->str(s, mdp); }
-    _FORCE_INLINE std::string dump(int i = 2, int m = 16) const { std::string s(0xe0, 0); s.clear(); return this->_json2pretty(s, i, i, m); }
-    _FORCE_INLINE std::string pretty(int indent = 4, int mdp = 16) const { std::string s; s.reserve(0xe0); return this->_json2pretty(s, indent, indent, mdp); }
+    _FORCE_INLINE std::string str(int mdp = 16) const { std::string s(0x100, 0); s.clear(); return this->str(s, mdp); }
+    _FORCE_INLINE std::string dump(int i = 2, int m = 16) const { std::string s(0x100, 0); s.clear(); return this->_json2pretty(s, i, i, m); }
+    _FORCE_INLINE std::string pretty(int indent = 4, int mdp = 16) const { std::string s(0x100, 0); s.clear(); return this->_json2pretty(s, indent, indent, mdp); }
     // Parse Json from string, inverse to stringify.
-    bool parse_from(const char* s, size_t n); _FORCE_INLINE bool parse_from(const char* s) { return this->parse_from(s, strlen(s)); } void reset();
-    _FORCE_INLINE bool parse_from(const std::string& s) { return this->parse_from(s.data(), s.size()); } bool parse(const char* s, size_t n);
+    bool parse(const char* s, size_t n); void reset(); _FORCE_INLINE bool parse(const char* s){ return this->parse(s, strlen(s)); };
     _FORCE_INLINE void swap(Json& v) noexcept { Json::_H* h = _h; _h = v._h; v._h = h; }_FORCE_INLINE void swap(Json&& v) noexcept { v.swap(*this); }
   private:
     friend class Parser; _H* _h; void* _dup() const; _FORCE_INLINE xx::Array& _array() const { return (xx::Array&)_h->p; }
@@ -459,11 +458,11 @@ namespace json {
   _FORCE_INLINE Json object() { return Json(Json::_obj_t()); }
   // make an object from initializer_list
   Json object(std::initializer_list<Json> v);
-  //Quick parsing without annotations
-  _FORCE_INLINE Json parse(const char* s, size_t n) { Json r; r.parse_from(s, n); return r; }
-  //Average parsing without comments
-  _FORCE_INLINE Json parse(const char* s) { Json r; r.parse_from(s, strlen(s)); return r; }
-  //Slow parsing with comments
+  //parsing with comments
+  _FORCE_INLINE Json parse(const char* s, size_t n) { Json r; r.parse(s, n); return r; }
+  //parsing with comments
+  _FORCE_INLINE Json parse(const char* s) { Json r; r.parse(s, strlen(s)); return r; }
+  //parsing with comments
   _FORCE_INLINE Json parse(const std::string& s) { Json r; r.parse(s.data(), s.size()); return r; }
   static Json read_file(const char* p) {
     struct stat t; if (-1 == stat(p, &t)) throw std::runtime_error("File not exist.");
@@ -493,7 +492,7 @@ namespace fc {
   }
   template<typename T, std::enable_if_t<std::is_mmp<T>::value && !std::is_reg<typename T::key_type>::value>* = null>
   static void to_json(json::Json& c, T* v) {
-    std::string b; b.reserve(0xe0); if (c.size()) c = Json(Json::_obj_t()); auto t = v->begin(); if (t != v->end()) {
+    std::string b; b.reserve(0x100); if (c.size()) c = Json(Json::_obj_t()); auto t = v->begin(); if (t != v->end()) {
       b << t->first; c.add_member(b.c_str(), t->second); while (++t != v->end()) { b.clear(); b << t->first; c.add_member(b.c_str(), t->second); }
     }
   }
