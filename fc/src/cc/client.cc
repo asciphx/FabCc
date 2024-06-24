@@ -97,8 +97,8 @@ namespace fc {
         if (0 == r) { break; }
         l += r;
       }$:
-      const char* path; size_t path_len, num = 0; int minor_version, status, flag = 0; _ssize_t content_length_;
-      flag = phr_parse_response(rb, of, &minor_version, &status, &path, &path_len, &headers, &num, &content_length_, 0);
+      const char* path; size_t path_len, last_len = 0; int minor_version, status, flag = 0; _ssize_t content_length_;
+      flag = phr_parse_response(rb, of, &minor_version, &status, &path, &path_len, &headers, &content_length_, last_len);
       if (content_length_ > 0) {
         int i = l - of; std::string_view sv(rb + of, i); if (i)this->body << sv;
         if (content_length_ > i) {
@@ -161,8 +161,8 @@ namespace fc {
         if (0 == r) { break; }
         l += r;
       }_:
-      const char* path; size_t path_len, num = 0; int minor_version, status, flag = 0; _ssize_t content_length_;
-      flag = phr_parse_response(rb, of, &minor_version, &status, &path, &path_len, &headers, &num, &content_length_, 0);
+      const char* path; size_t path_len, last_len = 0; int minor_version, status, flag = 0; _ssize_t content_length_;
+      flag = phr_parse_response(rb, of, &minor_version, &status, &path, &path_len, &headers, &content_length_, last_len);
       if (content_length_ > 0) {
         int i = l - of; std::string_view sv(rb + of, i); if (i)this->body << sv;
         if (content_length_ > i) {

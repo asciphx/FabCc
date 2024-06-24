@@ -206,7 +206,7 @@ namespace fc {
   }
   App& App::set_keep_alive(int idle, int intvl, unsigned char probes) { k_A[0] = idle; k_A[1] = intvl; k_A[2] = probes; return *this; }
   struct llParser: public llhttp__internal_s {
-    std::string& url; std::string_view& raw_url, header_field; fc::str_map& headers; cc::query_string& url_params;
+    std::string& url; std::string_view& raw_url, header_field, body; fc::str_map& headers; cc::query_string& url_params;
     llParser(std::string& u, std::string_view& a, fc::str_map& h, cc::query_string& q): url(u), raw_url(a), headers(h), url_params(q) {}
   };
   static int on_url(llhttp__internal_s* _, const char* c, size_t s) {
@@ -220,23 +220,26 @@ namespace fc {
   static int on_header_value(llhttp__internal_s* _, const char* c, size_t l) {
     llParser* $ = static_cast<llParser*>(_); $->headers.emplace($->header_field, std::string_view(c, l)); return 0;
   }
-  const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value };
+	static int on_body(llhttp__internal_s* _, const char* c, size_t l) {
+	  llParser* $ = static_cast<llParser*>(_); $->body = std::string_view(c, c + l); return 0;
+	}
+  const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value, nullptr, on_body };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
 #if __cplusplus < _cpp20_date
   static void make_http_processor(Conn& f, void* ap) {
 #else
   fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, int& idx, Reactor * rc) {
-    Conn f(fd, sa, k, ft, re, eh, idx);
+    Conn f(fd, sa, k, ft, re, eh, idx); int end = 0, r, last_len, pret;
 #if _OPENSSL
     if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { ++re->idx; if (re->on) epoll_del_cpp20(eh, fd, idx), re->on = 0; _CTX_return }
 #endif
 #endif
     fc::str_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP
-    llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r;
+    llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_;
 #else
-    const char* method, * path; size_t method_len, path_len, num; int flag, r, end = 0;
+    const char* method, * path; size_t method_len, path_len, of;
 #endif
     try {
       //#ifdef _WIN32
@@ -245,53 +248,65 @@ namespace fc {
       //        char id[11]; id[i2a(id, f.socket_fd) - id] = 0;
       //#endif // _WIN32
       while (RESon) {
-#if !_LLHTTP
-        num = flag = 0;
-#endif
-        // Read until there is a complete header.
-        if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } int of = end += r;
-        const char* cur = rb + (*rb == 71 ? r - 1 : r > 256 ? 127 : r >> 1);
-        while (RESon) {
-          // Look for end of header && save header lines.
+        if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
+#if _LLHTTP
+      _:pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+        if (pret == llhttp_errno::HPE_OK) {
+        } else if (pret > 20) {
+          if (end == static_cast<int>(sizeof(rb))) { _CTX_return } last_len = end;
+          end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+          goto _;
+        } else _CTX_return
+#else
+      _:pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
+        if (pret > 0) {
+          const char* cur = rb + (*rb == 71 ? r - 1 : r > 256 ? 127 : r >> 1);
           do {
             switch (*cur) {
             case '\n':
-              if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { ++cur; of = cur - rb; goto _; } ++cur; continue; }
-              if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto _; } cur += 3; continue; }
+              if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { ++cur; of = cur - rb; goto __; } ++cur; continue; }
+              if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; of = cur - rb; goto __; } cur += 3; continue; }
             case '\r':
-              if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto _; } cur += 2; continue; }
-              if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto _; }
+              if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; of = cur - rb; goto __; } cur += 2; continue; }
+              if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; of = cur - rb; goto __; }
             default:cur += 4;
             }
-          } while (cur - rb <= end);
-          // Read more data from the socket if the headers are not complete.
-          end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r || end == sizeof(rb)) { _CTX_return }
-        }_:
+          } while (cur - rb < end);
+        } else if (pret == -1) {
+          _CTX_return
+        } else if (pret == -2) {
+          if (end == static_cast<int>(sizeof(rb))) { _CTX_return } last_len = end;
+          end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+          goto _;
+        }
+        __:
+#endif
 #ifdef _WIN32
         f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
-        if (llhttp__internal_execute(&ll, rb, rb + of)) { _CTX_return } ctx.content_length_ = ll.content_length;
         Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
-        req.body = std::string_view(rb + of, end - of); ctx.http_minor = ll.http_minor; Res res(ctx, static_cast<App*>(ap));
+        ctx.content_length_ = ll.content_length; req.body = ll.body; ctx.http_minor = ll.http_minor; Res res(ctx, static_cast<App*>(ap));
         std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
         if (ll.finish) {
 #else
-        flag = phr_parse_request(rb, of, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &num, &ctx.content_length_);
-        if (flag < 0) { _CTX_return } ru = DecodeURL(path, path_len); path_len = ru.find('?');
+        ru = DecodeURL(path, path_len); path_len = ru.find('?');
         if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
           url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
         }
         Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
         req.body = std::string_view(rb + of, end - of); Res res(ctx, static_cast<App*>(ap));
         std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
-        if (end == flag && ctx.content_length_) {
+        if (end == pret && ctx.content_length_) {
 #endif
           //ctx.set_header("ip", req.ip_address().c_str()); ctx.set_header("id", id);
           int n = ++f.rpg->idx; f.is_idle = false;
           try {
             req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
             ctx.respond(res_body->size()); f.is_idle = true;
+#if _LLHTTP
+            llhttp_reset(&ll);
+#endif
           } catch (const http_error& e) {
             ctx.set_status(e.i()); *res_body = e.what(); ctx.respond(res_body->size());
           } catch (const std::exception& e) {
@@ -364,11 +379,11 @@ namespace fc {
           ctx.set_status(500); *res_body = e.what(); ctx.respond(res_body->size());
         }
         ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); co_await ctx.output_stream.flush(std::move(*res_body));
-        }
-      } catch (const std::runtime_error& e) {
-        std::cerr << "Err: " << e.what() << std::endl;
-      } co_return;
-    }
+      }
+    } catch (const std::runtime_error& e) {
+      std::cerr << "Err: " << e.what() << std::endl;
+    } co_return;
+  }
   void App::http_serve(int port, std::string ip, int nthreads) {
     if (!fc::is_directory(fc::directory_)) fc::create_directory(fc::directory_);
     if (!fc::is_directory(fc::directory_ + fc::upload_path_)) fc::create_directory(fc::directory_ + fc::upload_path_);
@@ -381,7 +396,7 @@ namespace fc {
 #endif
     start_server(ip, port, SOCK_STREAM, nthreads, make_http_processor, k_A, this, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
   }
-  } // namespace fc
+} // namespace fc
 #if __clang__
 #pragma clang diagnostic pop
 #endif

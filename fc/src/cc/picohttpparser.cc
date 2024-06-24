@@ -244,8 +244,9 @@ static const char* parse_http_version(const char* buf, const char* buf_end, int*
   PARSE_INT(minor_version, 1);
   return buf;
 }
-static const char* parse_headers(const char* buf, const char* buf_end, fc::str_map* headers, size_t* num_headers, int* ret, _ssize_t* c_l) {
-  for (;; ++*num_headers) {
+static const char* parse_headers(const char* buf, const char* buf_end, fc::str_map* headers, int* ret, _ssize_t* c_l) {
+  int num_headers = 0;
+  for (;; ++num_headers) {
     CHECK_EOF();
     if (*buf == '\015') {
       ++buf;
@@ -255,13 +256,13 @@ static const char* parse_headers(const char* buf, const char* buf_end, fc::str_m
       ++buf;
       break;
     }
-    if (*num_headers == max_headers) {
+    if (num_headers == max_headers) {
       *ret = -1;
       return NULL;
     }
     const char* $;
     size_t _;
-    if (!(*num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
+    if (!(num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
         /* parsing $, but do not discard SP before colon, see
          * http://www.mozilla.org/security/announce/2006/mfsa2006-33.html */
       if ((buf = parse_token(buf, buf_end, &$, &_, ':', ret)) == NULL) {
@@ -297,7 +298,7 @@ static const char* parse_headers(const char* buf, const char* buf_end, fc::str_m
   return buf;
 }
 static const char* parse_request(const char* buf, const char* buf_end, const char** method, size_t* method_len, const char** path,
-  size_t* path_len, int* minor_version, fc::str_map* headers, size_t* num_headers, _ssize_t* c_l, int* ret) {
+  size_t* path_len, int* minor_version, fc::str_map* headers, _ssize_t* c_l, int* ret) {
 /* skip first empty line (some clients add CRLF after POST content) */
   CHECK_EOF();
   if (*buf == '\015') {
@@ -335,10 +336,10 @@ static const char* parse_request(const char* buf, const char* buf_end, const cha
     *ret = -1;
     return NULL;
   }
-  return parse_headers(buf, buf_end, headers, num_headers, ret, c_l);
+  return parse_headers(buf, buf_end, headers, ret, c_l);
 }
 int phr_parse_request(const char* buf_start, size_t len, const char** method, size_t* method_len, const char** path,
-  size_t* path_len, int* minor_version, fc::str_map* headers, size_t* num_headers, _ssize_t* c_l) {
+  size_t* path_len, int* minor_version, fc::str_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf_start + len;
   int r;
   *method = NULL;
@@ -349,17 +350,17 @@ int phr_parse_request(const char* buf_start, size_t len, const char** method, si
   *minor_version = -1;
   /* if last_len != 0, check if the request is complete (a fast countermeasure
      againt slowloris */
-  //if (last_len != 0 && is_complete(buf, buf_end, last_len, &r) == NULL) {
-  //  return r;
-  //}
-  if ((buf = parse_request(buf, buf_end, method, method_len, path, path_len, minor_version, headers, num_headers, c_l,
+  if (last_len != 0 && is_complete(buf, buf_end, last_len, &r) == NULL) {
+   return r;
+  }
+  if ((buf = parse_request(buf, buf_end, method, method_len, path, path_len, minor_version, headers, c_l,
     &r)) == NULL) {
     return r;
   }
   return (int)(buf - buf_start);
 }
 static const char* parse_response(const char* buf, const char* buf_end, int* minor_version, int* status, const char** msg,
-  size_t* msg_len, fc::str_map* headers, size_t* num_headers, _ssize_t* c_l, int* ret) {
+  size_t* msg_len, fc::str_map* headers, _ssize_t* c_l, int* ret) {
 /* parse "HTTP/1.x" */
   if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
     return NULL;
@@ -397,10 +398,10 @@ static const char* parse_response(const char* buf, const char* buf_end, int* min
     *ret = -1;
     return NULL;
   }
-  return parse_headers(buf, buf_end, headers, num_headers, ret, c_l);
+  return parse_headers(buf, buf_end, headers, ret, c_l);
 }
 int phr_parse_response(const char* buf_start, size_t len, int* minor_version, int* status, const char** msg, size_t* msg_len,
-  fc::str_map* headers, size_t* num_headers, _ssize_t* c_l, size_t last_len) {
+  fc::str_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf + len;
   int r;
   *minor_version = -1;
@@ -413,12 +414,12 @@ int phr_parse_response(const char* buf_start, size_t len, int* minor_version, in
   if (last_len != 0 && is_complete(buf, buf_end, last_len, &r) == NULL) {
     return r;
   }
-  if ((buf = parse_response(buf, buf_end, minor_version, status, msg, msg_len, headers, num_headers, c_l, &r)) == NULL) {
+  if ((buf = parse_response(buf, buf_end, minor_version, status, msg, msg_len, headers, c_l, &r)) == NULL) {
     return r;
   }
   return (int)(buf - buf_start);
 }
-int phr_parse_headers(const char* buf_start, size_t len, fc::str_map* headers, size_t* num_headers, _ssize_t* c_l, size_t last_len) {
+int phr_parse_headers(const char* buf_start, size_t len, fc::str_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf + len;
   *c_l = 0;
   int r;
@@ -427,7 +428,7 @@ int phr_parse_headers(const char* buf_start, size_t len, fc::str_map* headers, s
   if (last_len != 0 && is_complete(buf, buf_end, last_len, &r) == NULL) {
     return r;
   }
-  if ((buf = parse_headers(buf, buf_end, headers, num_headers, &r, c_l)) == NULL) {
+  if ((buf = parse_headers(buf, buf_end, headers, &r, c_l)) == NULL) {
     return r;
   }
   return (int)(buf - buf_start);

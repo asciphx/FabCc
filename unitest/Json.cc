@@ -396,7 +396,7 @@ namespace test {
     }
     DEF_case(parse_null) {
       fc::Json v;
-      EXPECT(v.parse_from("null"));
+      EXPECT(v.parse("null"));
       EXPECT(v.is_null());
     }
     DEF_case(parse_bool) {
@@ -516,7 +516,7 @@ namespace test {
     }
     DEF_case(parse_escape) {
       fc::Json v;
-      v.parse_from("{ \"a\":23, \n \r \t  \"b\":\"str\", \r\n }");
+      v.parse("{ \"a\":23, \n \r \t  \"b\":\"str\", \r\n }");
       EXPECT_EQ(v.str(), "{\"a\":23,\"b\":\"str\"}");
       v = json::parse("{ \"s\":\"\\\\s\" }");
       EXPECT_EQ(v.str(), "{\"s\":\"\\\\s\"}")
@@ -530,7 +530,7 @@ namespace test {
     }
     DEF_case(parse_error) {
       fc::Json v;
-      v.parse_from("");
+      v.parse("");
       EXPECT(v.is_null());
       EXPECT(json::parse("").is_null());
       EXPECT(json::parse("{").is_null());
