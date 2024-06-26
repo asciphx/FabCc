@@ -304,9 +304,9 @@ namespace fc {
             llhttp_reset(&ll);
 #endif
           } catch (const http_error& e) {
-            ctx.set_status(e.i()); *res_body = e.what(); ctx.respond(res_body->size());
+            ctx.set_status(e.i()); *res_body = e.what(); ctx.output_stream.reset(); ctx.respond(res_body->size());
           } catch (const std::exception& e) {
-            ctx.set_status(500); *res_body = e.what(); ctx.respond(res_body->size());
+            ctx.set_status(500); *res_body = e.what(); ctx.output_stream.reset(); ctx.respond(res_body->size());
           }
           ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
           co_await ctx.output_stream.flush(std::move(*res_body)); time(&f.rpg->hrt);
@@ -369,10 +369,10 @@ namespace fc {
           default: ctx.respond(res_body->size());
           }
         } catch (const http_error& e) {// If error code is equal 500, record the log
-          ctx.set_status(e.i()); *res_body = e.what(); ctx.respond(res_body->size());
+          ctx.set_status(e.i()); *res_body = e.what(); ctx.output_stream.reset(); ctx.respond(res_body->size());
           if (e.i() == 500) std::cout << "ERROR<" << e.i() << ">: " << e.what() << std::endl;
         } catch (const std::exception& e) {//No logging is required as log takes up disk space
-          ctx.set_status(500); *res_body = e.what(); ctx.respond(res_body->size());
+          ctx.set_status(500); *res_body = e.what(); ctx.output_stream.reset(); ctx.respond(res_body->size());
         }
         ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); co_await ctx.output_stream.flush(std::move(*res_body));
       }
