@@ -8,7 +8,7 @@
 #include "hh/router.hh"
 namespace fc {
   HTTP c2m(const char* m, size_t l);
-  const char* m2c(HTTP m);
+  const std::string_view m2c(HTTP m);
   struct App {
     App();
     VH& operator[](const char* r);
