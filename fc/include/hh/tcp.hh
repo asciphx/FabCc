@@ -105,7 +105,7 @@ namespace fc {
 #if __cplusplus >= _cpp20_date
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
               if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
-              if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
+              // if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
             }
 #endif
             sj = RES_TIME_T + k_A[0];

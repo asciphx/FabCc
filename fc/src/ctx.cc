@@ -68,7 +68,7 @@ namespace fc {
   _CTX_TASK(void) Ctx::send_file_p(std::string& path, _Fsize_t pos, long long sizer) {
 #ifndef _WIN32 // Linux / Macos version with sendfile(can support larger than 4GB)
     // Open the file in non blocking mode.
-    int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+    int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
     long file_size = lseek(fd, (size_t)0, SEEK_END);
     // Writing the http headers.
@@ -85,12 +85,10 @@ namespace fc {
 #else
       int ret = ::sendfile(fiber.socket_fd, fd, &offset, sizer - offset);
 #endif
-      if (ret != -1) {
-        if (offset < sizer) continue;
-      } else if (errno == EPIPE) {
-        break;
-      } else {
-        if (errno != EAGAIN) {
+      if (ret == -1) {
+        if (errno == EPIPE) {
+          break;
+        } else if (errno != EAGAIN) {
           close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
           throw err::not_found("sendfile failed.");
         }
@@ -101,8 +99,8 @@ namespace fc {
 #endif
       }
     }
-    if (errno == EAGAIN) fiber.shut(_WRITE);
     close(fd);
+    if (errno == EAGAIN) fiber.shut(_WRITE);
 #else // Windows impl with basic sned_file method.(not support larger than 4GB)
     HANDLE fd; int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
     WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
@@ -175,7 +173,7 @@ namespace fc {
   _CTX_TASK(void) Ctx::send_file(std::string& path, bool is_download) {
 #ifndef _WIN32 // Linux / Macos version with sendfile
     // Open the file in non blocking mode.
-    int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+    int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
     long file_size = lseek(fd, (size_t)0, SEEK_END);
     // Writing the http headers.
