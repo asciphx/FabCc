@@ -70,7 +70,10 @@ namespace fc {
     // Open the file in non blocking mode.
     int fd = open(path.c_str(), O_RDONLY);
     if (fd == -1) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
-    long file_size = lseek(fd, (size_t)0, SEEK_END);
+    //// Plan to add a flow control strategy, especially for non-member video viewing
+    long file_size = sizer - pos;
+    //// File block transfer controls the size of each block, which can be used for flow control
+    // if (file_size > 16777216) file_size = 16777216, sizer = pos + 16777216;
     // Writing the http headers.
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
@@ -124,10 +127,13 @@ namespace fc {
     // #ifdef __MINGW32__
     //     else fd = af->second;
     // #endif
-    LARGE_INTEGER fileSize; GetFileSizeEx(fd, &fileSize); if (fileSize.QuadPart > UINT32_MAX) {
-      CloseHandle(fd); content_type = RES_NIL; throw err::not_extended("Can't larger than 4GB!");
-    }
-    content_length_ = static_cast<long long>(fileSize.QuadPart);
+    // LARGE_INTEGER fileSize; GetFileSizeEx(fd, &fileSize); if (fileSize.QuadPart > UINT32_MAX) {
+    //   CloseHandle(fd); content_type = RES_NIL; throw err::not_extended("Can't larger than 4GB!");
+    // }
+    //// Plan to add a flow control strategy, especially for non-member video viewing
+    content_length_ = sizer - pos;//static_cast<long long>(fileSize.QuadPart);
+    //// File block transfer controls the size of each block, which can be used for flow control
+    // if (content_length_ > 16777216) content_length_ = 16777216, sizer = pos + 16777216;
     // Writing the http headers.
     output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (output_stream << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
@@ -171,6 +177,7 @@ namespace fc {
   }
   // Send a file.
   _CTX_TASK(void) Ctx::send_file(std::string& path, bool is_download) {
+    //// Plan to add a flow control strategy, especially for downloading
 #ifndef _WIN32 // Linux / Macos version with sendfile
     // Open the file in non blocking mode.
     int fd = open(path.c_str(), O_RDONLY);
