@@ -31,14 +31,14 @@ namespace fc {
     std::string_view header(const std::string_view& k) const;
     std::string_view cookie(const char* k);
     std::string ip_address() const;
-    Req(HTTP method, std::string& url, std::string_view& params, str_map& headers, cc::query_string& q, Conn& fib,
+    Req(HTTP method, std::string& url, std::string_view& params, sv_map& headers, cc::query_string& q, Conn& fib,
       std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cache_file, double& max);
     std::string& url;
     std::string_view& raw_url;
     cc::query_string& params;
     double& USE_MAX_MEM_SIZE_MB;
     _Fsize_t length;
-    str_map& headers;
+    sv_map& headers;
     Conn& fiber;
     std::unique_ptr<fc::cache_file>& cache_file;
     std::unordered_map<std::string_view, std::string_view>& cookie_map;
@@ -46,41 +46,39 @@ namespace fc {
     void setTimeoutSec(std::function<void()>&& func, uint32_t seconds = 1);
     void setTimeout(std::function<void()>&& func, uint32_t milliseconds = 100);
   };// request
-
+  enum algorithm { // 15 is the default value for deflate
+    DEFLATE = 15, // windowBits can also be greater than 15 for optional gzip encoding.
+    // Add 16 to windowBits to write a simple gzip header and trailer around the compressed data instead of a zlib wrapper.
+    GZIP = 15 | 16,
+  };
   class Res {
     fc::Ctx& ctx;
-    std::string body;
-    std::string mask_url;
+    std::string body, mask_url;
     friend class fc::Conn;
     friend struct fc::App;
-    enum algorithm { // 15 is the default value for deflate
-      DEFLATE = 15, // windowBits can also be greater than 15 for optional gzip encoding.
-      // Add 16 to windowBits to write a simple gzip header and trailer around the compressed data instead of a zlib wrapper.
-      GZIP = 15 | 16,
-    };
   public:
     fc::App& app;
+    str_map headers;
+    //emplace a header
+    _FORCE_INLINE void add_header(const std::string& k, const std::string& v) { headers.emplace(k, std::move(v)); }
     _FORCE_INLINE void set_content_type(const char* v) { ctx.set_content_type(v, strlen(v)); };
     _FORCE_INLINE void set_content_type(const char* v, size_t l) { ctx.set_content_type(v, std::move(l)); };
-    _FORCE_INLINE void set_header(std::string_view&& k, std::string_view&& v) {
-      ctx.set_header(std::forward<std::string_view>(k), std::forward<std::string_view>(v));
-    }
+    //set a header
+    _FORCE_INLINE void set_header(const std::string& k, const std::string& v) { headers.erase(k); headers.emplace(k, std::move(v)); }
     _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { ctx.set_cookie(k, v); }
     _FORCE_INLINE Res(fc::Ctx& ctx, App* ap): ctx(ctx), app(*ap) {}
     //Generally used to read configuration files, or slow io operations, return Json
     void write_async(std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
     //Generally used to read configuration files, or slow io operations, return string
     void write_async_s(std::function<std::string()>&& f, short i = CACHE_HTML_TIME_SECOND);
-    _FORCE_INLINE void write(json::Json&& j) { ctx.set_content_type("application/json", 16); body = j.str(); };
     _FORCE_INLINE void write(const json::Json& j) { ctx.set_content_type("application/json", 16); body = j.str(); };
     _FORCE_INLINE void write(const std::string& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body = std::move(b); };
     _FORCE_INLINE void write(const char* b) { body = b; };
-    void write(std::string&& body_part);
     inline void set_status(int s) { ctx.set_status(s); }
     std::string& compress_str(char* const str, unsigned int len);
     std::string& decompress_str(char* const str, unsigned int len);
-  private:
-    uint16_t code{ 200 };// Check whether the response has a static file defined.
+	  // Location can either be a route or a full URL.
+    void redirect(const std::string& location, bool always = false);
   };// response
 }
 

@@ -5,18 +5,16 @@
 static std::unordered_map<std::string, HANDLE> RES_FILES;
 #endif
 namespace fc {
-  void Ctx::respond(size_t s) {
-    (output_stream << RES_http_status << status_ << RES_server_tag << fc::server_name_).append("\r\n", 2);
-#if ! defined(__MINGW32__)
-    output_stream.append("Date: ", 5) << REStop_h.top_header(); output_stream.append(" GMT\r\n", 6);
-#endif
-    if (content_type[0]) output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << s).append("\r\n\r\n", 4);
+  void Ctx::respond(size_t s, str_map& map) {
+	  for (auto& kv : map) ot.append(kv.first).append(RES_seperator).append(kv.second).append(RES_crlf);
+    if (content_type[0]) ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    (ot << RES_content_length_tag << s).append("\r\n\r\n", 4);
   }
-  void Ctx::set_header(std::string_view& k, std::string_view& v) { output_stream.append(k).append(": ", 2).append(v).append("\r\n", 2); }
-  void Ctx::set_header(std::string_view&& k, std::string_view&& v) { output_stream.append(k).append(": ", 2).append(v).append("\r\n", 2); }
+  void Ctx::add_header(const std::string_view& k, const std::string_view& v) { ot.append(k).append(": ", 2).append(v).append("\r\n", 2); }
+  void Ctx::add_header(const std::string_view& k, const char* v) { ot.append(k).append(": ", 2) << v; ot.append("\r\n", 2); }
+  void Ctx::add_header(const std::string_view& k, std::string&& v) { ot.append(k).append(": ", 2).append(std::move(v)).append("\r\n", 2); }
   void Ctx::set_cookie(std::string_view k, std::string_view v) {
-    (output_stream.append("Set-Cookie: ", 12).append(k) << '=').append(v).append("\r\n", 2);
+    (ot.append("Set-Cookie: ", 12).append(k) << '=').append(v).append("\r\n", 2);
   }//(\"\d+[ A-Za-z-]+\\r\\n\")
   void Ctx::set_status(int status) {
     switch (status) {
@@ -52,8 +50,8 @@ namespace fc {
   }
   // Send a file_sptr.(can support larger than 4GB)
   _CTX_TASK(void) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
-    output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << __->size_).append("\r\n\r\n", 4); co_await output_stream.flush();
+    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    (ot << RES_content_length_tag << __->size_).append("\r\n\r\n", 4); co_await ot.flush();
     __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size),
       [this](const char* s, int l, std::function<void()> d)_ctx{
       if (l > 0) { if ((co_await this->fiber.writen(s, l)) && d != nullptr) d(); }co_return; });
@@ -75,9 +73,9 @@ namespace fc {
     //// File block transfer controls the size of each block, which can be used for flow control
     // if (file_size > 16777216) file_size = 16777216, sizer = pos + 16777216;
     // Writing the http headers.
-    output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
-    co_await output_stream.flush();
+    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    (ot << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
+    co_await ot.flush();
     off_t offset = pos; lseek(fd, pos, SEEK_SET);
     while (offset < sizer) {
 #if __APPLE__ // sendfile on macos is slightly different...
@@ -135,26 +133,26 @@ namespace fc {
     //// File block transfer controls the size of each block, which can be used for flow control
     // if (content_length_ > 16777216) content_length_ = 16777216, sizer = pos + 16777216;
     // Writing the http headers.
-    output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (output_stream << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = output_stream.size();
-    bool rc = ReadFile(fd, output_stream.cursor_, static_cast<DWORD>(output_stream.cap_ - z), &g_Bytes, &ov);
+    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
+    OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = ot.size();
+    bool rc = ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - z), &g_Bytes, &ov);
     if (rc) {
-      ov.Offset += g_Bytes; if (!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
+      ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
     } else {
       if (GetLastError() == ERROR_IO_PENDING) {
         if (errno == EPIPE) { goto _; }
         WaitForSingleObject(fd, 1000);//INFINITE
         rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
         if (rc) {
-          ov.Offset += g_Bytes; if (!co_await this->fiber.writen(output_stream.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
+          ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
         }
       }
     }
     while (ov.Offset < sizer) {
-      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_Bytes, &ov);
+      bool rc = ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_Bytes; if (!co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) goto _;
+        ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, g_Bytes)) goto _;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
           if (errno == EPIPE) { goto _; }
@@ -163,7 +161,7 @@ namespace fc {
             rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
             if (rc) {
               ov.Offset += g_Bytes;
-              if (co_await this->fiber.writen(output_stream.buffer_, g_Bytes)) continue;
+              if (co_await this->fiber.writen(ot.buffer_, g_Bytes)) continue;
             }
           }
         }
@@ -184,10 +182,10 @@ namespace fc {
     if (fd == -1) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
     long file_size = lseek(fd, (size_t)0, SEEK_END);
     // Writing the http headers.
-    output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    if (is_download) (output_stream << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
-    else output_stream.append("Transfer-Encoding: chunked\r\n\r\n", 30);
-    co_await output_stream.flush();
+    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    if (is_download) (ot << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
+    else ot.append("Transfer-Encoding: chunked\r\n\r\n", 30);
+    co_await ot.flush();
     off_t offset = 0; lseek(fd, 0, 0);
     while (offset < file_size) {
 #if __APPLE__ // sendfile on macos is slightly different...
@@ -236,23 +234,23 @@ namespace fc {
     }
     content_length_ = static_cast<long long>(fileSize.QuadPart);
     // Writing the http headers.
-    output_stream.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    if (is_download) (output_stream << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    else output_stream.append("Transfer-Encoding: chunked\r\n\r\n", 30);
-    co_await output_stream.flush();
+    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
+    if (is_download) (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
+    else ot.append("Transfer-Encoding: chunked\r\n\r\n", 30);
+    co_await ot.flush();
     //::TransmitFile(socket_fd, fd, 0, 16777216, &ov, NULL, TF_DISCONNECT | TF_REUSE_SOCKET);//CloseHandle(fd);
     DWORD g_Bytes = 0; OVERLAPPED ov; memset(&ov, 0, sizeof(ov)); ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
     while (ov.Offset < content_length_) {
-      bool rc = ReadFile(fd, output_stream.buffer_, static_cast<DWORD>(output_stream.cap_), &g_Bytes, &ov);
+      bool rc = ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_Bytes; co_await this->fiber.write(output_stream.buffer_, g_Bytes);
+        ov.Offset += g_Bytes; co_await this->fiber.write(ot.buffer_, g_Bytes);
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
           if (errno == EINPROGRESS || errno == EINVAL) {
             WaitForSingleObject(fd, 1000);//INFINITE
             rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
             if (rc) {
-              if (co_await this->fiber.write(output_stream.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
+              if (co_await this->fiber.write(ot.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
             }
           }
         }

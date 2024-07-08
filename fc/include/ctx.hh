@@ -36,7 +36,7 @@
 #endif
 namespace fc {
   struct Ctx {
-    output_buffer output_stream;
+    output_buffer ot;//output_stream
     std::unordered_map<std::string_view, std::string_view> cookie_map;
     std::unique_ptr<fc::cache_file> cache_file;
     std::string_view content_type;
@@ -45,20 +45,21 @@ namespace fc {
     _Fsize_t content_length_;
     int http_minor{ 0 };
     Ctx(Conn& _fiber, char* rb, size_t l): fiber(_fiber), content_type("", 1), content_length_(0),
-      output_stream(rb, static_cast<int>(l), &_fiber), status_("200 OK\r\n", 8) {}
+      ot(rb, static_cast<int>(l), &_fiber), status_("200 OK\r\n", 8) {}
     Ctx& operator=(const Ctx&) = delete;
     Ctx(const Ctx&) = delete;
     _FORCE_INLINE void format_top_headers() {
-      (output_stream << RES_http_status << status_ << RES_server_tag << fc::server_name_).append("\r\n", 2);
+      (ot << RES_http_status << status_ << RES_server_tag << fc::server_name_).append("\r\n", 2);
 #if ! defined(__MINGW32__)
-      output_stream.append("Date: ", 5) << REStop_h.top_header(); output_stream.append(" GMT\r\n", 6);
+      ot.append("Date: ", 5) << REStop_h.top_header(); ot.append(" GMT\r\n", 6);
 #endif
     }
-    void respond(size_t s);
+    void respond(size_t s, str_map& map);
     _FORCE_INLINE void set_content_type(const std::string_view& sv) { if (!content_type[0])content_type = sv; };
     _FORCE_INLINE void set_content_type(const char* v, size_t&& l) { if (!content_type[0])content_type = std::string_view(v, l); };
-    void set_header(std::string_view& k, std::string_view& v);
-    void set_header(std::string_view&& k, std::string_view&& v);
+    void add_header(const std::string_view& k, const std::string_view& v);
+    void add_header(const std::string_view& k, const char* v);
+    void add_header(const std::string_view& k, std::string&& v);
     void set_cookie(std::string_view k, std::string_view v);
     void set_status(int status);
     // Send a file_sptr.(can support larger than 4GB)

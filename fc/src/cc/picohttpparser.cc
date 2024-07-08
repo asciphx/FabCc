@@ -244,7 +244,7 @@ static const char* parse_http_version(const char* buf, const char* buf_end, int*
   PARSE_INT(minor_version, 1);
   return buf;
 }
-static const char* parse_headers(const char* buf, const char* buf_end, fc::str_map* headers, int* ret, _ssize_t* c_l) {
+static const char* parse_headers(const char* buf, const char* buf_end, fc::sv_map* headers, int* ret, _ssize_t* c_l) {
   int num_headers = 0;
   for (;; ++num_headers) {
     CHECK_EOF();
@@ -298,7 +298,7 @@ static const char* parse_headers(const char* buf, const char* buf_end, fc::str_m
   return buf;
 }
 static const char* parse_request(const char* buf, const char* buf_end, const char** method, size_t* method_len, const char** path,
-  size_t* path_len, int* minor_version, fc::str_map* headers, _ssize_t* c_l, int* ret) {
+  size_t* path_len, int* minor_version, fc::sv_map* headers, _ssize_t* c_l, int* ret) {
 /* skip first empty line (some clients add CRLF after POST content) */
   CHECK_EOF();
   if (*buf == '\015') {
@@ -339,7 +339,7 @@ static const char* parse_request(const char* buf, const char* buf_end, const cha
   return parse_headers(buf, buf_end, headers, ret, c_l);
 }
 int phr_parse_request(const char* buf_start, size_t len, const char** method, size_t* method_len, const char** path,
-  size_t* path_len, int* minor_version, fc::str_map* headers, _ssize_t* c_l, size_t last_len) {
+  size_t* path_len, int* minor_version, fc::sv_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf_start + len;
   int r;
   *method = NULL;
@@ -360,7 +360,7 @@ int phr_parse_request(const char* buf_start, size_t len, const char** method, si
   return (int)(buf - buf_start);
 }
 static const char* parse_response(const char* buf, const char* buf_end, int* minor_version, int* status, const char** msg,
-  size_t* msg_len, fc::str_map* headers, _ssize_t* c_l, int* ret) {
+  size_t* msg_len, fc::sv_map* headers, _ssize_t* c_l, int* ret) {
 /* parse "HTTP/1.x" */
   if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
     return NULL;
@@ -401,7 +401,7 @@ static const char* parse_response(const char* buf, const char* buf_end, int* min
   return parse_headers(buf, buf_end, headers, ret, c_l);
 }
 int phr_parse_response(const char* buf_start, size_t len, int* minor_version, int* status, const char** msg, size_t* msg_len,
-  fc::str_map* headers, _ssize_t* c_l, size_t last_len) {
+  fc::sv_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf + len;
   int r;
   *minor_version = -1;
@@ -419,7 +419,7 @@ int phr_parse_response(const char* buf_start, size_t len, int* minor_version, in
   }
   return (int)(buf - buf_start);
 }
-int phr_parse_headers(const char* buf_start, size_t len, fc::str_map* headers, _ssize_t* c_l, size_t last_len) {
+int phr_parse_headers(const char* buf_start, size_t len, fc::sv_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf + len;
   *c_l = 0;
   int r;

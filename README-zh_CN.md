@@ -86,6 +86,9 @@ int main() {
       char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
       }); co_return;//设置默认的路由
   };
+  app["/redirect"] = [](Req& req, Res& res)_ctx {
+    res.redirect("https://www.github.com"); co_return;
+  };
   app["/get_upload"] = [](Req& req, Res& res)_ctx {
     res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;

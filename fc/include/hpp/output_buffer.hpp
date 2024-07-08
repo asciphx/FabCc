@@ -20,7 +20,7 @@ namespace fc {
     _FORCE_INLINE
 #endif
       _CTX_TASK(void) flush() { co_await flush_->write(buffer_, int(size())); reset(); co_return; }
-    _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(append, std::string_view&);
+    _OPT(operator<<, const std::string_view&)_OPT(operator<<, std::string_view&&)_OPT(append, const std::string_view&);_OPT(append, const std::string&);
 #if __cplusplus < _cpp20_date
     _FORCE_INLINE
 #endif

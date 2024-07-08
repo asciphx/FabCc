@@ -35,10 +35,10 @@
 #endif
  /* returns number of bytes consumed if successful, -2 if request is partial, -1 if failed */
 int phr_parse_request(const char* buf, size_t len, const char** method, size_t* method_len, const char** path, size_t* path_len,
-  int* minor_version, fc::str_map* headers, _ssize_t* c_l, size_t last_len);
+  int* minor_version, fc::sv_map* headers, _ssize_t* c_l, size_t last_len);
 int phr_parse_response(const char* _buf, size_t len, int* minor_version, int* status, const char** msg, size_t* msg_len,
-  fc::str_map* headers, _ssize_t* c_l, size_t last_len); /* ditto */
-int phr_parse_headers(const char* buf, size_t len, fc::str_map* headers, _ssize_t* c_l, size_t last_len);
+  fc::sv_map* headers, _ssize_t* c_l, size_t last_len); /* ditto */
+int phr_parse_headers(const char* buf, size_t len, fc::sv_map* headers, _ssize_t* c_l, size_t last_len);
 #ifdef __cplusplus
 extern "C" {
 #endif

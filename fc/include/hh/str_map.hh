@@ -16,12 +16,20 @@
 */
 namespace fc {
   struct str_hash {
-    unsigned int operator()(const std::string_view& z) const;
+    unsigned int operator()(const std::string& z) const;
   };
   struct str_key_eq {
+    bool operator()(const std::string& l, const std::string& r) const;
+  };
+  using str_map = std::unordered_multimap<std::string, std::string, str_hash, str_key_eq>;
+  
+  struct sv_hash {
+    unsigned int operator()(const std::string_view& z) const;
+  };
+  struct sv_key_eq {
     bool operator()(const std::string_view& l, const std::string_view& r) const;
   };
-  using str_map = std::unordered_multimap<std::string_view, std::string_view, str_hash, str_key_eq>;
-  static const str_key_eq STR_KEY_EQ;
+  using sv_map = std::unordered_multimap<std::string_view, std::string_view, sv_hash, sv_key_eq>;
+  static const sv_key_eq STR_KEY_EQ;
 }
 #endif // STR_MAP_H

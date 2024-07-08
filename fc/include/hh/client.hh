@@ -48,7 +48,7 @@ namespace fc {
     std::string& get(const std::string& url = "/", const std::string& body = "", int n = 6);
     void add_header(const char* k, const char* v) { header.append(k).append(": ", 2).append(v).append("\r\n", 2); }
     int close();
-    fc::str_map headers;
+    fc::sv_map headers;
     std::string body;
   private:
     std::string header;

@@ -2,7 +2,7 @@
 #include <hh/http_error.hh>
 #include <app.hh>
 namespace fc {
-  Req::Req(HTTP m, std::string& u, std::string_view& p, str_map& h, cc::query_string& q, Conn& fib,
+  Req::Req(HTTP m, std::string& u, std::string_view& p, sv_map& h, cc::query_string& q, Conn& fib,
     std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cache, double& max): fiber(fib), length(0),
     method(m), url(u), raw_url(p), headers(h), params(q), cookie_map(cookie_map), cache_file(cache), USE_MAX_MEM_SIZE_MB(max) {}
   // void Req::add_header(std::string key, std::string value) { headers.emplace(std::move(key), std::move(value)); }
@@ -51,7 +51,9 @@ namespace fc {
     }
   }
   /******************************** ************************************/
-  void Res::write(std::string&& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body = std::move(b); };
+  void Res::redirect(const std::string& location, bool always) {
+    ctx.ot.reset(); ctx.set_status(always ? 301 : 302); headers.erase({ "Location", 8 }); headers.emplace(RES_Loc, std::move(location));
+  }
   void Res::write_async(std::function<json::Json()>&& f, short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { ctx.set_content_type("application/json", 16); body = std::move(b); return; }
     b = std::move(f().str()); ctx.set_content_type("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
@@ -62,7 +64,7 @@ namespace fc {
   };
   std::string& Res::compress_str(char* const str, unsigned int len) {
     // Initialize with the default values, level default 8
-    char buffer[0x800]; z_stream stream{};
+    char buffer[0x800]; z_stream stream{}; int code{ 200 };
     if (::deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, algorithm::GZIP, 6, Z_DEFAULT_STRATEGY) == Z_OK) {
       stream.avail_in = len; // zlib does not take a const pointer. The data is not altered.
       stream.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(str));
