@@ -246,9 +246,9 @@ namespace fc {
 // #else
 //     char id[11]; id[i2a(id, f.socket_fd) - id] = 0;
 // #endif // _WIN32
-    while (RESon) {
+    do {
       if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
-      while (RESon) {
+      do {
 #if _LLHTTP
         if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
         if (pret == llhttp_errno::HPE_OK) {
@@ -279,7 +279,7 @@ namespace fc {
           last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
         }
 #endif
-      }
+      } while (RESon);
 #ifdef _WIN32
       f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
@@ -379,7 +379,7 @@ namespace fc {
         ctx.set_status(500); *res_body = e.what(); ctx.ot.reset(); ctx.format_top_headers(); ctx.respond(res_body->size(), res.headers);
       }
       ctx.prepare_next_request(); end = 0; hd.clear(); up.clear(); co_await ctx.ot.flush(std::move(*res_body));
-    }
+    } while (RESon);
     co_return;
   }
   void App::http_serve(int port, std::string ip, int nthreads) {

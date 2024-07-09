@@ -144,7 +144,7 @@ namespace fc {
             // Handle new connections.
             else if (listen_fd == this->event_fd) {
               // ACCEPT INCOMMING CONNECTION
-              while (RESon) {
+              do {
                 socket_type socket_fd = accept(listen_fd, this->in_addr, &this->in_len);
                 // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
 #ifndef _WIN32
@@ -195,7 +195,7 @@ namespace fc {
                 Task<void> magic = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
                 fib->_ = std::move(magic); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
 #endif
-              }
+              } while (RESon);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
           }
         }

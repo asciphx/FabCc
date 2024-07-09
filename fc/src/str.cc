@@ -30,23 +30,23 @@ namespace fc {
   }
   std::string_view DecodeURL(const char*& s, size_t l) {
     char* o = const_cast<char*>(s), * c = const_cast<char*>(s);
-    const char* e = c + l; while (c < e) {
+    const char* e = c + l; do {
       if (*c == '%' && c < e - 2 && _X[c[1]] != 0x10 && _X[c[2]] != 0x10) {
         *o = (_X[c[1]] << 4) | _X[c[2]]; c += 3; ++o; continue;
       }
       if (*c == '+') { *o = ' '; ++o; ++c; continue; }
       if (o != c) *o = *c; ++o; ++c;
-    } return std::string_view(s, o - s);
+    } while (c < e); return std::string_view(s, o - s);
   }
   std::string_view DecodeURL(const char* s) {
     size_t l = strlen(s); char* o = const_cast<char*>(s), * c = const_cast<char*>(s);
-    const char* e = c + l; while (c < e) {
+    const char* e = c + l; do {
       if (*c == '%' && c < e - 2 && _X[c[1]] != 0x10 && _X[c[2]] != 0x10) {
         *o = (_X[c[1]] << 4) | _X[c[2]]; c += 3; ++o; continue;
       }
       if (*c == '+') { *o = ' '; ++o; ++c; continue; }
       if (o != c) *o = *c; ++o; ++c;
-    } return std::string_view(s, o - s);
+    } while (c < e); return std::string_view(s, o - s);
   }
   static const char _H[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0x2b, 0x21, 0, 0x23, 0x24, 0, 0x26, 0x27, 0x28, 0x29, 0x2a, 0, 0x2c, 0x2d, 0x2e,
@@ -67,7 +67,7 @@ namespace fc {
     } return r;
   }
   std::string EncodeURL(const char* c) {
-    std::string r; while (*c) {
+    std::string r; do {
       if (*c > '\377') {
         if (_H[*c]) { r.push_back(_H[*c]); ++c; continue; }
         r.push_back(0x25); char o = (*c & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
@@ -75,7 +75,7 @@ namespace fc {
       }
       r.push_back(0x25); char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
       o = static_cast<uint8_t>(*c) & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o); ++c;
-    } return r;
+    } while (*c); return r;
   }
   static const char _2396[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
@@ -93,7 +93,7 @@ namespace fc {
     } return r;
   }//RFC2396
   std::string EncodeURLComponent(const char* c) {
-    std::string r; while (*c) {
+    std::string r; do {
       if (*c > '\377') {
         if (_2396[*c]) { r.push_back(*c); ++c; continue; }
         r.push_back(0x25); char o = (*c & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
@@ -101,27 +101,22 @@ namespace fc {
       }
       r.push_back(0x25); char o = (static_cast<uint8_t>(*c) & 0xF0) >> 4; o += o > 9 ? 0x37 : 0x30; r.push_back(o);
       o = static_cast<uint8_t>(*c) & 0x0F; o += o > 9 ? 0x37 : 0x30; r.push_back(o); ++c;
-    } return r;
+    } while (*c); return r;
   }
   std::string& toUpperCase(std::string& s) {
-    char* c = const_cast<char*>(s.c_str()); if (*c > 0x60 && *c < 0x7b) { *c &= ~0x20; }
-    while (*++c) { if (*c > 0x60 && *c < 0x7b) *c &= ~0x20; } return s;
+    char* c = const_cast<char*>(s.c_str()); do { if (*c > 0x60 && *c < 0x7b) *c &= ~0x20; } while (*++c); return s;
   }
   std::string toUpperCase(const char* s) {
-    std::string e; if (*s > 0x60 && *s < 0x7b) { e.push_back(*s - 0x20); } else { e.push_back(*s); }
-    while (*++s) { if (*s > 0x60 && *s < 0x7b) { e.push_back(*s - 0x20); } else { e.push_back(*s); } } return e;
+    std::string e; do { if (*s > 0x60 && *s < 0x7b) e.push_back(*s - 0x20); else e.push_back(*s); } while (*++s); return e;
   }
   std::string& toLowerCase(std::string& s) {
-    char* c = const_cast<char*>(s.c_str()); if (*c > 0x40 && *c < 0x5b) { *c |= 0x20; }
-    while (*++c) { if (*c > 0x40 && *c < 0x5b) *c |= 0x20; } return s;
+    char* c = const_cast<char*>(s.c_str()); do { if (*c > 0x40 && *c < 0x5b) *c |= 0x20; } while (*++c); return s;
   }
   std::string toLowerCase(std::string&& s) {
-    char* c = const_cast<char*>(s.c_str()); if (*c > 0x40 && *c < 0x5b) { *c |= 0x20; }
-    while (*++c) { if (*c > 0x40 && *c < 0x5b) *c |= 0x20; } return s;
+    char* c = const_cast<char*>(s.c_str()); do { if (*c > 0x40 && *c < 0x5b) *c |= 0x20; } while (*++c); return s;
   }
   std::string toLowerCase(const char* s) {
-    std::string e; if (*s > 0x40 && *s < 0x5b) e.push_back(*s + 0x20); else e.push_back(*s); 
-    while (*++s) { if (*s > 0x40 && *s < 0x5b) e.push_back(*s + 0x20); else e.push_back(*s); } return e;
+    std::string e; do { if (*s > 0x40 && *s < 0x5b) e.push_back(*s + 0x20); else e.push_back(*s); } while (*++s); return e;
   }
   std::string toSqlCase(const char* s) {
     std::string e; if (*s > 0x40 && *s < 0x5b) { e.push_back(*s + 0x20); }

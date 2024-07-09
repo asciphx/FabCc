@@ -77,7 +77,7 @@ namespace fc {
     (ot << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
     co_await ot.flush();
     off_t offset = pos; lseek(fd, pos, SEEK_SET);
-    while (offset < sizer) {
+    do {
 #if __APPLE__ // sendfile on macos is slightly different...
       off_t nwritten = 0;
       int ret = ::sendfile(fd, fiber.socket_fd, offset, &nwritten, nullptr, 0);
@@ -99,7 +99,7 @@ namespace fc {
         co_await std::suspend_always{};
 #endif
       }
-    }
+    } while (offset < sizer);
     close(fd);
     if (errno == EAGAIN) fiber.shut(_WRITE);
 #else // Windows impl with basic sned_file method.(not support larger than 4GB)
@@ -149,7 +149,7 @@ namespace fc {
         }
       }
     }
-    while (ov.Offset < sizer) {
+    do {
       bool rc = ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov);
       if (rc) {
         ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, g_Bytes)) goto _;
@@ -167,7 +167,7 @@ namespace fc {
         }
         goto _;
       }
-    }
+    } while (ov.Offset < sizer);
     if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE); _: CloseHandle(fd);
     content_length_ = 0; ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
@@ -187,7 +187,7 @@ namespace fc {
     else ot.append("Transfer-Encoding: chunked\r\n\r\n", 30);
     co_await ot.flush();
     off_t offset = 0; lseek(fd, 0, 0);
-    while (offset < file_size) {
+    do {
 #if __APPLE__ // sendfile on macos is slightly different...
       off_t nwritten = 0;
       int ret = ::sendfile(fd, fiber.socket_fd, offset, &nwritten, nullptr, 0);
@@ -209,7 +209,7 @@ namespace fc {
         //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
         throw err::not_found("sendfile failed.");
       }
-    }
+    } while (offset < file_size);
     close(fd);
 #else // Windows impl with basic read write.
     HANDLE fd;
@@ -240,7 +240,7 @@ namespace fc {
     co_await ot.flush();
     //::TransmitFile(socket_fd, fd, 0, 16777216, &ov, NULL, TF_DISCONNECT | TF_REUSE_SOCKET);//CloseHandle(fd);
     DWORD g_Bytes = 0; OVERLAPPED ov; memset(&ov, 0, sizeof(ov)); ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
-    while (ov.Offset < content_length_) {
+    do {
       bool rc = ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov);
       if (rc) {
         ov.Offset += g_Bytes; co_await this->fiber.write(ot.buffer_, g_Bytes);
@@ -256,7 +256,7 @@ namespace fc {
         }
         break;
       }
-    }
+    } while (ov.Offset < content_length_);
     content_length_ = 0;
 #endif
     co_return;
