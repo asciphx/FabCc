@@ -6,7 +6,7 @@ static std::unordered_map<std::string, HANDLE> RES_FILES;
 #endif
 namespace fc {
   void Ctx::respond(size_t s, str_map& map) {
-	  for (auto& kv : map) ot.append(kv.first).append(RES_seperator).append(kv.second).append(RES_crlf);
+    for (auto& kv : map) ot.append(kv.first).append(RES_seperator).append(kv.second).append(RES_crlf);
     if (content_type[0]) ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (ot << RES_content_length_tag << s).append("\r\n\r\n", 4);
   }

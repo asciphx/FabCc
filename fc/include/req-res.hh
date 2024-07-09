@@ -58,13 +58,9 @@ namespace fc {
     friend struct fc::App;
   public:
     fc::App& app;
-    str_map headers;
-    //emplace a header
-    _FORCE_INLINE void add_header(const std::string& k, const std::string& v) { headers.emplace(k, std::move(v)); }
+    str_map headers; //`res.headers["..."] = "...";` to set headers
     _FORCE_INLINE void set_content_type(const char* v) { ctx.set_content_type(v, strlen(v)); };
     _FORCE_INLINE void set_content_type(const char* v, size_t l) { ctx.set_content_type(v, std::move(l)); };
-    //set a header
-    _FORCE_INLINE void set_header(const std::string& k, const std::string& v) { headers.erase(k); headers.emplace(k, std::move(v)); }
     _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { ctx.set_cookie(k, v); }
     _FORCE_INLINE Res(fc::Ctx& ctx, App* ap): ctx(ctx), app(*ap) {}
     //Generally used to read configuration files, or slow io operations, return Json
@@ -77,7 +73,7 @@ namespace fc {
     inline void set_status(int s) { ctx.set_status(s); }
     std::string& compress_str(char* const str, unsigned int len);
     std::string& decompress_str(char* const str, unsigned int len);
-	  // Location can either be a route or a full URL.
+    // Location can either be a route or a full URL.
     void redirect(const std::string& location, bool always = false);
   };// response
 }

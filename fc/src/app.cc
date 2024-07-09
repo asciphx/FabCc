@@ -248,34 +248,38 @@ namespace fc {
 // #endif // _WIN32
     while (RESon) {
       if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
+      while (RESon) {
 #if _LLHTTP
-    _:if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
-      if (pret == llhttp_errno::HPE_OK) {
-      } else if (pret > 20) {
-        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return } goto _;
-      } else { _CTX_return }
+        if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+        if (pret == llhttp_errno::HPE_OK) {
+          break;
+        } else if (pret > 20) {
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+        } else { _CTX_return }
 #else
-    _:if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
-      pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
-      if (pret > 0) {
-        // const char* cur = rb + (*rb == 71 ? r - 1 : r >> 3);
-        // do {
-        //   switch (*cur) {
-        //   case '\n':
-        //     if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { ++cur; pret = cur - rb; goto __; } ++cur; continue; }
-        //     if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; pret = cur - rb; goto __; } cur += 3; continue; }
-        //   case '\r':
-        //     if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; pret = cur - rb; goto __; } cur += 2; continue; }
-        //     if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; pret = cur - rb; goto __; }
-        //   default:cur += 4;
-        //   }
-        // } while (cur - rb < end); pret = end;
-      } else if (pret == -1) {
-        _CTX_return
-      } else if (pret == -2) {
-        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return } goto _;
-      } // __:
+        if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
+        pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
+        if (pret > 0) {
+          break;
+          // const char* cur = rb + (*rb == 71 ? r - 1 : r >> 3);
+          // do {
+          //   switch (*cur) {
+          //   case '\n':
+          //     if (*(cur - 3) == '\r' && *(cur - 2) == '\n') { if (*(cur - 1) == '\r') { ++cur; pret = cur - rb; goto __; } ++cur; continue; }
+          //     if (*(cur + 2) == '\n' && *(cur + 1) == '\r') { if (*(cur - 1) == '\r') { cur += 3; pret = cur - rb; goto __; } cur += 3; continue; }
+          //   case '\r':
+          //     if (*(cur - 2) == '\r' && *(cur - 1) == '\n') { if (*(cur + 1) == '\n') { cur += 2; pret = cur - rb; goto __; } cur += 2; continue; }
+          //     if (*(cur + 3) == '\n' && *(cur + 2) == '\r' && *(cur + 1) == '\n') { cur += 4; pret = cur - rb; goto __; }
+          //   default:cur += 4;
+          //   }
+          // } while (cur - rb < end); pret = end;
+        } else if (pret == -1) {
+          _CTX_return;
+        } else if (pret == -2) {
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+        }
 #endif
+      }
 #ifdef _WIN32
       f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
