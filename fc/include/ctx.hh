@@ -26,18 +26,13 @@
 #include <hh/query_string.hh>
 
 #include <file_sptr.hh>
-#ifdef _MSVC_LANG
-#define $_(_) _._Ptr
-#else
-#define $_(_) _.base()
-#endif // _WIN32
 #ifdef _MSC_VER
 #undef min
 #endif
 namespace fc {
   struct Ctx {
     output_buffer ot;//output_stream
-    std::unordered_map<std::string_view, std::string_view> cookie_map;
+    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> cookie_map;
     std::unique_ptr<fc::cache_file> cache_file;
     std::string_view content_type;
     std::string_view status_;
@@ -85,4 +80,6 @@ namespace fc {
     }
   };
 } // namespace fc
+//For Secondary Routing
+#define fc_api(_) App $_##_()
 #endif

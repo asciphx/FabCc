@@ -85,7 +85,7 @@ namespace fc {
 #endif
       // Main loop.
       int bigsize = REScore + ids; int64_t sj = RES_TIME_T;
-      while (RESquit_signal_catched) {
+      do {
         if (RES_TP > t) {
           loop_timer.tick();
           if (nthreads > 1) {
@@ -199,7 +199,7 @@ namespace fc {
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
           }
         }
-      }
+      } while (RESquit_signal_catched);
 #if _WIN32
       epoll_close(this->epoll_fd);
 #else

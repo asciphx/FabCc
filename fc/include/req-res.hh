@@ -2,7 +2,6 @@
 #define REQRES_HH
 #include <functional>
 #include <string>
-#include "tp/zlib.h"
 #include "tp/ctx.hh"
 #include <ctx.hh>
 #include <hh/conn.hh>
@@ -28,11 +27,10 @@ namespace fc {
     void index_cookies();
   public:
     HTTP method;
-    std::string_view header(const std::string_view& k) const;
     std::string_view cookie(const char* k);
     std::string ip_address() const;
-    Req(HTTP method, std::string& url, std::string_view& params, sv_map& headers, cc::query_string& q, Conn& fib,
-      std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cache_file, double& max);
+    Req(HTTP method, std::string& url, std::string_view& params, sv_map& headers, cc::query_string& q, Conn& fib, double& max,
+      std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>& cookie_map, std::unique_ptr<fc::cache_file>& cache_file);
     std::string& url;
     std::string_view& raw_url;
     cc::query_string& params;
@@ -41,7 +39,7 @@ namespace fc {
     sv_map& headers;
     Conn& fiber;
     std::unique_ptr<fc::cache_file>& cache_file;
-    std::unordered_map<std::string_view, std::string_view>& cookie_map;
+    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>& cookie_map;
     std::string_view body;
     void setTimeoutSec(std::function<void()>&& func, uint32_t seconds = 1);
     void setTimeout(std::function<void()>&& func, uint32_t milliseconds = 100);

@@ -31,13 +31,13 @@ namespace fc {
 #endif
   }
   BP::BP(Req & req, const char* m, unsigned short mb): menu(fc::upload_path_), L(mb), req(req), ban_file(false),
-    boundary(g_b(req.header(RES_CT))), content_length_(req.length) {
+    boundary(g_b(req.headers.operator[](RES_CT))), content_length_(req.length) {
     menu += m; if (menu[menu.size() - 1] != '/')menu.push_back('/'); if (RES_menu.find(menu) == RES_menu.end()) {
       std::string ss(fc::directory_); ss += menu; RES_menu.insert(menu); if (!fc::is_directory(ss)) { fc::create_directory(ss); }
     }
   }
   BP::BP(Req & req, unsigned short mb, bool b): menu(fc::upload_path_), L(mb), req(req), ban_file(b),
-    boundary(g_b(req.header(RES_CT))), content_length_(req.length) {}
+    boundary(g_b(req.headers.operator[](RES_CT))), content_length_(req.length) {}
   std::string_view BP::g_b(const std::string_view & h) const {
     //std::cout << "<" << h << ">" << h.size() << std::endl;
     size_t f = h.find("=----"); if (f != -1) return h.substr(f + 0xe); return h;//raw

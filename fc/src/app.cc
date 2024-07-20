@@ -20,6 +20,11 @@
 #ifndef _LLHTTP
 #define _LLHTTP 0
 #endif
+#ifdef _MSVC_LANG
+#define $_(_) _._Ptr
+#else
+#define $_(_) _.base()
+#endif // _WIN32
 namespace fc {
   HTTP c2m(const char* m, size_t l) {
     switch (hack_str(m, l)) {
@@ -52,12 +57,14 @@ namespace fc {
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
   VH& App::operator[](const char* r) {
-    if (fc::upload_path_.size() == strlen(r) && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
+    size_t l = strlen(r); if(!l) r = "/";
+    if (fc::upload_path_.size() == l && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
       printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h;
   }
   VH& App::del(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
   VH& App::get(const char* r) {
-    if (fc::upload_path_.size() == strlen(r) && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
+    size_t l = strlen(r); if(!l) r = "/";
+    if (fc::upload_path_.size() == l && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
       printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h;
   }
   VH& App::post(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
@@ -148,7 +155,7 @@ namespace fc {
             } else {
               *reinterpret_cast<int*>(&req) = 2;
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
-                std::string range{ req.header("range") };
+                std::string range{ req.headers.operator[]("range") };
                 if (!range.empty()) {
                   res.set_status(206); ctx->format_top_headers();
 #ifdef __MINGW32__
@@ -284,7 +291,7 @@ namespace fc {
       f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
-      Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
+      Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };
       ctx.content_length_ = ll.content_length; req.body = ll.body; ctx.http_minor = ll.http_minor; Res res(ctx, static_cast<App*>(ap));
       std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
       if (ll.finish) {
@@ -293,7 +300,7 @@ namespace fc {
       if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
         url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
       }
-      Req req{ c2m(method, method_len), url, ru, hd, up, f, ctx.cookie_map, ctx.cache_file, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB };
+      Req req{ c2m(method, method_len), url, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };
       req.body = std::string_view(rb + pret, end - pret); Res res(ctx, static_cast<App*>(ap));
       std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
       if (end == pret && ctx.content_length_) {

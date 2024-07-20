@@ -15,8 +15,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #else
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <h/windows.h>
 #define sleep(x) Sleep(x * 1000)
 #include <winsock2.h>
 #include <ws2tcpip.h>

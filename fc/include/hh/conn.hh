@@ -125,15 +125,12 @@ namespace fc {
   struct Reactor;
   // Epoll based Reactor:
   // Orchestrates a set of fiber (ctx::co).
-  struct fiber_exception {
 #if __cplusplus < _cpp20_date
+  struct fiber_exception {
     std::string what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
     fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
-#else
-    std::string what; fc::Task<void> c; fiber_exception(fiber_exception&& e) = default;
-    fiber_exception(fc::Task<void>&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
-#endif
   };
+#endif
   class Conn {
     Conn& operator=(const Conn&) = delete; Conn(const Conn&) = delete;
   public:
@@ -260,6 +257,14 @@ namespace fc {
   };
 }
 namespace std {
-  template <>struct hash<fc::ROG> { size_t operator()(const fc::ROG& o) const { return hash<u16>()(o.idx); } };
+  template <>struct hash<fc::ROG> {
+    size_t operator()(const fc::ROG& o) const {
+#if __linux__ || _WIN32
+      return hash<fc::socket_type>()(o.$);
+#else
+      return hash<u16>()(o.idx);
+#endif
+    }
+  };
 }
 #endif // CONN_HH

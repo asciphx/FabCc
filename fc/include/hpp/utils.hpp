@@ -1,9 +1,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 #ifdef _WIN32
-#undef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <h/windows.h>
 #include <WinNls.h>
 #include <string>
 inline char* UnicodeToUtf8(const char* str) {

@@ -20,7 +20,7 @@ namespace fc {
     VH& find_or_create(std::string& r, unsigned short c);
     void for_all_routes(std::function<void(std::string, const fc::VH)>& f, std::string prefix = "") const;
     iterator find(const std::string& r, unsigned short c) const;
-    VH v_; std::unordered_map<std::string, drt_node*> children_;
+    VH v_; std::unordered_map<std::string, drt_node*, str_hash, str_key_eq> children_;
   };
   static const drt_node::iterator DRT_END = drt_node::iterator{ nullptr, std::string(), VH{} };
   struct DRT {

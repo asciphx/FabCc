@@ -22,9 +22,9 @@ namespace fc {
   template <size_t N, size_t... I> struct __Q<0x1, N, __I<I...>> { using type = __I<I..., (I + N)..., N << 0x1>; };
   template <size_t N> struct __G { using type = typename __Q<N % 0x2, (N >> 1), typename __G<(N >> 0x1)>::type>::type; };
   template <size_t S, size_t N, size_t... I> struct __S<S, 0x1, N, __I<I...>> { using type = __I<(I + S)..., (I + N + S)..., 2 * N + S>; };
-  template <size_t S, size_t N> struct __$ { using type = typename __S<S, N % 2, (N >> 1), typename __G<(N >> 0x1)>::type>::type; };
-  template <size_t S, size_t N> struct __$_B { using type = typename __$<S, N - S>::type; };
-  template <> struct __G<0x0> { using type = __I<>; }; template <size_t N, size_t E> using make_range_sequence = typename __$_B<N, E>::type;
+  template <size_t S, size_t N> struct __5 { using type = typename __S<S, N % 2, (N >> 1), typename __G<(N >> 0x1)>::type>::type; };
+  template <size_t S, size_t N> struct __5_B { using type = typename __5<S, N - S>::type; };
+  template <> struct __G<0x0> { using type = __I<>; }; template <size_t N, size_t E> using make_range_sequence = typename __5_B<N, E>::type;
   template <size_t... V> using index_sequence = __I<V...>; template <size_t I> using make_index_sequence = typename __G<I>::type;
   template <class... T> using index_sequence_for = make_index_sequence<sizeof...(T)>;
 }

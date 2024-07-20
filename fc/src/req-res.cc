@@ -1,11 +1,11 @@
-#include <req-res.hh>
-#include <hh/http_error.hh>
-#include <app.hh>
+#include "req-res.hh"
+#include "hh/http_error.hh"
+#include "app.hh"
+#include "tp/zlib.h"
 namespace fc {
-  Req::Req(HTTP m, std::string& u, std::string_view& p, sv_map& h, cc::query_string& q, Conn& fib,
-    std::unordered_map<std::string_view, std::string_view>& cookie_map, std::unique_ptr<fc::cache_file>& cache, double& max): fiber(fib), length(0),
+  Req::Req(HTTP m, std::string& u, std::string_view& p, sv_map& h, cc::query_string& q, Conn& fib, double& max,
+    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>& cookie_map, std::unique_ptr<fc::cache_file>& cache): fiber(fib), length(0),
     method(m), url(u), raw_url(p), headers(h), params(q), cookie_map(cookie_map), cache_file(cache), USE_MAX_MEM_SIZE_MB(max) {}
-  std::string_view Req::header(const std::string_view& k) const { auto _ = headers.find(k); return _ != headers.end() ? _->second : RES_empty; }
   std::string_view Req::cookie(const char* k) { if (!cookie_map.size())index_cookies(); return cookie_map[k]; }
   void Req::setTimeoutSec(std::function<void()>&& func, uint32_t seconds) { fiber.timer.add_s(seconds, std::move(func)); }
   void Req::setTimeout(std::function<void()>&& func, uint32_t milliseconds) { fiber.timer.add_ms(milliseconds, std::move(func)); }
@@ -37,7 +37,7 @@ namespace fc {
     return s;
   }
   void Req::index_cookies() {
-    std::string_view cookies = header("Cookie");
+    std::string_view cookies = this->headers.operator[]("Cookie");
     if (!cookies.data()) return;
     const char* line_end = &cookies.back() + 1;
     const char* cur = &cookies.front();
@@ -55,7 +55,7 @@ namespace fc {
   }
   void Res::write_async(std::function<json::Json()>&& f, short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { ctx.set_content_type("application/json", 16); body = std::move(b); return; }
-    b = std::move(f().str()); ctx.set_content_type("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
+    b = f().str(); ctx.set_content_type("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };
   void Res::write_async_s(std::function<std::string()>&& f, short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { body = std::move(b); return; }

@@ -49,7 +49,7 @@ namespace fc {
     VH _ = [](Req&, Res&)_ctx { throw err::not_found(); };
     DRT map_;
     std::unordered_map<std::string, std::shared_ptr<file_sptr>> file_cache_;
-    std::unordered_map<std::string_view, std::string_view> content_types;
+    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> content_types;
     int k_A[3] = { 4,3,2 };
     bool file_download = true;
     std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";

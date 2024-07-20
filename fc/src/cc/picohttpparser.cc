@@ -342,9 +342,7 @@ int phr_parse_request(const char* buf_start, size_t len, const char** method, si
   size_t* path_len, int* minor_version, fc::sv_map* headers, _ssize_t* c_l, size_t last_len) {
   const char* buf = buf_start, * buf_end = buf_start + len;
   int r;
-  *method = NULL;
   *method_len = 0;
-  *path = NULL;
   *path_len = 0;
   *c_l = 0;
   *minor_version = -1;

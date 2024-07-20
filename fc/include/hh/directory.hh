@@ -5,8 +5,6 @@
 #include <cstring>
 #include <vector>
 #if defined _WIN32
-#undef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
 #ifdef _MSVC_LANG
 #undef stat64
 #define stat64 _stat64
@@ -14,7 +12,7 @@
 #include <sys/stat.h>
 #endif
 #include <direct.h>
-#include <windows.h>
+#include <h/windows.h>
 #define CROSSPLATFORM_MAX_PATH MAX_PATH
 #include <io.h>
 #else
