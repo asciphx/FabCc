@@ -37,16 +37,10 @@ struct O {
 };
 REGIS(O, id, name, age, book, books)
 template <class T>
-struct Fn1 {
-  T& t; Fn1(T& t): t(t) {}
-  template <typename S>
-  void operator() (S& s) { std::string ss; ss << '(' << k(s) << ':' << t.*s << ')' << ','; std::cout << ss; }
-};
-template <class T>
 struct Fn2 {
   T& t; Fn2(T& t): t(t) {}
   template <typename S, typename A>
-  void operator() (S& s, A&& a) { std::cout << '(' << ++a << ',' << t.*s << ')' << ','; }
+  void operator() (S& s, A&& a, int&& b) { std::cout << '('<< k(s) << ++b << ',' << t.*s << ')' << ','; }
 };
 struct Fn {
   template <typename S, typename T>
@@ -63,8 +57,7 @@ int main() {
   std::string_view sv = k(&O::id);
   //Book cannot be counted as a database field, so it will not be marked in field reflection.
   std::cout << __cplusplus << ' ' << sv << k(&O::book) << ';'; O o{};
-  fc::ForRange<0, 3>(Fn2<O>(o), 1);
-  fc::ForRange<0, 3>(Fn1<O>(o));
+  fc::ForRange<0, 3>(Fn2<O>(o), 1, 2);
   fc::ForRange<0, 3>(Fn(), o);
   constexpr int i = fc::IDEX_IDX<5,false,false,false,false,false>::value;
 #ifdef _WIN32

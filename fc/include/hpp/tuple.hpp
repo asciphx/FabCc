@@ -93,12 +93,12 @@ namespace fc {
   constexpr int ForRange(Fn<T>&& f, Z&& z) { return ForTuple(std::move(f), _FC(Z, z), std::Tuple<T>::__(), _FCR<N, std::Tuple<T>::_s>{}); }
   template <template<typename> class Fn, typename T, typename Z>
   constexpr int ForEach(Fn<T>&& f, Z&& z) { return ForTuple(std::move(f), _FC(Z, z), std::Tuple<T>::__(), _FCI<std::Tuple<T>::_s>{}); }
-  template <size_t N = 0, size_t E, template<typename> class Fn, typename A>
-  constexpr int ForRange(Fn<A>&& f) { return ForTuple(std::move(f), std::Tuple<A>::__(), _FCR<N, E>{}); }
-  template <size_t N = 0, template<typename> class Fn, typename A>
-  constexpr int ForRange(Fn<A>&& f) { return ForTuple(std::move(f), std::Tuple<A>::__(), _FCR<N, std::Tuple<A>::_s>{}); }
-  template <template<typename> class Fn, typename A>
-  constexpr int ForEach(Fn<A>&& f) { return ForTuple(std::move(f), std::Tuple<A>::__(), _FCI<std::Tuple<A>::_s>{}); }
+  template <size_t N = 0, size_t E, template<typename> class Fn, typename T, typename Y, typename Z>
+  constexpr int ForRange(Fn<T>&& f, Y&& y, Z&& z) { return ForTuple(std::move(f), _FC(Y, y), _FC(Z, z), std::Tuple<T>::__(), _FCR<N, E>{}); }
+  template <size_t N = 0, template<typename> class Fn, typename T, typename Y, typename Z>
+  constexpr int ForRange(Fn<T>&& f, Y&& y, Z&& z) { return ForTuple(std::move(f), _FC(Y, y), _FC(Z, z), std::Tuple<T>::__(), _FCR<N, std::Tuple<T>::_s>{}); }
+  template <template<typename> class Fn, typename T, typename Y, typename Z>
+  constexpr int ForEach(Fn<T>&& f, Y&& y, Z&& z) { return ForTuple(std::move(f), _FC(Y, y), _FC(Z, z), std::Tuple<T>::__(), _FCI<std::Tuple<T>::_s>{}); }
   template <size_t N = 0, size_t E, class Fn, typename X>
   constexpr int ForRange(Fn&& f, X&& x) { return ForTuple(std::move(f), _FC(X, x), _FCT(X)__(), _FCR<N, E>{}); }
   template <size_t N = 0, size_t E, class Fn, typename X, typename Y>

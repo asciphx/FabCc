@@ -69,9 +69,17 @@ namespace fc {
           std::chrono::high_resolution_clock::now() - RES_START_TIME).count() - ss[2] * ss[3] - ss[1]) << ss[0];
         req.cache_file = std::unique_ptr<cache_file>(new cache_file{ mask.data(), mask.size() });
         value.resize(65536); int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), 65536 - o); N += o;
+#ifdef __GNUC__
+        const_cast<Req&>(req).cache_file->append(const_cast<char*>(value.data()), N), o += N;
+        while (content_length_ > o) {
+          N = co_await req.fiber.read(const_cast<char*>(value.data()), 65536);
+          if (N > 0) { const_cast<Req&>(req).cache_file->append(const_cast<char*>(value.data()), N), o += N; }
+        }
+#else
         do {
           if (N > 0) const_cast<Req&>(req).cache_file->append(const_cast<char*>(value.data()), N), o += N;
         } while (content_length_ > o && (N = co_await req.fiber.read(const_cast<char*>(value.data()), 65536)));
+#endif
       }
     } else {
       std::string es;
