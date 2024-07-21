@@ -76,10 +76,9 @@
 ```c++
 using namespace fc;
 int main() {
-  App app; Timer t;
+  App app; app fc_app(web) fc_app(user);
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","aac" })
-    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0)
-    .set_file_download(true);//设置启用文件下载，这是新的接口
+    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0).set_file_download(true);
   app.default_route() = [](Req& req, Res& res)_ctx {
     res.set_content_type("text/html;charset=UTF-8", 23); res.set_status(404);
     res.write_async_s([] {

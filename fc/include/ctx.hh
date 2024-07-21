@@ -80,6 +80,4 @@ namespace fc {
     }
   };
 } // namespace fc
-//For Secondary Routing
-#define fc_api(_) App $_##_()
 #endif

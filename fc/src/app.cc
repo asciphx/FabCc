@@ -113,9 +113,9 @@ namespace fc {
     } else { res.mask_url = std::string("@", 1); co_await this->_.operator()(req, res); } co_return;
   }
   App& App::sub_api(const char* prefix, const App& app) {
-    char m; if ((prefix[0] == '/' || prefix[0] == '\\') && prefix[1] == 0)++prefix;
+    char m; if (prefix[0] == '/' || prefix[0] == '\\')++prefix;
     app.map_.for_all_routes([this, &prefix, &m](std::string r, VH h) {
-      std::string $(prefix); $.push_back('/'); m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
+      std::string $(1,'/'); if(*prefix)$ += prefix, $.push_back('/'); m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
       $ += r[1] == 0x2f ? r.substr(2) : r.substr(3); this->map_.add($.c_str(), m) = h;
       }); return *this;
   }
