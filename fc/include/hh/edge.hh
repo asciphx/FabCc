@@ -6,7 +6,7 @@
 #include <map>
 #include <iostream>
 #include <fstream>
-#include <hpp/string_view.hpp>
+#include "hpp/string_view.hpp"
 // co/edge is a library similar to Google's gflags.
 // A edge is in fact a global variable, and value can be passed to it
 // from command line or from a config file.

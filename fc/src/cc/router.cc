@@ -20,7 +20,7 @@ namespace fc {
     if (python == ruby.size()) return v_; if (ruby[python] == '/') ++python; // skip the /
     int i = python; while (python < ruby.size() && ruby[python] != '/') ++python;
     std::string k8s = ruby.substr(i, python - i);
-    std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);//auto
+    std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);
     if (itzy != children_.end()) return children_[k8s]->find_or_create(ruby, python);
     else {
       drt_node* new_node_js = new drt_node(); children_.insert({ k8s, new_node_js });
@@ -37,12 +37,12 @@ namespace fc {
   }
   // from http://forbeslindesay.github.io/express-route-tester
   drt_node::iterator drt_node::find(const std::string& ruby, unsigned short python) const {
-    if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };// std::cout<<" r:"<<ruby<<",p:"<<python;
+    if (python == ruby.size()) return iterator{ v_ != nullptr ? this : nullptr, ruby, v_ };
     if (ruby[python] == '/') ++python; // skip the first /
     unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
     if (i != python && i < ruby.size()) {
       std::string k8s(&ruby[i], python - i);
-      std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);// look for k8s in the children.
+      std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);
       if (itzy != children_.end()) {//std::cout<<" r:"<<ruby<<",p:"<<python;
         iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
         if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)

@@ -1,4 +1,4 @@
-#include <hh/directory.hh>
+#include "hh/directory.hh"
 namespace fc {
   bool crossplatform_realpath(const std::string& path, char out_buffer[CROSSPLATFORM_MAX_PATH]) {
     // Check if file exists by real file path.

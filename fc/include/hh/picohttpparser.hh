@@ -27,7 +27,7 @@
 #define picohttpparser_h
 #include <sys/types.h>
  /* contains name and value of a header (name == NULL if is a continuing line of a multiline header */
-#include <hh/str_map.hh>
+#include "hh/str_map.hh"
 #ifdef _WIN32
 #define _ssize_t long long
 #else

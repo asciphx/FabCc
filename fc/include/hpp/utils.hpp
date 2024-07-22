@@ -1,7 +1,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 #ifdef _WIN32
-#include <h/windows.h>
+#include "h/windows.h"
 #include <WinNls.h>
 #include <string>
 inline char* UnicodeToUtf8(const char* str) {

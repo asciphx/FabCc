@@ -1,10 +1,8 @@
 #ifdef _WIN32
-#undef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <errno.h>
 #include <io.h>
 #include "h/mman.h"
+#include "h/windows.h"
 #ifndef FILE_MAP_EXECUTE
 #define FILE_MAP_EXECUTE    0x0020
 #endif /* FILE_MAP_EXECUTE */

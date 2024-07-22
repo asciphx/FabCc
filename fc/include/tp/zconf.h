@@ -298,7 +298,7 @@
 # ifdef FAR
 # undef FAR
 # endif
-# include <windows.h>
+# include "h/windows.h"
  
 # define ZEXPORT WINAPI
 # ifdef WIN32

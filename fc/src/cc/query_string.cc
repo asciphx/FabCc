@@ -1,4 +1,4 @@
-#include <hh/query_string.hh>
+#include "hh/query_string.hh"
 namespace cc {
   // TODO: implement sorting of the qs_kv array; for now ensure it's not compiled
   // isxdigit _is_ available in <ctype.h>, but let's avoid another header instead

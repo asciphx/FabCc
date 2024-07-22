@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 #endif
 #include <direct.h>
-#include <h/windows.h>
+#include "h/windows.h"
 #define CROSSPLATFORM_MAX_PATH MAX_PATH
 #include <io.h>
 #else

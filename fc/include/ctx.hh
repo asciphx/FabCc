@@ -15,17 +15,16 @@
 #include <sys/sendfile.h>
 #endif
 #include <unordered_map>
-#include <hh/lexical_cast.hh>
-#include <hh/http_error.hh>
-#include <hpp/output_buffer.hpp>
-#include <hh/tcp.hh>
-#include <h/any_types.h>
-#include <hpp/string_view.hpp>
-#include <hh/str_map.hh>
-#include <hh/cache_file.hh>
-#include <hh/query_string.hh>
-
-#include <file_sptr.hh>
+#include "hh/lexical_cast.hh"
+#include "hh/http_error.hh"
+#include "hpp/output_buffer.hpp"
+#include "hh/tcp.hh"
+#include "h/any_types.h"
+#include "hpp/string_view.hpp"
+#include "hh/str_map.hh"
+#include "hh/cache_file.hh"
+#include "hh/query_string.hh"
+#include "file_sptr.hh"
 #ifdef _MSC_VER
 #undef min
 #endif

@@ -16,7 +16,7 @@
 */
 namespace fc {
   struct str_hash {
-    unsigned int operator()(const std::string& z) const;
+    size_t operator()(const std::string& z) const;
   };
   struct str_key_eq {
     bool operator()(const std::string& l, const std::string& r) const;

@@ -1,4 +1,4 @@
-#include <str.hh>
+#include "str.hh"
 /*
  * This software is licensed under the AGPL-3.0 License.
  *
@@ -195,10 +195,7 @@ namespace fc {
 #endif
 }
 #ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
+#include "h/windows.h"
 #pragma warning(disable:4503)
 namespace color {
   inline bool ansi_color_seq_enabled() {

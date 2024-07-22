@@ -16,7 +16,7 @@
 // from http://0x80.pl/articles/sse-itoa.html
 #include <immintrin.h>
 #include <stdint.h>
-#include <tp/c++.h>
+#include "tp/c++.h"
 
 static _ALIGN(16) const unsigned int K_Div0x2710[4] = { 0xD1B71759, 0xD1B71759, 0xD1B71759, 0xD1B71759 };
 static _ALIGN(16) const unsigned int K_2710[4] = { 0x2710, 0x2710, 10000, 0x2710 };

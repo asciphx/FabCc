@@ -19,8 +19,8 @@
 #include <sstream>
 #include <iomanip>
 #include <iosfwd>
-#include <tp/c++.h>
-#include <hh/lexical_cast.hh>
+#include "tp/c++.h"
+#include "hh/lexical_cast.hh"
 const static unsigned char utf$[256] =
 { 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,

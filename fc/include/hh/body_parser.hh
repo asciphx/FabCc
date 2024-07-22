@@ -14,8 +14,8 @@
 */
 #include <vector>
 #include <set>
-#include <hpp/string_view.hpp>
-#include <req-res.hh>
+#include "hpp/string_view.hpp"
+#include "req-res.hh"
 #ifdef WIN32
 #include <psapi.h>
 #include <direct.h>

@@ -24,8 +24,8 @@
 //#pragma comment (lib, "ws2_32.lib")
 //#pragma comment (lib, "wsock32.lib")
 #endif
-#include <hpp/string_view.hpp>
-#include <hh/picohttpparser.hh>
+#include "hpp/string_view.hpp"
+#include "hh/picohttpparser.hh"
 #ifndef _OPENSSL
 #define _OPENSSL 0
 #endif

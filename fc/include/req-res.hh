@@ -2,24 +2,24 @@
 #define REQRES_HH
 #include <functional>
 #include <string>
-#include "tp/ctx.hh"
-#include <ctx.hh>
-#include <hh/conn.hh>
-#include <h/common.h>
-#include <hpp/string_view.hpp>
-#include <hh/str_map.hh>
-#include <hh/directory.hh>
-#include <file_sptr.hh>
-#include <json.hh>
 #include <iostream>
+#include "tp/ctx.hh"
+#include "ctx.hh"
+#include "hh/conn.hh"
+#include "h/common.h"
+#include "hpp/string_view.hpp"
+#include "hh/str_map.hh"
+#include "hh/directory.hh"
+#include "file_sptr.hh"
+#include "json.hh"
 #if defined(_MSC_VER)
 #include <io.h>
 #else
 #include <fcntl.h>
 #endif
 namespace fc {
-  static std::unordered_map<std::string, std::string> RES_CACHE_MENU = {};
-  static std::unordered_map<std::string, int64_t> RES_CACHE_TIME = {};
+  static std::unordered_map<std::string, std::string, str_hash, str_key_eq> RES_CACHE_MENU = {};
+  static std::unordered_map<std::string, int64_t, str_hash, str_key_eq> RES_CACHE_TIME = {};
   struct App;
   class Res;
   class Req {

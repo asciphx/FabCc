@@ -100,13 +100,11 @@ extern "C" {
 #elif defined(_MSC_VER)
 #pragma warning(push, 1)
 #endif
-#undef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <windows.h>
+#include "h/windows.h"
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #elif defined(_MSC_VER)

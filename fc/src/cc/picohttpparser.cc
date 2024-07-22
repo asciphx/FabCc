@@ -35,7 +35,7 @@
 #endif
 #include "hh/picohttpparser.hh"
 #include "hh/lexical_cast.hh"
-#include <tp/c++.h>
+#include "tp/c++.h"
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 #define CHECK_EOF()                                                                                                                \
     if (buf == buf_end) {                                                                                                          \

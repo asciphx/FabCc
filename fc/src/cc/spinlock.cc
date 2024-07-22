@@ -1,4 +1,4 @@
-#include <hh/spinlock.hh>
+#include "hh/spinlock.hh"
 /*
 * This software is licensed under the AGPL-3.0 License.
 *
@@ -12,9 +12,7 @@
 * the modified version must be made available.
 */
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <winnt.h>
+#include "h/windows.h"
 #endif // _WIN32
 namespace fc {
   void spinlock::lock() noexcept {
