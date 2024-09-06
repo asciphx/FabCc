@@ -84,14 +84,10 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int bigsize = REScore + ids; int64_t sj = RES_TIME_T;
+      int64_t sj = RES_TIME_T;
       do {
         if (RES_TP > t) {
-          loop_timer.tick();
-          if (nthreads > 1) {
-            if (this->idex > bigsize) { bigsize += RESmaxEVENTS; std::this_thread::yield(); }
-          }
-          t = RES_TP;
+          loop_timer.tick(); t = RES_TP;
         }
 #if __linux__ || _WIN32
         this->n_events = epoll_wait(this->epoll_fd, this->kevents, RESmaxEVENTS, 1);
@@ -101,15 +97,13 @@ namespace fc {
 #endif
         if (_likely(this->n_events == 0)) {
           if (RES_TIME_T > sj) {
-            if (this->idex > bigsize) bigsize += RESmaxEVENTS << 1;
-#if __cplusplus >= _cpp20_date
+#if __cplusplus >= _cpp20_date && _WIN32
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
               if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
               // if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
             }
 #endif
             sj = RES_TIME_T + k_A[0];
-            if (bigsize > REScore)bigsize -= RESmaxEVENTS;
           }
         } else {
           epoll_event* kevents;
@@ -135,7 +129,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              ++ro->idx; epoll_del(this->event_fd); ro->on = 0; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
+              ++ro->idx; epoll_del(this->event_fd); ro->on = 2; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -193,7 +187,7 @@ namespace fc {
                   });
 #else
                 Task<void> magic = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
-                fib->_ = std::move(magic); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->on && fib->_) { fib->_(); } });
+                fib->_ = std::move(magic); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_(); } });
 #endif
               } while (RESon);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
@@ -211,16 +205,18 @@ namespace fc {
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
   static void start_server(std::string ip, int port, int socktype, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
-    time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + ((k_a[1] * k_a[2]) >> 1);
+    time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2];
 #ifdef _WIN32
     SetConsoleOutputCP(65001); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w);
     if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
     signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler);
+    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(1)); } });
 #else
     struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler;
     sigaction(SIGINT, &act, 0); sigaction(SIGTERM, &act, 0); sigaction(SIGQUIT, &act, 0);
     // Ignore sigpipe signal. Otherwise sendfile causes crashes if the
     // client closes the connection during the response transfer.
+    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(4)); } });
 #endif
     RESmaxEVENTS = n > 32 ? (n << 1) - (n >> 1) : n > 7 ? n << 1 : (((n + 1) * (n + 1)) >> 1) + 0x16; REScore *= n; REScore += 0x66 + n;
 #if __APPLE__ || __linux__
@@ -228,7 +224,6 @@ namespace fc {
 #endif
     // Start the server threads.
     const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
-    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(1)); } });
     socket_type sfd = create_and_bind(listen_ip, port, socktype); if (sfd == (socket_type)-1) return;
 #ifdef __linux__
     struct linger lll { 1, 0 }; setsockopt(sfd, SOL_SOCKET, SO_LINGER, &lll, sizeof(struct linger));

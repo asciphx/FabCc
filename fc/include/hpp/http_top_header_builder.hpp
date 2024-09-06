@@ -52,7 +52,7 @@ namespace fc {
 #elif defined(__MINGW32__)
       if (++i == 60) { i = 0; time(&RES_TIME_T); localtime_s(RES_NOW, &RES_TIME_T); }
 #else
-      if (++i == 1000) {
+      if (++i == 250) {
         i = 0; time(&RES_TIME_T); localtime_r(&RES_TIME_T, RES_NOW);
         top_header_size = int(strftime(tmp.p2, 32, "%a, %d %b %Y %T", RES_NOW)); std::swap(tmp.p1, tmp.p2);
       }
