@@ -56,12 +56,10 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
   int Conn::shut(sd_type type) { return ::shutdown(this->socket_fd, type); }
   void Conn::epoll_mod(socket_type flags) {
 #if __linux__ || _WIN32
-    epoll_event event; memset(&event, 0, sizeof(event)); event.data.ptr = rpg; event.events = static_cast<uint32_t>(flags);
-    if (-1 == ::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, socket_fd, &event) && errno != EEXIST)
-      std::cout << "epoll_ctl error: " << strerror(errno) << std::endl;
+    epoll_event e{ static_cast<uint32_t>(flags) }; e.data.ptr = rpg;
+    if (-1 == ::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, socket_fd, &e) && errno != EEXIST) std::cout << "epoll_ctl error: " << strerror(errno) << std::endl;
 #elif __APPLE__
-    struct kevent ev_set; ev_set.udata = ptr; EV_SET(&ev_set, socket_fd, flags, 2, 0, 0, NULL);
-    kevent(epoll_fd, &ev_set, 1, NULL, 0, NULL);
+    struct kevent e; e.udata = rpg; EV_SET(&e, socket_fd, flags, 2, 0, 0, NULL); kevent(epoll_fd, &e, 1, NULL, 0, NULL);
 #endif
   }
 }

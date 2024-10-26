@@ -98,12 +98,10 @@ namespace fc {
   }
   void Reactor::epoll_ctl(epoll_handle_t epoll_fd, socket_type fd, int action, socket_type flags, void* ptr) {
 #if __linux__ || _WIN32
-    epoll_event event; memset(&event, 0, sizeof(event)); event.events = flags; event.data.ptr = ptr;
-    if (-1 == ::epoll_ctl(epoll_fd, action, fd, &event) && errno != EEXIST)
-      std::cout << "epoll_ctl error: " << strerror(errno) << std::endl;
+    epoll_event e{ static_cast<uint32_t>(flags) }; e.data.ptr = ptr;
+    if (-1 == ::epoll_ctl(epoll_fd, action, fd, &e) && errno != EEXIST) std::cout << "epoll_ctl error: " << strerror(errno) << std::endl;
 #elif __APPLE__
-    struct kevent ev_set; ev_set.udata = ptr; EV_SET(&ev_set, fd, flags, action, 0, 0, NULL);
-    kevent(epoll_fd, &ev_set, 1, NULL, 0, NULL);
+    struct kevent e; e.udata = ptr; EV_SET(&e, fd, flags, action, 0, 0, NULL); kevent(epoll_fd, &e, 1, NULL, 0, NULL);
 #endif
   };
 }

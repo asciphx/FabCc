@@ -105,9 +105,9 @@ namespace fc {
   }
   static void epoll_del_cpp20(epoll_handle_t ef, socket_type fd, int& idex) {
 #if __linux__ || _WIN32
-    epoll_event e; memset(&e, 0, sizeof(e)); e.events = 0; ::epoll_ctl(ef, EPOLL_CTL_DEL, fd, &e); --idex;
+    epoll_event e{ 0 }; ::epoll_ctl(ef, EPOLL_CTL_DEL, fd, &e); --idex;
 #elif __APPLE__
-    struct kevent ev_set; EV_SET(&ev_set, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(ef, &ev_set, 1, NULL, 0, NULL); --idex;
+    struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(ef, &e, 1, NULL, 0, NULL); --idex;
 #endif
   }
   struct ROG {

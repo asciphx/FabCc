@@ -125,7 +125,7 @@ namespace fc {
     lines.erase(0, f + 2);
     char b = 0;
     while (!line.empty()) {
-      const char* c = line.c_str() + 6; f = 0x9; while (*++c != '"' && ++f);
+      const char* c = line.c_str() + 6; f = 0x9; while (*++c != '"' && ++f && *c);
       std::string value = line.substr(0, f);
       if (b == '\0') {
         if (*++c == ';') { f += 2; value = value.substr(0, f - 3); }

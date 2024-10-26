@@ -55,7 +55,7 @@ namespace fc {
   struct Task {
     Task() noexcept = default; Task(Task const&) = delete;
     struct promise_type; Task& operator=(Task const&) = delete;
-    Task& operator=(Task&& _) noexcept { $ = _.$; _.$ = nullptr; return *this; }
+    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
@@ -88,7 +88,7 @@ namespace fc {
   template <> struct Task<void> {
     Task() noexcept = default; Task(Task const&) = delete;
     struct promise_type; Task& operator=(Task const&) = delete;
-    Task& operator=(Task&& _) noexcept { $ = _.$; _.$ = nullptr; return *this; }
+    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }

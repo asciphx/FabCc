@@ -64,9 +64,9 @@ namespace fc {
     void epoll_ctl(epoll_handle_t epoll_fd, socket_type fd, int action, socket_type flags, void* ptr = NULL);
     _FORCE_INLINE void epoll_del(socket_type fd) {
 #if __linux__ || _WIN32
-      epoll_event e; memset(&e, 0, sizeof(e)); e.events = 0; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e); --this->idex;
+      epoll_event e{ 0 }; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e); --this->idex;
 #elif __APPLE__
-      struct kevent ev_set; EV_SET(&ev_set, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &ev_set, 1, NULL, 0, NULL); --this->idex;
+      struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &e, 1, NULL, 0, NULL); --this->idex;
 #endif
     }
     void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids, void* ap) {
@@ -84,11 +84,9 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int64_t sj = RES_TIME_T;
+      int64_t sj = RES_TIME_T; epoll_event* kevents; ROG* ro, *fib;
       do {
-        if (RES_TP > t) {
-          loop_timer.tick(); t = RES_TP;
-        }
+        if (RES_TP > t) { loop_timer.tick(); t = RES_TP; }
 #if __linux__ || _WIN32
         this->n_events = epoll_wait(this->epoll_fd, this->kevents, RESmaxEVENTS, 1);
 #elif __APPLE__
@@ -106,7 +104,6 @@ namespace fc {
             sj = RES_TIME_T + k_A[0];
           }
         } else {
-          epoll_event* kevents;
           for (i = 0; i < this->n_events; ++i) {
             kevents = &this->kevents[i];
 #if __APPLE__
@@ -115,9 +112,9 @@ namespace fc {
               if (event_fd == SIGINT) std::cout << "SIGINT" << std::endl; if (event_fd == SIGTERM) std::cout << "SIGTERM" << std::endl;
               if (this->event_fd == SIGKILL) std::cout << "SIGKILL" << std::endl; RESquit_signal_catched = false; break;
             }
-            ROG* ro = static_cast<ROG*>(kevents->udata);
+            ro = static_cast<ROG*>(kevents->udata);
 #else
-            this->event_flags = kevents->events; ROG* ro = static_cast<ROG*>(kevents->data.ptr); this->event_fd = ro->$;
+            this->event_flags = kevents->events; ro = static_cast<ROG*>(kevents->data.ptr); this->event_fd = ro->$;
 #endif
             // Handle errors on sockets.
 #if __linux__ || _WIN32
@@ -156,7 +153,7 @@ namespace fc {
                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 #endif
-                ROG* fib = &this->clients[socket_fd]; u16 idx = fib->idx;
+                fib = &this->clients[socket_fd]; u16 idx = fib->idx;
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
@@ -186,8 +183,8 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                Task<void> magic = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
-                fib->_ = std::move(magic); this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_(); } });
+                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
+                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_(); } });
 #endif
               } while (RESon);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
