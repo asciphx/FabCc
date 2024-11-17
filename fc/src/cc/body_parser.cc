@@ -140,7 +140,7 @@ namespace fc {
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         throw err::bad_request("Suffix does not exist or exceeds 8 digits!");
-      _:std::string s = menu + value;
+      _:std::string s = menu + value; if(value.size() > CROSSPLATFORM_MAX_PATH)throw std::runtime_error("Failed to max path name.");
         p.value = s; ++b;
       }
     }

@@ -234,7 +234,7 @@ namespace fc {
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
 #if __cplusplus < _cpp20_date
-  static void make_http_processor(Conn& f, void* ap) {
+  static void make_http_processor(Conn& f, void* ap, Reactor * rc) {
 #else
   fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, int& idx, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh, idx);
@@ -327,18 +327,6 @@ namespace fc {
         switch (*reinterpret_cast<int*>(&req)) {
         case 1:
         {
-          std::string _ = *res_body;
-#ifdef __MINGW32__
-          int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
-          WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
-          struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &statbuf_)) != 0) {
-            delete[] pwsz; ctx.content_type = RES_NIL; pwsz = null; throw err::not_found("Not Found!");
-          } delete[] pwsz; pwsz = null;
-#else
-          struct stat statbuf_; if ((*reinterpret_cast<int*>(&req) = stat(_.c_str(), &statbuf_)) != 0) {
-            ctx.content_type = RES_NIL; throw err::not_found(_ << " -> Not Found!");
-          }
-#endif
           unsigned int l = 0; ctx.format_top_headers();
           if (RES_CACHE_TIME[url] > nowStamp()) {
             std::string& bo = RES_CACHE_MENU[url]; l = static_cast<unsigned int>(bo.size()); ctx.prepare_next_request();
@@ -354,7 +342,18 @@ namespace fc {
 #endif // !_WIN32
             continue;
           } else {
-            std::ifstream inf(_, std::ios::in | std::ios::binary); if (!inf.is_open()) throw err::not_found(); res_body->clear();
+#ifdef __MINGW32__
+            int path_len = ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, NULL, 0);
+            WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, pwsz, path_len);
+            if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &rc->statbuf_)) != 0) {
+              delete[] pwsz; ctx.content_type = RES_NIL; pwsz = null; throw err::not_found(*res_body << " -> Not Found!");
+            } delete[] pwsz; pwsz = null;
+#else
+            if ((*reinterpret_cast<int*>(&req) = stat(res_body->c_str(), &rc->statbuf_)) != 0) {
+              ctx.content_type = RES_NIL; throw err::not_found(*res_body << " -> Not Found!");
+            }
+#endif
+            std::ifstream inf(*res_body, std::ios::in | std::ios::binary); if (!inf.is_open()) throw err::not_found(); res_body->clear();
             inf.seekg(0, std::ios_base::end); auto file_size = inf.tellg();//default 600kb for html's max size
             if (file_size >> 10 > static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB) { inf.close(); throw err::forbidden("Html file too large!"); }
             inf.seekg(0, std::ios_base::beg); std::stringstream fb; fb << inf.rdbuf(); std::string bo = std::move(fb.str());

@@ -40,7 +40,7 @@
 #define _OPENSSL 0
 #endif
 #if __cplusplus < _cpp20_date
-#define _CTX_FUNC void(Conn&,void*)
+#define _CTX_FUNC void(Conn&,void*,Reactor*)
 #define _CTX_TASK(_) _
 #define _CTX_back(_) return _;
 #define _CTX_return return;

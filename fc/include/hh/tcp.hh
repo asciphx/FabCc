@@ -33,7 +33,7 @@ namespace fc {
   */
   // Helper to create a TCP/UDP server socket.
   socket_type create_and_bind(const char* ip, int port, int socktype);
-  static int RESmaxEVENTS = 16, REScore = 16; static std::once_flag RESonce_flag;
+  static int RESmaxEVENTS = 16; static std::once_flag RESonce_flag;
   static volatile int RESquit_signal_catched = 1;
   static std::stack<std::future<void>> RESfus;
   static void create_init(int n) {};
@@ -56,6 +56,7 @@ namespace fc {
     sockaddr* in_addr = (sockaddr*)&in_addr_storage;
     std::chrono::system_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
+    struct stat statbuf_;
     socket_type event_flags, event_fd;
     int n_events, i, idex = 0;
 #if _OPENSSL
@@ -70,15 +71,15 @@ namespace fc {
 #endif
     }
     void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids, void* ap) {
-      std::call_once(RESonce_flag, create_init, k_a);
+      std::call_once(RESonce_flag, create_init, k_a); ROG rpg;
 #if __linux__
-      ROG rpg; this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET, &rpg);
+      this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET, &rpg);
       this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event))); rpg.$ = listen_fd;
 #elif  _WIN32
-      ROG rpg{ listen_fd }; this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN, &rpg);
-      this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event)));
+      this->epoll_fd = epoll_create(); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN, &rpg);
+      this->kevents = static_cast<epoll_event*>(calloc(RESmaxEVENTS, sizeof(epoll_event))); rpg.$ = listen_fd;
 #elif __APPLE__
-      ROG rpg{}; this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
+      this->epoll_fd = kqueue(); this->kevents = static_cast<kevent*>(calloc(RESmaxEVENTS, sizeof(kevent)));
       epoll_ctl(this->epoll_fd, listen_fd, EV_ADD, EVFILT_READ, &rpg); epoll_ctl(this->epoll_fd, SIGINT, EV_ADD, EVFILT_SIGNAL);
       epoll_ctl(this->epoll_fd, SIGKILL, EV_ADD, EVFILT_SIGNAL); epoll_ctl(this->epoll_fd, SIGTERM, EV_ADD, EVFILT_SIGNAL);
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
@@ -173,7 +174,7 @@ namespace fc {
                       ++fib->idx; epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
                     }
 #endif
-                    handler(c, ap); ++fib->idx; epoll_del(socket_fd);
+                    handler(c, ap, this); ++fib->idx; epoll_del(socket_fd);
                   } catch (fiber_exception& ex) {
                     ++fib->idx; epoll_del(socket_fd); return std::move(ex.c);
                   } catch (const std::exception&) {
@@ -186,7 +187,7 @@ namespace fc {
                 fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
                 this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_(); } });
 #endif
-              } while (RESon);
+              } while (1);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
           }
         }
@@ -215,9 +216,9 @@ namespace fc {
     // client closes the connection during the response transfer.
     std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(4)); } });
 #endif
-    RESmaxEVENTS = n > 32 ? (n << 1) - (n >> 1) : n > 7 ? n << 1 : (((n + 1) * (n + 1)) >> 1) + 0x16; REScore *= n; REScore += 0x66 + n;
+    RESmaxEVENTS = n > 32 ? (n << 1) - (n >> 1) : n > 7 ? n << 1 : (((n + 1) * (n + 1)) >> 1) + 0x16;
 #if __APPLE__ || __linux__
-    signal(SIGPIPE, SIG_IGN); REScore += k_A * n;
+    signal(SIGPIPE, SIG_IGN);
 #endif
     // Start the server threads.
     const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;

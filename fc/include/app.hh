@@ -7,8 +7,8 @@
 #include <memory>
 #include "hh/router.hh"
 //For Secondary Routing
-#define fc_api(_) App $_##_()
-#define fc_app(_) .sub_api(#_, fc::$_##_())
+#define fc_api(_) App _$##_()
+#define fc_app(_) .sub_api(#_, fc::_$##_())
 namespace fc {
   HTTP c2m(const char* m, size_t l);
   const std::string_view m2c(HTTP m);
