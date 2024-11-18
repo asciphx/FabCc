@@ -53,6 +53,7 @@ namespace fc {
     return std::string_view("NULL", 4);
   }
   App::App() {}
+  static std::unordered_map<std::string, int, str_hash, str_key_eq> RES_CHECK_MENU = {};
   std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
@@ -327,8 +328,9 @@ namespace fc {
         switch (*reinterpret_cast<int*>(&req)) {
         case 1:
         {
+          int& rc_check = RES_CHECK_MENU[url]; if(rc_check < 0 && !rc->check_once) throw err::not_found(*res_body << " -> Not Found!");
           unsigned int l = 0; ctx.format_top_headers();
-          if (RES_CACHE_TIME[url] > nowStamp()) {
+          if (rc_check > 0 && RES_CACHE_TIME[url] > nowStamp()) {
             std::string& bo = RES_CACHE_MENU[url]; l = static_cast<unsigned int>(bo.size()); ctx.prepare_next_request();
             ctx.ot.append("Access-Control-Allow-origin: *\r\n", 32) << RES_CE << RES_seperator << RES_gzip
               << RES_crlf << RES_content_length_tag << l << RES_crlf; end = 0; hd.clear(); up.clear();
@@ -342,18 +344,22 @@ namespace fc {
 #endif // !_WIN32
             continue;
           } else {
-#ifdef __MINGW32__
-            int path_len = ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, NULL, 0);
-            WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, pwsz, path_len);
-            if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &rc->statbuf_)) != 0) {
-              delete[] pwsz; ctx.content_type = RES_NIL; pwsz = null; throw err::not_found(*res_body << " -> Not Found!");
-            } delete[] pwsz; pwsz = null;
-#else
-            if ((*reinterpret_cast<int*>(&req) = stat(res_body->c_str(), &rc->statbuf_)) != 0) {
-              ctx.content_type = RES_NIL; throw err::not_found(*res_body << " -> Not Found!");
+            if(rc_check <= 0) {
+              if(rc->check_once) rc->check_once = false, rc_check = 0;
+  #ifdef __MINGW32__
+              int path_len = ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, NULL, 0);
+              WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, pwsz, path_len);
+              if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &rc->statbuf_)) != 0) {
+                delete[] pwsz; ctx.content_type = RES_NIL; pwsz = null; --rc_check; throw err::not_found(*res_body << " -> Not Found!");
+              } delete[] pwsz; pwsz = null;
+  #else
+              if ((*reinterpret_cast<int*>(&req) = stat(res_body->c_str(), &rc->statbuf_)) != 0) {
+                ctx.content_type = RES_NIL; --rc_check; throw err::not_found(*res_body << " -> Not Found!");
+              }
+  #endif
+              rc_check = 1;
             }
-#endif
-            std::ifstream inf(*res_body, std::ios::in | std::ios::binary); if (!inf.is_open()) throw err::not_found(); res_body->clear();
+            std::ifstream inf(*res_body, std::ios::in | std::ios::binary); if (!inf.is_open()) rc_check = 0, throw err::not_found(); res_body->clear();
             inf.seekg(0, std::ios_base::end); auto file_size = inf.tellg();//default 600kb for html's max size
             if (file_size >> 10 > static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB) { inf.close(); throw err::forbidden("Html file too large!"); }
             inf.seekg(0, std::ios_base::beg); std::stringstream fb; fb << inf.rdbuf(); std::string bo = std::move(fb.str());
