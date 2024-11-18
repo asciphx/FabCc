@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <title>Welcome to FabCc!</title>
@@ -12,17 +11,16 @@
       font-size: 10pt;
     }
   </style>
-  <script type="text/javascript" src="s/pm/js/jquery.min.js"></script>
-  <script src="./index.min.js"></script>
-  <link rel="stylesheet" href="./index.min.css" />
+  <script type="text/javascript" src="s/pm/js/jquery.min.js"></script><script src="./index.min.js"></script>
+  <link rel="stylesheet" href="./index.min.css" /><link rel="stylesheet" href="./css/Pagination.css"><script src="./js/Pagination.js"></script>
 </head>
-
 <body onload="ajax('/get_upload', true)">
   <h1>Welcome to FabCc!</h1>
   <p>On December 8, the ultra-high-definition 8k Remastered version will arrive. To unlock playback of videos over 4GB in size (highlight)</p>
   <img style="opacity: 0.3;position: absolute;z-index: -1;width: inherit" src="./1.png" alt="Alternate Text">
   <button onclick="ajax('/get_upload', true)" style="">get_upload_files[refresh]</button>&nbsp;<a
     href="/test.html">Test[[Postman]]</a>.<br> <div id="vid" style="margin-left: -34%;"></div>
+  <div class="page" ondragstart="return false"></div>
   <script>
     var player = new Player({
       id: 'vid', url: '', autoplay: true, loop: true, pip: true, fullscreen: { useCssFullscreen: false },// autoplayMuted: false,
@@ -35,16 +33,32 @@
           default: true
         }]
       }
-    }), once = true;
+    }), once = true, pageNum = 10, pageArr = [];
     function tv_play(src, text = true) {
       var vi = document.getElementById("vid"); url = src.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
       vi.firstChild.src = url; if(text){
         url = url.substr(0,/\.[0-9a-zA-Z]+$/.exec(url).index) + '.srt';
-        player.plugins.texttrack.updateSubtitles([{ id: 'vtt1', url: url, text: 'subtitle', default: true }]);
+        player.plugins.texttrack.updateSubtitles([{ id: 'vtt1', url: url, text: 'subtitle', default: false }]);
       } player.play();
     }
-    function ext_(size, u=[ 'B','K','M','G','T' ]) {
-    var U;while((U=u.shift())&&size>1023){ size/=1024; } if(size<1000)return size.toFixed(2)+U;U=u.shift(),size/=1024;return size.toFixed(3)+U;
+    var Page = new Pagination({
+        // 页码偏移(为1的时,适合移动端)
+        maxShow:3,
+        pageCount:0,
+        onPageChange:function(p){
+          var start = (p - 1)*pageNum, end = p * pageNum; var ends = end>pageArr.length?pageArr.length:end
+          var s = "";
+          for (var i = start; i < ends; ++i) {
+            s += i + 1 + ":<a href=\"" + pageArr[i].name + "\" onclick=\"tv_play(this.href);return false;\">" +
+              pageArr[i].name.slice(7) + "</a> [ "+ext_(pageArr[i].size)+" ]<br/>";
+          }
+          document.getElementById("list").innerHTML = s;
+          if(once) once=false, tv_play(pageArr[start].name, false);
+        }
+    });
+    function ext_(size) {
+      var U,u=[ 'B','K','M','G','T' ];while((U=u.shift())&&size>1023){ size/=1024; }
+      if(size<1000)return size.toFixed(2)+U;U=u.shift(),size/=1024;return size.toFixed(3)+U;
     }
     function ajax(url, bool) {
       $.ajax({
@@ -61,23 +75,15 @@
         //},
         async: true,
         success: function (data) {
-          var s = "";
-          for (var i = 0; i < data.length; ++i) {
-            s += i + 1 + ":<a href=\"#\" onclick=\"tv_play(this.innerHTML)\">" + data[i].name + "</a> [ "+ext_(data[i].size)+" ]<br/>";
-          }
-          if(once&&data.length) once=false, tv_play(data[0].name, false);
-          document.getElementById("list").innerHTML = s;
+          Page.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data; Page.gotoPage(1);
         },
         error: function (data) {
-          document.getElementById("list").innerHTML = data.responseText;console.log(data.responseText);
+          document.getElementById("list").innerHTML = data.responseText;console.log(data.responseText); pageCount = 0;
           // document.getElementById("text").innerHTML = data.responseText; console.log(data);
         }
       });
     }
   </script>
-  <br>
-  <label>List：</label>
   <p id="list"></p>
 </body>
-
 </html>

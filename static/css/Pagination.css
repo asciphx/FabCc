@@ -1,0 +1,68 @@
+/*2019年5月9日，作者:Asciphx*/
+*{
+    margin:0;
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+}
+.page{
+	display: table;
+	margin: 3px auto 3px auto;
+	width: max-content;
+	color: #ccc;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.page a{
+    cursor: default;
+    display: inline-block;
+    color: rgb(66, 139, 202);
+    height: 25px;
+    font-size: 9pt;
+    line-height: 25px;
+    text-align: center;
+    min-width: 26px;
+    vertical-align: middle;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(221, 221, 221);
+    border-image: initial;
+    border-radius: 4px;
+    text-decoration: none;
+		padding: 0 1px;
+		margin: 0 2px;
+}
+.page a:not(.disabled):not(.current):hover{
+	border: 1px solid #428bca;
+	cursor: pointer;
+}
+.page a.current{
+	display: inline-block;
+	font-size: 10pt;
+	height: 25px;
+	line-height: 25px;
+	padding: 0 2px;
+	margin: 0 3px;
+	color: #fff;
+	background-color: #428bca;
+	border: 1px solid #428bca;
+	border-radius: 4px;
+	vertical-align: middle;
+}
+.page a.disabled{
+	display: inline-block;
+	font-size: 10pt;
+	height: 25px;
+	line-height: 25px;
+	padding: 0 1px;
+	margin: 0 2px;
+	color: #bfbfbf;
+	background: #f2f2f2;
+	border: 1px solid #bfbfbf;
+	border-radius: 4px;
+	vertical-align: middle;
+}

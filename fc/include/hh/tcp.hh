@@ -203,7 +203,7 @@ namespace fc {
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
   static void start_server(std::string ip, int port, int socktype, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
-    time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2];
+    time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2] - 1;
 #ifdef _WIN32
     SetConsoleOutputCP(65001); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w);
     if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
