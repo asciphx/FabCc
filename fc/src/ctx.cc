@@ -135,33 +135,31 @@ namespace fc {
     // Writing the http headers.
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = ot.size();
-    bool rc = ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - z), &g_Bytes, &ov);
+    OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = ot.size(); char p[0x2000];
+    memcpy(p, ot.buffer_, z); bool rc = ReadFile(fd, p + z, static_cast<DWORD>(sizeof(p) - z), &g_Bytes, &ov);
     if (rc) {
-      ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
+      ov.Offset += g_Bytes; if (!co_await this->fiber.writen(p, static_cast<int>(z) + g_Bytes)) goto _;
     } else {
       if (GetLastError() == ERROR_IO_PENDING) {
         if (errno == EPIPE) { goto _; }
         WaitForSingleObject(fd, 1000);//INFINITE
-        rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
-        if (rc) {
-          ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, static_cast<int>(z) + g_Bytes)) goto _;
+        if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, TRUE)) {
+          ov.Offset += g_Bytes; if (!co_await this->fiber.writen(p, static_cast<int>(z) + g_Bytes)) goto _;
         }
       }
     }
     do {
-      bool rc = ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov);
+      bool rc = ReadFile(fd, p, static_cast<DWORD>(sizeof(p)), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_Bytes; if (!co_await this->fiber.writen(ot.buffer_, g_Bytes)) goto _;
+        ov.Offset += g_Bytes; if (!co_await this->fiber.writen(p, g_Bytes)) goto _;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
           if (errno == EPIPE) { goto _; }
           if (errno == EINPROGRESS || errno == EINVAL) {
             WaitForSingleObject(fd, INFINITE);//INFINITE
-            rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
-            if (rc) {
+            if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE)) {
               ov.Offset += g_Bytes;
-              if (co_await this->fiber.writen(ot.buffer_, g_Bytes)) continue;
+              if (co_await this->fiber.writen(p, g_Bytes)) continue;
             }
           }
         }

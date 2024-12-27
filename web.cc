@@ -17,7 +17,7 @@ REGIS(Person, name, age, book, books)
 using namespace fc;
 int main() {
   App app; app fc_app(web) fc_app(user);
-  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","mkv","srt","vtt" })
+  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","mkv","srt","vtt","mov" })
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0).set_file_download(true);
   app.default_route() = [](Req& req, Res& res)_ctx{
     res.set_content_type("text/html;charset=UTF-8", 23); res.set_status(404);
@@ -31,7 +31,7 @@ int main() {
   app["/get_upload"] = [](Req& req, Res& res)_ctx{
     res.write_async([] {
       auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
-      std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
+      std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv", "mov" };
       for (auto v : f) {
         if (std::find(extentions.begin(), extentions.end(), fc::toLowerCase(v.ext)) != extentions.end()) {
           x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
