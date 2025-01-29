@@ -41,20 +41,10 @@
 #endif
 #if __cplusplus < _cpp20_date
 #define _CTX_FUNC void(Conn&,void*,Reactor*)
-#define _CTX_TASK(_) _
-#define _CTX_back(_) return _;
-#define _CTX_return return;
-#define _ctx -> void
-//co_return
 #define _CTX_idx
 #define _CTX_idex
 #else
 #define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,int&,Reactor*)
-#define _CTX_TASK(_) fc::Task<_>
-#define _CTX_back(_) co_return _;
-#define _CTX_return co_return;
-#define _ctx -> fc::Task<>
-//co_return
 #define _CTX_idx , int& idx
 #define _CTX_idex , idex(idx)
 #endif
@@ -195,62 +185,8 @@ namespace fc {
 #endif
       return ::send(socket_fd, buf, size, 0);
     }
-#if __cplusplus < _cpp20_date
-    int read(char* buf, int size);
-    bool write(const char* buf, int size);
-    bool writen(const char* buf, int size);
-#else//The timer must be called externally to destroy the coroutine, which is completely asynchronous and unavailable.
-    fc::Task<int> read(char* buf, int max_size) {
-      int count = read_impl(buf, max_size); int64_t t = 0;
-      while (count < 0) {
-#ifndef _WIN32
-        if (errno != EAGAIN) { co_return 0; }
-#else
-        if (errno != EINPROGRESS && errno != EINVAL && errno != ENOENT) { co_return 0; }
-#endif // !_WIN32
-        co_await std::suspend_always{}; t = time(NULL) - rpg->hrt;
-        if (is_idle && t) {
-          if (t > k_a) {
-#ifdef _WIN32
-            ::setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
-#endif
-            co_return 0;
-          }
-          u16 n = ++rpg->idx; ROG* fib = rpg; timer.add_s(k_a + 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_.operator()(); } });
-        }
-        count = read_impl(buf, max_size);
-      }
-      co_return count;
-    }
-    fc::Task<bool> write(const char* buf, int size) {
-      const char* end = buf + size; is_idle = false;
-      int count = write_impl(buf, size); if (count > 0) buf += count;
-      while (buf != end) {
-#ifndef _WIN32
-        if (count == 0 || count < 0 && errno != EAGAIN) { co_return false; }
-#else
-        if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { co_return false; }
-#endif // !_WIN32
-        co_await std::suspend_always{};
-        if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
-      } time(&rpg->hrt);
-      co_return is_idle = true;
-    }
-    fc::Task<bool> writen(const char* buf, int size) {
-      const char* end = buf + size; is_idle = false;
-      int count = write_impl(buf, size); if (count > 0) buf += count;
-      while (buf != end) {
-#ifndef _WIN32
-        if (count == 0 || count < 0 && (errno == EPIPE || errno != EAGAIN)) { co_return false; }
-#else
-        if (count == 0 || count < 0 && (errno == EPIPE || (errno != EINVAL && errno != EINPROGRESS))) { co_return false; }
-#endif // !_WIN32
-        co_await std::suspend_always{};
-        if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
-      }
-      co_return is_idle = true;
-    };
-#endif
+    _CTX_TASK(int) read(char* buf, int size);
+    _CTX_TASK(bool) write(const char* buf, int size);
     int shut(socket_type fd, sd_type type);
     int shut(sd_type type);
     void epoll_mod(socket_type flags);

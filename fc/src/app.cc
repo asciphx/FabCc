@@ -3,6 +3,7 @@
 #include <memory>
 #include <algorithm>
 #include <fstream>
+#include <mutex>
 #include "app.hh"
 #include "hpp/i2a.hpp"
 #include "hh/lexical_cast.hh"
@@ -52,7 +53,7 @@ namespace fc {
     }
     return std::string_view("NULL", 4);
   }
-  App::App() {}
+  App::App() {} static std::mutex mapMutex;
   std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
@@ -157,16 +158,16 @@ namespace fc {
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
                 std::string range{ req.headers.operator[]("range") };
                 if (!range.empty()) {
-                  res.set_status(206); ctx->format_top_headers();
+                  res.set_status(206); ctx->format_top_headers(); std::unique_lock<std::mutex> k(mapMutex);
 #ifdef __MINGW32__
                   int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
                   WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
                   struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &statbuf_)) != 0) {
-                    delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; throw err::not_found("Not Found!");
+                    delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; file_cache_.erase(file_cache_.find(_)); k.unlock(); throw err::not_found("Not Found!");
                   } delete[] pwsz; pwsz = null;
 #else
                   struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = stat64(_.c_str(), &statbuf_)) != 0) {
-                    ctx->content_type = RES_NIL; throw err::not_found("Not Found!");
+                    ctx->content_type = RES_NIL; file_cache_.erase(file_cache_.find(_)); k.unlock(); throw err::not_found("Not Found!");
                   }
 #endif
                   i64 l = range.find('=') + 1, r = range.rfind('-'); _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l));
@@ -174,18 +175,15 @@ namespace fc {
                   l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->ot.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
 #ifdef _WIN32
-                  if (statbuf_.st_size <= 0x100000000) { co_await ctx->send_file_p(_, pos, ++r); req.fiber.rpg->hrt = RES_TIME_T - 1; _CTX_return }
-                  //Because the windows system does not have a sendfile method, if > 4GB, need mmap. Only then can the file be deleted.
+                  //Because the windows system does not have a sendfile method, if > 4GB, need mmap
+                  if (statbuf_.st_size > 0x100000000) { throw err::not_extended("windows is not extended!"); }
+#endif
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                    co_await ctx->send_file_sptr(p->second, pos, ++r); _CTX_return
+                    k.unlock(); co_await ctx->send_file_sptr(p->second, pos, ++r); _CTX_return
                   } else {
-                    co_await ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return
+                    k.unlock(); co_await ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return
                   }
-#else
-                  //Very large files will directly call the '::sendfile' method, which is faster than mmap
-                  co_await ctx->send_file_p(_, pos, ++r); req.fiber.rpg->hrt = RES_TIME_T - 1; _CTX_return
-#endif
                 }
                 ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_return
               } //Non-media formats will only use the strategy of caching for one week

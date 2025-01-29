@@ -37,6 +37,10 @@ typedef unsigned long long u64;
 #define _cpp20_date 201709L
 #endif
 #if __cplusplus >= _cpp20_date
+#define _CTX_TASK(_) fc::Task<_>
+#define _CTX_back(_) co_return _;
+#define _CTX_return co_return;
+#define _ctx -> fc::Task<>
 #include <coroutine>
 /*
 * This software is licensed under the AGPL-3.0 License.
@@ -115,6 +119,10 @@ namespace fc {
   };
 }
 #else
+#define _CTX_TASK(_) _
+#define _CTX_back(_) return _;
+#define _CTX_return return;
+#define _ctx -> void
 #define co_return
 #define co_await
 #endif

@@ -2,6 +2,7 @@
 #include "hh/time.hh"
 #ifdef _WIN32
 #include <MSWSock.h>
+#include <handleapi.h>
 static std::unordered_map<std::string, HANDLE, fc::str_hash, fc::str_key_eq> RES_FILES;
 #endif
 namespace fc {
@@ -50,17 +51,68 @@ namespace fc {
   }
   // Send a file_sptr.(can support larger than 4GB)
   _CTX_TASK(void) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
-    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (ot << RES_content_length_tag << __->size_).append("\r\n\r\n", 4); co_await ot.flush();
-    __->read_chunk(p, static_cast<int>(size > INT32_MAX ? INT32_MAX : size),
-      [this](const char* s, int l, std::function<void()> d)_ctx{
-      if (l > 0) { if ((co_await this->fiber.writen(s, l)) && d != nullptr) d(); }co_return; });
+    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2); content_length_ = size - p;
+    // if (content_length_ > 16777216) content_length_ = 16777216, size = p + 16777216;
+    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
+    co_await __->read_chunk([this, p, size](_Fhandle fd)_ctx{
 #ifdef _WIN32
-    if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE);
+      OVERLAPPED ov = { 0 }; ov.Offset = p; DWORD g_Bytes = 0; size_t z = ot.size();
+      if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - z), &g_Bytes, &ov)) {
+        ov.Offset += g_Bytes; if (!co_await this->fiber.write(ot.buffer_, static_cast<int>(z) + g_Bytes)) co_return;
+      } else {
+        if (GetLastError() == ERROR_IO_PENDING) {
+          WaitForSingleObject(fd, INFINITE);
+          if (GetOverlappedResult(fd, &ov, &g_Bytes, TRUE)) {
+            ov.Offset += g_Bytes; if (!co_await this->fiber.write(ot.buffer_, static_cast<int>(z) + g_Bytes)) co_return;
+          }
+        }
+      }
+      do {
+        if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov)) {
+          if (co_await this->fiber.write(ot.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
+        } else {
+          if (GetLastError() == ERROR_IO_PENDING) {
+            WaitForSingleObject(fd, 1000);//INFINITE
+            if (GetOverlappedResult(fd, &ov, &g_Bytes, FALSE)) {
+              if (co_await this->fiber.write(ot.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
+            }
+          }
+        }
+        break;
+      } while (ov.Offset < size);
+#else
+      co_await ot.flush();
+      off_t offset = p; lseek(fd, p, SEEK_SET);
+      do {
+#if __APPLE__ // sendfile on macos is slightly different...
+        off_t nwritten = 0;
+        int ret = ::sendfile(fd, fiber.socket_fd, offset, &nwritten, nullptr, 0);
+        offset += nwritten;
+        if (ret == 0 && nwritten == 0) break; // end of file.
+#else
+        int ret = ::sendfile(fiber.socket_fd, fd, &offset, size - offset);
+#endif
+        if (ret == -1) {
+          if (errno == EPIPE) {
+            break;
+          } else if (errno != EAGAIN) {
+            close(fd); throw err::not_found("sendfile failed.");
+          }
+#if __cplusplus < _cpp20_date
+          this->fiber.rpg->_.operator()();
+#else
+          co_await std::suspend_always{};
+#endif
+        }
+      } while (offset < size);
+#endif
+    co_return; });
+#ifdef _WIN32
+    if (errno == EINPROGRESS) fiber.shut(_WRITE); ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #else
     if (errno == EAGAIN) fiber.shut(_WRITE);
 #endif
-    time(&fiber.rpg->hrt); co_return;
+    content_length_ = 0; time(&fiber.rpg->hrt); co_return;
   }
   // send file with pos
   _CTX_TASK(void) Ctx::send_file_p(std::string& path, _Fsize_t pos, long long sizer) {
@@ -138,35 +190,32 @@ namespace fc {
     OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = ot.size(); char p[0x2000];
     memcpy(p, ot.buffer_, z); bool rc = ReadFile(fd, p + z, static_cast<DWORD>(sizeof(p) - z), &g_Bytes, &ov);
     if (rc) {
-      ov.Offset += g_Bytes; if (!co_await this->fiber.writen(p, static_cast<int>(z) + g_Bytes)) goto _;
+      ov.Offset += g_Bytes; if (!co_await this->fiber.write(p, static_cast<int>(z) + g_Bytes)) goto _;
     } else {
       if (GetLastError() == ERROR_IO_PENDING) {
-        if (errno == EPIPE) { goto _; }
         WaitForSingleObject(fd, 1000);//INFINITE
         if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, TRUE)) {
-          ov.Offset += g_Bytes; if (!co_await this->fiber.writen(p, static_cast<int>(z) + g_Bytes)) goto _;
+          ov.Offset += g_Bytes; if (!co_await this->fiber.write(p, static_cast<int>(z) + g_Bytes)) goto _;
         }
       }
     }
     do {
       bool rc = ReadFile(fd, p, static_cast<DWORD>(sizeof(p)), &g_Bytes, &ov);
       if (rc) {
-        ov.Offset += g_Bytes; if (!co_await this->fiber.writen(p, g_Bytes)) goto _;
+        ov.Offset += g_Bytes; if (!co_await this->fiber.write(p, g_Bytes)) goto _;
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
           if (errno == EPIPE) { goto _; }
-          if (errno == EINPROGRESS || errno == EINVAL) {
-            WaitForSingleObject(fd, INFINITE);//INFINITE
-            if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE)) {
-              ov.Offset += g_Bytes;
-              if (co_await this->fiber.writen(p, g_Bytes)) continue;
-            }
+          WaitForSingleObject(fd, INFINITE);//INFINITE
+          if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE)) {
+            ov.Offset += g_Bytes;
+            if (co_await this->fiber.write(p, g_Bytes)) continue;
           }
         }
         goto _;
       }
     } while (ov.Offset < sizer);
-    if (errno == EINPROGRESS || errno == EINVAL) fiber.shut(_WRITE); _: CloseHandle(fd);
+    _: if (errno == EINPROGRESS) fiber.shut(_WRITE); CloseHandle(fd);
     content_length_ = 0; ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
     co_return;
@@ -244,12 +293,10 @@ namespace fc {
         ov.Offset += g_Bytes; co_await this->fiber.write(ot.buffer_, g_Bytes);
       } else {
         if (GetLastError() == ERROR_IO_PENDING) {
-          if (errno == EINPROGRESS || errno == EINVAL) {
-            WaitForSingleObject(fd, 1000);//INFINITE
-            rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
-            if (rc) {
-              if (co_await this->fiber.write(ot.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
-            }
+          WaitForSingleObject(fd, 1000);//INFINITE
+          rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE);
+          if (rc) {
+            if (co_await this->fiber.write(ot.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }
           }
         }
         break;

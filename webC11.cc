@@ -19,7 +19,7 @@ REGIS(Person, name, age, book, books)
 using namespace fc;
 void funk(Req& req, Res& res) { res.write("Homepage route is replicated by std::bind！"); };
 int main() {
-  App app; app.sub_api("/web", fc::$_web()).sub_api("/user", fc::$_user());
+  App app; app fc_app(web) fc_app(user);
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","mkv","srt","vtt" })
     .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0).set_file_download(true);
   app.default_route() = [](Req& req, Res& res) {
