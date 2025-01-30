@@ -56,7 +56,7 @@ namespace fc {
     sockaddr* in_addr = (sockaddr*)&in_addr_storage;
     std::chrono::system_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
-    struct stat statbuf_; bool check_once = false;
+    struct stat statbuf_;
     socket_type event_flags, event_fd;
     int n_events, i, idex = 0;
 #if _OPENSSL
@@ -102,7 +102,7 @@ namespace fc {
               // if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
             }
 #endif
-            sj = RES_TIME_T + k_A[0]; check_once = true;
+            sj = RES_TIME_T + k_A[0];
           }
         } else {
           for (i = 0; i < this->n_events; ++i) {
@@ -140,7 +140,7 @@ namespace fc {
                 socket_type socket_fd = accept(listen_fd, this->in_addr, &this->in_len);
                 // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
 #ifndef _WIN32
-                if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
+                if (socket_fd == EOF) { break; } if (EOF == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
 #else
                 if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) continue;
 #endif
@@ -222,7 +222,7 @@ namespace fc {
 #endif
     // Start the server threads.
     const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
-    socket_type sfd = create_and_bind(listen_ip, port, socktype); if (sfd == (socket_type)-1) return;
+    socket_type sfd = create_and_bind(listen_ip, port, socktype); if (sfd == (socket_type)EOF) return;
 #ifdef __linux__
     struct linger lll { 1, 0 }; setsockopt(sfd, SOL_SOCKET, SO_LINGER, &lll, sizeof(struct linger));
 #endif

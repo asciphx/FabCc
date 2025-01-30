@@ -15,6 +15,7 @@ namespace fc {
   class file_sptr: public std::enable_shared_from_this<file_sptr> {
   public:
     file_sptr(const std::string& path, _Fsize_t length = 0, long long modified_time = 0);
+    file_sptr();
     ~file_sptr();
     _Fsize_t size_;
     long long modified_time_;

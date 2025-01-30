@@ -53,7 +53,7 @@ namespace fc {
     }
     return std::string_view("NULL", 4);
   }
-  App::App() {} static std::mutex mapMutex;
+  App::App() : k(fc::mapMutex, std::defer_lock) {}
   std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
@@ -158,16 +158,16 @@ namespace fc {
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
                 std::string range{ req.headers.operator[]("range") };
                 if (!range.empty()) {
-                  res.set_status(206); ctx->format_top_headers(); std::unique_lock<std::mutex> k(mapMutex);
+                  res.set_status(206); ctx->format_top_headers();
 #ifdef __MINGW32__
                   int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
                   WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
                   struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &statbuf_)) != 0) {
-                    delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; file_cache_.erase(file_cache_.find(_)); k.unlock(); throw err::not_found("Not Found!");
+                    delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; file_cache_[_] = std::make_shared<file_sptr>(); throw err::not_found();
                   } delete[] pwsz; pwsz = null;
 #else
                   struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = stat64(_.c_str(), &statbuf_)) != 0) {
-                    ctx->content_type = RES_NIL; file_cache_.erase(file_cache_.find(_)); k.unlock(); throw err::not_found("Not Found!");
+                    ctx->content_type = RES_NIL; file_cache_[_] = std::make_shared<file_sptr>(); throw err::not_found();
                   }
 #endif
                   i64 l = range.find('=') + 1, r = range.rfind('-'); _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l));
@@ -180,9 +180,10 @@ namespace fc {
 #endif
                   std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                    k.unlock(); co_await ctx->send_file_sptr(p->second, pos, ++r); _CTX_return
+                    co_await ctx->send_file(p->second, pos, ++r); _CTX_return
                   } else {
-                    k.unlock(); co_await ctx->send_file_sptr(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return
+                    std::shared_ptr<fc::file_sptr>& ptr = file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime);
+                    co_await ctx->send_file(ptr, pos, ++r); _CTX_return
                   }
                 }
                 ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_return
@@ -231,11 +232,6 @@ namespace fc {
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value, nullptr, on_body };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
-#ifdef _WIN32
-#define _FC_BUF_SIZE 0x2000
-#else
-#define _FC_BUF_SIZE 0x4000
-#endif
 #if __cplusplus < _cpp20_date
   static void make_http_processor(Conn& f, void* ap, Reactor * rc) {
 #else
@@ -245,7 +241,7 @@ namespace fc {
     if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { ++re->idx; if (re->on) epoll_del_cpp20(eh, fd, idx), re->on = 0; _CTX_return }
 #endif
 #endif
-    fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x1000], wb[_FC_BUF_SIZE]; Ctx ctx(f, wb, sizeof(wb));
+    fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x1000], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP
     llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r, last_len, pret;
 #else

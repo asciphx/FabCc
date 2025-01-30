@@ -50,7 +50,7 @@ namespace fc {
     }
   }
   // Send a file_sptr.(can support larger than 4GB)
-  _CTX_TASK(void) Ctx::send_file_sptr(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
+  _CTX_TASK(void) Ctx::send_file(std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2); content_length_ = size - p;
     // if (content_length_ > 16777216) content_length_ = 16777216, size = p + 16777216;
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
@@ -108,117 +108,11 @@ namespace fc {
 #endif
     co_return; });
 #ifdef _WIN32
-    if (errno == EINPROGRESS) fiber.shut(_WRITE); ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
+    if (errno == EINPROGRESS || errno == EINVAL)fiber.shut(_WRITE), ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #else
-    if (errno == EAGAIN) fiber.shut(_WRITE);
+    if (errno == EAGAIN)fiber.shut(_WRITE);
 #endif
     content_length_ = 0; time(&fiber.rpg->hrt); co_return;
-  }
-  // send file with pos
-  _CTX_TASK(void) Ctx::send_file_p(std::string& path, _Fsize_t pos, long long sizer) {
-#ifndef _WIN32 // Linux / Macos version with sendfile(can support larger than 4GB)
-    // Open the file in non blocking mode.
-    int fd = open(path.c_str(), O_RDONLY);
-    if (fd == -1) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
-    //// Plan to add a flow control strategy, especially for non-member video viewing
-    long file_size = sizer - pos;
-    //// File block transfer controls the size of each block, which can be used for flow control
-    // if (file_size > 16777216) file_size = 16777216, sizer = pos + 16777216;
-    // Writing the http headers.
-    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (ot << RES_content_length_tag << file_size).append("\r\n\r\n", 4);
-    co_await ot.flush();
-    off_t offset = pos; lseek(fd, pos, SEEK_SET);
-    do {
-#if __APPLE__ // sendfile on macos is slightly different...
-      off_t nwritten = 0;
-      int ret = ::sendfile(fd, fiber.socket_fd, offset, &nwritten, nullptr, 0);
-      offset += nwritten;
-      if (ret == 0 && nwritten == 0) break; // end of file.
-#else
-      int ret = ::sendfile(fiber.socket_fd, fd, &offset, sizer - offset);
-#endif
-      if (ret == -1) {
-        if (errno == EPIPE) {
-          break;
-        } else if (errno != EAGAIN) {
-          close(fd); //std::cerr << "Internal error: sendfile failed: " << strerror(errno) << std::endl;
-          throw err::not_found("sendfile failed.");
-        }
-#if __cplusplus < _cpp20_date
-        this->fiber.rpg->_.operator()();
-#else
-        co_await std::suspend_always{};
-#endif
-      }
-    } while (offset < sizer);
-    close(fd);
-    if (errno == EAGAIN) fiber.shut(_WRITE);
-#else // Windows impl with basic sned_file method.(not support larger than 4GB)
-    HANDLE fd; int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
-    WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
-    fd = ::CreateFileW(pwsz, FILE_GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
-      OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
-    if (fd == INVALID_HANDLE_VALUE) { content_type = RES_NIL; throw err::not_found(path << " => not found."); }
-    // #ifdef __MINGW32__
-    //     auto af = RES_FILES.find(path);
-    //     if (af == RES_FILES.end()) {
-    // #else
-    //     if ((fd = RES_FILES.find(path)->second) == nullptr) {
-    // #endif
-    //       int path_len = ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, NULL, 0);
-    //       WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, pwsz, path_len);
-    //       fd = ::CreateFileW(pwsz, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
-    //       if (fd == INVALID_HANDLE_VALUE) {
-    //         content_type = RES_NIL; throw err::not_found(path << " => not found.");
-    //       }
-    //       RES_FILES[path] = fd;
-    //     }
-    // #ifdef __MINGW32__
-    //     else fd = af->second;
-    // #endif
-    // LARGE_INTEGER fileSize; GetFileSizeEx(fd, &fileSize); if (fileSize.QuadPart > UINT32_MAX) {
-    //   CloseHandle(fd); content_type = RES_NIL; throw err::not_extended("Can't larger than 4GB!");
-    // }
-    //// Plan to add a flow control strategy, especially for non-member video viewing
-    content_length_ = sizer - pos;//static_cast<long long>(fileSize.QuadPart);
-    //// File block transfer controls the size of each block, which can be used for flow control
-    // if (content_length_ > 16777216) content_length_ = 16777216, sizer = pos + 16777216;
-    // Writing the http headers.
-    ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
-    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    OVERLAPPED ov = { 0 }; ov.Offset = pos; DWORD g_Bytes = 0; size_t z = ot.size(); char p[0x2000];
-    memcpy(p, ot.buffer_, z); bool rc = ReadFile(fd, p + z, static_cast<DWORD>(sizeof(p) - z), &g_Bytes, &ov);
-    if (rc) {
-      ov.Offset += g_Bytes; if (!co_await this->fiber.write(p, static_cast<int>(z) + g_Bytes)) goto _;
-    } else {
-      if (GetLastError() == ERROR_IO_PENDING) {
-        WaitForSingleObject(fd, 1000);//INFINITE
-        if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, TRUE)) {
-          ov.Offset += g_Bytes; if (!co_await this->fiber.write(p, static_cast<int>(z) + g_Bytes)) goto _;
-        }
-      }
-    }
-    do {
-      bool rc = ReadFile(fd, p, static_cast<DWORD>(sizeof(p)), &g_Bytes, &ov);
-      if (rc) {
-        ov.Offset += g_Bytes; if (!co_await this->fiber.write(p, g_Bytes)) goto _;
-      } else {
-        if (GetLastError() == ERROR_IO_PENDING) {
-          if (errno == EPIPE) { goto _; }
-          WaitForSingleObject(fd, INFINITE);//INFINITE
-          if (rc = GetOverlappedResult(fd, &ov, &g_Bytes, FALSE)) {
-            ov.Offset += g_Bytes;
-            if (co_await this->fiber.write(p, g_Bytes)) continue;
-          }
-        }
-        goto _;
-      }
-    } while (ov.Offset < sizer);
-    _: if (errno == EINPROGRESS) fiber.shut(_WRITE); CloseHandle(fd);
-    content_length_ = 0; ::setsockopt(fiber.socket_fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
-#endif
-    co_return;
   }
   // Send a file.
   _CTX_TASK(void) Ctx::send_file(std::string& path, bool is_download) {
