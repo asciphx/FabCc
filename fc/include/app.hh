@@ -10,7 +10,6 @@
 #define fc_api(_) App _$##_()
 #define fc_app(_) .sub_api(#_, fc::_$##_())
 namespace fc {
-  static std::mutex mapMutex;
   HTTP c2m(const char* m, size_t l);
   const std::string_view m2c(HTTP m);
   struct App {
@@ -51,9 +50,10 @@ namespace fc {
     double USE_MAX_MEM_SIZE_MB = 400.0;
   private:
     DRT map_;
+  public:
     std::unordered_map<std::string, std::shared_ptr<file_sptr>, str_hash, str_key_eq> file_cache_;
+  private:
     std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> content_types;
-    std::unique_lock<std::mutex> k;
     VH _ = [](Req&, Res&)_ctx { throw err::not_found(); };
     std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";
     int k_A[3] = { 4,3,2 }; bool file_download = true;

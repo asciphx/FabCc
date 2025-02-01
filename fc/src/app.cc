@@ -53,7 +53,7 @@ namespace fc {
     }
     return std::string_view("NULL", 4);
   }
-  App::App() : k(fc::mapMutex, std::defer_lock) {}
+  App::App(){}
   std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
@@ -154,22 +154,24 @@ namespace fc {
             if (extension[0] == 'h' && extension[1] == 't') {
               *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);//maybe with zlib
             } else {
-              *reinterpret_cast<int*>(&req) = 2;
+              *reinterpret_cast<int*>(&req) = 2; std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p;
+#ifdef __MINGW32__
+              int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
+              WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
+              struct stat64 statbuf_; if (_wstat64(pwsz, &statbuf_) != 0) {
+                delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; p = file_cache_.find(_);
+                if(p != file_cache_.cend())p->second = std::make_shared<file_sptr>(); throw err::not_found();
+              } delete[] pwsz; pwsz = null;
+#else
+              struct stat64 statbuf_; if (stat64(_.c_str(), &statbuf_) != 0) {
+                p = file_cache_.find(_); if(p != file_cache_.cend())p->second = std::make_shared<file_sptr>();
+                ctx->content_type = RES_NIL; throw err::not_found();
+              }
+#endif
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
                 std::string range{ req.headers.operator[]("range") };
                 if (!range.empty()) {
                   res.set_status(206); ctx->format_top_headers();
-#ifdef __MINGW32__
-                  int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
-                  WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
-                  struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &statbuf_)) != 0) {
-                    delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; file_cache_[_] = std::make_shared<file_sptr>(); throw err::not_found();
-                  } delete[] pwsz; pwsz = null;
-#else
-                  struct stat64 statbuf_; if ((*reinterpret_cast<int*>(&req) = stat64(_.c_str(), &statbuf_)) != 0) {
-                    ctx->content_type = RES_NIL; file_cache_[_] = std::make_shared<file_sptr>(); throw err::not_found();
-                  }
-#endif
                   i64 l = range.find('=') + 1, r = range.rfind('-'); _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l));
                   ctx->ot.append("Accept-Ranges: bytes\r\n", 22); range = range.substr(++r);
                   l = std::lexical_cast<long long>(range); r = l > 1 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
@@ -178,18 +180,28 @@ namespace fc {
                   //Because the windows system does not have a sendfile method, if > 4GB, need mmap
                   if (statbuf_.st_size > 0x100000000) { throw err::not_extended("windows is not extended!"); }
 #endif
-                  std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p = file_cache_.find(_);
+                  p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                    co_await ctx->send_file(p->second, pos, ++r); _CTX_return
+                    std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, pos, ++r); _CTX_return
                   } else {
-                    std::shared_ptr<fc::file_sptr>& ptr = file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime);
-                    co_await ctx->send_file(ptr, pos, ++r); _CTX_return
+                    co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return
                   }
                 }
-                ctx->format_top_headers(); co_await ctx->send_file(_, this->file_download); _CTX_return
+                ctx->format_top_headers(); p = file_cache_.find(_);
+                if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+                  std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, this->file_download); _CTX_return
+                } else {
+                  co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), this->file_download); _CTX_return
+                }
+                _CTX_return
               } //Non-media formats will only use the strategy of caching for one week
               ctx->format_top_headers(); ctx->ot.append("Cache-Control: max-age=604800,immutable\r\n", 41);
-              co_await ctx->send_file(_); req.fiber.rpg->hrt = RES_TIME_T;
+              p = file_cache_.find(_);
+              if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+                std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr); _CTX_return
+              } else {
+                co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime)); _CTX_return
+              }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
             ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib] { if (fib->idx == n) { if (fib->_)fib->_.operator()(); } });
             _CTX_return
@@ -235,10 +247,10 @@ namespace fc {
 #if __cplusplus < _cpp20_date
   static void make_http_processor(Conn& f, void* ap, Reactor * rc) {
 #else
-  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, int& idx, Reactor * rc) {
-    Conn f(fd, sa, k, ft, re, eh, idx);
+  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
+    Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { ++re->idx; if (re->on) epoll_del_cpp20(eh, fd, idx), re->on = 0; _CTX_return }
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->on) epoll_del_cpp20(eh, fd), re->on = 0; _CTX_return }
 #endif
 #endif
     fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x1000], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
@@ -372,7 +384,7 @@ namespace fc {
           }
         }
         break;
-        case 2: break;
+        case 2: *reinterpret_cast<int*>(&req) = 0; break;
         default: ctx.format_top_headers();
           // ctx.add_header("ip", req.ip_address().c_str()); ctx.add_header("id", id);
           ctx.respond(res_body->size(), res.headers);
@@ -397,7 +409,35 @@ namespace fc {
 #else
     std::cout << "C++<web>[" << static_cast<int>(nthreads) << "] => http://127.0.0.1:" << port << std::endl;
 #endif
-    start_server(ip, port, SOCK_STREAM, nthreads, make_http_processor, k_A, this, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
+#ifdef _WIN32
+    SetConsoleOutputCP(65001); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w);
+    if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
+    signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler);
+    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(1)); } });
+#else
+    struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler;
+    sigaction(SIGINT, &act, 0); sigaction(SIGTERM, &act, 0); sigaction(SIGQUIT, &act, 0);
+    // Ignore sigpipe signal. Otherwise sendfile causes crashes if the
+    // client closes the connection during the response transfer.
+    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(4)); } });
+#endif
+#if __APPLE__ || __linux__
+    signal(SIGPIPE, SIG_IGN);
+#endif
+    // Start the server threads.
+    const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
+    socket_type sfd = create_and_bind(listen_ip, port, SOCK_STREAM); if (sfd == (socket_type)EOF) return;
+#ifdef __linux__
+    struct linger lll { 1, 0 }; setsockopt(sfd, SOL_SOCKET, SO_LINGER, &lll, sizeof(struct linger));
+#endif
+    setsockopt(sfd, SOL_SOCKET, SO_KEEPALIVE,
+#if _WIN32
+    (const char*)&RESkeep_AI
+#else
+      & RESkeep_AI
+#endif
+      , sizeof(RESkeep_AI));
+    start_server(date_thread, sfd, nthreads, make_http_processor, k_A, this, ssl_key, ssl_cert, ssl_ciphers);//SOCK_DGRAM
   }
 } // namespace fc
 #if __clang__

@@ -57,9 +57,9 @@ namespace fc {
     void set_cookie(std::string_view k, std::string_view v);
     void set_status(int status);
     // Send a file_sptr with pos
-    _CTX_TASK(void) send_file(std::shared_ptr<fc::file_sptr>& __, _Fsize_t pos, long long size);
+    _CTX_TASK(void) send_file(const std::shared_ptr<fc::file_sptr>& __, _Fsize_t pos, long long size);
     // Send a file.
-    _CTX_TASK(void) send_file(std::string& path, bool pos = true);
+    _CTX_TASK(void) send_file(const std::shared_ptr<fc::file_sptr>& __, bool pos = true);
     // split a string, starting from cur && ending with split_char.
     // Advance cur to the end of the split.
     void prepare_next_request();

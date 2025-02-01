@@ -41,12 +41,8 @@
 #endif
 #if __cplusplus < _cpp20_date
 #define _CTX_FUNC void(Conn&,void*,Reactor*)
-#define _CTX_idx
-#define _CTX_idex
 #else
-#define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,int&,Reactor*)
-#define _CTX_idx , int& idx
-#define _CTX_idex , idex(idx)
+#define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*)
 #endif
 #if _OPENSSL
 #include <openssl/err.h>
@@ -93,11 +89,11 @@ namespace fc {
     return close(sock);
 #endif
   }
-  static void epoll_del_cpp20(epoll_handle_t ef, socket_type fd, int& idex) {
+  static void epoll_del_cpp20(epoll_handle_t ef, socket_type fd) {
 #if __linux__ || _WIN32
-    epoll_event e{ 0 }; ::epoll_ctl(ef, EPOLL_CTL_DEL, fd, &e); --idex;
+    epoll_event e{ 0 }; ::epoll_ctl(ef, EPOLL_CTL_DEL, fd, &e);
 #elif __APPLE__
-    struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(ef, &e, 1, NULL, 0, NULL); --idex;
+    struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(ef, &e, 1, NULL, 0, NULL);
 #endif
   }
   struct ROG {
@@ -127,9 +123,6 @@ namespace fc {
     sockaddr in_addr;
     fc::timer& timer;
     ROG* rpg;
-#if __cplusplus >= _cpp20_date
-    int& idex;
-#endif
     epoll_handle_t epoll_fd;
     socket_type socket_fd;
 #if _OPENSSL
@@ -157,13 +150,13 @@ namespace fc {
 #endif
     int k_a;
     bool is_idle = true;
-    _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e _CTX_idx):
-      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e) _CTX_idex {
+    _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e):
+      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e) {
       r->hrt = RES_TIME_T;
     }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
-      if (rpg->on) ++rpg->idx, rpg->on = 0, epoll_del_cpp20(epoll_fd, socket_fd, idex);
+      if (rpg->on) ++rpg->idx, rpg->on = 0, epoll_del_cpp20(epoll_fd, socket_fd);
 #else
       rpg->on = 0;
 #endif

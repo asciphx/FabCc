@@ -58,16 +58,16 @@ namespace fc {
     socklen_t in_len{ sizeof(sockaddr_storage) };
     struct stat statbuf_;
     socket_type event_flags, event_fd;
-    int n_events, i, idex = 0;
+    int n_events, i;
 #if _OPENSSL
     std::unique_ptr<ssl_context> ssl_ctx = nullptr;
 #endif
     void epoll_ctl(epoll_handle_t epoll_fd, socket_type fd, int action, socket_type flags, void* ptr = NULL);
     _FORCE_INLINE void epoll_del(socket_type fd) {
 #if __linux__ || _WIN32
-      epoll_event e{ 0 }; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e); --this->idex;
+      epoll_event e{ 0 }; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e);
 #elif __APPLE__
-      struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &e, 1, NULL, 0, NULL); --this->idex;
+      struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &e, 1, NULL, 0, NULL);
 #endif
     }
     void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids, void* ap) {
@@ -163,7 +163,7 @@ namespace fc {
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-                ++this->idex; fib->on = 1;
+                fib->on = 1;
 #if __cplusplus < _cpp20_date
                 this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_.operator()(); } });
                 fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
@@ -184,7 +184,7 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this->idex, this);
+                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
                 this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_(); } });
 #endif
               } while (1);
@@ -201,38 +201,10 @@ namespace fc {
     }
   };
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
-  static void start_server(std::string ip, int port, int socktype, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
+  static void start_server(std::thread& date_thread, socket_type sfd, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2] - 1;
-#ifdef _WIN32
-    SetConsoleOutputCP(65001); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int err = WSAStartup(MAKEWORD(2, 2), &w);
-    if (err != 0) { std::cerr << "WSAStartup failed with error: " << err << std::endl; return; } // Setup quit signals
-    signal(SIGINT, shutdown_handler); signal(SIGTERM, shutdown_handler); signal(SIGABRT, shutdown_handler);
-    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(1)); } });
-#else
-    struct sigaction act; memset(&act, 0, sizeof(act)); act.sa_handler = shutdown_handler;
-    sigaction(SIGINT, &act, 0); sigaction(SIGTERM, &act, 0); sigaction(SIGQUIT, &act, 0);
-    // Ignore sigpipe signal. Otherwise sendfile causes crashes if the
-    // client closes the connection during the response transfer.
-    std::thread date_thread([]() { while (RESquit_signal_catched) { fc::REStop_h.tick(), std::this_thread::sleep_for(std::chrono::milliseconds(4)); } });
-#endif
     RESmaxEVENTS = n > 32 ? (n << 1) - (n >> 1) : n > 7 ? n << 1 : (((n + 1) * (n + 1)) >> 1) + 0x16;
-#if __APPLE__ || __linux__
-    signal(SIGPIPE, SIG_IGN);
-#endif
-    // Start the server threads.
-    const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
-    socket_type sfd = create_and_bind(listen_ip, port, socktype); if (sfd == (socket_type)EOF) return;
-#ifdef __linux__
-    struct linger lll { 1, 0 }; setsockopt(sfd, SOL_SOCKET, SO_LINGER, &lll, sizeof(struct linger));
-#endif
-    setsockopt(sfd, SOL_SOCKET, SO_KEEPALIVE,
-#if _WIN32
-    (const char*)&RESkeep_AI
-#else
-      & RESkeep_AI
-#endif
-      , sizeof(RESkeep_AI));
     for (int i = 0; i < n; ++i) {
       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {
         Reactor reactor;
