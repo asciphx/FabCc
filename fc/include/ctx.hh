@@ -25,9 +25,6 @@
 #include "hh/cache_file.hh"
 #include "hh/query_string.hh"
 #include "file_sptr.hh"
-#ifdef _MSC_VER
-#undef min
-#endif
 namespace fc {
   struct Ctx {
     output_buffer ot;//output_stream
@@ -63,18 +60,6 @@ namespace fc {
     // split a string, starting from cur && ending with split_char.
     // Advance cur to the end of the split.
     void prepare_next_request();
-    template <typename C> void url_decode_parameters(std::string_view content, C kv_callback) {
-      const char* c = content.data();
-      const char* end = c + content.size();
-      if (c < end) {
-        while (c < end) {
-          std::string_view key = std::split(c, end, '=');
-          std::string_view value = std::split(c, end, '&');
-          kv_callback(key, value);
-          // printf("kv: '%.*s' -> '%.*s'\n", key.size(), key.data(), value.size(), value.data());
-        }
-      }
-    }
   };
 } // namespace fc
 #endif

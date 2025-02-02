@@ -28,9 +28,8 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
     _CTX_back(count)
   };//Alternatively, you can control the maximum number of connections that can be established per IP, which has not yet been implemented
   _CTX_TASK(bool) Conn::write(const char* buf, int size) {
-    const char* end = buf + size; is_idle = false;
-    int count = write_impl(buf, size); if (count > 0) buf += count;
-    while (buf != end) {
+    is_idle = false; int count = write_impl(buf, size); if (count > 0) buf += count, size -= count;
+    while (size != 0) {
 #ifndef _WIN32
       if (count == 0 || count < 0 && errno != EAGAIN) { _CTX_back(false) }
 #else
@@ -41,7 +40,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #else
       co_await std::suspend_always{};
 #endif
-      if ((count = write_impl(buf, int(end - buf))) > 0) buf += count;
+      if ((count = write_impl(buf, size)) > 0) { buf += count, size -= count; }
     } time(&rpg->hrt);
     _CTX_back(is_idle = true)
   };

@@ -25,6 +25,7 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long long u64;
 #ifdef _MSVC_LANG
+#undef min
 #define _FORCE_INLINE __forceinline
 #define _ALIGN(s) __declspec(align(s))
 #define _NEVER_INLINE __declspec(noinline)

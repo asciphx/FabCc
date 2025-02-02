@@ -13,13 +13,13 @@
  */
 namespace fc {
   void Timer::add_s(unsigned int s, std::function<void()>&& func) {
-    min_heap.push(______{ std::move(std::chrono::system_clock::now() + std::chrono::seconds(s)) , std::move(func) });
+    min_heap.push(______{ std::move(std::chrono::steady_clock::now() + std::chrono::seconds(s)) , std::move(func) });
   }
   void Timer::add_ms(unsigned int ms, std::function<void()>&& func) {
-    min_heap.push(______{ std::move(std::chrono::system_clock::now() + std::chrono::milliseconds(ms)) , std::move(func) });
+    min_heap.push(______{ std::move(std::chrono::steady_clock::now() + std::chrono::milliseconds(ms)) , std::move(func) });
   }
   void Timer::tick() {
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
     while (!min_heap.empty()) { const ______& next = min_heap.top(); if (next.t <= now) next.f(), min_heap.pop(); else break; }
   }
 }

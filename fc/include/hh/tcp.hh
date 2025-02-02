@@ -54,7 +54,7 @@ namespace fc {
     kevent* kevents;
 #endif
     sockaddr* in_addr = (sockaddr*)&in_addr_storage;
-    std::chrono::system_clock::time_point t{ RES_TP };
+    std::chrono::steady_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
     struct stat statbuf_;
     socket_type event_flags, event_fd;

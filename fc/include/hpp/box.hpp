@@ -81,11 +81,11 @@ public:
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
   const T* operator->() const { if (p)return p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
   T* operator->() { if (this->p)return this->p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
-  _FORCE_INLINE T& operator*() & noexcept { return *this->p; }
-  _FORCE_INLINE const T& operator*() const& noexcept { return *this->p; }
+  _FORCE_INLINE T& operator*() & { if (!this->p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *this->p; }
+  _FORCE_INLINE const T& operator*() const& { if (!p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *p; }
   __CONSTEXPR T value_or(T&& _) const noexcept { return this->p != null ? *this->p : _; }
   __CONSTEXPR T value_or(T& _) const noexcept { return this->p != null ? *this->p : _; }
-  _FORCE_INLINE void reset() noexcept { if (this->p) { this->p->~T(); ::free(static_cast<void*>(this->p)); } this->b = false; }
+  _FORCE_INLINE void reset() noexcept { if (this->p) { delete this->p; } this->b = false; }
 };
 template<typename T, std::enable_if_t<!std::is_reg<T>::value>* = null>
 std::string& operator<<(std::string& b, const box<T>& v) { if (v) return b << *v; return b.append("null", 4); };

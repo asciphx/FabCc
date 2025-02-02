@@ -3,7 +3,6 @@
 #ifdef _WIN32
 #include <MSWSock.h>
 #include <handleapi.h>
-static std::unordered_map<std::string, HANDLE, fc::str_hash, fc::str_key_eq> RES_FILES;
 #endif
 namespace fc {
   void Ctx::respond(size_t s, str_map& map) {
@@ -95,7 +94,7 @@ namespace fc {
           if (errno == EPIPE) {
             break;
           } else if (errno != EAGAIN) {
-            close(fd); throw err::not_found("sendfile failed.");
+            throw err::not_found("sendfile failed.");
           }
 #if __cplusplus < _cpp20_date
           this->fiber.rpg->_.operator()();

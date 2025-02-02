@@ -7,12 +7,12 @@
 #if defined(_MSC_VER)
 #define _NOW_VER RES_TP
 #else
-#define _NOW_VER std::chrono::system_clock::now()
+#define _NOW_VER std::chrono::steady_clock::now()
 #endif
 namespace fc {
   static struct tm* RES_NOW;
   static int64_t RES_TIME_T;
-  static std::chrono::system_clock::time_point RES_TP = std::chrono::system_clock::now();
+  static std::chrono::steady_clock::time_point RES_TP = std::chrono::steady_clock::now();
   static _FORCE_INLINE tm now() { return *RES_NOW; }
   static _FORCE_INLINE int64_t nowStamp(short& i) { return RES_TIME_T + i; }
   static _FORCE_INLINE int64_t nowStamp(short&& i) { return RES_TIME_T + std::move(i); }
@@ -43,7 +43,7 @@ namespace fc {
   struct http_top_header_builder {
     inline std::string_view top_header() { return std::string_view(tmp.p1, top_header_size); };
     _FORCE_INLINE void tick() {
-      RES_TP = std::chrono::system_clock::now();
+      RES_TP = std::chrono::steady_clock::now();
 #if defined(_MSC_VER)
       if (++i == 60) {
         i = 0; time(&RES_TIME_T); localtime_s(RES_NOW, &RES_TIME_T);
