@@ -16,7 +16,7 @@ namespace fc {
 #ifdef _WIN32
     fd_ = nullptr;
 #else
-    fd_ = EOF;
+    fd_ = -1;
 #endif
   }
   file_sptr::file_sptr(const std::string& path, _Fsize_t length, long long modified_time) {
@@ -33,7 +33,7 @@ namespace fc {
         LARGE_INTEGER fileSize; ::GetFileSizeEx(fd_, &fileSize); size_ = fileSize.QuadPart;
 #else
     fd_ = ::open(psz, O_RDONLY);
-    if (fd_ != EOF) {
+    if (fd_ != -1) {
       if (length == 0) {
         struct stat64 st; if (stat64(psz, &st) == 0)size_ = st.st_size;
 #endif
@@ -44,7 +44,7 @@ namespace fc {
 #ifdef _WIN32
     if (fd_ != nullptr)CloseHandle(fd_);
 #else
-    if (fd_ != EOF)::close(fd_);
+    if (fd_ != -1)::close(fd_);
 #endif
   }
   _CTX_TASK(void) file_sptr::read_chunk(std::function<_CTX_TASK(void)(_Fhandle fd)> sink) { co_await sink(fd_); co_return; }

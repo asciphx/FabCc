@@ -47,13 +47,13 @@ namespace fc {
     //std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt"
     App& set_ssl(std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt");
     void http_serve(int port = 8080, std::string ip = "", int nthreads = std::thread::hardware_concurrency());
-    double USE_MAX_MEM_SIZE_MB = 400.0;
   private:
     DRT map_;
+    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> content_types;
   public:
     std::unordered_map<std::string, std::shared_ptr<file_sptr>, str_hash, str_key_eq> file_cache_;
+    double USE_MAX_MEM_SIZE_MB = 400.0;
   private:
-    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> content_types;
     VH _ = [](Req&, Res&)_ctx { throw err::not_found(); };
     std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";
     int k_A[3] = { 4,3,2 }; bool file_download = true;

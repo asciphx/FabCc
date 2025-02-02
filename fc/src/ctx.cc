@@ -54,6 +54,7 @@ namespace fc {
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
     co_await __->read_chunk([this, p, size](_Fhandle fd)_ctx{
 #ifdef _WIN32
+      if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
       OVERLAPPED ov = { 0 }; ov.Offset = p; DWORD g_Bytes = 0; size_t z = ot.size();
       if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - z), &g_Bytes, &ov)) {
         ov.Offset += g_Bytes; if (!co_await this->fiber.write(ot.buffer_, static_cast<int>(z) + g_Bytes)) co_return;
@@ -79,8 +80,8 @@ namespace fc {
         break;
       } while (ov.Offset < size);
 #else
-      co_await ot.flush();
-      off_t offset = p; lseek(fd, p, SEEK_SET);
+      if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
+      co_await ot.flush(); off_t offset = p; lseek(fd, p, SEEK_SET);
       do {
 #if __APPLE__ // sendfile on macos is slightly different...
         off_t nwritten = 0;
@@ -119,12 +120,12 @@ namespace fc {
     // Writing the http headers.
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     if (is_download) (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
-    else ot.append("Transfer-Encoding: chunked\r\n\r\n", 30); co_await ot.flush();
+    else ot.append("Transfer-Encoding: chunked\r\n\r\n", 30);
     // Open the file in non blocking mode.
 #ifndef _WIN32 // Linux / Macos version with sendfile
     co_await __->read_chunk([this](_Fhandle fd)_ctx{
       if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
-      off_t offset = 0;
+      co_await ot.flush(); off_t offset = 0;
       do {
 #if __APPLE__ // sendfile on macos is slightly different...
         off_t nwritten = 0;
@@ -149,7 +150,7 @@ namespace fc {
 #else // Windows impl with basic read write.
     co_await __->read_chunk([this](_Fhandle fd)_ctx{
       if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
-      DWORD g_Bytes = 0; OVERLAPPED ov; memset(&ov, 0, sizeof(ov)); ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
+      co_await ot.flush(); DWORD g_Bytes = 0; OVERLAPPED ov; memset(&ov, 0, sizeof(ov)); ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
       do {
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &g_Bytes, &ov)) {
           if (co_await this->fiber.write(ot.buffer_, g_Bytes)) { ov.Offset += g_Bytes; continue; }

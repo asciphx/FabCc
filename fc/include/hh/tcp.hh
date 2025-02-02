@@ -140,7 +140,7 @@ namespace fc {
                 socket_type socket_fd = accept(listen_fd, this->in_addr, &this->in_len);
                 // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
 #ifndef _WIN32
-                if (socket_fd == EOF) { break; } if (EOF == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
+                if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
 #else
                 if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) continue;
 #endif

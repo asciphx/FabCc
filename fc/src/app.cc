@@ -426,7 +426,7 @@ namespace fc {
 #endif
     // Start the server threads.
     const char* listen_ip = !ip.empty() ? ip.c_str() : nullptr;
-    socket_type sfd = create_and_bind(listen_ip, port, SOCK_STREAM); if (sfd == (socket_type)EOF) return;
+    socket_type sfd = create_and_bind(listen_ip, port, SOCK_STREAM); if (sfd == (socket_type)-1) return;
 #ifdef __linux__
     struct linger lll { 1, 0 }; setsockopt(sfd, SOL_SOCKET, SO_LINGER, &lll, sizeof(struct linger));
 #endif

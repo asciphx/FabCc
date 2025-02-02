@@ -54,7 +54,7 @@ int llhttp_finish(llhttp__internal_t* parser) {
   case HTTP_FINISH_SAFE:
     return HPE_OK;
   case HTTP_FINISH_UNSAFE:
-    parser->reason = "Invalid EOF state";
+    parser->reason = "Invalid -1 state";
     return HPE_INVALID_EOF_STATE;
   default:abort();
   }

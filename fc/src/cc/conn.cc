@@ -49,7 +49,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
   void Conn::epoll_mod(socket_type flags) {
 #if __linux__ || _WIN32
     epoll_event e{ static_cast<uint32_t>(flags) }; e.data.ptr = rpg;
-    if (-1 == ::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, socket_fd, &e) && errno != EEXIST) std::cout << "epoll_ctl error: " << strerror(errno) << std::endl;
+    if (-1 == ::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, socket_fd, &e) && errno != EEXIST) std::cout << "epoll_ctl err: " << strerror(errno) << std::endl;
 #elif __APPLE__
     struct kevent e; e.udata = rpg; EV_SET(&e, socket_fd, flags, 2, 0, 0, NULL); kevent(epoll_fd, &e, 1, NULL, 0, NULL);
 #endif
