@@ -29,11 +29,15 @@ namespace fc {
   struct Ctx {
     output_buffer ot;//output_stream
     std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> cookie_map;
+    std::string_view content_type, status_;
     std::unique_ptr<fc::cache_file> cache_file;
-    std::string_view content_type;
-    std::string_view status_;
     Conn& fiber;
-    _Fsize_t content_length_;
+    _Fsize_t content_length_ = sizeof (std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>);
+#ifndef _WIN32
+    int ret;
+#else
+    DWORD nwritten;
+#endif
     int http_minor{ 0 };
     Ctx(Conn& _fiber, char* rb, size_t l): fiber(_fiber), content_type("", 1), content_length_(0),
       ot(rb, static_cast<int>(l), &_fiber), status_("200 OK\r\n", 8) {}
@@ -45,6 +49,8 @@ namespace fc {
       ot.append("Date: ", 5) << REStop_h.top_header(); ot.append(" GMT\r\n", 6);
 #endif
     }
+    //1 =  HTTP/1.1, 0 = HTTP/1.0
+    int get_http_version();
     void respond(size_t s, str_map& map);
     _FORCE_INLINE void set_content_type(const std::string_view& sv) { if (!content_type[0])content_type = sv; };
     _FORCE_INLINE void set_content_type(const char* v, size_t&& l) { if (!content_type[0])content_type = std::string_view(v, l); };
