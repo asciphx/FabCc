@@ -94,7 +94,7 @@ namespace fc {
         // kevent is already listening to quit signals.
         this->n_events = kevent(this->epoll_fd, NULL, 0, this->kevents, RESmaxEVENTS, &timeout);
 #endif
-        if (_likely(this->n_events == 0)) {
+        if (this->n_events == 0) {
           if (RES_TIME_T > sj) {
 #if __cplusplus >= _cpp20_date && _WIN32
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
@@ -127,7 +127,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              ++ro->idx; epoll_del(this->event_fd); ro->on = 2; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
+              epoll_del(this->event_fd); ro->on = 2; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -154,7 +154,7 @@ namespace fc {
                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 #endif
-                fib = &this->clients[socket_fd]; u16 idx = fib->idx;
+                fib = &this->clients[socket_fd];
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
@@ -165,27 +165,27 @@ namespace fc {
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
                 fib->on = 1;
 #if __cplusplus < _cpp20_date
-                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_.operator()(); } });
-                fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
-                  fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
+                uint64_t id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
+                fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap, id](co&& sink) {
+                  fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, id);
                   try {
 #if _OPENSSL
                     if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
-                      ++fib->idx; epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
+                      loop_timer.cancel(c.timer_id); epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
                     }
 #endif
-                    handler(c, ap, this); ++fib->idx; epoll_del(socket_fd);
+                    handler(c, ap, this); loop_timer.cancel(c.timer_id); epoll_del(socket_fd);
                   } catch (fiber_exception& ex) {
-                    ++fib->idx; epoll_del(socket_fd); return std::move(ex.c);
+                    loop_timer.cancel(c.timer_id); epoll_del(socket_fd); return std::move(ex.c);
                   } catch (const std::exception&) {
-                    ++fib->idx; epoll_del(socket_fd);// std::cerr << "Err: " << e.what() << '\n';
+                    loop_timer.cancel(c.timer_id); epoll_del(socket_fd);// std::cerr << "Err: " << e.what() << '\n';
                     return std::move(fib->_);
                   }
                   return std::move(fib->_);
                   });
 #else
-                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
-                this->loop_timer.add_s(k_a + 1, [fib, idx] { if (fib->idx == idx && fib->_) { fib->_(); } });
+                uint64_t id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_(); } });
+                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this, id);
 #endif
               } while (1);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.

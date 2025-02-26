@@ -17,19 +17,20 @@ namespace fc {
   static _FORCE_INLINE int64_t nowStamp(short& i) { return RES_TIME_T + i; }
   static _FORCE_INLINE int64_t nowStamp(short&& i) { return RES_TIME_T + std::move(i); }
   static _FORCE_INLINE int64_t nowStamp() { return RES_TIME_T; }
-  struct timer : public Timer {
-    _FORCE_INLINE void add(std::function<void()>&& func) {
-      min_heap.push(______{ _NOW_VER , std::move(func) });
+  struct timer: public Timer {
+    inline uint64_t add_s(unsigned int s, std::function<void()>&& cb) {
+      ______ node{ _NOW_VER + std::chrono::seconds(s), next_id++ };
+      timers.insert(node, std::move(cb)); return node.id;
     }
-    inline void add_s(unsigned int s, std::function<void()>&& func) {
-      min_heap.push(______{ std::move(_NOW_VER + std::chrono::seconds(s)) , std::move(func) });
-    }
-    inline void add_ms(unsigned int ms, std::function<void()>&& func) {
-      min_heap.push(______{ std::move(_NOW_VER + std::chrono::milliseconds(ms)) , std::move(func) });
+    inline uint64_t add_ms(unsigned int ms, std::function<void()>&& cb) {
+      ______ node{ _NOW_VER + std::chrono::milliseconds(ms), next_id++ };
+      timers.insert(node, std::move(cb)); return node.id;
     }
     inline void tick() {
-      while (!min_heap.empty()) {
-        const ______& next = min_heap.top(); if (next.t <= RES_TP) { next.f(); min_heap.pop(); } else break;
+      while (!timers.empty()) {
+        Node<______, std::function<void()>>* node = timers.find(timers.find(*reinterpret_cast<______*&>(timers))->key);
+        if (node == nullptr || node->key.time > _NOW_VER) break;
+        node->value(); timers.remove(node->key);
       }
     }
   };

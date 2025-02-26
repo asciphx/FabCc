@@ -19,22 +19,26 @@
  */
 #if defined _WIN32
 #include <basetsd.h>
-#define _sock_type UINT_PTR
-#else
-#define _sock_type int
 #endif
+#include "hpp/rb_tree.hpp"
+#include <chrono>
 namespace fc {
-  struct ______ {
-    std::chrono::time_point<std::chrono::steady_clock> t; std::function<void()> f;
-    bool operator<(const ______& l) const { return l.t < this->t; }
-  };
+  // Timer implementation using RBTree
   class Timer {
   protected:
-    std::priority_queue<______, std::vector<______>> min_heap;
+    struct ______ {
+      std::chrono::steady_clock::time_point time;
+      uint64_t id;
+      bool operator<(const ______& other) const;
+    };
+    RBTree<______, std::function<void()>> timers;
+    uint64_t next_id = 0;
   public:
-    virtual void add_s(unsigned int seconds, std::function<void()>&& func);
-    virtual void add_ms(unsigned int milliseconds, std::function<void()>&& func);
+    virtual uint64_t add_ms(unsigned int ms, std::function<void()>&& cb);
+    virtual uint64_t add_s(unsigned int s, std::function<void()>&& cb);
     virtual void tick();
+    virtual int64_t time_to_next() const;
+    void cancel(uint64_t id);
   };
 }
 #endif

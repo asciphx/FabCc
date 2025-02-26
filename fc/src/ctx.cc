@@ -74,7 +74,7 @@ namespace fc {
       co_await ot.flush(); off_t ov = p; lseek(fd, p, SEEK_SET);
       do {
 #if __APPLE__ // sendfile on macos is slightly different...
-        off_t nwritten = 0;
+        nwritten = 0;
         ret = ::sendfile(fd, fiber.socket_fd, ov, &nwritten, nullptr, 0);
         ov += nwritten;
         if (ret == 0 && nwritten == 0) break; // end of file.
@@ -115,10 +115,10 @@ namespace fc {
 #ifndef _WIN32 // Linux / Macos version with sendfile
     co_await __->read_chunk([this](_Fhandle fd)_ctx{
       // if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
-      co_await ot.flush();  off_t ov = 0;
+      co_await ot.flush(); off_t ov = 0;
       do {
 #if __APPLE__ // sendfile on macos is slightly different...
-        off_t nwritten = 0;
+        nwritten = 0;
         ret = ::sendfile(fd, fiber.socket_fd, ov, &nwritten, nullptr, 0);
         ov += nwritten;
         if (ret == 0 && nwritten == 0) break; // end of file.

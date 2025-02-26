@@ -150,7 +150,7 @@ namespace fc {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
           if (content_types.find(extension) != content_types.end()) {
             Ctx*& ctx = reinterpret_cast<Ctx*&>(res); std::string_view& sv{ content_types.at(extension) }; ctx->content_type = sv;
-            u16 n = ++req.fiber.rpg->idx;
+            req.fiber.timer.cancel(req.fiber.timer_id);
             if (extension[0] == 'h' && extension[1] == 't') {
               *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);//maybe with zlib
             } else {
@@ -203,7 +203,7 @@ namespace fc {
                 co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime)); _CTX_return
               }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            ROG* fib = req.fiber.rpg; req.fiber.timer.add_s(1, [n, fib] { if (fib->idx == n) { if (fib->_)fib->_.operator()(); } });
+            ROG* fib = req.fiber.rpg; req.fiber.timer_id = req.fiber.timer.add_s(1, [fib] { if (fib->_)fib->_.operator()(); });
             _CTX_return
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
@@ -247,8 +247,8 @@ namespace fc {
 #if __cplusplus < _cpp20_date
   static void make_http_processor(Conn& f, void* ap, Reactor * rc) {
 #else
-  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
-    Conn f(fd, sa, k, ft, re, eh);
+  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc, uint64_t& id) {
+    Conn f(fd, sa, k, ft, re, eh, id);
 #if _OPENSSL
     if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->on) epoll_del_cpp20(eh, fd), re->on = 0; _CTX_return }
 #endif
@@ -260,9 +260,9 @@ namespace fc {
     const char* method, * path; size_t method_len, path_len; int end = 0, r, last_len, pret;
 #endif
 // #ifdef _WIN32
-//     char id[10]; id[u2a(id, f.socket_fd) - id] = 0;
+//     char sid[10]; sid[u2a(sid, f.socket_fd) - sid] = 0;
 // #else
-//     char id[11]; id[i2a(id, f.socket_fd) - id] = 0;
+//     char sid[11]; sid[i2a(sid, f.socket_fd) - sid] = 0;
 // #endif // _WIN32
     do {
       if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
@@ -316,7 +316,7 @@ namespace fc {
       std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
       if (end == pret && ctx.content_length_) {
 #endif
-        int n = ++f.rpg->idx; f.is_idle = false;
+        f.timer.cancel(f.timer_id); f.is_idle = false;
         try {
           req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
           ctx.format_top_headers(); ctx.respond(res_body->size(), res.headers); f.is_idle = true;
@@ -330,7 +330,7 @@ namespace fc {
         }
         ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
         co_await ctx.ot.flush(std::move(*res_body)); time(&f.rpg->hrt);
-        ROG* fib = f.rpg; f.timer.add_s(f.k_a - 1, [n, fib] { if (fib->idx == n && fib->_) { fib->_.operator()(); } });
+        ROG* fib = f.rpg; f.timer_id = f.timer.add_s(f.k_a - 1, [fib] { if (fib->_) { fib->_.operator()(); } });
         continue;
       }
       try {
@@ -386,7 +386,7 @@ namespace fc {
         break;
         case 2: *reinterpret_cast<int*>(&req) = 0; break;
         default: ctx.format_top_headers();
-          // ctx.add_header("ip", req.ip_address().c_str()); ctx.add_header("id", id);
+          // ctx.add_header("ip", req.ip_address().c_str()); ctx.add_header("id", sid);
           ctx.respond(res_body->size(), res.headers);
         }
       } catch (const http_error& e) {// If error code is equal 500, record the log
