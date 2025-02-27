@@ -42,7 +42,7 @@
 #if __cplusplus < _cpp20_date
 #define _CTX_FUNC void(Conn&,void*,Reactor*)
 #else
-#define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*,uint64_t&)
+#define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*)
 #endif
 #if _OPENSSL
 #include <openssl/err.h>
@@ -97,10 +97,11 @@ namespace fc {
 #endif
   }
   struct ROG {
+    Timer::Node t_id;
 #if __linux__ || _WIN32
     socket_type $;
 #endif
-    int64_t hrt;
+    int64_t hrt{ 0 };
 #if __cplusplus < _cpp20_date
     ctx::co _;
 #else
@@ -121,11 +122,11 @@ namespace fc {
     Conn& operator=(const Conn&) = delete; Conn(const Conn&) = delete;
   public:
     sockaddr in_addr;
+    Timer::Node t_id;
     fc::timer& timer;
     ROG* rpg;
     epoll_handle_t epoll_fd;
     socket_type socket_fd;
-    uint64_t timer_id;
 #if _OPENSSL
     SSL* ssl = nullptr;
     inline _CTX_TASK(bool) ssl_handshake(std::unique_ptr<ssl_context>& ssl_ctx) {
@@ -151,13 +152,13 @@ namespace fc {
 #endif
     int k_a;
     bool is_idle = true;
-    _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e, uint64_t i):
-      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e), timer_id(i) {
+    _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e):
+      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e) {
       r->hrt = RES_TIME_T;
     }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
-      if (rpg->on) rpg->on = 0, epoll_del_cpp20(epoll_fd, socket_fd);
+      if (rpg->on) timer.cancel(rpg->t_id), rpg->on = 0, epoll_del_cpp20(epoll_fd, socket_fd);
 #else
       rpg->on = 0;
 #endif

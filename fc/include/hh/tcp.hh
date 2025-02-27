@@ -127,7 +127,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              epoll_del(this->event_fd); ro->on = 2; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
+              loop_timer.cancel(ro->t_id); epoll_del(this->event_fd); ro->on = 2; fc::Task<void> v = std::move(ro->_); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -165,27 +165,27 @@ namespace fc {
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
                 fib->on = 1;
 #if __cplusplus < _cpp20_date
-                uint64_t id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
-                fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap, id](co&& sink) {
-                  fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, id);
+                fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_.operator()(); } });
+                fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
+                  fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
                   try {
 #if _OPENSSL
                     if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
-                      loop_timer.cancel(c.timer_id); epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
+                      loop_timer.cancel(fib->t_id); epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
                     }
 #endif
-                    handler(c, ap, this); loop_timer.cancel(c.timer_id); epoll_del(socket_fd);
+                    handler(c, ap, this); loop_timer.cancel(fib->t_id); epoll_del(socket_fd);
                   } catch (fiber_exception& ex) {
-                    loop_timer.cancel(c.timer_id); epoll_del(socket_fd); return std::move(ex.c);
+                    loop_timer.cancel(fib->t_id); epoll_del(socket_fd); return std::move(ex.c);
                   } catch (const std::exception&) {
-                    loop_timer.cancel(c.timer_id); epoll_del(socket_fd);// std::cerr << "Err: " << e.what() << '\n';
+                    loop_timer.cancel(fib->t_id); epoll_del(socket_fd);// std::cerr << "Err: " << e.what() << '\n';
                     return std::move(fib->_);
                   }
                   return std::move(fib->_);
                   });
 #else
-                uint64_t id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_(); } });
-                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this, id);
+                fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_(); } });
+                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
 #endif
               } while (1);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
@@ -203,7 +203,7 @@ namespace fc {
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
   static void start_server(std::thread& date_thread, socket_type sfd, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
-    time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2] - 1;
+    time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2] - 2; if (k_A < 3)k_A = 3;
     RESmaxEVENTS = n > 32 ? (n << 1) - (n >> 1) : n > 7 ? n << 1 : (((n + 1) * (n + 1)) >> 1) + 0x16;
     for (int i = 0; i < n; ++i) {
       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {

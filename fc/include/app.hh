@@ -43,7 +43,7 @@ namespace fc {
     App& file_type(const std::vector<std::string_view>& line = { "html","htm","ico","css","js","srt",
       "json","svg","png","jpg","jpeg","gif","txt","wasm","mp4","webm","mp3","wav","aac","mkv","vtt" });
     // keep-alive time seconds = idle + intvl * probes, RESk_A is the total time written. time seconds default = 6s
-    App& set_keep_alive(int idle = 1, int intvl = 1, unsigned char probes = 5);
+    App& set_keep_alive(unsigned char idle = 1, unsigned char intvl = 1, unsigned char probes = 5);
     //std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt"
     App& set_ssl(std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt");
     void http_serve(int port = 8080, std::string ip = "", int nthreads = std::thread::hardware_concurrency());

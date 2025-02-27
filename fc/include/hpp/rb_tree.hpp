@@ -4,22 +4,22 @@
 #include "tp/c++.h"
 #include <functional>
 template<typename K, typename V>
-struct Node {
+struct Nod {
   K key; V value;
-  Node* left;
-  Node* right;
-  Node* parent;
+  Nod* left;
+  Nod* right;
+  Nod* parent;
   bool b;
-  Node(const K& k, const V& v): key(k), value(v), b(false),
+  Nod(const K& k, const V& v): key(k), value(v), b(false),
     left(NULL), right(NULL), parent(NULL) {}
 };
 
 template<typename K, typename V>
 class RBTree {
-  Node<K, V>* root;
-  Node<K, V>* nil;
-  inline void rotateLeft(Node<K, V>* x) {
-    Node<K, V>* y = x->right;
+  Nod<K, V>* root;
+  Nod<K, V>* nil;
+  inline void rotateLeft(Nod<K, V>* x) {
+    Nod<K, V>* y = x->right;
     x->right = y->left;
     if (y->left != nil) y->left->parent = x;
     y->parent = x->parent;
@@ -29,8 +29,8 @@ class RBTree {
     y->left = x;
     x->parent = y;
   }
-  inline void rotateRight(Node<K, V>* x) {
-    Node<K, V>* y = x->left;
+  inline void rotateRight(Nod<K, V>* x) {
+    Nod<K, V>* y = x->left;
     x->left = y->right;
     if (y->right != nil) y->right->parent = x;
     y->parent = x->parent;
@@ -40,10 +40,10 @@ class RBTree {
     y->right = x;
     x->parent = y;
   }
-  void fixInsert(Node<K, V>* z) {
+  void fixInsert(Nod<K, V>* z) {
     while (z != root && z->parent->b == false) {
       if (z->parent == z->parent->parent->left) {
-        Node<K, V>* y = z->parent->parent->right;
+        Nod<K, V>* y = z->parent->parent->right;
         if (y->b == false) {
           z->parent->b = true;
           y->b = true;
@@ -59,7 +59,7 @@ class RBTree {
           rotateRight(z->parent->parent);
         }
       } else {
-        Node<K, V>* y = z->parent->parent->left;
+        Nod<K, V>* y = z->parent->parent->left;
         if (y->b == false) {
           z->parent->b = true;
           y->b = true;
@@ -78,20 +78,16 @@ class RBTree {
     }
     root->b = true;
   }
-  inline void transplant(Node<K, V>* u, Node<K, V>* v) {
+  inline void transplant(Nod<K, V>* u, Nod<K, V>* v) {
     if (u->parent == nil) root = v;
     else if (u == u->parent->left) u->parent->left = v;
     else u->parent->right = v;
     v->parent = u->parent;
   }
-  _FORCE_INLINE Node<K, V>* minimum(Node<K, V>* x) const {
-    while (x->left != nil) x = x->left;
-    return x;
-  }
-  void fixDelete(Node<K, V>* x) {
+  void fixDelete(Nod<K, V>* x) {
     while (x != root && x->b == true) {
       if (x == x->parent->left) {
-        Node<K, V>* w = x->parent->right;
+        Nod<K, V>* w = x->parent->right;
         if (w->b == false) {
           w->b = true;
           x->parent->b = false;
@@ -115,7 +111,7 @@ class RBTree {
           x = root;
         }
       } else {
-        Node<K, V>* w = x->parent->left;
+        Nod<K, V>* w = x->parent->left;
         if (w->b == false) {
           w->b = true;
           x->parent->b = false;
@@ -142,10 +138,10 @@ class RBTree {
     }
     x->b = true;
   }
-  void deleteNode(Node<K, V>* z) {
-    Node<K, V>* y = z;
+  void deleteNode(Nod<K, V>* z) {
+    Nod<K, V>* y = z;
     bool yColor = y->b;
-    Node<K, V>* x;
+    Nod<K, V>* x;
     if (z->left == nil) {
       x = z->right;
       transplant(z, z->right);
@@ -171,7 +167,7 @@ class RBTree {
     delete z;
     if (yColor == true) fixDelete(x);
   }
-  void destroy(Node<K, V>* node) {
+  void destroy(Nod<K, V>* node) {
     if (node != nil) {
       destroy(node->left);
       destroy(node->right);
@@ -181,7 +177,7 @@ class RBTree {
 
 public:
   RBTree() {
-    nil = new Node<K, V>(K(), V());
+    nil = new Nod<K, V>(K(), V());
     nil->b = true;
     nil->left = nil->right = nil->parent = nil;
     root = nil;
@@ -191,9 +187,9 @@ public:
     delete nil;
   }
   void insert(const K& key, const V& value) {
-    Node<K, V>* z = new Node<K, V>(key, value);
-    Node<K, V>* y = nil;
-    Node<K, V>* x = root;
+    Nod<K, V>* z = new Nod<K, V>(key, value);
+    Nod<K, V>* y = nil;
+    Nod<K, V>* x = root;
     while (x != nil) {
       y = x;
       if (z->key < x->key) x = x->left;
@@ -208,11 +204,11 @@ public:
     fixInsert(z);
   }
   _FORCE_INLINE void remove(const K& key) {
-    Node<K, V>* z = find(key);
+    Nod<K, V>* z = find(key);
     if (z != nullptr) deleteNode(z);
   }
-  inline Node<K, V>* find(const K& key) const {
-    Node<K, V>* x = root;
+  inline Nod<K, V>* find(const K& key) const {
+    Nod<K, V>* x = root;
     while (x != nil) {
       if (key < x->key) x = x->left;
       else if (x->key < key) x = x->right;
@@ -225,19 +221,10 @@ public:
     destroy(root);
     root = nil;
   }
-  // New method to find timer by ID (specialized for Timer class)
-  inline Node<K, V>* find_by_id(uint64_t id) const {
-    Node<K, V>* x = root;
-    while (x != nil) {
-      if (id < x->key.id) x = x->left;
-      else if (x->key.id < id) x = x->right;
-      else return x;
-    }
-    return nullptr;
-  }
   // Add to RBTree public section:
-  _FORCE_INLINE Node<K, V>* get_minimum() const {
-    return minimum(root);
+  _FORCE_INLINE Nod<K, V>* minimum(Nod<K, V>* x) const {
+    while (x->left != nil) x = x->left;
+    return x;
   }
 };
 #endif

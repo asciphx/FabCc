@@ -21,7 +21,7 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #endif
           _CTX_back(0)
         }
-        timer.cancel(timer_id); ROG* fib = rpg; timer_id = timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
+        timer.cancel(rpg->t_id); ROG* fib = rpg; rpg->t_id = timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
       }
       count = read_impl(buf, max_size);
     }

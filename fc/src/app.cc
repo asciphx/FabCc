@@ -150,7 +150,7 @@ namespace fc {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
           if (content_types.find(extension) != content_types.end()) {
             Ctx*& ctx = reinterpret_cast<Ctx*&>(res); std::string_view& sv{ content_types.at(extension) }; ctx->content_type = sv;
-            req.fiber.timer.cancel(req.fiber.timer_id);
+            req.fiber.timer.cancel(req.fiber.rpg->t_id);
             if (extension[0] == 'h' && extension[1] == 't') {
               *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);//maybe with zlib
             } else {
@@ -203,7 +203,7 @@ namespace fc {
                 co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime)); _CTX_return
               }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            ROG* fib = req.fiber.rpg; req.fiber.timer_id = req.fiber.timer.add_s(1, [fib] { if (fib->_)fib->_.operator()(); });
+            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(1, [fib] { if (fib->_)fib->_.operator()(); });
             _CTX_return
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
@@ -222,7 +222,7 @@ namespace fc {
     }
     return app;
   }
-  App& App::set_keep_alive(int idle, int intvl, unsigned char probes) { k_A[0] = idle; k_A[1] = intvl; k_A[2] = probes; return *this; }
+  App& App::set_keep_alive(unsigned char idle, unsigned char intvl, unsigned char probes) { k_A[0] = idle; k_A[1] = intvl; k_A[2] = probes; return *this; }
   struct llParser: public llhttp__internal_s {
     std::string& url; std::string_view& raw_url, header_field, body; fc::sv_map& headers; cc::query_string& url_params;
     llParser(std::string& u, std::string_view& a, fc::sv_map& h, cc::query_string& q): url(u), raw_url(a), headers(h), url_params(q) {}
@@ -247,8 +247,8 @@ namespace fc {
 #if __cplusplus < _cpp20_date
   static void make_http_processor(Conn& f, void* ap, Reactor * rc) {
 #else
-  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc, uint64_t& id) {
-    Conn f(fd, sa, k, ft, re, eh, id);
+  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
+    Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
     if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->on) epoll_del_cpp20(eh, fd), re->on = 0; _CTX_return }
 #endif
@@ -316,7 +316,7 @@ namespace fc {
       std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
       if (end == pret && ctx.content_length_) {
 #endif
-        f.timer.cancel(f.timer_id); f.is_idle = false;
+        f.timer.cancel(f.rpg->t_id); f.is_idle = false;
         try {
           req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
           ctx.format_top_headers(); ctx.respond(res_body->size(), res.headers); f.is_idle = true;
@@ -330,7 +330,7 @@ namespace fc {
         }
         ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
         co_await ctx.ot.flush(std::move(*res_body)); time(&f.rpg->hrt);
-        ROG* fib = f.rpg; f.timer_id = f.timer.add_s(f.k_a - 1, [fib] { if (fib->_) { fib->_.operator()(); } });
+        ROG* fib = f.rpg; f.rpg->t_id = f.timer.add_s(f.k_a - 1, [fib] { if (fib->_) { fib->_.operator()(); } });
         continue;
       }
       try {

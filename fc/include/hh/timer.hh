@@ -24,21 +24,24 @@
 #include <chrono>
 namespace fc {
   // Timer implementation using RBTree
-  class Timer {
-  protected:
-    struct ______ {
+  struct Timer {
+    struct Node {
+      Node(const std::chrono::steady_clock::time_point& t, uint64_t& i):time(std::move(t)), id(i != 0 ? i : ++i) {}
+      Node():id(0) {}//The root node uses 0 and cannot be deleted.
       std::chrono::steady_clock::time_point time;
-      uint64_t id;
-      bool operator<(const ______& other) const;
+      uint64_t id;//id is auto-increment to create an index
+      bool operator<(const Node& other) const;
     };
-    RBTree<______, std::function<void()>> timers;
-    uint64_t next_id = 0;
+  protected:
+    RBTree<Node, std::function<void()>> timers;
+    uint64_t next_id = 0;//Initial index of the root node
+    using ______ = Nod<Node, std::function<void()>>;
   public:
-    virtual uint64_t add_ms(unsigned int ms, std::function<void()>&& cb);
-    virtual uint64_t add_s(unsigned int s, std::function<void()>&& cb);
+    virtual Node add_ms(unsigned int ms, std::function<void()>&& cb);
+    virtual Node add_s(unsigned int s, std::function<void()>&& cb);
     virtual void tick();
     virtual int64_t time_to_next() const;
-    void cancel(uint64_t id);
+    void cancel(Node& id);//If Node.id is 0 it will be skipped
   };
 }
 #endif

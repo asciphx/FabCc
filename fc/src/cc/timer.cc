@@ -12,40 +12,39 @@
  * the modified version must be made available.
  */
 namespace fc {
-  bool Timer::______::operator<(const Timer::______& other) const {
+  bool Timer::Node::operator<(const Timer::Node& other) const {
     return time < other.time || (time == other.time && id < other.id);
   }
-  uint64_t Timer::add_s(unsigned int s, std::function<void()>&& cb) {
-    ______ node{ std::chrono::steady_clock::now() + std::chrono::seconds(s), next_id++ };
-    timers.insert(node, std::move(cb));
-    return node.id;
+  Timer::Node Timer::add_s(unsigned int s, std::function<void()>&& cb) {
+    Node node( std::chrono::steady_clock::now() + std::chrono::seconds(s), ++next_id);
+    timers.insert(node, std::move(cb)); return node;
   }
-  uint64_t Timer::add_ms(unsigned int ms, std::function<void()>&& cb) {
-    ______ node{ std::chrono::steady_clock::now() + std::chrono::milliseconds(ms), next_id++ };
-    timers.insert(node, std::move(cb));
-    return node.id;
+  Timer::Node Timer::add_ms(unsigned int ms, std::function<void()>&& cb) {
+    Node node{ std::chrono::steady_clock::now() + std::chrono::milliseconds(ms), ++next_id };
+    timers.insert(node, std::move(cb)); return node;
   }
   void Timer::tick() {
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     while (!timers.empty()) {
-      Node<______, std::function<void()>>* node = timers.find(timers.find(*reinterpret_cast<______*&>(timers))->key);
+      ______* node = timers.minimum(reinterpret_cast<______*&>(timers));
       if (node == nullptr || node->key.time > now) break;
-      node->value();
-      timers.remove(node->key);
+      node->value(); timers.remove(node->key);
     }
   }
   int64_t Timer::time_to_next() const {
     if (timers.empty()) return -1;
-    Node<______, std::function<void()>>* node = timers.get_minimum();
+    ______* node = timers.minimum(reinterpret_cast<______*&>(const_cast<RBTree<Node, std::function<void()>>&>(timers)));
     if (node == nullptr) return -1;
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       node->key.time - std::chrono::steady_clock::now()).count();
     return diff > 0 ? diff : 0;
   }
-  void Timer::cancel(uint64_t id) {
-    Node<______, std::function<void()>>* node = timers.find_by_id(id);
-    if (node != nullptr) {
-      timers.remove(node->key);
+  void Timer::cancel(Node& id) {
+    if(id.id) {
+      ______* node = timers.find(id); id.id = 0;//Prevent duplicate deletion
+      if (node != nullptr) {
+        timers.remove(node->key);
+      }
     }
   }
 }
