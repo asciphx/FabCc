@@ -8,10 +8,10 @@ namespace fc {
     method(m), url(u), raw_url(p), headers(h), params(q), cookie_map(cookie_map), cache_file(cache), USE_MAX_MEM_SIZE_MB(max) {}
   std::string_view Req::cookie(const char* k) { if (!cookie_map.size())index_cookies(); return cookie_map[k]; }
   void Req::setTimeoutSec(std::function<void()>&& func, uint32_t seconds) {
-    if(fiber.t_id.id)fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_s(seconds, std::move(func));
+    if(fiber.t_id.time.time_since_epoch().count())fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_s(seconds, std::move(func));
   }
   void Req::setTimeout(std::function<void()>&& func, uint32_t milliseconds) {
-    if(fiber.t_id.id)fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_ms(milliseconds, std::move(func));
+    if(fiber.t_id.time.time_since_epoch().count())fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_ms(milliseconds, std::move(func));
   }
   std::string Req::ip_address() const {
     std::string s;

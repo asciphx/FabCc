@@ -39,9 +39,9 @@ namespace fc {
       node->key.time - std::chrono::steady_clock::now()).count();
     return diff > 0 ? diff : 0;
   }
-  void Timer::cancel(Node& id) {
-    if(id.id) {
-      ______* node = timers.find(id); id.id = 0;//Prevent duplicate deletion
+  void Timer::cancel(Node& id) {//Prevent duplicate deletion
+    if(id.time.time_since_epoch().count()) {
+      ______* node = timers.find(id); id.time = std::chrono::steady_clock::time_point();
       if (node != nullptr) {
         timers.remove(node->key);
       }

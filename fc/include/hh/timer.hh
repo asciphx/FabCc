@@ -17,19 +17,18 @@
  * version is used to provide a service over a network, the complete source code of
  * the modified version must be made available.
  */
-#if defined _WIN32
-#include <basetsd.h>
-#endif
 #include "hpp/rb_tree.hpp"
 #include <chrono>
 namespace fc {
   // Timer implementation using RBTree
   struct Timer {
     struct Node {
-      Node(const std::chrono::steady_clock::time_point& t, uint64_t& i):time(std::move(t)), id(i != 0 ? i : ++i) {}
-      Node():id(0) {}//The root node uses 0 and cannot be deleted.
+      Node(const Node& _):time(_.time), id(_.id) {}
+      Node(std::chrono::steady_clock::time_point&& t, uint64_t& i):time(std::move(t)), id(i) {}
+      Node():id(0) {}
+      void operator = (Node&& _) { time = std::move(_.time); id = std::move(_.id); }
       std::chrono::steady_clock::time_point time;
-      uint64_t id;//id is auto-increment to create an index
+      uint64_t id;
       bool operator<(const Node& other) const;
     };
   protected:
@@ -41,7 +40,7 @@ namespace fc {
     virtual Node add_s(unsigned int s, std::function<void()>&& cb);
     virtual void tick();
     virtual int64_t time_to_next() const;
-    void cancel(Node& id);//If Node.id is 0 it will be skipped
+    void cancel(Node& id);//If Node.time.time_since_epoch().count() is 0 it will be skipped
   };
 }
 #endif
