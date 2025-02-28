@@ -95,6 +95,9 @@ namespace fc {
 #elif __APPLE__
     struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(ef, &e, 1, NULL, 0, NULL);
 #endif
+#if _WIN32
+    ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
+#endif
   }
   struct ROG {
     Timer::Node t_id;

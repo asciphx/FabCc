@@ -18,19 +18,18 @@
 namespace fc {
   template<typename K, typename V>
   class SPTree {
-  private:
-    struct Node {
+    struct Nod {
       K key;
       V value;
-      Node* left;
-      Node* right;
-      Node* parent;
-      Node(const K& k, const V& v): key(k), value(v), left(nullptr), right(nullptr), parent(nullptr) {}
-      Node(const K& k, V&& v): key(k), value(std::move(v)), left(nullptr), right(nullptr), parent(nullptr) {}
+      Nod* left;
+      Nod* right;
+      Nod* parent;
+      Nod(const K& k, const V& v): key(k), value(v), left(nullptr), right(nullptr), parent(nullptr) {}
+      Nod(const K& k, V&& v): key(k), value(std::move(v)), left(nullptr), right(nullptr), parent(nullptr) {}
     };
-    Node* root;
-    inline void rotateRight(Node* x) {
-      Node* y = x->left;
+    Nod* root;
+    inline void rotateRight(Nod* x) {
+      Nod* y = x->left;
       x->left = y->right;
       if (y->right) y->right->parent = x;
       y->parent = x->parent;
@@ -40,8 +39,8 @@ namespace fc {
       y->right = x;
       x->parent = y;
     }
-    inline void rotateLeft(Node* x) {
-      Node* y = x->right;
+    inline void rotateLeft(Nod* x) {
+      Nod* y = x->right;
       x->right = y->left;
       if (y->left) y->left->parent = x;
       y->parent = x->parent;
@@ -51,7 +50,7 @@ namespace fc {
       y->left = x;
       x->parent = y;
     }
-    void splay(Node* x) {
+    void splay(Nod* x) {
       while (x->parent) {
         if (!x->parent->parent) {
           if (x == x->parent->left) rotateRight(x->parent);
@@ -71,11 +70,11 @@ namespace fc {
         }
       }
     }
-    _FORCE_INLINE Node* minimum(Node* x) {
+    _FORCE_INLINE Nod* minimum(Nod* x) {
       while (x->left) x = x->left;
       return x;
     }
-    void destroy(Node* node) {
+    void destroy(Nod* node) {
       if (node) {
         destroy(node->left);
         destroy(node->right);
@@ -88,9 +87,9 @@ namespace fc {
       destroy(root);
     }
     void insert(const K& key, const V& value) {
-      Node* z = new Node(key, value);
-      Node* x = root;
-      Node* y = nullptr;
+      Nod* z = new Nod(key, value);
+      Nod* x = root;
+      Nod* y = nullptr;
       while (x) {
         y = x;
         if (key < x->key) x = x->left;
@@ -109,7 +108,7 @@ namespace fc {
       splay(z);
     }
     inline V* find(const K& key) {
-      Node* x = root;
+      Nod* x = root;
       while (x) {
         if (key < x->key) x = x->left;
         else if (key > x->key) x = x->right;
@@ -121,7 +120,7 @@ namespace fc {
       return nullptr;
     }
     void remove(const K& key) {
-      Node* x = root;
+      Nod* x = root;
       while (x) {
         if (key < x->key) x = x->left;
         else if (key > x->key) x = x->right;
@@ -129,25 +128,24 @@ namespace fc {
       }
       if (!x) return;
       splay(x);
-      if (!x->left) {
-        root = x->right;
-        if (root) root->parent = nullptr;
-      } else {
-        Node* new_root = minimum(x->right);
-        if (new_root) {
-          splay(new_root);
-          new_root->left = x->left;
-          x->left->parent = new_root;
-        } else {
-          root = x->left;
-          root->parent = nullptr;
-        }
-      }
+      Nod* l = x->left;
+      Nod* r = x->right;
+      if (l) l->parent = nullptr;
+      if (r) r->parent = nullptr;
       delete x;
+      if (!l) {
+        root = r;
+      } else {
+        while (l->right) l = l->right;
+        splay(l);
+        l->right = r;
+        if (r) r->parent = l;
+        root = l;
+      }
     }
     //Similar to RBTree's operator[]
     V& operator[](const K& key) {
-      Node* x = root;
+      Nod* x = root;
       while (x) {
         if (key < x->key) x = x->left;
         else if (x->key < key) x = x->right;
@@ -157,8 +155,8 @@ namespace fc {
         }
       }
       //Not found, insert new node
-      Node* z = new Node(key, V());
-      Node* y = nullptr;
+      Nod* z = new Nod(key, V());
+      Nod* y = nullptr;
       x = root;
       while (x) {
         y = x;
@@ -175,8 +173,8 @@ namespace fc {
     // Iterator implementation
     template<typename A, typename B>
     struct iterator {
-      Node* curr;
-      iterator(Node* ptr = nullptr): curr(ptr) {}
+      Nod* curr;
+      iterator(Nod* ptr = nullptr): curr(ptr) {}
       bool operator!=(const iterator& other) const { return curr != other.curr; }
       bool operator==(const iterator& other) const { return curr == other.curr; }
       std::pair<const A, B>* operator->() const { return reinterpret_cast<std::pair<const A, B>*>(&curr->key); }
@@ -185,7 +183,7 @@ namespace fc {
           curr = curr->right;
           while (curr->left) curr = curr->left;
         } else {
-          Node* y = curr->parent;
+          Nod* y = curr->parent;
           while (y && curr == y->right) {
             curr = y;
             y = y->parent;
@@ -196,7 +194,7 @@ namespace fc {
       }
     };
     _FORCE_INLINE iterator<K, V> begin() {
-      Node* x = root;
+      Nod* x = root;
       if (!x) return iterator<K, V>(nullptr);
       while (x->left) x = x->left;
       return iterator<K, V>(x);

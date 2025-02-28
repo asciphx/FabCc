@@ -65,13 +65,13 @@ namespace fc {
 #endif
     void epoll_ctl(epoll_handle_t epoll_fd, socket_type fd, int action, socket_type flags, void* ptr = NULL);
     _FORCE_INLINE void epoll_del(socket_type fd) {
-#if __cplusplus >= _cpp20_date
-      clients.remove(fd);
-#endif
 #if __linux__ || _WIN32
       epoll_event e{ 0 }; ::epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, fd, &e);
 #elif __APPLE__
       struct kevent e; EV_SET(&e, fd, 0, EPOLL_CTL_DEL, 0, 0, NULL); kevent(this->epoll_fd, &e, 1, NULL, 0, NULL);
+#endif
+#if _WIN32
+      ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
     }
     void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids, void* ap) {
@@ -89,9 +89,11 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int64_t sj = RES_TIME_T; epoll_event* kevents; ROG* ro, *fib;
+      int64_t sj = RES_TIME_T; epoll_event* kevents; ROG* ro, * fib;
       do {
-        if (RES_TP > t) { loop_timer.tick(); t = RES_TP; }
+        if (RES_TP > t) {
+          loop_timer.tick(); t = RES_TP + std::chrono::milliseconds(3);
+        }
 #if __linux__ || _WIN32
         this->n_events = epoll_wait(this->epoll_fd, this->kevents, RESmaxEVENTS, 1);
 #elif __APPLE__
@@ -99,19 +101,19 @@ namespace fc {
         this->n_events = kevent(this->epoll_fd, NULL, 0, this->kevents, RESmaxEVENTS, &timeout);
 #endif
         if (this->n_events == 0) {
-          if (RES_TIME_T > sj) {
-#if __cplusplus >= _cpp20_date
+#if __cplusplus >= _cpp20_date && _WIN32
+          if (RES_TIME_T < sj) {
             for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
-              if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); clients.remove(ider->second.$); }
+              if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
               // if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
             }
-#elif !_WIN32
-            for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
-              if (ider->second.on == 0) { ider->second.on = 2; clients.remove(ider->second.$); }
-            }
-#endif
             sj = RES_TIME_T + k_A[0];
           }
+#elif !_WIN32
+          usleep(10000);
+#else
+          Sleep(1);
+#endif
         } else {
           for (i = 0; i < this->n_events; ++i) {
             kevents = &this->kevents[i];
@@ -135,7 +137,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              loop_timer.cancel(ro->t_id); epoll_del(this->event_fd); ro->on = 2; fc::Task<void> v = std::move(ro->_); if (v) v.operator()(); clients.remove(ro->$);
+              loop_timer.cancel(ro->t_id); ro->on = 2; fc::Task<void> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -152,17 +154,17 @@ namespace fc {
 #else
                 if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) continue;
 #endif
-#ifdef WIN32
-                RESin_kavars.onoff = k_A[0]; RESin_kavars.keepalivetime = k_A[1] * 1000; RESin_kavars.keepaliveinterval = k_A[2] * 1000;
-                if (WSAIoctl(socket_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RESin_kavars, RESl_k, (LPVOID)&RESout_kavars, RESl_k, &RESuBR, NULL, NULL) == SOCKET_ERROR) {
-                  DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError()); epoll_del(socket_fd); close_socket(socket_fd); break;
-                }
-#else
-                if (setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &RESkeep_AI, sizeof(RESkeep_AI)) != 0) { epoll_del(socket_fd); close_socket(socket_fd); break; }
-                setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
-                setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
-#endif
-                fib = &this->clients[socket_fd];
+// #ifdef WIN32
+//                 RESin_kavars.onoff = k_A[0]; RESin_kavars.keepalivetime = k_A[1] * 1000; RESin_kavars.keepaliveinterval = k_A[2] * 1000;
+//                 if (WSAIoctl(socket_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RESin_kavars, RESl_k, (LPVOID)&RESout_kavars, RESl_k, &RESuBR, NULL, NULL) == SOCKET_ERROR) {
+//                   DEBUG("WSAIoctl() SIO_KEEPALIVE_VALS error. [%d]", WSAGetLastError()); epoll_del(socket_fd); close_socket(socket_fd); break;
+//                 }
+// #else
+//                 if (setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &RESkeep_AI, sizeof(RESkeep_AI)) != 0) { epoll_del(socket_fd); close_socket(socket_fd); break; }
+//                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
+//                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
+// #endif
+                fib = &clients[socket_fd];
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
@@ -212,7 +214,7 @@ namespace fc {
   static void start_server(std::thread& date_thread, socket_type sfd, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2]; if (k_A < 4)k_A = 4;
-    RESmaxEVENTS = n > 32 ? (n << 1) - (n >> 1) : n > 7 ? n << 1 : (((n + 1) * (n + 1)) >> 1) + 0x16;
+    RESmaxEVENTS = n > 32 ? n + 32 : n > 7 ? (n << 1) - (n >> 1) : (((n + 1) * (n + 1)) >> 1) + 0x16;
     for (int i = 0; i < n; ++i) {
       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {
         Reactor reactor;

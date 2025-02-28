@@ -23,17 +23,16 @@ namespace fc {
     Nod* right;
     Nod* parent;
     bool b;
-    Nod(const K& k, const V& v): key(k), value(v), b(false),
+    Nod(const K& k, const V& v) noexcept: key(k), value(v), b(false),
       left(NULL), right(NULL), parent(NULL) {}
-    Nod(const K& k, V&& v): key(k), value(std::move(v)), b(false),
+    Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), b(false),
       left(NULL), right(NULL), parent(NULL) {}
   };
-
   template<typename K, typename V>
   class RBTree {
     Nod<K, V>* root;
     Nod<K, V>* nil;
-    inline void rotateLeft(Nod<K, V>* x) {
+    inline void rotateLeft(Nod<K, V>* x) noexcept {
       Nod<K, V>* y = x->right;
       x->right = y->left;
       if (y->left != nil) y->left->parent = x;
@@ -44,7 +43,7 @@ namespace fc {
       y->left = x;
       x->parent = y;
     }
-    inline void rotateRight(Nod<K, V>* x) {
+    inline void rotateRight(Nod<K, V>* x) noexcept {
       Nod<K, V>* y = x->left;
       x->left = y->right;
       if (y->right != nil) y->right->parent = x;
@@ -55,7 +54,7 @@ namespace fc {
       y->right = x;
       x->parent = y;
     }
-    void fixInsert(Nod<K, V>* z) {
+    void fixInsert(Nod<K, V>* z) noexcept {
       while (z != root && z->parent->b == false) {
         if (z->parent == z->parent->parent->left) {
           Nod<K, V>* y = z->parent->parent->right;
@@ -93,13 +92,13 @@ namespace fc {
       }
       root->b = true;
     }
-    inline void transplant(Nod<K, V>* u, Nod<K, V>* v) {
+    inline void transplant(Nod<K, V>* u, Nod<K, V>* v) noexcept {
       if (u->parent == nil) root = v;
       else if (u == u->parent->left) u->parent->left = v;
       else u->parent->right = v;
       v->parent = u->parent;
     }
-    void fixDelete(Nod<K, V>* x) {
+    void fixDelete(Nod<K, V>* x) noexcept {
       while (x != root && x->b == true) {
         if (x == x->parent->left) {
           Nod<K, V>* w = x->parent->right;
@@ -153,7 +152,7 @@ namespace fc {
       }
       x->b = true;
     }
-    void deleteNode(Nod<K, V>* z) {
+    void deleteNode(Nod<K, V>* z) noexcept {
       Nod<K, V>* y = z;
       bool yColor = y->b;
       Nod<K, V>* x;
@@ -182,14 +181,13 @@ namespace fc {
       delete z;
       if (yColor == true) fixDelete(x);
     }
-    void destroy(Nod<K, V>* node) {
+    void destroy(Nod<K, V>* node) noexcept {
       if (node != nil) {
         destroy(node->left);
         destroy(node->right);
         delete node;
       }
     }
-
   public:
     V& operator[](const K& key) {
       Nod<K, V>* x = root;
@@ -219,11 +217,11 @@ namespace fc {
       const Nod<A, B>* nil;
       mutable Nod<A, B>* curr;
     public:
-      iterator(Nod<A, B>* ptr = nullptr, Nod<A, B>* n = nullptr): nil(n), curr(ptr) {}
-      bool operator!=(const iterator& other) const { return curr != other.curr; }
-      bool operator==(const iterator& other) const { return !(*this != other); }
-      std::pair<const A, B>* operator->() const { return reinterpret_cast<std::pair<const A, B>*>(&curr->key); }
-      iterator& operator++() {
+      iterator(Nod<A, B>* ptr = nullptr, Nod<A, B>* n = nullptr) noexcept: nil(n), curr(ptr) {}
+      bool operator!=(const iterator& other) const noexcept { return curr != other.curr; }
+      bool operator==(const iterator& other) const noexcept { return !(*this != other); }
+      std::pair<const A, B>* operator->() const noexcept { return reinterpret_cast<std::pair<const A, B>*>(&curr->key); }
+      iterator& operator++() noexcept {
         if (curr->right != nil) {
           Nod<A, B>* x = curr->right;
           while (x->left != nil) x = x->left;
@@ -238,15 +236,20 @@ namespace fc {
         }
         return *this;
       };
+      iterator operator++(int) noexcept {
+        iterator tmp = *this;
+        ++(*this);
+        return tmp;
+      }
     };
-    _FORCE_INLINE iterator<K, V> begin() {
+    _FORCE_INLINE iterator<K, V> begin() noexcept {
       Nod<K, V>* x = root;
       while (x->left != nil) {
         x = x->left;
       }
       return iterator(x, nil);
     };
-    _FORCE_INLINE iterator<K, V> end() const {
+    _FORCE_INLINE iterator<K, V> end() const noexcept {
       return iterator<K, V>(this->nil, this->nil);
     }
     RBTree() {
@@ -259,7 +262,7 @@ namespace fc {
       destroy(root);
       delete nil;
     }
-    void insert(const K& key, const V& value) {
+    void insert(const K& key, const V& value) noexcept {
       Nod<K, V>* z = new Nod<K, V>(key, value);
       Nod<K, V>* y = nil;
       Nod<K, V>* x = root;
@@ -276,11 +279,11 @@ namespace fc {
       z->right = nil;
       fixInsert(z);
     }
-    _FORCE_INLINE void remove(const K& key) {
+    _FORCE_INLINE void remove(const K& key) noexcept {
       Nod<K, V>* z = find(key);
       if (z != nullptr) deleteNode(z);
     }
-    inline Nod<K, V>* find(const K& key) const {
+    inline Nod<K, V>* find(const K& key) const noexcept {
       Nod<K, V>* x = root;
       while (x != nil) {
         if (key < x->key) x = x->left;
@@ -289,13 +292,13 @@ namespace fc {
       }
       return nullptr;
     }
-    _FORCE_INLINE bool empty() const { return root == nil; }
-    _FORCE_INLINE void clear() {
+    _FORCE_INLINE bool empty() const noexcept { return root == nil; }
+    _FORCE_INLINE void clear() noexcept {
       destroy(root);
       root = nil;
     }
     // Add to RBTree public section:
-    _FORCE_INLINE Nod<K, V>* minimum(Nod<K, V>* x) const {
+    _FORCE_INLINE Nod<K, V>* minimum(Nod<K, V>* x) const noexcept {
       while (x->left != nil) x = x->left;
       return x;
     }
