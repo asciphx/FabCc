@@ -64,4 +64,5 @@ int main() {
   };
   //Start the server, also supports ipv6
   app.http_serve(8080);
+  // app.set_ssl("ALL:!NULL").http_serve(443, "0.0.0.0");
 }

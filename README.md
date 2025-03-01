@@ -16,7 +16,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 > ![coroutine](./co%20vs%20Task.jpg)
 
 ## Be Original
-- Fully and deeply integrated RBTree and time wheel have stronger performance (+5%) encapsulated revocable timers, using box<> to manage the release of coroutines, thus saving the memory of using containers
+- Comprehensive and deep integration of RBTree and Time Wheel (5% performance improvement) to encapsulate cancelable timers, while using box<> dark magic to manage the release of coroutines, thereby saving memory used by containers
 - Supports c++20 stack free coroutines, currently compatible with the original project's stack based asymmetric coroutines, and is perfectly integrated, requiring almost minimal macro modifications. Performance is about 5% stronger than stack based protocols.
 - Added a new player with subtitles [The subtitles have the same name as the file, but the file format is different, that is, the suffix is different (supports srt, vtt, ass formats)] func.
 - Enhanced field reflection, for example`std::string_view sv = k(&O::id);` will return "`O`.`id`"(can be modified by constexpr in C++14 and higher versions).

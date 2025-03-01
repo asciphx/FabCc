@@ -186,7 +186,7 @@ namespace ctx {
 /*
 * This software is licensed under the AGPL-3.0 License.
 *
-* Copyright (C) 2023 Asciphx
+* Copyright (C) 2025 Asciphx
 *
 * Permissions of this strongest copyleft license are conditioned on making available
 * complete source code of licensed works and modifications, which include larger works
@@ -235,6 +235,35 @@ namespace fc {
     Task() noexcept = default; Task(Task const&) = delete;
     struct promise_type; Task& operator=(Task const&) = delete;
     Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
+    using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
+    Task(promise_type* p): $(Handle::from_promise(*p)) {}
+    Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
+    ~Task() { if ($) $.destroy(); }
+    struct promise_type {
+      std::coroutine_handle<> l, r; std::exception_ptr e; void return_void() {}
+      _FORCE_INLINE void unhandled_exception() { e = std::current_exception(); }
+      std::suspend_never initial_suspend() noexcept { return {}; }
+      std::suspend_always final_suspend() noexcept { return {}; }
+      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
+    };
+    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
+    _FORCE_INLINE void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
+    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
+    template<typename T> void await_suspend(std::coroutine_handle<T> _) noexcept { _.promise().l = $; $.promise().r = _; }
+    explicit operator bool() const noexcept { return $ && !$.done(); }
+    void operator()() noexcept {
+      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
+      do {
+        $.resume(); if (!$.done())return;
+        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
+      } while (!$.done());
+    }
+  };
+  template <> struct Task<ROG> {
+    Task() noexcept = default; Task(Task const&) = delete;
+    struct promise_type; Task& operator=(Task const&) = delete;
+    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
+    Task& operator=(Task<void>&& _) noexcept { $ = Handle::from_address(_.$.address()); _.$ = nullptr; return *this; }
     using Handle = std::coroutine_handle<promise_type>; mutable Handle $; box<ROG> box;//Black magic
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
@@ -292,7 +321,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
     ctx::co _;
 #else
-    fc::Task<void> _;
+    fc::Task<ROG> _;
 #endif
     ROG():$(0) {}
   };

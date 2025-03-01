@@ -27,7 +27,7 @@
 #include "file_sptr.hh"
 namespace fc {
   struct Ctx {
-    output_buffer ot;//output_stream
+    output_buffer ot;
     std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> cookie_map;
     std::string_view content_type, status_;
     std::unique_ptr<fc::cache_file> cache_file;
@@ -36,7 +36,7 @@ namespace fc {
 #ifdef _WIN32
     DWORD nwritten;
 #elif __APPLE__
-    off_t nwritten;
+    off_t nwritten; int ret;
 #else
     int ret;
 #endif

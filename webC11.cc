@@ -68,4 +68,5 @@ int main() {
   };
   //Start the server
   app.http_serve(8080, "0.0.0.0");
+  // app.set_ssl("ALL:!NULL").http_serve(443, "0.0.0.0");
 }

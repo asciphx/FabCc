@@ -146,9 +146,7 @@ namespace fc {
     }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
-      if (rpg->hrt) timer.cancel(rpg->t_id), rpg->hrt = 0, epoll_del_cpp20(epoll_fd, socket_fd);
-#else
-      rpg->hrt = 0;
+     if (rpg->hrt) timer.cancel(rpg->t_id), rpg->hrt = 0, epoll_del_cpp20(epoll_fd, socket_fd);
 #endif
 #if _OPENSSL
       if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }

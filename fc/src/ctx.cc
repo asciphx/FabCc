@@ -52,10 +52,10 @@ namespace fc {
   _CTX_TASK(void) Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2); content_length_ = size - p;
     // if (content_length_ > 16777216) content_length_ = 16777216, size = p + 16777216;
-    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
+    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4); co_await ot.flush();
     co_await __->read_chunk([this, size, p](_Fhandle fd)_ctx{
 #ifdef _WIN32
-      co_await ot.flush(); OVERLAPPED ov { 0 }; ov.Offset = p;
+      OVERLAPPED ov { 0 }; ov.Offset = p;
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
@@ -67,11 +67,20 @@ namespace fc {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
             }
           }
+          throw err::not_found("failed.");
         }
         break;
       } while (ov.Offset < size);
 #else
+#if _OPENSSL
       co_await ot.flush(); off_t ov = p; lseek(fd, p, SEEK_SET);
+      do {
+        if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
+        if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
+        if (errno == EPIPE) break; throw err::not_found("failed.");
+      } while (ov < size);
+#else
+      off_t ov = p; lseek(fd, p, SEEK_SET);
       do {
 #if __APPLE__ // sendfile on macos is slightly different...
         nwritten = 0;
@@ -82,11 +91,8 @@ namespace fc {
         ret = ::sendfile(fiber.socket_fd, fd, &ov, size - ov);
 #endif
         if (ret == -1) {
-          if (errno == EPIPE) {
-            break;
-          } else if (errno != EAGAIN) {
-            throw err::not_found("failed.");
-          }
+          if (errno == EPIPE) break; throw err::not_found("failed.");
+        } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
           this->fiber.rpg->_.operator()();
 #else
@@ -94,6 +100,7 @@ namespace fc {
 #endif
         }
       } while (ov < size);
+#endif
 #endif
     co_return; });
 #ifdef _WIN32
@@ -112,9 +119,17 @@ namespace fc {
     if (is_download) (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
     else ot.append("Transfer-Encoding: chunked\r\n\r\n", 30);
     // Open the file in non blocking mode.
-#ifndef _WIN32 // Linux / Macos version with sendfile
     co_await __->read_chunk([this](_Fhandle fd)_ctx{
+#ifndef _WIN32 // Linux / Macos version with sendfile
       // if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
+#if _OPENSSL
+      co_await ot.flush(); off_t ov = 0;
+      do {
+        if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
+        if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
+        if (errno == EPIPE) break; throw err::not_found("failed.");
+      } while (ov < content_length_);
+#else
       co_await ot.flush(); off_t ov = 0;
       do {
 #if __APPLE__ // sendfile on macos is slightly different...
@@ -125,20 +140,18 @@ namespace fc {
 #else
         ret = ::sendfile(fiber.socket_fd, fd, &ov, content_length_ - ov);
 #endif
-        if (ret != -1 && ov < content_length_) {
-          continue;
+        if (ret == -1) {
+          if (errno == EPIPE) break; throw err::not_found("failed.");
         } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
           this->fiber.rpg->_.operator()();
 #else
           co_await std::suspend_always{};
 #endif
-        } else {
-          throw err::not_found("failed.");
         }
       } while (ov < content_length_);
+#endif
 #else // Windows impl with basic read write.
-    co_await __->read_chunk([this](_Fhandle fd)_ctx{
       // if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
       co_await ot.flush(); OVERLAPPED ov { 0 }; ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
       do {
@@ -152,6 +165,7 @@ namespace fc {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
             }
           }
+          throw err::not_found("failed.");
         }
         break;
       } while (ov.Offset < content_length_);
