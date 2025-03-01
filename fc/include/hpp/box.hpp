@@ -17,8 +17,22 @@
 #include <stdexcept>
 #include <memory>
 #include <type_traits>
+#include <array>
+#include <deque>
+#include <forward_list>
+#include <list>
+#include <map>
+#include <stack>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 #include <new>
-#include "tp/c++.h"
+#ifdef _MSVC_LANG
+#define _FORCE_INLINE __forceinline
+#else
+#define _FORCE_INLINE inline __attribute__((always_inline))
+#endif
 template <typename T> class box;
 namespace std {
   template <class T> struct is_box_impl: std::false_type {}; template <class T> struct is_box_impl<box<T>>: std::true_type {};
@@ -44,6 +58,7 @@ template<typename T> using vec = std::vector<T>; template<typename T> using lis 
 template <class T, class... K> inline constexpr box<T> make_box(K &&... k) { return box<T>(std::forward<K>(k)...); }
 template <class T> inline constexpr box<T> make_box(T&& _) { return box<T>(std::forward<T>(_)); }
 #define null nullptr
+// Dark magic, automatic memory management, but be careful not to release the external
 template <typename T>
 class box {
   bool b; T* p;
@@ -55,10 +70,9 @@ public:
   explicit box(T&& _) noexcept: p(new T{ std::move(_) }), b(true) {}
   explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}
   explicit box(const box<T>& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; }
-  explicit box(T* _) noexcept: p(std::addressof(*_)), b(false) {}
+  explicit box(T* _) noexcept: p(_), b(true) {}
   template<typename... X> box(X&&... _) noexcept: p(new T{ std::forward<X>(_)... }), b(true) {}
   ~box() noexcept { if (this->b) { delete this->p; this->p = null; } }
-  //Automatic memory management, but be careful not to release the external, eg: box<T> xx = new T{};
   _FORCE_INLINE void operator = (T* _) noexcept { if (this->b) delete this->p; this->p = _; this->b = _ ? true : false; }
   _FORCE_INLINE void operator = (box<T>& _) noexcept {
     if (this->b) { if (_.p)*this->p = *_.p; else { delete this->p; this->p = null; this->b = false; } } else if (_.p) { this->p = new T(*_.p); this->b = true; }
@@ -83,8 +97,8 @@ public:
   T* operator->() { if (this->p)return this->p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
   _FORCE_INLINE T& operator*() & { if (!this->p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *this->p; }
   _FORCE_INLINE const T& operator*() const& { if (!p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *p; }
-  __CONSTEXPR T value_or(T&& _) const noexcept { return this->p != null ? *this->p : _; }
-  __CONSTEXPR T value_or(T& _) const noexcept { return this->p != null ? *this->p : _; }
+  T value_or(T&& _) const noexcept { return this->p != null ? *this->p : _; }
+  T value_or(T& _) const noexcept { return this->p != null ? *this->p : _; }
   _FORCE_INLINE void reset() noexcept { if (this->p) { delete this->p; } this->b = false; }
 };
 template<typename T, std::enable_if_t<!std::is_reg<T>::value>* = null>
@@ -153,4 +167,5 @@ template <class T, class U>
 inline const bool operator>=(const box<T>& l, const U& r) { return l ? *l >= r : false; }
 template <class T, class U>
 inline const bool operator>=(const U& l, const box<T>& r) { return r ? l >= *r : true; }
+#undef _FORCE_INLINE
 #endif // BOX_HPP

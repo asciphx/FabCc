@@ -14,6 +14,7 @@
 #include <mutex>
 #include "hh/conn.hh"
 #include "hpp/sp_tree.hpp"
+#include "hpp/box.hpp"
 #pragma warning(disable:4244)
 namespace fc {
   /**
@@ -47,7 +48,6 @@ namespace fc {
   struct Reactor {
     sockaddr_storage in_addr_storage;
     fc::timer loop_timer;
-    fc::SPTree<socket_type, ROG> clients;
     epoll_handle_t epoll_fd;
 #if __linux__ || _WIN32
     epoll_event* kevents;
@@ -57,7 +57,11 @@ namespace fc {
     sockaddr* in_addr = (sockaddr*)&in_addr_storage;
     std::chrono::steady_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
+  #ifdef __MINGW32__
+    struct stat64 statbuf_;
+  #else
     struct stat statbuf_;
+  #endif
     socket_type event_flags, event_fd;
     int n_events, i;
 #if _OPENSSL
@@ -89,7 +93,7 @@ namespace fc {
       struct timespec timeout; memset(&timeout, 0, sizeof(timeout)); timeout.tv_nsec = 10000;
 #endif
       // Main loop.
-      int64_t sj = RES_TIME_T; epoll_event* kevents; ROG* ro, * fib;
+      epoll_event* kevents; ROG* ro;
       do {
         if (RES_TP > t) {
           loop_timer.tick(); t = RES_TP + std::chrono::milliseconds(3);
@@ -101,18 +105,8 @@ namespace fc {
         this->n_events = kevent(this->epoll_fd, NULL, 0, this->kevents, RESmaxEVENTS, &timeout);
 #endif
         if (this->n_events == 0) {
-#if __cplusplus >= _cpp20_date && _WIN32
-          if (RES_TIME_T < sj) {
-            for (auto ider = clients.begin(); ider != clients.end(); ++ider) {
-              if (ider->second.on == 0) { ider->second.on = 2; Task<void> v = std::move(ider->second._); if (v) v.operator()(); }
-              // if (ider->second.on == 1 && RES_TIME_T - ider->second.hrt >= k_A[0]) { ider->second.on = 2; if(ider->second._) ider->second._.operator()(); }
-            }
-            sj = RES_TIME_T + k_A[0];
-          }
-#elif !_WIN32
+#if !_WIN32
           usleep(10000);
-#else
-          Sleep(1);
 #endif
         } else {
           for (i = 0; i < this->n_events; ++i) {
@@ -137,7 +131,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              loop_timer.cancel(ro->t_id); ro->on = 2; fc::Task<void> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
+              loop_timer.cancel(ro->t_id); ro->hrt = 0; fc::Task<void> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -164,7 +158,7 @@ namespace fc {
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 // #endif
-                fib = &clients[socket_fd];
+                ROG* fib = new ROG{ socket_fd };
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
@@ -173,11 +167,11 @@ namespace fc {
                 epoll_ctl(this->epoll_fd, socket_fd, EV_ADD, EVFILT_READ | EVFILT_WRITE, fib);
 #endif
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
-                fib->on = 1;
 #if __cplusplus < _cpp20_date
                 fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_.operator()(); } });
                 fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
                   fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
+                  fib->_.box = fib;//Black magic, using box<> to automatically manage the release of objects
                   try {
 #if _OPENSSL
                     if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
@@ -194,6 +188,7 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
+                fib->_.box = fib;// Dark magic, box<> brings the wrapper pointer into the box of the coroutine
                 fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_(); } });
                 fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
 #endif

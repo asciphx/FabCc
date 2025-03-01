@@ -18,6 +18,9 @@ namespace fc {
   static _FORCE_INLINE int64_t nowStamp(short&& i) { return RES_TIME_T + std::move(i); }
   static _FORCE_INLINE int64_t nowStamp() { return RES_TIME_T; }
   struct timer: public Timer {
+    inline Node add(std::function<void()>&& cb) {
+      Node node{ _NOW_VER, ++next_id }; timers.insert(node, std::move(cb)); return node;
+    }
     inline Node add_s(unsigned int s, std::function<void()>&& cb) {
       Node node{ _NOW_VER + std::chrono::seconds(s), ++next_id };
       timers.insert(node, std::move(cb)); return node;

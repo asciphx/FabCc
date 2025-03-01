@@ -25,22 +25,24 @@ namespace fc {
     struct Node {
       Node(const Node& _):time(_.time), id(_.id) {}
       Node(std::chrono::steady_clock::time_point&& t, uint64_t& i):time(std::move(t)), id(i) {}
+      Node(const std::chrono::steady_clock::time_point& t, uint64_t& i):time(t), id(i) {}
       Node():id(0) {}
       void operator = (Node&& _) { time = std::move(_.time); id = std::move(_.id); }
       std::chrono::steady_clock::time_point time;
       uint64_t id;
-      bool operator<(const Node& other) const;
+      bool operator<(const Node&) const;
+      explicit operator bool() const noexcept { return this->time.time_since_epoch().count(); }
+      bool operator!() const noexcept { return this->time.time_since_epoch().count() == 0; }
     };
-  protected:
-    RBTree<Node, std::function<void()>> timers;
-    uint64_t next_id = 0;//Initial index of the root node
-    using ______ = Nod<Node, std::function<void()>>;
-  public:
     virtual Node add_ms(unsigned int ms, std::function<void()>&& cb);
     virtual Node add_s(unsigned int s, std::function<void()>&& cb);
     virtual void tick();
     virtual int64_t time_to_next() const;
     void cancel(Node& id);//If Node.time.time_since_epoch().count() is 0 it will be skipped
+  protected:
+    RBTree<Node, std::function<void()>> timers;
+    uint64_t next_id = 0;
+    using ______ = Nod<Node, std::function<void()>>;
   };
 }
 #endif

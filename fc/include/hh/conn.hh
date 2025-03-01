@@ -69,7 +69,6 @@ namespace fc {
   static int RESon = 1; static int RESkeep_AI = 1;//keepalive
 #if defined _WIN32
   typedef HANDLE epoll_handle_t;
-  typedef UINT_PTR socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
   static unsigned int RESrcv = 5000;
   static unsigned int RESsed = 10000;
   static tcp_keepalive RESin_kavars{ 0, 0, 0 };
@@ -78,7 +77,6 @@ namespace fc {
   static DWORD RESuBR;
 #else
   typedef int epoll_handle_t;
-  typedef int socket_type;
   static struct timeval RESrcv { 5, 0 };//max{5,0},read
   static struct timeval RESsed { 10, 0 };//write
 #endif
@@ -99,19 +97,6 @@ namespace fc {
     ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
   }
-  struct ROG {
-    Timer::Node t_id;
-#if __linux__ || _WIN32
-    socket_type $;
-#endif
-    int64_t hrt{ 0 };
-#if __cplusplus < _cpp20_date
-    ctx::co _;
-#else
-    fc::Task<void> _;
-#endif
-    u16 on = 2;
-  };
   struct Reactor;
   // Epoll based Reactor:
   // Orchestrates a set of fiber (ctx::co).
@@ -161,9 +146,9 @@ namespace fc {
     }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
-      if (rpg->on) timer.cancel(rpg->t_id), rpg->on = 0, epoll_del_cpp20(epoll_fd, socket_fd);
+      if (rpg->hrt) timer.cancel(rpg->t_id), rpg->hrt = 0, epoll_del_cpp20(epoll_fd, socket_fd);
 #else
-      rpg->on = 0;
+      rpg->hrt = 0;
 #endif
 #if _OPENSSL
       if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
@@ -196,7 +181,7 @@ namespace std {
 #if __linux__ || _WIN32
       return hash<fc::socket_type>()(o.$);
 #else
-      return hash<u16>()(o.hrt);
+      return hash<int64_t>()(o.hrt);
 #endif
     }
   };

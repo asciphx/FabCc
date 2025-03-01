@@ -250,7 +250,7 @@ namespace fc {
   fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->on) epoll_del_cpp20(eh, fd), re->on = 0; _CTX_return }
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd), re->hrt = 0; _CTX_return }
 #endif
 #endif
     fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x1000], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));

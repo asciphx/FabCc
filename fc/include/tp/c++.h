@@ -6,6 +6,7 @@
 #include <utility>
 #include <time.h>
 #include <exception>
+#include "hpp/box.hpp"
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
 #define _unlikely(x) __builtin_expect((x),0)
 #define _likely(x) __builtin_expect(!!(x),1)
@@ -36,96 +37,6 @@ typedef unsigned long long u64;
 #define _FORCE_INLINE inline __attribute__((always_inline))
 #define _NEVER_INLINE inline __attribute__((noinline))
 #define _cpp20_date 201709L
-#endif
-#if __cplusplus >= _cpp20_date
-#include <coroutine>
-/*
-* This software is licensed under the AGPL-3.0 License.
-*
-* Copyright (C) 2023 Asciphx
-*
-* Permissions of this strongest copyleft license are conditioned on making available
-* complete source code of licensed works and modifications, which include larger works
-* using a licensed work, under the same license. Copyright and license notices must be
-* preserved. Contributors provide an express grant of patent rights. When a modified
-* version is used to provide a service over a network, the complete source code of
-* the modified version must be made available.
-*/// C++20 Coroutine for task - Asciphx
-namespace fc {
-  template <typename T = void>
-  struct Task {
-    Task() noexcept = default; Task(Task const&) = delete;
-    struct promise_type; Task& operator=(Task const&) = delete;
-    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
-    using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
-    Task(promise_type* p): $(Handle::from_promise(*p)) {}
-    Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
-    ~Task() { if ($) $.destroy(); }
-    struct promise_type {
-      std::coroutine_handle<> l, r; mutable T _{}; std::exception_ptr e;
-      void unhandled_exception() { e = std::current_exception(); }
-      std::suspend_never initial_suspend() noexcept { return {}; }
-      std::suspend_always final_suspend() noexcept { return {}; }
-      std::suspend_always yield_value(T&& v) { _ = std::move(v); return {}; }
-      std::suspend_always yield_value(const T& v) { _ = v; return {}; }
-      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
-      _FORCE_INLINE void return_value(const T& v) { _ = v; }
-      _FORCE_INLINE void return_value(T&& v) { _ = T(std::move(v)); }
-    };
-    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
-    _FORCE_INLINE T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return std::move($.promise()._); }
-    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
-    template<typename S> void await_suspend(std::coroutine_handle<S> _) noexcept { _.promise().l = $; $.promise().r = _; }
-    explicit operator bool() const noexcept { return $ && !$.done(); }
-    void operator()() noexcept {
-      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
-      do {
-        $.resume(); if (!$.done())return;
-        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
-      } while (!$.done());
-    }
-    _FORCE_INLINE T get() { while ($.promise().l && ($ = Handle::from_address($.promise().l.address()))){}; return $.promise()._; }
-  };
-  template <> struct Task<void> {
-    Task() noexcept = default; Task(Task const&) = delete;
-    struct promise_type; Task& operator=(Task const&) = delete;
-    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
-    using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
-    Task(promise_type* p): $(Handle::from_promise(*p)) {}
-    Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
-    ~Task() { if ($) $.destroy(); }
-    struct promise_type {
-      std::coroutine_handle<> l, r; std::exception_ptr e; void return_void() {}
-      _FORCE_INLINE void unhandled_exception() { e = std::current_exception(); }
-      std::suspend_never initial_suspend() noexcept { return {}; }
-      std::suspend_always final_suspend() noexcept { return {}; }
-      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
-    };
-    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
-    _FORCE_INLINE void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
-    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
-    template<typename T> void await_suspend(std::coroutine_handle<T> _) noexcept { _.promise().l = $; $.promise().r = _; }
-    explicit operator bool() const noexcept { return $ && !$.done(); }
-    void operator()() noexcept {
-      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
-      do {
-        $.resume(); if (!$.done())return;
-        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
-      } while (!$.done());
-    }
-  };
-}
-#define _CTX_TASK(_) fc::Task<_>
-#define _CTX_back(_) co_return _;
-#define _CTX_return co_return;
-#define _ctx -> fc::Task<>
-#else
-#define _CTX_TASK(_) _
-#define _CTX_back(_) return _;
-#define _CTX_return return;
-#define _ctx -> void
-#define co_return
-#define co_await
 #endif
 #ifdef _MSVC_LANG
 #ifdef _WIN64
@@ -229,14 +140,4 @@ namespace std {
 #endif
   template <class> struct Tuple {};
 }
-#include <array>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <map>//multimap
-#include <stack>
-#include <set>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 #endif // !CPP_HH

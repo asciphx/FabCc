@@ -1,5 +1,17 @@
 #ifndef CTX_HH
 #define CTX_HH
+/*
+ * This software is licensed under the AGPL-3.0 License.
+ *
+ * Copyright (C) 2025 Asciphx
+ *
+ * Permissions of this strongest copyleft license are conditioned on making available
+ * complete source code of licensed works and modifications, which include larger works
+ * using a licensed work, under the same license. Copyright and license notices must be
+ * preserved. Contributors provide an express grant of patent rights. When a modified
+ * version is used to provide a service over a network, the complete source code of
+ * the modified version must be made available.
+ */
 #include "c++.h"
 #include "fcontext.hpp"
 #include "fixedsize_stack.hh"
@@ -11,6 +23,8 @@
 #include <tuple>
 #include <type_traits>
 #include <iostream>
+#include "hh/timer.hh"
+#include "hpp/box.hpp"
 #if defined _MSC_VER
 #if defined(_M_X64)
 #  pragma pack(push,16)
@@ -33,6 +47,9 @@
 #else
 #define CTX_MIN_SIZE 65536
 #endif
+namespace fc {
+  struct ROG;
+}
 namespace ctx {
   struct forced_unwind {
     fcontext_t fctx{ nullptr }; forced_unwind() = default; forced_unwind(fcontext_t fctx_) : fctx(fctx_) {}
@@ -115,7 +132,8 @@ namespace ctx {
   public:
     co(fcontext_t fctx) noexcept : fctx_{ fctx } {}
     co() noexcept = default;
-
+    //Black magic, using box<> to automatically manage the release of objects
+    box<fc::ROG> box;
     //template<typename Fn, typename = std::disable_overload< co, Fn >>
     //co(fixedsize_stack& salloc): co{ std::allocator_arg, salloc } {}
     template<typename Fn, typename = std::disable_overload< co, Fn >>
@@ -164,7 +182,121 @@ namespace ctx {
   }
   typedef co fiber;
 }
-namespace fc { typedef ctx::co co; }
+#if __cplusplus >= _cpp20_date
+/*
+* This software is licensed under the AGPL-3.0 License.
+*
+* Copyright (C) 2023 Asciphx
+*
+* Permissions of this strongest copyleft license are conditioned on making available
+* complete source code of licensed works and modifications, which include larger works
+* using a licensed work, under the same license. Copyright and license notices must be
+* preserved. Contributors provide an express grant of patent rights. When a modified
+* version is used to provide a service over a network, the complete source code of
+* the modified version must be made available.
+*/// C++20 Coroutine for task - Asciphx
+#include <coroutine>
+namespace fc {
+  template <typename T = void>
+  struct Task {
+    Task() noexcept = default; Task(Task const&) = delete;
+    struct promise_type; Task& operator=(Task const&) = delete;
+    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
+    using Handle = std::coroutine_handle<promise_type>; mutable Handle $;
+    Task(promise_type* p): $(Handle::from_promise(*p)) {}
+    Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
+    ~Task() { if ($) $.destroy(); }
+    struct promise_type {
+      std::coroutine_handle<> l, r; mutable T _{}; std::exception_ptr e;
+      void unhandled_exception() { e = std::current_exception(); }
+      std::suspend_never initial_suspend() noexcept { return {}; }
+      std::suspend_always final_suspend() noexcept { return {}; }
+      std::suspend_always yield_value(T&& v) { _ = std::move(v); return {}; }
+      std::suspend_always yield_value(const T& v) { _ = v; return {}; }
+      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
+      _FORCE_INLINE void return_value(const T& v) { _ = v; }
+      _FORCE_INLINE void return_value(T&& v) { _ = T(std::move(v)); }
+    };
+    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
+    _FORCE_INLINE T await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); return std::move($.promise()._); }
+    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
+    template<typename S> void await_suspend(std::coroutine_handle<S> _) noexcept { _.promise().l = $; $.promise().r = _; }
+    explicit operator bool() const noexcept { return $ && !$.done(); }
+    void operator()() noexcept {
+      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
+      do {
+        $.resume(); if (!$.done())return;
+        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
+      } while (!$.done());
+    }
+    _FORCE_INLINE T get() { while ($.promise().l && ($ = Handle::from_address($.promise().l.address()))){}; return $.promise()._; }
+  };
+  template <> struct Task<void> {
+    Task() noexcept = default; Task(Task const&) = delete;
+    struct promise_type; Task& operator=(Task const&) = delete;
+    Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
+    using Handle = std::coroutine_handle<promise_type>; mutable Handle $; box<ROG> box;//Black magic
+    Task(promise_type* p): $(Handle::from_promise(*p)) {}
+    Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
+    ~Task() { if ($) $.destroy(); }
+    struct promise_type {
+      std::coroutine_handle<> l, r; std::exception_ptr e; void return_void() {}
+      _FORCE_INLINE void unhandled_exception() { e = std::current_exception(); }
+      std::suspend_never initial_suspend() noexcept { return {}; }
+      std::suspend_always final_suspend() noexcept { return {}; }
+      _FORCE_INLINE Task get_return_object() { return Task{ this }; }
+    };
+    _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
+    _FORCE_INLINE void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
+    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
+    template<typename T> void await_suspend(std::coroutine_handle<T> _) noexcept { _.promise().l = $; $.promise().r = _; }
+    explicit operator bool() const noexcept { return $ && !$.done(); }
+    void operator()() noexcept {
+      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
+      do {
+        $.resume(); if (!$.done())return;
+        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
+      } while (!$.done());
+    }
+  };
+}
+#define _CTX_TASK(_) fc::Task<_>
+#define _CTX_back(_) co_return _;
+#define _CTX_return co_return;
+#define _ctx -> fc::Task<>
+#else
+#define _CTX_TASK(_) _
+#define _CTX_back(_) return _;
+#define _CTX_return return;
+#define _ctx -> void
+#define co_return
+#define co_await
+#endif
+namespace fc {
+  typedef ctx::co co;
+#if defined _WIN32
+  typedef unsigned long long socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
+#else
+  typedef int socket_type;
+#endif
+  //This is a cross platform coroutine wrapper, designed for convenience and practicality
+  struct ROG {
+    Timer::Node t_id;
+#if __linux__ || _WIN32
+    socket_type $;
+    ROG(socket_type s):$(s) {}
+#else
+    ROG(socket_type s) : {}
+#endif
+    int64_t hrt{ 0 };
+#if __cplusplus < _cpp20_date
+    ctx::co _;
+#else
+    fc::Task<void> _;
+#endif
+    ROG():$(0) {}
+  };
+}
 #undef CTX_MIN_SIZE
 #if defined _MSC_VER
 # pragma warning(pop)
