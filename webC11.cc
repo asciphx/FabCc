@@ -67,6 +67,6 @@ int main() {
     res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
   };
   //Start the server
-  app.http_serve(8080, "0.0.0.0");
+  app.set_buf_size().http_serve(8080, "0.0.0.0");
   // app.set_ssl("ALL:!NULL").http_serve(443, "0.0.0.0");
 }

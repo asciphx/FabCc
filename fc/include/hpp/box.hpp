@@ -91,14 +91,14 @@ public:
     if (this->p) *this->p = _; else { this->p = new T(_); this->b = true; }
   }
   _FORCE_INLINE void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
+  _FORCE_INLINE void from_raw(T* _) noexcept { this->p = _; this->b = true; }//unsafe
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
   const T* operator->() const { if (p)return p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
   T* operator->() { if (this->p)return this->p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
   _FORCE_INLINE T& operator*() & { if (!this->p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *this->p; }
   _FORCE_INLINE const T& operator*() const& { if (!p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *p; }
-  T value_or(T&& _) const noexcept { return this->p != null ? *this->p : _; }
-  T value_or(T& _) const noexcept { return this->p != null ? *this->p : _; }
+  T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }
   _FORCE_INLINE void reset() noexcept { if (this->p) { delete this->p; } this->b = false; }
 };
 template<typename T, std::enable_if_t<!std::is_reg<T>::value>* = null>

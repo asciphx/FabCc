@@ -72,16 +72,13 @@ namespace fc {
         break;
       } while (ov.Offset < size);
 #else
-#if _OPENSSL
-      co_await ot.flush(); off_t ov = p; lseek(fd, p, SEEK_SET);
+      off_t ov = p; lseek(fd, p, SEEK_SET);
       do {
+#if _OPENSSL
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
         if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
         if (errno == EPIPE) break; throw err::not_found("failed.");
-      } while (ov < size);
 #else
-      off_t ov = p; lseek(fd, p, SEEK_SET);
-      do {
 #if __APPLE__ // sendfile on macos is slightly different...
         nwritten = 0;
         ret = ::sendfile(fd, fiber.socket_fd, ov, &nwritten, nullptr, 0);
@@ -99,8 +96,8 @@ namespace fc {
           co_await std::suspend_always{};
 #endif
         }
-      } while (ov < size);
 #endif
+      } while (ov < size);
 #endif
     co_return; });
 #ifdef _WIN32
@@ -122,16 +119,13 @@ namespace fc {
     co_await __->read_chunk([this](_Fhandle fd)_ctx{
 #ifndef _WIN32 // Linux / Macos version with sendfile
       // if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
-#if _OPENSSL
       co_await ot.flush(); off_t ov = 0;
       do {
+#if _OPENSSL
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
         if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
         if (errno == EPIPE) break; throw err::not_found("failed.");
-      } while (ov < content_length_);
 #else
-      co_await ot.flush(); off_t ov = 0;
-      do {
 #if __APPLE__ // sendfile on macos is slightly different...
         nwritten = 0;
         ret = ::sendfile(fd, fiber.socket_fd, ov, &nwritten, nullptr, 0);
@@ -149,8 +143,8 @@ namespace fc {
           co_await std::suspend_always{};
 #endif
         }
-      } while (ov < content_length_);
 #endif
+      } while (ov < content_length_);
 #else // Windows impl with basic read write.
       // if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
       co_await ot.flush(); OVERLAPPED ov { 0 }; ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);

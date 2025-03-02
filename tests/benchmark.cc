@@ -21,5 +21,5 @@ int main() {
   //};
   //app["/updates"] = [](Req& req, Res& res)_ctx {
   //};
-  app.set_keep_alive(7).http_serve(8080, "0.0.0.0");
+  app.set_buf_size(0x400, 0x400).set_keep_alive(7).http_serve(8080, "0.0.0.0");
 }

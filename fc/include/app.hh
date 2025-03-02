@@ -46,6 +46,8 @@ namespace fc {
     App& set_keep_alive(unsigned char idle = 1, unsigned char intvl = 1, unsigned char probes = 5);
     //std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt"
     App& set_ssl(std::string ssl_ciphers, std::string ssl_key = "./server.key", std::string ssl_cert = "./server.crt");
+    //Set the size of buf. 0x800 is recommended for rbNum and 0x1000 is recommended for wbNum.
+    App& set_buf_size(int rbNum = 2048, int wbNum = 4096);
     void http_serve(int port = 8080, std::string ip = "", int nthreads = std::thread::hardware_concurrency());
   private:
     DRT map_;
@@ -53,10 +55,12 @@ namespace fc {
   public:
     std::unordered_map<std::string, std::shared_ptr<file_sptr>, str_hash, str_key_eq> file_cache_;
     double USE_MAX_MEM_SIZE_MB = 400.0;
+    //The default buf size is very small and is only used for running benchmarks.
+    int rbNum{ 0x400 }, wbNum{ 0x800 };
   private:
-    VH _ = [](Req&, Res&)_ctx { throw err::not_found(); };
+    VH _ = [](Req&, Res&)_ctx{ throw err::not_found(); };
     std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";
-    int k_A[3] = { 4,3,2 }; bool file_download = true;
+    int k_A[3]{ 4,3,2 }; bool file_download = true;
   };
 } // namespace fc
 #endif

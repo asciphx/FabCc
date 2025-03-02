@@ -171,7 +171,7 @@ namespace fc {
                 fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_.operator()(); } });
                 fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
                   fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
-                  fib->_.box = fib;//Black magic, using box<> to automatically manage the release of objects
+                  fib->_.box.from_raw(fib);//Black magic, using box<> to automatically manage the release of objects
                   try {
 #if _OPENSSL
                     if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
@@ -188,7 +188,7 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                fib->_.box = fib;// Dark magic, box<> brings the wrapper pointer into the box of the coroutine
+                fib->_.box.from_raw(fib);// Dark magic, box<> brings the wrapper pointer into the box of the coroutine
                 fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_(); } });
                 fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
 #endif

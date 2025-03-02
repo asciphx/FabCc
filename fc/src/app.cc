@@ -75,6 +75,7 @@ namespace fc {
   //for example, 2G memory can be set to 512MB, because the idle memory is about 600+MB
   App& App::set_use_max_mem(const float& v) { USE_MAX_MEM_SIZE_MB = v <= 0x1ff ? 0x200 : v; return *this; }// < 600
 
+  App& App::set_buf_size(int rbN, int wbN) { rbNum = rbN; wbNum = wbN; return *this; }
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it
@@ -253,7 +254,8 @@ namespace fc {
     if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd), re->hrt = 0; _CTX_return }
 #endif
 #endif
-    fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x1000], wb[0x4000]; Ctx ctx(f, wb, sizeof(wb));
+    cc::query_string up; std::string_view ru; char* rb = new char[static_cast<App*>(ap)->rbNum], * wb = new char[static_cast<App*>(ap)->wbNum];
+    std::unique_ptr<char[]> ur(rb); std::unique_ptr<char[]> uw(wb); fc::sv_map hd; std::string url; Ctx ctx(f, wb, static_cast<App*>(ap)->wbNum);
 #if _LLHTTP
     llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r, last_len, pret;
 #else
@@ -265,17 +267,17 @@ namespace fc {
 //     char sid[11]; sid[i2a(sid, f.socket_fd) - sid] = 0;
 // #endif // _WIN32
     do {
-      if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
+      if (!(r = co_await f.read(rb, static_cast<App*>(ap)->rbNum))) { _CTX_return } last_len = end; end += r;
       do {
 #if _LLHTTP
-        if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+        if (end == static_cast<App*>(ap)->rbNum) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
         if (pret == llhttp_errno::HPE_OK) {
           break;
         } else if (pret > 20) {
-          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(static_cast<App*>(ap)->rbNum - end))); if (0 == r) { _CTX_return }
         } else { _CTX_return }
 #else
-        if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
+        if (end == static_cast<App*>(ap)->rbNum) { _CTX_return }
         pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
         if (pret > 0) {
           break;
@@ -294,7 +296,7 @@ namespace fc {
         } else if (pret == -1) {
           _CTX_return;
         } else if (pret == -2) {
-          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(static_cast<App*>(ap)->rbNum - end))); if (0 == r) { _CTX_return }
         }
 #endif
       } while (RESon);
