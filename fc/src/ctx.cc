@@ -55,22 +55,24 @@ namespace fc {
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4); co_await ot.flush();
     co_await __->read_chunk([this, size, p](_Fhandle fd)_ctx{
 #ifdef _WIN32
-      OVERLAPPED ov { 0 }; ov.Offset = p;
+      OVERLAPPED ov { 0 }; ov.Offset = p; ov.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+      if (!ov.hEvent) throw err::internal_server_error("Failed.");
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
           if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
         } else {
           if (GetLastError() == ERROR_IO_PENDING) {
-            WaitForSingleObject(fd, 1000);//INFINITE
+            // 使用ov.hEvent来等待I/O操作完成
+            WaitForSingleObject(ov.hEvent, 1000); //INFINITE
             if (GetOverlappedResult(fd, &ov, &nwritten, FALSE)) {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
             }
           }
-          throw err::not_found("failed.");
+          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found("failed.");
         }
         break;
-      } while (ov.Offset < size);
+      } while (ov.Offset < size); if (ov.hEvent) CloseHandle(ov.hEvent);
 #else
       off_t ov = p; lseek(fd, p, SEEK_SET);
       do {
@@ -88,7 +90,9 @@ namespace fc {
         ret = ::sendfile(fiber.socket_fd, fd, &ov, size - ov);
 #endif
         if (ret == -1) {
-          if (errno == EPIPE) break; throw err::not_found("failed.");
+          if (errno == EPIPE) break; else if (errno != EAGAIN) {
+            throw err::not_found("failed.");
+          }
         } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
           this->fiber.rpg->_.operator()();
@@ -135,7 +139,9 @@ namespace fc {
         ret = ::sendfile(fiber.socket_fd, fd, &ov, content_length_ - ov);
 #endif
         if (ret == -1) {
-          if (errno == EPIPE) break; throw err::not_found("failed.");
+          if (errno == EPIPE) break; else if (errno != EAGAIN) {
+            throw err::not_found("failed.");
+          }
         } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
           this->fiber.rpg->_.operator()();
@@ -148,21 +154,22 @@ namespace fc {
 #else // Windows impl with basic read write.
       // if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
       co_await ot.flush(); OVERLAPPED ov { 0 }; ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
+      ov.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL); if (!ov.hEvent) throw err::internal_server_error("Failed.");
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
           if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
         } else {
           if (GetLastError() == ERROR_IO_PENDING) {
-            WaitForSingleObject(fd, 1000);//INFINITE
+            WaitForSingleObject(ov.hEvent, 1000); // 或者使用INFINITE
             if (GetOverlappedResult(fd, &ov, &nwritten, FALSE)) {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
             }
           }
-          throw err::not_found("failed.");
+          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found("failed.");
         }
         break;
-      } while (ov.Offset < content_length_);
+      } while (ov.Offset < content_length_); if (ov.hEvent) CloseHandle(ov.hEvent);
 #endif
     co_return; });
     content_length_ = 0; if(__.use_count() == 1) const_cast<std::shared_ptr<fc::file_sptr>&>(__) = std::make_shared<file_sptr>(); co_return;

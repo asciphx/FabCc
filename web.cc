@@ -63,6 +63,6 @@ int main() {
     req.setTimeout([] { raise(SIGINT); }, 6000); res.write("Turn off the server timer and start the countdown!"); co_return;
   };
   //Start the server, also supports ipv6
-  app.set_buf_size().http_serve(8080);
+  app.set_buf_size(0x800, 0x2000).http_serve(8080);
   // app.set_ssl("ALL:!NULL").http_serve(443, "0.0.0.0");
 }

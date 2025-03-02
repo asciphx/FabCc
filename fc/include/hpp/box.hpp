@@ -91,7 +91,6 @@ public:
     if (this->p) *this->p = _; else { this->p = new T(_); this->b = true; }
   }
   _FORCE_INLINE void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
-  _FORCE_INLINE void from_raw(T* _) noexcept { this->p = _; this->b = true; }//unsafe
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
   const T* operator->() const { if (p)return p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }

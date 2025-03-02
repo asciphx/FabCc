@@ -24,7 +24,6 @@
 #include <type_traits>
 #include <iostream>
 #include "hh/timer.hh"
-#include "hpp/box.hpp"
 #if defined _MSC_VER
 #if defined(_M_X64)
 #  pragma pack(push,16)
@@ -133,7 +132,7 @@ namespace ctx {
     co(fcontext_t fctx) noexcept : fctx_{ fctx } {}
     co() noexcept = default;
     //Black magic, using box<> to automatically manage the release of objects
-    box<fc::ROG> box;
+    std::unique_ptr<fc::ROG> box;
     //template<typename Fn, typename = std::disable_overload< co, Fn >>
     //co(fixedsize_stack& salloc): co{ std::allocator_arg, salloc } {}
     template<typename Fn, typename = std::disable_overload< co, Fn >>
@@ -264,7 +263,7 @@ namespace fc {
     struct promise_type; Task& operator=(Task const&) = delete;
     Task& operator=(Task&& _) noexcept { $ = std::exchange(_.$, nullptr); return *this; }
     Task& operator=(Task<void>&& _) noexcept { $ = Handle::from_address(_.$.address()); _.$ = nullptr; return *this; }
-    using Handle = std::coroutine_handle<promise_type>; mutable Handle $; box<ROG> box;//Black magic
+    using Handle = std::coroutine_handle<promise_type>; mutable Handle $; std::unique_ptr<ROG> box;//Black magic
     Task(promise_type* p): $(Handle::from_promise(*p)) {}
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
     ~Task() { if ($) $.destroy(); }
