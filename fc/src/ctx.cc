@@ -52,35 +52,48 @@ namespace fc {
   _CTX_TASK(void) Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2); content_length_ = size - p;
     // if (content_length_ > 16777216) content_length_ = 16777216, size = p + 16777216;
-    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4); co_await ot.flush();
+    (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
     co_await __->read_chunk([this, size, p](_Fhandle fd)_ctx{
 #ifdef _WIN32
       OVERLAPPED ov { 0 }; ov.Offset = p; ov.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-      if (!ov.hEvent) throw err::internal_server_error("Failed.");
+      if (!ov.hEvent) throw err::internal_server_error("Failed."); ret = static_cast<int>(ot.size());
+      if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
+        ov.Offset += nwritten; if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+      } else {
+        if (GetLastError() == ERROR_IO_PENDING) {
+          WaitForSingleObject(ov.hEvent, 1000); //INFINITE
+          if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
+            ov.Offset += nwritten; if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+          }
+        }
+      }
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
           if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
         } else {
           if (GetLastError() == ERROR_IO_PENDING) {
-            // 使用ov.hEvent来等待I/O操作完成
-            WaitForSingleObject(ov.hEvent, 1000); //INFINITE
+            WaitForSingleObject(ov.hEvent, 1000);
             if (GetOverlappedResult(fd, &ov, &nwritten, FALSE)) {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
             }
           }
-          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found("failed.");
+          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found();
         }
-        break;
       } while (ov.Offset < size); if (ov.hEvent) CloseHandle(ov.hEvent);
 #else
-      off_t ov = p; lseek(fd, p, SEEK_SET);
-      do {
 #if _OPENSSL
+      off_t ov = ot.size(); lseek(fd, p, SEEK_SET);
+      if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) co_return;
+      if (!co_await this->fiber.write(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
+      ov = p + ret;
+      do {
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
         if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
-        if (errno == EPIPE) break; throw err::not_found("failed.");
+        if (errno == EPIPE) break; throw err::not_found();
 #else
+      co_await ot.flush(); off_t ov = p; lseek(fd, p, SEEK_SET);
+      do {
 #if __APPLE__ // sendfile on macos is slightly different...
         nwritten = 0;
         ret = ::sendfile(fd, fiber.socket_fd, ov, &nwritten, nullptr, 0);
@@ -91,7 +104,7 @@ namespace fc {
 #endif
         if (ret == -1) {
           if (errno == EPIPE) break; else if (errno != EAGAIN) {
-            throw err::not_found("failed.");
+            throw err::not_found();
           }
         } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
@@ -123,13 +136,17 @@ namespace fc {
     co_await __->read_chunk([this](_Fhandle fd)_ctx{
 #ifndef _WIN32 // Linux / Macos version with sendfile
       // if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
-      co_await ot.flush(); off_t ov = 0;
-      do {
 #if _OPENSSL
+      off_t ov = ot.size(); if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) co_return;
+      if (!co_await this->fiber.write(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
+      ov = ret;
+      do {
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
         if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
-        if (errno == EPIPE) break; throw err::not_found("failed.");
+        if (errno == EPIPE) break; throw err::not_found();
 #else
+      co_await ot.flush(); off_t ov = 0;
+      do {
 #if __APPLE__ // sendfile on macos is slightly different...
         nwritten = 0;
         ret = ::sendfile(fd, fiber.socket_fd, ov, &nwritten, nullptr, 0);
@@ -140,7 +157,7 @@ namespace fc {
 #endif
         if (ret == -1) {
           if (errno == EPIPE) break; else if (errno != EAGAIN) {
-            throw err::not_found("failed.");
+            throw err::not_found();
           }
         } else if (errno == EAGAIN) {
 #if __cplusplus < _cpp20_date
@@ -153,8 +170,18 @@ namespace fc {
       } while (ov < content_length_);
 #else // Windows impl with basic read write.
       // if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
-      co_await ot.flush(); OVERLAPPED ov { 0 }; ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL);
+      OVERLAPPED ov { 0 }; ov.OffsetHigh = (DWORD)((content_length_ >> 0x20) & 0xFFFFFFFFL); ret = static_cast<int>(ot.size());
       ov.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL); if (!ov.hEvent) throw err::internal_server_error("Failed.");
+      if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
+        ov.Offset += nwritten; if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+      } else {
+        if (GetLastError() == ERROR_IO_PENDING) {
+          WaitForSingleObject(ov.hEvent, 1000); //INFINITE
+          if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
+            ov.Offset += nwritten; if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+          }
+        }
+      }
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
@@ -166,7 +193,7 @@ namespace fc {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) { ov.Offset += nwritten; continue; }
             }
           }
-          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found("failed.");
+          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found();
         }
         break;
       } while (ov.Offset < content_length_); if (ov.hEvent) CloseHandle(ov.hEvent);

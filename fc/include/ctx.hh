@@ -36,11 +36,9 @@ namespace fc {
 #ifdef _WIN32
     DWORD nwritten;
 #elif __APPLE__
-    off_t nwritten; int ret;
-#else
-    int ret;
+    off_t nwritten;
 #endif
-    int http_minor{ 0 };
+    int ret, http_minor{ 0 };
     Ctx(Conn& _fiber, char* rb, size_t l): fiber(_fiber), content_type("", 1), content_length_(0),
       ot(rb, static_cast<int>(l), &_fiber), status_("200 OK\r\n", 8) {}
     Ctx& operator=(const Ctx&) = delete;
