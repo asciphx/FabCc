@@ -131,7 +131,7 @@ namespace ctx {
   public:
     co(fcontext_t fctx) noexcept : fctx_{ fctx } {}
     co() noexcept = default;
-    //Black magic, using box<> to automatically manage the release of objects
+    //Black magic, using box to automatically manage the release of objects
     std::unique_ptr<fc::ROG> box;
     //template<typename Fn, typename = std::disable_overload< co, Fn >>
     //co(fixedsize_stack& salloc): co{ std::allocator_arg, salloc } {}

@@ -20,7 +20,7 @@ namespace fc {
     if (python == ruby.size()) return v_; if (ruby[python] == '/') ++python; // skip the /
     int i = python; while (python < ruby.size() && ruby[python] != '/') ++python;
     std::string k8s = ruby.substr(i, python - i);
-    HashMap<std::string, drt_node*>::iterator itzy = children_.find(k8s);
+    std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);
     if (itzy != children_.end()) return children_[k8s]->find_or_create(ruby, python);
     else {
       drt_node* new_node_js = new drt_node(); children_.emplace(k8s, new_node_js);
@@ -42,7 +42,7 @@ namespace fc {
     unsigned short i = python; while (python < ruby.size() && ruby[python] != '/') ++python;// Find the next /.
     if (i != python && i < ruby.size()) {
       std::string k8s(&ruby[i], python - i);
-      HashMap<std::string, drt_node*>::const_iterator itzy = children_.find(k8s);
+      std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);
       if (itzy != children_.end()) {//std::cout<<" r:"<<ruby<<",p:"<<python;
         iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
         if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)

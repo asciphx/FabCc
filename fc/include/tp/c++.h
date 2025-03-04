@@ -6,7 +6,6 @@
 #include <utility>
 #include <time.h>
 #include <exception>
-#include "hpp/box.hpp"
 #if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
 #define _unlikely(x) __builtin_expect((x),0)
 #define _likely(x) __builtin_expect(!!(x),1)
@@ -140,4 +139,14 @@ namespace std {
 #endif
   template <class> struct Tuple {};
 }
+#include <array>
+#include <deque>
+#include <forward_list>
+#include <list>
+#include <map>//multimap
+#include <stack>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 #endif // !CPP_HH

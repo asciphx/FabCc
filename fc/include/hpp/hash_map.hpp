@@ -58,7 +58,7 @@ namespace fc {
     size_t totalSize;
     size_t numEntries;
     size_t numSubarrays;
-    static const size_t SUBARRAY_SIZE = sizeof(T) > 3 ? 16 : 8;
+    static const size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 7 ? 16 : 32;
     static V dummy;
     bool resize() {
       size_t newTotalSize = totalSize + (totalSize >> 1);
@@ -147,7 +147,7 @@ namespace fc {
       return false;
     }
   public:
-    HashMap(size_t initialSize = sizeof(K) * 32) noexcept
+    HashMap(size_t initialSize = sizeof(K) * 16) noexcept
       : totalSize(initialSize), numEntries(0), numSubarrays(initialSize / SUBARRAY_SIZE) {
       table = new Nod[totalSize]();
       superPointers = new T[totalSize]();
@@ -257,29 +257,22 @@ namespace fc {
     _FORCE_INLINE size_t capacity() const noexcept { return totalSize; }
     class iterator {
       friend HashMap;
-      Nod* table;
-      size_t subarrayIdx, slotIdx, numSubarrays;
-      inline void moveToNextOccupied() noexcept {
-        while (subarrayIdx != numSubarrays) {
-          while (slotIdx != SUBARRAY_SIZE) {
-            if (table[subarrayIdx * SUBARRAY_SIZE + slotIdx].occupied) { return; }
-            ++slotIdx;
-          } slotIdx = 0, ++subarrayIdx;
-        }
+      Nod* curr, * end;
+      _FORCE_INLINE void moveToNextOccupied() {
+        while (curr != end) { if (curr->occupied) return; ++curr; }
       }
+      HashMap* map;
     public:
-      iterator(Nod* t, size_t subIdx, size_t slot, size_t numSubs) noexcept
-        : table(t), subarrayIdx(subIdx), slotIdx(slot), numSubarrays(numSubs) {}
+      iterator(HashMap* m, size_t subIdx, size_t slot) noexcept
+        : curr(m->table + subIdx * SUBARRAY_SIZE + slot), end(m->table + m->totalSize), map(m) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept {
-        return reinterpret_cast<std::pair<const K, V>*>(&table[subarrayIdx * SUBARRAY_SIZE + slotIdx]);
+        return reinterpret_cast<std::pair<const K, V>*>(curr);
       }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept {
-        return reinterpret_cast<std::pair<const K, V>&>(table[subarrayIdx * SUBARRAY_SIZE + slotIdx]);
+        return reinterpret_cast<std::pair<const K, V>&>(*curr);
       }
       _FORCE_INLINE iterator& operator++() noexcept {
-        ++slotIdx;
-        moveToNextOccupied();
-        return *this;
+        while (++curr != end) { if (curr->occupied) return *this; } return *this;
       }
       _FORCE_INLINE iterator operator++(int) noexcept {
         iterator tmp = *this;
@@ -287,17 +280,17 @@ namespace fc {
         return tmp;
       }
       _FORCE_INLINE bool operator==(const iterator& other) const noexcept {
-        return subarrayIdx == other.subarrayIdx && slotIdx == other.slotIdx;
+        return curr == other.curr;
       }
       _FORCE_INLINE bool operator!=(const iterator& other) const noexcept {
         return !(*this == other);
       }
     };
     _FORCE_INLINE iterator begin() noexcept {
-      iterator i(table, 0, 0, numSubarrays); i.moveToNextOccupied(); return i;
+      iterator i(this, 0, 0); i.moveToNextOccupied(); return i;
     }
     _FORCE_INLINE iterator end() noexcept {
-      return iterator(table, numSubarrays, 0, numSubarrays);
+      return iterator(this, numSubarrays, 0);
     }
     inline iterator find(const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
@@ -307,7 +300,7 @@ namespace fc {
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
           if (entry.occupied && entry.key == key) {
-            return iterator(table, currentSubarray, j, numSubarrays);
+            return iterator(this, currentSubarray, j);
           }
         }
       }
@@ -315,29 +308,22 @@ namespace fc {
     }
     class const_iterator {
       friend HashMap;
-      Nod* table;
-      size_t subarrayIdx, slotIdx, numSubarrays;
-      inline void moveToNextOccupied() {
-        while (subarrayIdx != numSubarrays) {
-          while (slotIdx != SUBARRAY_SIZE) {
-            if (table[subarrayIdx * SUBARRAY_SIZE + slotIdx].occupied) { return; }
-            ++slotIdx;
-          } slotIdx = 0, ++subarrayIdx;
-        }
+      Nod* curr, * end;
+      _FORCE_INLINE void moveToNextOccupied() {
+        while (curr != end) { if (curr->occupied) return; ++curr; }
       }
+      const HashMap* map;
     public:
-      const_iterator(Nod* t, size_t subIdx, size_t slot, size_t numSubs) noexcept
-        : table(t), subarrayIdx(subIdx), slotIdx(slot), numSubarrays(numSubs) {}
-      _FORCE_INLINE std::pair<const K, const V>* operator->() const noexcept {
-        return reinterpret_cast<std::pair<const K, const V>*>(&table[subarrayIdx * SUBARRAY_SIZE + slotIdx]);
+      const_iterator(const HashMap* m, size_t subIdx, size_t slot) noexcept
+        : curr(m->table + subIdx * SUBARRAY_SIZE + slot), end(m->table + m->totalSize), map(m) {}
+      _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept {
+        return reinterpret_cast<std::pair<const K, V>*>(curr);
       }
-      _FORCE_INLINE std::pair<const K, const V>& operator*() const noexcept {
-        return reinterpret_cast<std::pair<const K, const V>&>(table[subarrayIdx * SUBARRAY_SIZE + slotIdx]);
+      _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept {
+        return reinterpret_cast<std::pair<const K, V>&>(*curr);
       }
       _FORCE_INLINE const_iterator& operator++() noexcept {
-        ++slotIdx;
-        moveToNextOccupied();
-        return *this;
+        while (++curr != end) { if (curr->occupied) return *this; } return *this;
       }
       _FORCE_INLINE const_iterator operator++(int) noexcept {
         const_iterator tmp = *this;
@@ -345,7 +331,7 @@ namespace fc {
         return tmp;
       }
       _FORCE_INLINE bool operator==(const const_iterator& other) const noexcept {
-        return subarrayIdx == other.subarrayIdx && slotIdx == other.slotIdx;
+        return curr == other.curr;
       }
       _FORCE_INLINE bool operator!=(const const_iterator& other) const noexcept {
         return !(*this == other);
@@ -364,7 +350,7 @@ namespace fc {
       for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
         const Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
         if (entry.occupied && entry.key == key) {
-          return const_iterator(table, currentSubarray, j, numSubarrays);
+          return const_iterator(this, currentSubarray, j);
         }
       }
     }
@@ -373,19 +359,19 @@ namespace fc {
   template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
   _FORCE_INLINE typename HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::const_iterator
     HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::begin() const noexcept {
-    const_iterator i(table, 0, 0, numSubarrays); i.moveToNextOccupied(); return i;
+    const_iterator i(this, 0, 0); i.moveToNextOccupied(); return i;
   }
   template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
   _FORCE_INLINE typename HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::const_iterator
     HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::end() const noexcept {
-    return const_iterator(table, numSubarrays, 0, numSubarrays);
+    return const_iterator(this, numSubarrays, 0);
   }
   template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
   V HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::dummy;
   template<>
-  class HashMap<std::string, std::string, uint32_t, 80>: public HashMap<std::string, std::string> {};
+  class HashMap<std::string, std::string, uint32_t, 85>: public HashMap<std::string, std::string> {};
   template<>
-  class HashMap<std::string_view, std::string_view, uint8_t, 85>: public HashMap<std::string_view, std::string_view> {};
+  class HashMap<std::string_view, std::string_view, uint8_t, 80>: public HashMap<std::string_view, std::string_view> {};
   using sv_hash_map = fc::HashMap<std::string_view, std::string_view>;
 }
 #endif

@@ -17,22 +17,8 @@
 #include <stdexcept>
 #include <memory>
 #include <type_traits>
-#include <array>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <map>
-#include <stack>
-#include <set>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 #include <new>
-#ifdef _MSVC_LANG
-#define _FORCE_INLINE __forceinline
-#else
-#define _FORCE_INLINE inline __attribute__((always_inline))
-#endif
+#include "tp/c++.h"
 template <typename T> class box;
 namespace std {
   template <class T> struct is_box_impl: std::false_type {}; template <class T> struct is_box_impl<box<T>>: std::true_type {};
@@ -166,5 +152,4 @@ template <class T, class U>
 inline const bool operator>=(const box<T>& l, const U& r) { return l ? *l >= r : false; }
 template <class T, class U>
 inline const bool operator>=(const U& l, const box<T>& r) { return r ? l >= *r : true; }
-#undef _FORCE_INLINE
 #endif // BOX_HPP
