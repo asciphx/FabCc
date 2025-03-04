@@ -3,8 +3,8 @@
 #include "app.hh"
 #include "tp/zlib.h"
 namespace fc {
-  Req::Req(HTTP m, std::string& u, std::string_view& p, sv_map& h, cc::query_string& q, Conn& fib, double& max,
-    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>& cookie_map, std::unique_ptr<fc::cache_file>& cache): fiber(fib), length(0),
+  Req::Req(HTTP m, std::string& u, std::string_view& p, fc::sv_map& h, cc::query_string& q, Conn& fib, double& max,
+    fc::sv_map& cookie_map, std::unique_ptr<fc::cache_file>& cache): fiber(fib), length(0),
     method(m), url(u), raw_url(p), headers(h), params(q), cookie_map(cookie_map), cache_file(cache), USE_MAX_MEM_SIZE_MB(max) {}
   std::string_view Req::cookie(const char* k) { if (!cookie_map.size())index_cookies(); return cookie_map[k]; }
   void Req::setTimeoutSec(std::function<void()>&& func, uint32_t seconds) {

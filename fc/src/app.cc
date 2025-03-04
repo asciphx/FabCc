@@ -170,7 +170,7 @@ namespace fc {
               }
 #endif
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
-                std::string range{ req.headers.operator[]("range") };
+                std::string range{ req.headers.operator[]("Range") };
                 if (!range.empty()) {
                   res.set_status(206); ctx->format_top_headers();
                   i64 l = range.find('=') + 1, r = range.rfind('-'); _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l));
@@ -225,8 +225,8 @@ namespace fc {
   }
   App& App::set_keep_alive(unsigned char idle, unsigned char intvl, unsigned char probes) { k_A[0] = idle; k_A[1] = intvl; k_A[2] = probes; return *this; }
   struct llParser: public llhttp__internal_s {
-    std::string& url; std::string_view& raw_url, header_field, body; fc::sv_map& headers; cc::query_string& url_params;
-    llParser(std::string& u, std::string_view& a, fc::sv_map& h, cc::query_string& q): url(u), raw_url(a), headers(h), url_params(q) {}
+    std::string& url; std::string_view& raw_url, header_field, body; fc::sv_hash_map& headers; cc::query_string& url_params;
+    llParser(std::string& u, std::string_view& a, fc::sv_hash_map& h, cc::query_string& q): url(u), raw_url(a), headers(h), url_params(q) {}
   };
   static int on_url(llhttp__internal_s* _, const char* c, size_t s) {
     llParser* $ = static_cast<llParser*>(_); $->raw_url = DecodeURL(c, s);

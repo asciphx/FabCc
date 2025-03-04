@@ -28,7 +28,7 @@
 namespace fc {
   struct Ctx {
     output_buffer ot;
-    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq> cookie_map;
+    fc::sv_map cookie_map;
     std::string_view content_type, status_;
     std::unique_ptr<fc::cache_file> cache_file;
     Conn& fiber;

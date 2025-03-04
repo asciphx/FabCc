@@ -42,7 +42,7 @@ namespace fc {
   protected:
     RBTree<Node, std::function<void()>> timers;
     uint64_t next_id = 0;
-    using ______ = Nod<Node, std::function<void()>>;
+    using ______ = RBTree<Node, std::function<void()>>::Nod;
   };
 }
 #endif

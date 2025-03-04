@@ -24,7 +24,7 @@ namespace fc {
   using str_map = std::unordered_map<std::string, std::string, str_hash, str_key_eq>;
 
   struct sv_hash {
-    size_t operator()(const std::string_view& z) const;
+    unsigned int operator()(const std::string_view& z) const;
   };
   struct sv_key_eq {
     bool operator()(const std::string_view& l, const std::string_view& r) const;

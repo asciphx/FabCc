@@ -12,14 +12,15 @@
 #include "hh/directory.hh"
 #include "file_sptr.hh"
 #include "json.hh"
+#include "hpp/hash_map.hpp"
 #if defined(_MSC_VER)
 #include <io.h>
 #else
 #include <fcntl.h>
 #endif
 namespace fc {
-  static std::unordered_map<std::string, std::string, str_hash, str_key_eq> RES_CACHE_MENU = {};
-  static std::unordered_map<std::string, int64_t, str_hash, str_key_eq> RES_CACHE_TIME = {};
+  static fc::HashMap<std::string, std::string> RES_CACHE_MENU = {};
+  static fc::HashMap<std::string, int64_t> RES_CACHE_TIME = {};
   struct App;
   class Res;
   class Req {
@@ -29,17 +30,17 @@ namespace fc {
     HTTP method;
     std::string_view cookie(const char* k);
     std::string ip_address() const;
-    Req(HTTP method, std::string& url, std::string_view& params, sv_map& headers, cc::query_string& q, Conn& fib, double& max,
-      std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>& cookie_map, std::unique_ptr<fc::cache_file>& cache_file);
+    Req(HTTP method, std::string& url, std::string_view& params, fc::sv_map& headers, cc::query_string& q, Conn& fib, double& max,
+      fc::sv_map& cookie_map, std::unique_ptr<fc::cache_file>& cache_file);
     std::string& url;
     std::string_view& raw_url;
     cc::query_string& params;
     double& USE_MAX_MEM_SIZE_MB;
     _Fsize_t length;
-    sv_map& headers;
+    fc::sv_map& headers;
     Conn& fiber;
     std::unique_ptr<fc::cache_file>& cache_file;
-    std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>& cookie_map;
+    fc::sv_map& cookie_map;
     std::string_view body;
     void setTimeoutSec(std::function<void()>&& func, uint32_t seconds = 1);
     void setTimeout(std::function<void()>&& func, uint32_t milliseconds = 100);
