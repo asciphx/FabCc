@@ -12,15 +12,12 @@
 #include "hh/directory.hh"
 #include "file_sptr.hh"
 #include "json.hh"
-#include "hpp/hash_map.hpp"
 #if defined(_MSC_VER)
 #include <io.h>
 #else
 #include <fcntl.h>
 #endif
 namespace fc {
-  static fc::HashMap<std::string, std::string> RES_CACHE_MENU = {};
-  static fc::HashMap<std::string, int64_t> RES_CACHE_TIME = {};
   struct App;
   class Res;
   class Req {

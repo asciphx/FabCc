@@ -13,9 +13,6 @@
 #include <set>
 #include <mutex>
 #include "hh/conn.hh"
-#include "hpp/sp_tree.hpp"
-#include "hpp/box.hpp"
-#pragma warning(disable:4244)
 namespace fc {
   /**
   * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)

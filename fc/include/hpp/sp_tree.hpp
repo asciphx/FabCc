@@ -70,10 +70,6 @@ namespace fc {
         }
       }
     }
-    _FORCE_INLINE Nod* minimum(Nod* x) {
-      while (x->left) x = x->left;
-      return x;
-    }
     void destroy(Nod* node) {
       if (node) {
         destroy(node->left);

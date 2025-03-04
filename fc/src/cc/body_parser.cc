@@ -18,6 +18,7 @@
 #include "hh/directory.hh"
 #include "hh/http_error.hh"
 #include "hh/body_parser.hh"
+#pragma warning(disable:4244)
 namespace fc {
 #ifdef WIN32
   float GetMemUsage(int pid) {
