@@ -8,7 +8,6 @@
 #include "hh/conn.hh"
 #include "h/common.h"
 #include "hpp/string_view.hpp"
-#include "hh/str_map.hh"
 #include "hh/directory.hh"
 #include "file_sptr.hh"
 #include "json.hh"

@@ -13,7 +13,6 @@
 #include "hh/directory.hh"
 #include "hh/http_error.hh"
 #include "h/llhttp.h"
-#include "hh/picohttpparser.hh"
 #if __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmultichar"

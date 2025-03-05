@@ -21,7 +21,7 @@
 #include "hh/tcp.hh"
 #include "h/any_types.h"
 #include "hpp/string_view.hpp"
-#include "hh/str_map.hh"
+#include "hh/picohttpparser.hh"
 #include "hh/cache_file.hh"
 #include "hh/query_string.hh"
 #include "file_sptr.hh"

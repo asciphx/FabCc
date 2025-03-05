@@ -29,7 +29,7 @@ namespace fc {
   struct sv_key_eq {
     bool operator()(const std::string_view& l, const std::string_view& r) const;
   };
-  struct sv_map : std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>{
+  struct sv_unordered_map : std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>{
     _FORCE_INLINE std::string_view operator[](const std::string_view& k) {
       auto _ = this->find(k); if (_ != this->end()) return _->second; return std::string_view{"", 0};
     }

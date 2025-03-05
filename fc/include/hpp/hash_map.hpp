@@ -13,6 +13,7 @@
 * the modified version must be made available.
 */
 #include "hpp/string_view.hpp"
+#include <stdexcept>
 namespace fc {
   template<typename K>
   _FORCE_INLINE static size_t fc_hash(const K& key, size_t mod) noexcept {
@@ -32,13 +33,14 @@ namespace fc {
     }
     while (n > 0) { r = r * 5 + (*p | 0x20); ++p; --n; } return (r - key.length()) % mod;
   }
-  // FNV-1a hash for strings
-  template<>
-  _FORCE_INLINE size_t fc_hash<std::string_view>(const std::string_view& key, size_t mod) noexcept {
-    static const uint32_t FNV_PRIME = 0X1000193U; static const uint32_t FNV_OFFSET = 0X811c9dc5U;
-    uint32_t hash = FNV_OFFSET; size_t n = key.size();
-    if (n >= 4) { for (size_t i = 0; i < n; ++i) { hash ^= static_cast<uint32_t>(key[i]); hash *= FNV_PRIME; } } else {
-      hash ^= n ? key[0] : 0; hash *= FNV_PRIME; if (n > 1) hash ^= key[1]; hash *= FNV_PRIME; if (n > 2) hash ^= key[2];
+  // FNV-1a hash for string_view
+  template<>_FORCE_INLINE size_t fc_hash<std::string_view>(const std::string_view& key, size_t mod) noexcept {
+    static const uint64_t FNV_PRIME = 0x100000001b3ULL;
+    static const uint32_t FNV_OFFSET = 0x811c9dc5U;
+    uint64_t hash { FNV_OFFSET };
+    for (char c : key) {
+      hash ^= static_cast<uint8_t>(c);
+      hash *= FNV_PRIME;
     }
     return hash % mod;
   }
@@ -52,13 +54,22 @@ namespace fc {
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}
     };
     Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
-    static const size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 16 : sizeof(V) > 16 ? 8 : 32; static V dummy;
+    static const size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 16 : sizeof(V) > 16 ? 8 : 32;
+    static V dummy;
+    static const uint64_t MaxSize = static_cast<uint64_t>(std::numeric_limits<T>::max()) * SUBARRAY_SIZE;
     bool resize() {
-      size_t newTotalSize = totalSize + (totalSize >> 1); size_t newNumSubarrays = newTotalSize / SUBARRAY_SIZE;
+      size_t newTotalSize = sizeof(T) < 3 ? totalSize * 2 : totalSize + (totalSize >> 1);
+      size_t newNumSubarrays = newTotalSize / SUBARRAY_SIZE;
+      if (newTotalSize > MaxSize || newNumSubarrays > std::numeric_limits<T>::max()) {
+        return false; // Exceeds maximum boundary based on T
+      }
       Nod* newTable = nullptr; T* newSuperPointers = nullptr;
       try {
         newTable = new Nod[newTotalSize](); newSuperPointers = new T[newTotalSize]();
-      } catch (const std::bad_alloc&) { return false; }
+      } catch (const std::bad_alloc&) {
+        delete[] newTable; delete[] newSuperPointers;
+        return false;
+      }
       for (size_t i = 0; i < totalSize; ++i) {
         Nod& entry = table[i]; if (entry.occupied)
           reinsert(newTable, newSuperPointers, newTotalSize, newNumSubarrays, entry.key, entry.value);
@@ -70,8 +81,9 @@ namespace fc {
       size_t targetNumSubarrays, const K& key, const V& value) noexcept {
       size_t baseIndex = fc_hash(key, targetSize); size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
       size_t offset = baseIndex % SUBARRAY_SIZE;
+      size_t step = 1 + (fc_hash(key, targetNumSubarrays - 1)); // Double hashing
       size_t i = 0; do {
-        size_t currentSubarray = (subarrayIdx + i) % targetNumSubarrays;
+        size_t currentSubarray = (subarrayIdx + i * step) % targetNumSubarrays;
         size_t startOffset = (i == 0) ? offset : 0;
         Nod* subarray = targetTable + currentSubarray * SUBARRAY_SIZE; size_t j = 0;
         do {
@@ -86,8 +98,9 @@ namespace fc {
     _FORCE_INLINE bool tryInsert(Nod* targetTable, T* targetPointers, size_t targetSize,
       size_t targetNumSubarrays, size_t baseIndex, const K& key, const V& value, bool& wasUnoccupied) noexcept {
       size_t subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t offset = baseIndex % SUBARRAY_SIZE;
+      size_t step = 1 + (fc_hash(key, targetNumSubarrays - 1)); // Double hashing
       size_t i = 0; do {
-        size_t currentSubarray = (subarrayIdx + i) % targetNumSubarrays;
+        size_t currentSubarray = (subarrayIdx + i * step) % targetNumSubarrays;
         size_t startOffset = (i == 0) ? offset : 0;
         Nod* subarray = targetTable + currentSubarray * SUBARRAY_SIZE; size_t j = 0;
         do {
@@ -101,25 +114,19 @@ namespace fc {
       } while (i < targetNumSubarrays); return false;
     }
     bool insertImpl(const K& key, const V& value, size_t baseIndex) noexcept {
-      bool wasUnoccupied = false; if (tryInsert(table, superPointers, totalSize, numSubarrays,
-        baseIndex, key, value, wasUnoccupied)) {
+      bool wasUnoccupied = false;
+      if (tryInsert(table, superPointers, totalSize, numSubarrays, baseIndex, key, value, wasUnoccupied)) {
         if (wasUnoccupied) ++numEntries; return true;
-      }
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t offset = baseIndex % SUBARRAY_SIZE;
-      size_t attempt = 1;
-      while (attempt < numSubarrays) {
-        size_t newSubarrayIdx = (subarrayIdx + attempt * attempt) % numSubarrays;
-        size_t newBaseIndex = newSubarrayIdx * SUBARRAY_SIZE + offset;
-        if (tryInsert(table, superPointers, totalSize, numSubarrays, newBaseIndex, key, value, wasUnoccupied)) {
-          if (wasUnoccupied) ++numEntries; return true;
-        }
-        ++attempt;
       }
       return false;
     }
   public:
-    HashMap(size_t initialSize = sizeof(K) * sizeof(T) * 8) noexcept: totalSize(initialSize), numEntries(0),
-      numSubarrays(initialSize / SUBARRAY_SIZE) {
+    HashMap(size_t initialSize = sizeof(T) < 3 ? 64 : sizeof(K) * sizeof(T) * 8) noexcept
+      : totalSize(initialSize), numEntries(0), numSubarrays(initialSize / SUBARRAY_SIZE) {
+      if (totalSize > MaxSize) {
+        totalSize = MaxSize;
+        numSubarrays = totalSize / SUBARRAY_SIZE;
+      }
       table = new Nod[totalSize](); superPointers = new T[totalSize]();
     }
     ~HashMap() { delete[] table; delete[] superPointers; }
@@ -136,8 +143,10 @@ namespace fc {
     V& operator[](const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize); size_t subarrayIdx = superPointers[baseIndex];
       if (subarrayIdx) {
-        Nod* subarray = table + subarrayIdx * SUBARRAY_SIZE; for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
-          Nod& entry = subarray[i]; if (entry.occupied && entry.key == key) return entry.value;
+        Nod* subarray = table + subarrayIdx * SUBARRAY_SIZE;
+        for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
+          Nod& entry = subarray[i];
+          if (entry.occupied && entry.key == key) return entry.value;
         }
       }
       bool resized = false; do {
@@ -146,19 +155,11 @@ namespace fc {
           if (!resized) { insertImpl(key, dummy, baseIndex); return table[baseIndex].value; }
           baseIndex = fc_hash(key, totalSize);
         }
-        subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t offset = baseIndex % SUBARRAY_SIZE; size_t i = 0;
-        do {
-          size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
-          Nod* subarray = table + currentSubarray * SUBARRAY_SIZE;
-          size_t startOffset = (i == 0) ? offset : 0; size_t j = 0;
-          do {
-            size_t idx = (startOffset + j) % SUBARRAY_SIZE; Nod& entry = subarray[idx];
-            if (!entry.occupied) {
-              entry.key = key; entry.occupied = true;
-              superPointers[baseIndex] = static_cast<T>(currentSubarray); ++numEntries; return entry.value;
-            }
-          } while (++j < SUBARRAY_SIZE); ++i;
-        } while (i < numSubarrays);
+        bool wasUnoccupied = false;
+        if (tryInsert(table, superPointers, totalSize, numSubarrays, baseIndex, key, dummy, wasUnoccupied)) {
+          if (wasUnoccupied) ++numEntries;
+          return table[baseIndex].value;
+        }
       } while (resized); return dummy;
     }
     //Cover up mistakes
@@ -280,8 +281,8 @@ namespace fc {
     HashMap<std::string, std::string, uint32_t, 80>(int i = 1024): HashMap<std::string, std::string>(i) {}
   };
   template<>
-  class HashMap<std::string_view, std::string_view, uint8_t, 70>: public HashMap<std::string_view, std::string_view> {
-    HashMap<std::string_view, std::string_view, uint8_t, 70>(int i = 16): HashMap<std::string_view, std::string_view>(i) {}
+  class HashMap<std::string_view, std::string_view, uint8_t>: public HashMap<std::string_view, std::string_view> {
+    HashMap<std::string_view, std::string_view, uint8_t>(int i = 16): HashMap<std::string_view, std::string_view>(i) {}
   };
   struct sv_hash_map: fc::HashMap<std::string_view, std::string_view> {};
   template<typename T>

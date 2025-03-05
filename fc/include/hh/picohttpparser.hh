@@ -28,6 +28,12 @@
 #include <sys/types.h>
  /* contains name and value of a header (name == NULL if is a continuing line of a multiline header */
 #include "hh/str_map.hh"
+#include "hpp/hash_map.hpp"
+//sv_hash_map vs sv_unordered_map. Just modify it to compare, guess which one is stronger?
+namespace fc {
+  // using sv_map = sv_unordered_map;
+  using sv_map = sv_hash_map;
+}
 #ifdef _WIN32
 #define _ssize_t long long
 #else
