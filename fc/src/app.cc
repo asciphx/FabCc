@@ -176,10 +176,6 @@ namespace fc {
                   ctx->ot.append("Accept-Ranges: bytes\r\n", 22); range = range.substr(++r);
                   l = std::lexical_cast<long long>(range); r = l > 0 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->ot.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
-#ifdef _WIN32
-                  //Because the windows system does not have a sendfile method, if > 4GB, need mmap
-                  if (statbuf_.st_size > 0x100000000) { throw err::not_extended("windows is not extended!"); }
-#endif
                   p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
                     std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, pos, ++r); _CTX_return

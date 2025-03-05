@@ -141,10 +141,12 @@ namespace fc {
                 socket_type socket_fd = accept(listen_fd, this->in_addr, &this->in_len);
                 // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
 #ifndef _WIN32
-                if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
+                if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) {
 #else
-                if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) continue;
+                if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) {
 #endif
+                  close_socket(socket_fd); continue;
+                }
 // #ifdef WIN32
 //                 RESin_kavars.onoff = k_A[0]; RESin_kavars.keepalivetime = k_A[1] * 1000; RESin_kavars.keepaliveinterval = k_A[2] * 1000;
 //                 if (WSAIoctl(socket_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RESin_kavars, RESl_k, (LPVOID)&RESout_kavars, RESl_k, &RESuBR, NULL, NULL) == SOCKET_ERROR) {
