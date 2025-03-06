@@ -63,7 +63,7 @@ namespace fc {
         if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
       } else {
         if (GetLastError() != ERROR_IO_PENDING) {
-          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found();
+          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
         }
         WaitForSingleObject(ov.hEvent, 1000); //INFINITE
         if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
@@ -86,10 +86,10 @@ namespace fc {
               }
             }
           }
-          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found();
+          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
         }
         break;
-      } while (ov.Offset < size); if (ov.hEvent) CloseHandle(ov.hEvent);
+      } while (ov.Offset < size); if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0;
 #else
 #if _OPENSSL
       off_t ov = ot.size(); lseek(fd, p, SEEK_SET);
@@ -187,7 +187,7 @@ namespace fc {
         if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
       } else {
         if (GetLastError() != ERROR_IO_PENDING) {
-          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found();
+          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
         }
         WaitForSingleObject(ov.hEvent, 1000); //INFINITE
         if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
@@ -212,10 +212,10 @@ namespace fc {
               }
             }
           }
-          if (ov.hEvent) CloseHandle(ov.hEvent); throw err::not_found();
+          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
         }
         break;
-      } while (ov.Offset < content_length_); if (ov.hEvent) CloseHandle(ov.hEvent);
+      } while (ov.Offset < content_length_); if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0;
 #endif
       co_return;
     });

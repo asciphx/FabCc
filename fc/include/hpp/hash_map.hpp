@@ -264,11 +264,11 @@ namespace fc {
     _FORCE_INLINE size_t size() const noexcept { return numEntries; }
     _FORCE_INLINE size_t capacity() const noexcept { return totalSize; }
     class iterator {
-      friend HashMap; mutable Nod* curr; Nod* end; HashMap* map;
+      friend HashMap; mutable Nod* curr; Nod* end;
       _FORCE_INLINE void moveToNextOccupied() { while (curr != end) { if (curr->occupied) return; ++curr; } }
     public:
       iterator(HashMap* m, size_t subIdx, size_t slot) noexcept: curr(m->table + subIdx * SUBARRAY_SIZE + slot),
-        end(m->table + m->totalSize), map(m) {}
+        end(m->table + m->totalSize) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept { return reinterpret_cast<std::pair<const K, V>*>(curr); }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept { return reinterpret_cast<std::pair<const K, V>&>(*curr); }
       _FORCE_INLINE iterator& operator++() noexcept { while (++curr != end) { if (curr->occupied) return *this; } return *this; }
@@ -291,11 +291,11 @@ namespace fc {
       } while (i < numSubarrays); return end();
     }
     class const_iterator {
-      friend HashMap; mutable Nod* curr; Nod* end; const HashMap* map;
+      friend HashMap; mutable Nod* curr; Nod* end;
       _FORCE_INLINE void moveToNextOccupied() { while (curr != end) { if (curr->occupied) return; ++curr; } }
     public:
       const_iterator(const HashMap* m, size_t subIdx, size_t slot) noexcept:
-        curr(m->table + subIdx * SUBARRAY_SIZE + slot), end(m->table + m->totalSize), map(m) {}
+        curr(m->table + subIdx * SUBARRAY_SIZE + slot), end(m->table + m->totalSize) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept { return reinterpret_cast<std::pair<const K, V>*>(curr); }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept { return reinterpret_cast<std::pair<const K, V>&>(*curr); }
       _FORCE_INLINE const_iterator& operator++() noexcept {
