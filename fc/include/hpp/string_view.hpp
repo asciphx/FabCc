@@ -33,7 +33,7 @@ namespace std {
     static constexpr size_t npos = size_t(-1);
     constexpr string_view() noexcept: data_(nullptr), length_(0) {}
     template<size_t T>
-    constexpr string_view(const char(&data)[T]): data_{ data }, length_{ T - 1 } {}
+    constexpr string_view(const char(&data)[T]) : data_{ data }, length_{ T - 1 } {}
     explicit constexpr string_view(const char* data, const size_t length) : data_(data), length_(length) {}
     string_view(const char* data): data_(data), length_(char_traits<char>::length(data)) {}
     constexpr string_view(const string_view&) noexcept = default;
@@ -358,5 +358,15 @@ namespace std {
     }
     return $;
   }
+}
+namespace fc {
+  static constexpr unsigned long long _m = 0xDFDFDFDFDFDFDFDF & ~uint64_t{ 0 };
+  static unsigned int _um = static_cast<unsigned int>(0xDFDFDFDF & ~std::uint32_t{ 0 });
+  struct str_key_eq {
+    bool operator()(const std::string& l, const std::string& r) const;
+  };
+  struct sv_key_eq {
+    bool operator()(const std::string_view& l, const std::string_view& r) const;
+  };
 }
 #endif

@@ -15,6 +15,7 @@
 #include "hpp/string_view.hpp"
 #include <stdexcept>
 #include <immintrin.h>
+#include <functional>
 namespace fc {
   template<typename K>
   _FORCE_INLINE static size_t fc_hash(const K& key, size_t mod) noexcept {
@@ -26,53 +27,73 @@ namespace fc {
     const unsigned char* p = reinterpret_cast<const unsigned char*>(key.c_str());
     size_t n = key.length(); size_t r = 0x517cc1b7;
     if (n >= 16) {
+      const __m128i mul_factor = _mm_set1_epi32(5);
+      const __m128i mask_case = _mm_set1_epi8(~0x20);
+      const __m128i zero = _mm_setzero_si128();
       __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
       const unsigned char* end = p + (n & ~15);
       while (p < end) {
         __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        hash_vec = _mm_add_epi32(_mm_mul_epu32(hash_vec, _mm_set1_epi32(5)), chunk);
+        chunk = _mm_and_si128(chunk, mask_case);
+        __m128i lo_64 = _mm_unpacklo_epi32(chunk, zero);
+        __m128i hi_64 = _mm_unpackhi_epi32(chunk, zero);
+        __m128i hash_lo = _mm_mul_epu32(hash_vec, mul_factor);
+        __m128i hash_hi = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
+        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo, lo_64), _mm_add_epi32(hash_hi, hi_64));
         p += 16;
       }
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     while (n >= 8) {
-      r = (r * 5 + (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
-        (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
-        (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)));
-      p += 8; n -= 8;
+      uint64_t chunk = (static_cast<uint64_t>(p[0]) | (static_cast<uint64_t>(p[1]) << 8) |
+        (static_cast<uint64_t>(p[2]) << 16) | (static_cast<uint64_t>(p[3]) << 24) |
+        (static_cast<uint64_t>(p[4]) << 32) | (static_cast<uint64_t>(p[5]) << 40) |
+        (static_cast<uint64_t>(p[6]) << 48) | (static_cast<uint64_t>(p[7]) << 56)) & _m;
+      r = r * 5 + chunk; p += 8; n -= 8;
     }
     while (n >= 4) {
-      r = (r * 5 + (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24))); p += 4; n -= 4;
+      uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um;
+      r = r * 5 + chunk; p += 4; n -= 4;
     }
-    while (n > 0) { r = r * 5 + *p; ++p; --n; } return r % mod;
+    while (n > 0) { r = r * 5 + (*p & 0xDF); ++p; --n; } return r % mod;
   }
-  // Custom hash function from str_map for std::string_view
   template<>
   _FORCE_INLINE size_t fc_hash<std::string_view>(const std::string_view& key, size_t mod) noexcept {
     size_t n = key.size(); size_t r = n - 1;
     unsigned char const* p = reinterpret_cast<unsigned char const*>(key.data());
     if (n >= 16) {
-      __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r)); const unsigned char* end = p + (n & ~15);
+      const __m128i mul_factor = _mm_set1_epi32(5);
+      const __m128i mask_case = _mm_set1_epi8(~0x20);
+      const __m128i zero = _mm_setzero_si128();
+      __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
+      const unsigned char* end = p + (n & ~15);
       while (p < end) {
         __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        hash_vec = _mm_add_epi32(_mm_mul_epu32(hash_vec, _mm_set1_epi32(5)), chunk);
+        chunk = _mm_and_si128(chunk, mask_case);
+        __m128i lo_64 = _mm_unpacklo_epi32(chunk, zero);
+        __m128i hi_64 = _mm_unpackhi_epi32(chunk, zero);
+        __m128i hash_lo = _mm_mul_epu32(hash_vec, mul_factor);
+        __m128i hash_hi = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
+        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo, lo_64), _mm_add_epi32(hash_hi, hi_64));
         p += 16;
       }
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     while (n >= 8) {
-      r = (r * 5 + (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
-        (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
-        (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)));
-      p += 8; n -= 8;
+      uint64_t chunk = (static_cast<uint64_t>(p[0]) | (static_cast<uint64_t>(p[1]) << 8) |
+        (static_cast<uint64_t>(p[2]) << 16) | (static_cast<uint64_t>(p[3]) << 24) |
+        (static_cast<uint64_t>(p[4]) << 32) | (static_cast<uint64_t>(p[5]) << 40) |
+        (static_cast<uint64_t>(p[6]) << 48) | (static_cast<uint64_t>(p[7]) << 56)) & _m;
+      r = r * 5 + chunk; p += 8; n -= 8;
     }
     while (n >= 4) {
-      r = (r * 5 + (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24))); p += 4; n -= 4;
+      uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um;
+      r = r * 5 + chunk; p += 4; n -= 4;
     }
-    while (n > 0) { r = r * 5 + *p; ++p; --n; } return (r - key.size()) % mod;
+    while (n > 0) { r = r * 5 + (*p & 0xDF); ++p; --n; } return (r - key.size()) % mod;
   }
   // Query-friendly hash table similar to std::unordered_map, suitable for frequent lookups
-  template<typename K, typename V, typename T = uint16_t, char LOAD_FACTOR_THRESHOLD = 75>
+  template<typename K, typename V, typename T = uint16_t, typename KeyEqual = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
     struct Nod {
       K key; V value; bool occupied;
@@ -80,7 +101,7 @@ namespace fc {
       Nod(const K& k, const V& v) noexcept: key(k), value(v), occupied(true) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}
     };
-    Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
+    KeyEqual equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
     static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 16 : sizeof(V) < 4 ? 16 : sizeof(K) < 16 ? 32 : 8;
     static V dummy;
     static const constexpr uint64_t MaxSize = static_cast<uint64_t>(static_cast<T>(-1)) * SUBARRAY_SIZE;
@@ -140,7 +161,7 @@ namespace fc {
           size_t idx = (startOffset + j) % SUBARRAY_SIZE;
           Nod& entry = table[currentSubarray * SUBARRAY_SIZE + idx];
           bool wasUnoccupied = !entry.occupied;
-          if (wasUnoccupied || entry.key == key) {
+          if (wasUnoccupied || equal(entry.key, key)) {
             entry.key = key;
             entry.value = std::move(value);
             entry.occupied = true;
@@ -181,7 +202,7 @@ namespace fc {
       size_t subarrayIdx = superPointers[baseIndex];
       for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
         Nod& entry = table[subarrayIdx * SUBARRAY_SIZE + i];
-        if (entry.occupied && entry.key == key) {
+        if (entry.occupied && equal(entry.key, key)) {
           return entry.value;
         }
       }
@@ -223,7 +244,7 @@ namespace fc {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
-          if (entry.occupied && entry.key == key) {
+          if (entry.occupied && equal(entry.key, key)) {
             return entry.value;
           }
         }
@@ -238,7 +259,7 @@ namespace fc {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           const Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
-          if (entry.occupied && entry.key == key) {
+          if (entry.occupied && equal(entry.key, key)) {
             return entry.value;
           }
         }
@@ -252,7 +273,7 @@ namespace fc {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
-          if (entry.occupied && entry.key == key) {
+          if (entry.occupied && equal(entry.key, key)) {
             entry.occupied = false;
             --numEntries;
             superPointers[baseIndex] = 0;
@@ -285,7 +306,7 @@ namespace fc {
         Nod* subarray = table + currentSubarray * SUBARRAY_SIZE;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           Nod& entry = subarray[j];
-          if (entry.occupied && entry.key == key) return iterator(this, currentSubarray, j);
+          if (entry.occupied && equal(entry.key, key)) return iterator(this, currentSubarray, j);
         }
         ++i;
       } while (i < numSubarrays); return end();
@@ -309,38 +330,38 @@ namespace fc {
     _FORCE_INLINE const_iterator begin() const noexcept;
     _FORCE_INLINE const_iterator end() const noexcept;
   };
-  template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
-  _FORCE_INLINE const typename HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::const_iterator
-    HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::find(const K& key) const noexcept {
+  template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
+  _FORCE_INLINE const typename HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::const_iterator
+    HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::find(const K& key) const noexcept {
     size_t baseIndex = fc_hash(key, totalSize); size_t subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t i = 0;
     do {
       size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
       const Nod* subarray = table + currentSubarray * SUBARRAY_SIZE;
       for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
         const Nod& entry = subarray[j];
-        if (entry.occupied && entry.key == key) return const_iterator(this, currentSubarray, j);
+        if (entry.occupied && equal(entry.key, key)) return const_iterator(this, currentSubarray, j);
       }
       ++i;
-    } while (i < numSubarrays); return HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::end();
+    } while (i < numSubarrays); return HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::end();
   }
-  template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
-  _FORCE_INLINE typename HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::const_iterator
-    HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::begin() const noexcept {
+  template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
+  _FORCE_INLINE typename HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::const_iterator
+    HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::begin() const noexcept {
     const_iterator i(this, 0, 0); i.moveToNextOccupied(); return i;
   }
-  template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
-  _FORCE_INLINE typename HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::const_iterator
-    HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::end() const noexcept {
+  template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
+  _FORCE_INLINE typename HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::const_iterator
+    HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::end() const noexcept {
     return const_iterator(this, numSubarrays, 0);
   }
-  template<typename K, typename V, typename T, char LOAD_FACTOR_THRESHOLD>
-  V HashMap<K, V, T, LOAD_FACTOR_THRESHOLD>::dummy;
-  struct sv_hash_map: fc::HashMap<std::string_view, std::string_view, uint8_t> {
-    sv_hash_map(int i = 16) noexcept: HashMap<std::string_view, std::string_view, uint8_t>(i) {}
+  template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
+  V HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::dummy;
+  struct sv_hash_map: fc::HashMap<std::string_view, std::string_view, uint8_t, sv_key_eq> {
+    sv_hash_map(int i = 16) noexcept: HashMap<std::string_view, std::string_view, uint8_t, sv_key_eq>(i) {}
   };
   template<typename T>
-  struct str_hash_map: fc::HashMap<std::string, std::string, T, 80> {
-    str_hash_map(int i = 1024) noexcept: HashMap<std::string, std::string, T, 80>(i) {}
+  struct str_hash_map: fc::HashMap<std::string, std::string, T, str_key_eq, 80> {
+    str_hash_map(int i = 1024) noexcept: HashMap<std::string, std::string, T, str_key_eq, 80>(i) {}
   };
 }
 #endif

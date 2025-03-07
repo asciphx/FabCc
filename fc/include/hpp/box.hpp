@@ -57,7 +57,9 @@ public:
   explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}
   explicit box(const box<T>& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; }
   explicit box(T* _) noexcept: p(_), b(true) {}
-  template<typename... X> box(X&&... _) noexcept: p(new T{ std::forward<X>(_)... }), b(true) {}
+  template<typename... X> box(X&&... _) noexcept(std::is_nothrow_constructible<T, X...>::value): p(new T{ std::forward<X>(_)... }), b(true) {
+    static_assert(std::is_constructible<T, X...>::value, "T must be constructible with X...");
+  }
   ~box() noexcept { if (this->b) { delete this->p; this->p = null; } }
   _FORCE_INLINE void operator = (T* _) noexcept { if (this->b) delete this->p; this->p = _; this->b = _ ? true : false; }
   _FORCE_INLINE void operator = (box<T>& _) noexcept {

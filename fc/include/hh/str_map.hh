@@ -18,16 +18,10 @@ namespace fc {
   struct str_hash {
     size_t operator()(const std::string& z) const;
   };
-  struct str_key_eq {
-    bool operator()(const std::string& l, const std::string& r) const;
-  };
   using str_map = std::unordered_map<std::string, std::string, str_hash, str_key_eq>;
 
   struct sv_hash {
     size_t operator()(const std::string_view& z) const;
-  };
-  struct sv_key_eq {
-    bool operator()(const std::string_view& l, const std::string_view& r) const;
   };
   struct sv_unordered_map : std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>{
     _FORCE_INLINE std::string_view operator[](const std::string_view& k) {
