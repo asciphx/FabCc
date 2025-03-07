@@ -14,22 +14,28 @@
 #ifdef _WIN32
 #include "h/windows.h"
 #endif // _WIN32
+#include <thread>
 namespace fc {
   void spinlock::lock() noexcept {
-    for (;;) {
-      // Optimistically assume the lock is free on the first try
-      if (!lock_.exchange(true, std::memory_order_acquire)) {
-        break;
-      }
+    // Optimistically try to acquire the lock
+    while (lock_.exchange(true, std::memory_order_acquire)) {
+      // Spin wait until the lock is potentially free
       // Wait for lock to be released without generating cache misses
       while (lock_.load(std::memory_order_relaxed)) {
         // Issue X86 PAUSE or ARM YIELD instruction to reduce contention between
         // hyper-threads
-#ifdef _WIN32
-        YieldProcessor();
+#if defined(_WIN32)
+        YieldProcessor(); // Windows (x86/x64)
+#elif defined(__x86_64__) || defined(__i386__)
+        __builtin_ia32_pause(); // GCC/Clang x86/x64
+#elif defined(__arm__) || defined(__aarch64__)
+        __asm__ __volatile__("yield" ::: "memory"); // ARM/ARM64
+#elif defined(__riscv)
+        __asm__ __volatile__("nop;nop\nnop" ::: "memory");// RISC-V
 #else
-        __builtin_ia32_pause();
-#endif // _WIN32
+        // Fallback
+        std::this_thread::yield();
+#endif
       }
     }
   }

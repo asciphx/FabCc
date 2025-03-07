@@ -359,6 +359,7 @@ namespace std {
     return $;
   }
 }
+#include <immintrin.h>
 namespace fc {
   static constexpr unsigned long long _m = 0xDFDFDFDFDFDFDFDF & ~uint64_t{ 0 };
   static unsigned int _um = static_cast<unsigned int>(0xDFDFDFDF & ~std::uint32_t{ 0 });
@@ -368,5 +369,8 @@ namespace fc {
   struct sv_key_eq {
     bool operator()(const std::string_view& l, const std::string_view& r) const;
   };
+  static const __m128i mul_factor = _mm_set1_epi32(5);
+  static const __m128i mask_case = _mm_set1_epi8(~0x20);
+  static const __m128i zero = _mm_setzero_si128();
 }
 #endif

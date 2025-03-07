@@ -17,83 +17,53 @@
 #include <immintrin.h>
 #include <functional>
 namespace fc {
+  // （2³² × (√5 - 1) / 2）
   template<typename K>
   _FORCE_INLINE static size_t fc_hash(const K& key, size_t mod) noexcept {
-    return (static_cast<size_t>(key) * 0xcc9e2d51U) % mod;// Using a better multiplier from MurmurHash(old 0X9e3779b1U)
+    return (static_cast<size_t>(key) * 0X9e3779b1U) % mod;
   }
   // Optimized string hash using SIMD where possible
   template<>
   _FORCE_INLINE size_t fc_hash<std::string>(const std::string& key, size_t mod) noexcept {
     const unsigned char* p = reinterpret_cast<const unsigned char*>(key.c_str());
-    size_t n = key.length(); size_t r = 0x517cc1b7;
+    size_t n = key.length(), r = n - 1;
     if (n >= 16) {
-      const __m128i mul_factor = _mm_set1_epi32(5);
-      const __m128i mask_case = _mm_set1_epi8(~0x20);
-      const __m128i zero = _mm_setzero_si128();
-      __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
-      const unsigned char* end = p + (n & ~15);
+      __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r)); const unsigned char* end = p + (n & ~15);
       while (p < end) {
-        __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        chunk = _mm_and_si128(chunk, mask_case);
-        __m128i lo_64 = _mm_unpacklo_epi32(chunk, zero);
-        __m128i hi_64 = _mm_unpackhi_epi32(chunk, zero);
-        __m128i hash_lo = _mm_mul_epu32(hash_vec, mul_factor);
-        __m128i hash_hi = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo, lo_64), _mm_add_epi32(hash_hi, hi_64));
+        __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
+        hash_vec = _mm_add_epi32(_mm_add_epi32(_mm_mul_epu32(hash_vec, mul_factor), _mm_unpacklo_epi32(chunk, zero)),
+          _mm_add_epi32(_mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor), _mm_unpackhi_epi32(chunk, zero)));
         p += 16;
       }
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
-    while (n >= 8) {
-      uint64_t chunk = (static_cast<uint64_t>(p[0]) | (static_cast<uint64_t>(p[1]) << 8) |
-        (static_cast<uint64_t>(p[2]) << 16) | (static_cast<uint64_t>(p[3]) << 24) |
-        (static_cast<uint64_t>(p[4]) << 32) | (static_cast<uint64_t>(p[5]) << 40) |
-        (static_cast<uint64_t>(p[6]) << 48) | (static_cast<uint64_t>(p[7]) << 56)) & _m;
-      r = r * 5 + chunk; p += 8; n -= 8;
+    if (n >= 8) {
+      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
+      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8)); p += 8; n -= 8;
     }
     while (n >= 4) {
-      uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um;
-      r = r * 5 + chunk; p += 4; n -= 4;
+      uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um; r = r * 5 + chunk; p += 4; n -= 4;
     }
-    while (n > 0) { r = r * 5 + (*p & 0xDF); ++p; --n; } return r % mod;
+    while (n--) r = r * 5 + (*p++ & 0xDF); return (r - key.length()) % mod;
   }
+  // Custom hash function from str_map for std::string_view
   template<>
   _FORCE_INLINE size_t fc_hash<std::string_view>(const std::string_view& key, size_t mod) noexcept {
-    size_t n = key.size(); size_t r = n - 1;
+    size_t n = key.size(); size_t r = 0;
     unsigned char const* p = reinterpret_cast<unsigned char const*>(key.data());
-    if (n >= 16) {
-      const __m128i mul_factor = _mm_set1_epi32(5);
-      const __m128i mask_case = _mm_set1_epi8(~0x20);
-      const __m128i zero = _mm_setzero_si128();
-      __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
-      const unsigned char* end = p + (n & ~15);
-      while (p < end) {
-        __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        chunk = _mm_and_si128(chunk, mask_case);
-        __m128i lo_64 = _mm_unpacklo_epi32(chunk, zero);
-        __m128i hi_64 = _mm_unpackhi_epi32(chunk, zero);
-        __m128i hash_lo = _mm_mul_epu32(hash_vec, mul_factor);
-        __m128i hash_hi = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo, lo_64), _mm_add_epi32(hash_hi, hi_64));
-        p += 16;
-      }
-      r = _mm_cvtsi128_si32(hash_vec); n &= 15;
-    }
     while (n >= 8) {
-      uint64_t chunk = (static_cast<uint64_t>(p[0]) | (static_cast<uint64_t>(p[1]) << 8) |
-        (static_cast<uint64_t>(p[2]) << 16) | (static_cast<uint64_t>(p[3]) << 24) |
-        (static_cast<uint64_t>(p[4]) << 32) | (static_cast<uint64_t>(p[5]) << 40) |
-        (static_cast<uint64_t>(p[6]) << 48) | (static_cast<uint64_t>(p[7]) << 56)) & _m;
-      r = r * 5 + chunk; p += 8; n -= 8;
+      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
+      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8));
+      p += 8; n -= 8;
     }
     while (n >= 4) {
       uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um;
       r = r * 5 + chunk; p += 4; n -= 4;
     }
-    while (n > 0) { r = r * 5 + (*p & 0xDF); ++p; --n; } return (r - key.size()) % mod;
+    while (n--) r = r * 5 + (*p++ & 0xDF); return r % mod;
   }
-  // Query-friendly hash table similar to std::unordered_map, suitable for frequent lookups
-  template<typename K, typename V, typename T = uint16_t, typename KeyEqual = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
+  // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
+  template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
     struct Nod {
       K key; V value; bool occupied;
@@ -101,7 +71,7 @@ namespace fc {
       Nod(const K& k, const V& v) noexcept: key(k), value(v), occupied(true) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}
     };
-    KeyEqual equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
+    E equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
     static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 16 : sizeof(V) < 4 ? 16 : sizeof(K) < 16 ? 32 : 8;
     static V dummy;
     static const constexpr uint64_t MaxSize = static_cast<uint64_t>(static_cast<T>(-1)) * SUBARRAY_SIZE;

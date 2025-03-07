@@ -36,9 +36,6 @@ namespace fc {
     size_t n = z.length(); size_t r = n - 1;
     unsigned char const* p = reinterpret_cast<unsigned char const*>(z.c_str());
     if (n >= 16) {
-      const __m128i mul_factor = _mm_set1_epi32(5);
-      const __m128i mask_case = _mm_set1_epi8(~0x20);
-      const __m128i zero = _mm_setzero_si128();
       __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
       const unsigned char* end = p + (n & ~15);
       while (p + 32 <= end) {
@@ -49,13 +46,13 @@ namespace fc {
         __m128i hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
         __m128i hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
         hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
-        __m128i chunk2 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 16));
-        chunk2 = _mm_and_si128(chunk2, mask_case);
-        __m128i lo2_64 = _mm_unpacklo_epi32(chunk2, zero);
-        __m128i hi2_64 = _mm_unpackhi_epi32(chunk2, zero);
-        __m128i hash_lo2 = _mm_mul_epu32(hash_vec, mul_factor);
-        __m128i hash_hi2 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo2, lo2_64), _mm_add_epi32(hash_hi2, hi2_64));
+        chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 16));
+        chunk1 = _mm_and_si128(chunk1, mask_case);
+        lo1_64 = _mm_unpacklo_epi32(chunk1, zero);
+        hi1_64 = _mm_unpackhi_epi32(chunk1, zero);
+        hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
+        hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
+        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
         p += 32;
       }
       while (p + 16 <= end) {
@@ -71,25 +68,22 @@ namespace fc {
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     while (n >= 8) {
-      uint64_t chunk = (static_cast<uint64_t>(case_table[p[0]]) | (static_cast<uint64_t>(case_table[p[1]]) << 8) |
-        (static_cast<uint64_t>(case_table[p[2]]) << 16) | (static_cast<uint64_t>(case_table[p[3]]) << 24) |
-        (static_cast<uint64_t>(case_table[p[4]]) << 32) | (static_cast<uint64_t>(case_table[p[5]]) << 40) |
-        (static_cast<uint64_t>(case_table[p[6]]) << 48) | (static_cast<uint64_t>(case_table[p[7]]) << 56));
-      r = r * 5 + chunk; p += 8; n -= 8;
+      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
+      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8));
+      p += 8; n -= 8;
     }
     while (n >= 4) {
       uint32_t chunk = (case_table[p[0]] | (case_table[p[1]] << 8) |
         (case_table[p[2]] << 16) | (case_table[p[3]] << 24));
       r = r * 5 + chunk; p += 4; n -= 4;
     }
-    while (n > 0) { r = r * 5 + case_table[*p]; ++p; --n; } return r - z.length();
+    while (n--) r = r * 5 + case_table[*p], ++p; return r - z.length();
   }
   bool str_key_eq::operator()(const std::string& l, const std::string& r) const {
     size_t n = l.length(); if (n != r.length()) return false;
     unsigned char const* x = reinterpret_cast<unsigned char const*>(l.c_str());
     unsigned char const* y = reinterpret_cast<unsigned char const*>(r.c_str());
     if (n >= 16) {
-      const __m128i mask_case = _mm_set1_epi8(~0x20);
       const unsigned char* end = x + (n & ~15);
       while (x < end) {
         __m128i chunk_x = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
@@ -103,12 +97,9 @@ namespace fc {
       n &= 15;
     }
     for (; n >= 8; x += 8, y += 8, n -= 8) {
-      if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24) |
-        (static_cast<size_t>(x[4]) << 32) | (static_cast<size_t>(x[5]) << 40) |
-        (static_cast<size_t>(x[6]) << 48) | (static_cast<size_t>(x[7]) << 56)) ^
-        (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24) |
-          (static_cast<size_t>(y[4]) << 32) | (static_cast<size_t>(y[5]) << 40) |
-          (static_cast<size_t>(y[6]) << 48) | (static_cast<size_t>(y[7]) << 56))) & _m) return false;
+      __m128i chunk_x = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
+      __m128i chunk_y = _mm_loadu_si128(reinterpret_cast<const __m128i*>(y));
+      if (_mm_cvtsi128_si64(_mm_xor_si128(chunk_x, chunk_y)) & _m) return false;
     }
     for (; n >= 4; x += 4, y += 4, n -= 4) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
@@ -120,9 +111,6 @@ namespace fc {
     size_t n = z.size(); size_t r = 0;
     unsigned char const* p = reinterpret_cast<unsigned char const*>(z.data());
     if (n >= 16) {
-      const __m128i mul_factor = _mm_set1_epi32(5);
-      const __m128i mask_case = _mm_set1_epi8(~0x20);
-      const __m128i zero = _mm_setzero_si128();
       __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
       const unsigned char* end = p + (n & ~15);
       while (p + 32 <= end) {
@@ -133,13 +121,13 @@ namespace fc {
         __m128i hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
         __m128i hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
         hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
-        __m128i chunk2 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 16));
-        chunk2 = _mm_and_si128(chunk2, mask_case);
-        __m128i lo2_64 = _mm_unpacklo_epi32(chunk2, zero);
-        __m128i hi2_64 = _mm_unpackhi_epi32(chunk2, zero);
-        __m128i hash_lo2 = _mm_mul_epu32(hash_vec, mul_factor);
-        __m128i hash_hi2 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo2, lo2_64), _mm_add_epi32(hash_hi2, hi2_64));
+        chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 16));
+        chunk1 = _mm_and_si128(chunk1, mask_case);
+        lo1_64 = _mm_unpacklo_epi32(chunk1, zero);
+        hi1_64 = _mm_unpackhi_epi32(chunk1, zero);
+        hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
+        hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
+        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
         p += 32;
       }
       while (p + 16 <= end) {
@@ -155,25 +143,22 @@ namespace fc {
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     while (n >= 8) {
-      uint64_t chunk = (static_cast<uint64_t>(case_table[p[0]]) | (static_cast<uint64_t>(case_table[p[1]]) << 8) |
-        (static_cast<uint64_t>(case_table[p[2]]) << 16) | (static_cast<uint64_t>(case_table[p[3]]) << 24) |
-        (static_cast<uint64_t>(case_table[p[4]]) << 32) | (static_cast<uint64_t>(case_table[p[5]]) << 40) |
-        (static_cast<uint64_t>(case_table[p[6]]) << 48) | (static_cast<uint64_t>(case_table[p[7]]) << 56));
-      r = r * 5 + chunk; p += 8; n -= 8;
+      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
+      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8));
+      p += 8; n -= 8;
     }
     while (n >= 4) {
       uint32_t chunk = (case_table[p[0]] | (case_table[p[1]] << 8) |
         (case_table[p[2]] << 16) | (case_table[p[3]] << 24));
       r = r * 5 + chunk; p += 4; n -= 4;
     }
-    while (n > 0) { r = r * 5 + case_table[*p]; ++p; --n; } return r;
+    while (n--) r = r * 5 + case_table[*p], ++p; return r;
   }
   bool sv_key_eq::operator()(const std::string_view& l, const std::string_view& r) const {
     size_t n = l.size(); if (n != r.size()) return false;
     unsigned char const* x = reinterpret_cast<unsigned char const*>(l.data());
     unsigned char const* y = reinterpret_cast<unsigned char const*>(r.data());
     if (n >= 16) {
-      const __m128i mask_case = _mm_set1_epi8(~0x20);
       const unsigned char* end = x + (n & ~15);
       while (x < end) {
         __m128i chunk_x = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
@@ -187,12 +172,9 @@ namespace fc {
       n &= 15;
     }
     for (; n >= 8; x += 8, y += 8, n -= 8) {
-      if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24) |
-        (static_cast<size_t>(x[4]) << 32) | (static_cast<size_t>(x[5]) << 40) |
-        (static_cast<size_t>(x[6]) << 48) | (static_cast<size_t>(x[7]) << 56)) ^
-        (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24) |
-          (static_cast<size_t>(y[4]) << 32) | (static_cast<size_t>(y[5]) << 40) |
-          (static_cast<size_t>(y[6]) << 48) | (static_cast<size_t>(y[7]) << 56))) & _m) return false;
+      __m128i chunk_x = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
+      __m128i chunk_y = _mm_loadu_si128(reinterpret_cast<const __m128i*>(y));
+      if (_mm_cvtsi128_si64(_mm_xor_si128(chunk_x, chunk_y)) & _m) return false;
     }
     for (; n >= 4; x += 4, y += 4, n -= 4) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
