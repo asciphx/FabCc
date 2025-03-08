@@ -292,8 +292,9 @@ static const char* parse_headers(const char* buf, const char* buf_end, fc::sv_ma
     for (; value_end != $; --value_end) {
       const char c = *(value_end - 1); if (!(c == ' ' || c == '\t')) break;
     }
-    std::string_view v($, _); headers->emplace(n, v);
-    if (n[0] == 0X43 && n == "Content-Length") *c_l = std::lexical_cast<_ssize_t>(v);
+    std::string_view v($, _);
+    if (n[0] == 0X43 && n == "Content-Length") { *c_l = std::lexical_cast<_ssize_t>(v); continue; }
+    headers->emplace(n, v);
   }
   return buf;
 }

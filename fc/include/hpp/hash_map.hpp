@@ -38,22 +38,24 @@ namespace fc {
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     if (n >= 8) {
-      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
-      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8)); p += 8; n -= 8;
+      r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
+        (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
+        (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
+      p += 8; n -= 8;
     }
     while (n >= 4) {
       uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um; r = r * 5 + chunk; p += 4; n -= 4;
     }
     while (n--) r = r * 5 + (*p++ & 0xDF); return (r - key.length()) % mod;
   }
-  // Custom hash function from str_map for std::string_view
   template<>
   _FORCE_INLINE size_t fc_hash<std::string_view>(const std::string_view& key, size_t mod) noexcept {
     size_t n = key.size(); size_t r = 0;
     unsigned char const* p = reinterpret_cast<unsigned char const*>(key.data());
     while (n >= 8) {
-      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
-      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8));
+      r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
+        (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
+        (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
     while (n >= 4) {
@@ -62,11 +64,23 @@ namespace fc {
     }
     while (n--) r = r * 5 + (*p++ & 0xDF); return r % mod;
   }
+  template<typename Z>
+  _FORCE_INLINE const uint64_t fc_HashResize(size_t _) { return static_cast<uint64_t>(_ > 0x200 ? _ + (_ >> 1) : _ << 1); };
+  template<>
+  _FORCE_INLINE const uint64_t fc_HashResize<uint64_t>(size_t _) { return static_cast<uint64_t>(_ > 0x10000 ? _ + (_ >> 1) : _ << 1); };
+  template<>
+  _FORCE_INLINE const uint64_t fc_HashResize<uint32_t>(size_t _) { return static_cast<uint64_t>(_ > 0x1000 ? _ + (_ >> 1) : _ << 1); };
+  template<>
+  _FORCE_INLINE const uint64_t fc_HashResize<uint16_t>(size_t _) { return static_cast<uint64_t>(_ + (_ >> 1)); };
+  template<typename Z>
+  static constexpr const uint64_t fc_HashMax(size_t _) { return static_cast<uint64_t>(static_cast<Z>(-1)) * _; };
+  template<>
+  constexpr const uint64_t fc_HashMax<uint64_t>(size_t _) { return static_cast<uint64_t>(-1); };
   // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
   template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
     struct Nod {
-      K key; V value; bool occupied;
+      K key; V value; alignas(sizeof(K) + sizeof(V) <= 32 ? 32 : 64) bool occupied;
       Nod() noexcept: key(), value(), occupied(false) {}
       Nod(const K& k, const V& v) noexcept: key(k), value(v), occupied(true) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}
@@ -74,10 +88,13 @@ namespace fc {
     E equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
     static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 16 : sizeof(V) < 4 ? 16 : sizeof(K) < 16 ? 32 : 8;
     static V dummy;
-    static const constexpr uint64_t MaxSize = static_cast<uint64_t>(static_cast<T>(-1)) * SUBARRAY_SIZE;
-    bool resize() {
-      size_t newTotalSize = totalSize < 1024 ? totalSize * 2 : totalSize + (totalSize >> 1);
-      if (newTotalSize > MaxSize) return false;
+    static const constexpr uint64_t MaxSize = fc_HashMax<T>(SUBARRAY_SIZE);
+    // Optimization: Reduced exception path overhead by using noexcept and manual cleanup
+    bool resize() noexcept {
+      size_t newTotalSize = fc_HashResize<T>(totalSize);
+      if (newTotalSize > MaxSize || newTotalSize <= totalSize) {
+        if (totalSize == MaxSize) return false; newTotalSize = MaxSize;
+      }
       size_t newNumSubarrays = newTotalSize / SUBARRAY_SIZE;
       Nod* newTable = nullptr;
       T* newSuperPointers = nullptr;
@@ -85,6 +102,8 @@ namespace fc {
         newTable = new Nod[newTotalSize]();
         newSuperPointers = new T[newTotalSize]();
       } catch (const std::bad_alloc&) {
+        delete[] newTable;
+        delete[] newSuperPointers;
         return false;
       }
       for (size_t i = 0; i < numSubarrays; ++i) {
@@ -146,7 +165,7 @@ namespace fc {
   public:
     HashMap(size_t initialSize = sizeof(T) * sizeof(V) * 8) noexcept
       : totalSize(initialSize > MaxSize ? MaxSize : initialSize), numEntries(0), numSubarrays(totalSize / SUBARRAY_SIZE) {
-      table = new Nod[totalSize]();
+      table = new Nod[totalSize](); static_assert(std::is_integral<T>::value, "Super pointer must be integral!");
       superPointers = new T[totalSize]();
     }
     ~HashMap() {
@@ -158,7 +177,8 @@ namespace fc {
     bool emplace(const K& key, const V& value) noexcept {
       if (numEntries * 100 > LOAD_FACTOR_THRESHOLD * totalSize) {
         if (!resize()) {
-          return insertImpl(key, value, fc_hash(key, totalSize));
+          if (!insertImpl(key, value, fc_hash(key, totalSize))) return false;
+          return true;
         }
       }
       return insertImpl(key, value, fc_hash(key, totalSize));
@@ -326,12 +346,25 @@ namespace fc {
   }
   template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
   V HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::dummy;
-  struct sv_hash_map: fc::HashMap<std::string_view, std::string_view, uint8_t, sv_key_eq> {
-    sv_hash_map(int i = 16) noexcept: HashMap<std::string_view, std::string_view, uint8_t, sv_key_eq>(i) {}
+  template<typename T>
+  class HashMap<std::string, std::string, T, str_key_eq, 80>: public HashMap<std::string, std::string, T> {
+  public: HashMap(int i = 1024) noexcept: HashMap<std::string, std::string, T>(i) {}
   };
   template<typename T>
-  struct str_hash_map: fc::HashMap<std::string, std::string, T, str_key_eq, 80> {
-    str_hash_map(int i = 1024) noexcept: HashMap<std::string, std::string, T, str_key_eq, 80>(i) {}
+  class HashMap<std::string_view, std::string_view, T, sv_key_eq>: public HashMap<std::string_view, std::string_view, T> {
+  public: HashMap(int i = 16) noexcept: HashMap<std::string_view, std::string_view, T>(i) {}
   };
+  template<typename T = uint8_t>
+  using sv_hash_map = HashMap<std::string_view, std::string_view, T, sv_key_eq>;
+  template<typename T = uint16_t>
+  using str_hash_map = HashMap<std::string, std::string, T, str_key_eq, 80>;
+  // template<typename T = uint8_t>
+  // struct sv_hash_map: fc::HashMap<std::string_view, std::string_view, T, sv_key_eq> {
+  //   sv_hash_map(int i = 16) noexcept: HashMap<std::string_view, std::string_view, T, sv_key_eq>(i) {}
+  // };
+  // template<typename T = uint16_t>
+  // struct str_hash_map: fc::HashMap<std::string, std::string, T, str_key_eq, 80> {
+  //   str_hash_map(int i = 1024) noexcept: HashMap<std::string, std::string, T, str_key_eq, 80>(i) {}
+  // };
 }
 #endif

@@ -68,8 +68,9 @@ namespace fc {
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     while (n >= 8) {
-      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
-      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8));
+      r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
+        (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
+        (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
     while (n >= 4) {
@@ -143,8 +144,9 @@ namespace fc {
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
     while (n >= 8) {
-      __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
-      r = r * 5 + _mm_cvtsi128_si32(chunk); r = r * 5 + _mm_cvtsi128_si32(_mm_srli_si128(chunk, 8));
+      r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
+        (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
+        (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
     while (n >= 4) {
