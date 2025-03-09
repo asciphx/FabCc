@@ -347,12 +347,12 @@ namespace fc {
   template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
   V HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::dummy;
   template<typename T>
-  class HashMap<std::string, std::string, T, str_key_eq, 80>: public HashMap<std::string, std::string, T> {
-  public: HashMap(int i = 1024) noexcept: HashMap<std::string, std::string, T>(i) {}
+  class HashMap<std::string, std::string, T, str_key_eq, 80>: public HashMap<std::string, std::string, T, str_key_eq> {
+  public: HashMap(int i = 1024) noexcept: HashMap<std::string, std::string, T, str_key_eq>(i) {}
   };
   template<typename T>
-  class HashMap<std::string_view, std::string_view, T, sv_key_eq>: public HashMap<std::string_view, std::string_view, T> {
-  public: HashMap(int i = 16) noexcept: HashMap<std::string_view, std::string_view, T>(i) {}
+  class HashMap<std::string_view, std::string_view, T, sv_key_eq, 75>: public HashMap<std::string_view, std::string_view, T, sv_key_eq, 80> {
+  public: HashMap(int i = 16) noexcept: HashMap<std::string_view, std::string_view, T, sv_key_eq, 80>(i) {}
   };
   template<typename T = uint8_t>
   using sv_hash_map = HashMap<std::string_view, std::string_view, T, sv_key_eq>;

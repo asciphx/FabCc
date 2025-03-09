@@ -169,7 +169,7 @@ namespace fc {
               }
 #endif
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
-                std::string range{ req.headers.operator[]("Range") };
+                std::string range{ req.headers.operator[]("range") };
                 if (!range.empty()) {
                   res.set_status(206); ctx->format_top_headers();
                   i64 l = range.find('=') + 1, r = range.rfind('-'); _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l));
