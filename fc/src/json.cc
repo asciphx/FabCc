@@ -1,5 +1,13 @@
 #include "json.hh"
 #include <algorithm>
+#ifdef _MSC_VER
+#include <intrin.h>
+static _FORCE_INLINE int __builtin_ctzZ(unsigned long _) {
+  unsigned long _index; _BitScanForward(&_index, _); return static_cast<int>(_index);
+}
+#else
+#define __builtin_ctzZ __builtin_ctz
+#endif
 namespace json {
   class Parser;
   namespace xx {
@@ -34,7 +42,7 @@ namespace json {
     class Alloc {
       Array _a[4], _stack, _ustack; friend Parser; std::string _fs;
     public:
-      static const u32 N = 8192; Alloc(): _stack(), _ustack(0x20), _fs(0x80, '\0') {}
+      static const u32 N = 8192; Alloc(): _stack(), _ustack(0x20), _fs(0x800, '\0') {}
       _FORCE_INLINE void* alloc() { if (_a[0].empty()) { return ::malloc(16); } return _a[0].pop_back(); }
       _FORCE_INLINE void free(void* p) { _a[0].size() < ((N - Array::R) << 3) ? _a[0].push_back(p) : ::free(p); }
       _FORCE_INLINE void* alloc(u32 n) {
@@ -122,7 +130,7 @@ namespace json {
     if (e - b >= 4 && b[1] == 'u' && b[2] == 'l' && b[3] == 'l') { v = 0; return b + 3; } return 0;
   }
   _FORCE_INLINE bool is_white_space(const char c) { return (c == ' ' || c == '\n' || c == '\r' || c == '\t'); }
-#if 1
+  //while (++b < e && is_white_space(*b));
 #define skip_white_space(b, e) \
     if (is_white_space(*++b)) { \
         for (++b;;) { \
@@ -151,10 +159,6 @@ namespace json {
             } \
         } \
     }
-#else
-#define skip_white_space(b, e) \
-    while (++b < e && is_white_space(*b));
-#endif
   // This is a non-recursive implement of json parser.
   // stack: |prev size|prev state|val|....
   bool Parser::parse(const char* b, const char* e, void*& val) {
@@ -234,29 +238,139 @@ namespace json {
     return false;
   }
   const char* Parser::parse_string(const char* b, const char* e, void*& v) {
-    const char* p, * q;
-    if ((p = static_cast<const char*>(memchr(b, '"', e - b))) == 0) return 0; q = static_cast<const char*>(memchr(b, '\\', p - b));
-    if (q == 0) { v = make_string(_a, b, p - b); return p; }
+    const char* p;
+    if ((p = static_cast<const char*>(memchr(b, '"', e - b))) == 0) return 0;
+    __m128i escape_char = _mm_set1_epi8('\\');
+    const char* q = b;
+    bool has_escape = false;
+    while (q + 16 <= p) {
+      __m128i chars = _mm_loadu_si128((const __m128i*)q);
+      __m128i escapes = _mm_cmpeq_epi8(chars, escape_char);
+      int mask = _mm_movemask_epi8(escapes);
+      if (mask) {
+        has_escape = true;
+        q += __builtin_ctzZ(mask);
+        break;
+      }
+      q += 16;
+    }
+    while (q < p && *q != '\\') ++q;
+    if (!has_escape && q == p) {
+      v = make_string(_a, b, p - b);
+      return p;
+    }
     std::string& s = _a.stream();
-    do {
-      s.append(b, q - b); if (++q == e) return 0;
-      char c = xx::s2e_table[static_cast<u8>(*q)];
-      if (c == 0) return 0; // invalid escape
-      if (*q != 'u') {
-        s.append({ c });
-      } else {
-        q = parse_unicode(q + 1, e, s); if (q == 0) return 0;
+    s.clear(); // Ensure the stream starts empty to avoid memory buildup
+    s.append(b, q - b);
+    while (q < p) {
+      if (*q == '\\') {
+        if (++q == e) return 0;
+        char c = xx::s2e_table[static_cast<u8>(*q)];
+        if (c == 0) {
+          if (*q != 'u') return 0;
+          // Integrated parse_hex and parse_unicode logic
+          ++q; // Skip 'u'
+          if (q + 4 > e) return 0;
+          // Parse 4 hex digits using SSE2
+          __m128i chars = _mm_loadu_si128((const __m128i*)q);
+          __m128i digits_lower = _mm_sub_epi8(chars, _mm_set1_epi8('0'));
+          __m128i digits_upper = _mm_sub_epi8(chars, _mm_set1_epi8('A'));
+          __m128i digits_lower_valid = _mm_cmplt_epi8(digits_lower, _mm_set1_epi8(10));
+          __m128i digits_upper_valid = _mm_and_si128(
+            _mm_cmplt_epi8(digits_upper, _mm_set1_epi8(6)),
+            _mm_cmpgt_epi8(digits_upper, _mm_set1_epi8(-1))
+          );
+          __m128i digits_lower_adjust = _mm_and_si128(digits_lower, digits_lower_valid);
+          __m128i digits_upper_adjust = _mm_and_si128(
+            _mm_add_epi8(digits_upper, _mm_set1_epi8(10)),
+            digits_upper_valid
+          );
+          __m128i combined = _mm_or_si128(digits_lower_adjust, digits_upper_adjust);
+          int mask_lower = _mm_movemask_epi8(digits_lower_valid);
+          int mask_upper = _mm_movemask_epi8(digits_upper_valid);
+          int mask = mask_lower | mask_upper;
+          if ((mask & 0xF) != 0xF) return 0;
+          u32 u0 = static_cast<u32>(_mm_extract_epi16(combined, 0) & 0xFF);
+          u32 u1 = static_cast<u32>(_mm_extract_epi16(combined, 0) >> 8 & 0xFF);
+          u32 u2 = static_cast<u32>(_mm_extract_epi16(combined, 1) & 0xFF);
+          u32 u3 = static_cast<u32>(_mm_extract_epi16(combined, 1) >> 8 & 0xFF);
+          u32 u = (u0 << 12) | (u1 << 8) | (u2 << 4) | u3;
+          q += 3; // Move past the 4 hex digits
+          // Integrated parse_unicode logic
+          if (0xD7ff < u && u < 0xDC00) {
+            if (e - q < 3) return 0;
+            if (q[1] != '\\' || q[2] != 'u') return 0;
+            q += 3; // Skip "\u"
+            if (q + 4 > e) return 0;
+            // Parse second set of 4 hex digits
+            chars = _mm_loadu_si128((const __m128i*)q);
+            digits_lower = _mm_sub_epi8(chars, _mm_set1_epi8('0'));
+            digits_upper = _mm_sub_epi8(chars, _mm_set1_epi8('A'));
+            digits_lower_valid = _mm_cmplt_epi8(digits_lower, _mm_set1_epi8(10));
+            digits_upper_valid = _mm_and_si128(
+              _mm_cmplt_epi8(digits_upper, _mm_set1_epi8(6)),
+              _mm_cmpgt_epi8(digits_upper, _mm_set1_epi8(-1))
+            );
+            digits_lower_adjust = _mm_and_si128(digits_lower, digits_lower_valid);
+            digits_upper_adjust = _mm_and_si128(
+              _mm_add_epi8(digits_upper, _mm_set1_epi8(10)),
+              digits_upper_valid
+            );
+            combined = _mm_or_si128(digits_lower_adjust, digits_upper_adjust);
+            mask_lower = _mm_movemask_epi8(digits_lower_valid);
+            mask_upper = _mm_movemask_epi8(digits_upper_valid);
+            mask = mask_lower | mask_upper;
+            if ((mask & 0xF) != 0xF) return 0;
+            u0 = static_cast<u32>(_mm_extract_epi16(combined, 0) & 0xFF);
+            u1 = static_cast<u32>(_mm_extract_epi16(combined, 0) >> 8 & 0xFF);
+            u2 = static_cast<u32>(_mm_extract_epi16(combined, 1) & 0xFF);
+            u3 = static_cast<u32>(_mm_extract_epi16(combined, 1) >> 8 & 0xFF);
+            u32 v = (u0 << 12) | (u1 << 8) | (u2 << 4) | u3;
+            q += 3; // Move past the second set of 4 hex digits
+            if (v < 0xDC00 || v > 0xDFFF) return 0;
+            u = 0x10000 + (((u - 0xD800) << 10) | (v - 0xDC00));
+          }
+          // Encode UTF-8
+          if (u < 0x80) {
+            s.append({ static_cast<char>(u) });
+          } else if (u < 0x800) {
+            s.append({ static_cast<char>(0xC0 | (0xFF & (u >> 6))) });
+            s.append({ static_cast<char>(0x80 | (0x3F & u)) });
+          } else if (u < 0x10000) {
+            s.append({ static_cast<char>(0xE0 | (0xFF & (u >> 12))) });
+            s.append({ static_cast<char>(0x80 | (0x3F & (u >> 6))) });
+            s.append({ static_cast<char>(0x80 | (0x3F & u)) });
+          } else {
+            //if (u >= 0x110000) return 0; // Invalid Unicode code point
+            assert(u < 0x110000);
+            s.append({ static_cast<char>(0xF0 | (0xFF & (u >> 18))) });
+            s.append({ static_cast<char>(0x80 | (0x3F & (u >> 12))) });
+            s.append({ static_cast<char>(0x80 | (0x3F & (u >> 6))) });
+            s.append({ static_cast<char>(0x80 | (0x3F & u)) });
+          }
+        } else {
+          s.append({ c });
+        }
+        b = q + 1;
+        p = static_cast<const char*>(memchr(b, '"', e - b));
+        if (p == 0) return 0;
+        q = b;
+        while (q + 16 <= p) {
+          __m128i chars = _mm_loadu_si128((const __m128i*)q);
+          __m128i escapes = _mm_cmpeq_epi8(chars, escape_char);
+          int mask = _mm_movemask_epi8(escapes);
+          if (mask) {
+            q += __builtin_ctzZ(mask);
+            break;
+          }
+          q += 16;
+        }
+        while (q < p && *q != '\\') ++q;
+        s.append(b, q - b);
       }
-      b = q + 1;
-      if (b > p) {
-        p = static_cast<const char*>(memchr(b, '"', e - b)); if (p == 0) return 0;
-      }
-      q = static_cast<const char*>(memchr(b, '\\', p - b));
-      if (q == 0) {
-        s.append(b, p - b); v = make_string(_a, s.data(), s.size());
-        return p;
-      }
-    } while (true);
+    }
+    v = make_string(_a, s.data(), s.size());
+    return p;
   }
   _FORCE_INLINE const char* parse_hex(const char* b, const char* e, u32& u) {
     u32 u0, u1, u2, u3;

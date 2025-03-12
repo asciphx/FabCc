@@ -65,13 +65,13 @@ namespace fc {
     while (n--) r = r * 5 + (*p++ & 0xDF); return r % mod;
   }
   template<typename Z>
-  _FORCE_INLINE const uint64_t fc_HashResize(size_t _) { return static_cast<uint64_t>(_ > 0x200 ? _ + (_ >> 1) : _ << 1); };
+  _FORCE_INLINE const uint64_t fc_HashResize(size_t _) { return static_cast<uint64_t>(_ << 1); };
   template<>
-  _FORCE_INLINE const uint64_t fc_HashResize<uint64_t>(size_t _) { return static_cast<uint64_t>(_ > 0x10000 ? _ + (_ >> 1) : _ << 1); };
+  _FORCE_INLINE const uint64_t fc_HashResize<uint64_t>(size_t _) { return static_cast<uint64_t>(_ > 0x100000 ? _ + (_ >> 1) : _ << 1); };
   template<>
-  _FORCE_INLINE const uint64_t fc_HashResize<uint32_t>(size_t _) { return static_cast<uint64_t>(_ > 0x1000 ? _ + (_ >> 1) : _ << 1); };
+  _FORCE_INLINE const uint64_t fc_HashResize<uint32_t>(size_t _) { return static_cast<uint64_t>(_ > 0x10000 ? _ + (_ >> 1) : _ << 1); };
   template<>
-  _FORCE_INLINE const uint64_t fc_HashResize<uint16_t>(size_t _) { return static_cast<uint64_t>(_ + (_ >> 1)); };
+  _FORCE_INLINE const uint64_t fc_HashResize<uint16_t>(size_t _) { return static_cast<uint64_t>(_ > 0x1000 ? _ + (_ >> 1) : _ << 1); };
   template<typename Z>
   static constexpr const uint64_t fc_HashMax(size_t _) { return static_cast<uint64_t>(static_cast<Z>(-1)) * _; };
   template<>
@@ -79,14 +79,15 @@ namespace fc {
   // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
   template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
+    static int const constexpr size_dummy = sizeof(K) + sizeof(V);
     struct Nod {
-      K key; V value; alignas(sizeof(K) + sizeof(V) <= 32 ? 32 : 64) bool occupied;
+      K key; V value; alignas(sizeof(K) > sizeof(V) ? sizeof(V) : size_dummy <= 32 ? 32 : 64) bool occupied;
       Nod() noexcept: key(), value(), occupied(false) {}
       Nod(const K& k, const V& v) noexcept: key(k), value(v), occupied(true) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}
     };
     E equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
-    static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 16 : sizeof(V) < 4 ? 16 : sizeof(K) < 16 ? 32 : 8;
+    static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 0x20 : sizeof(V) < 8 ? 16 : sizeof(K) < 16 ? 0x20 : 16;
     static V dummy;
     static const constexpr uint64_t MaxSize = fc_HashMax<T>(SUBARRAY_SIZE);
     // Optimization: Reduced exception path overhead by using noexcept and manual cleanup
@@ -163,7 +164,7 @@ namespace fc {
       return false;
     }
   public:
-    HashMap(size_t initialSize = sizeof(T) * sizeof(V) * 8) noexcept
+    HashMap(size_t initialSize = sizeof(T) * sizeof(V) * 16) noexcept
       : totalSize(initialSize > MaxSize ? MaxSize : initialSize), numEntries(0), numSubarrays(totalSize / SUBARRAY_SIZE) {
       table = new Nod[totalSize](); static_assert(std::is_integral<T>::value, "Super pointer must be integral!");
       superPointers = new T[totalSize]();
