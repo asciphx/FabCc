@@ -38,24 +38,7 @@ namespace fc {
     if (n >= 16) {
       __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
       const unsigned char* end = p + (n & ~15);
-      while (p + 32 <= end) {
-        __m128i chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        chunk1 = _mm_and_si128(chunk1, mask_case);
-        __m128i lo1_64 = _mm_unpacklo_epi32(chunk1, zero);
-        __m128i hi1_64 = _mm_unpackhi_epi32(chunk1, zero);
-        __m128i hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
-        __m128i hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
-        chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 16));
-        chunk1 = _mm_and_si128(chunk1, mask_case);
-        lo1_64 = _mm_unpacklo_epi32(chunk1, zero);
-        hi1_64 = _mm_unpackhi_epi32(chunk1, zero);
-        hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
-        hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
-        p += 32;
-      }
-      while (p + 16 <= end) {
+      while (p < end) {
         __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
         chunk = _mm_and_si128(chunk, mask_case);
         __m128i lo_64 = _mm_unpacklo_epi32(chunk, zero);
@@ -114,24 +97,7 @@ namespace fc {
     if (n >= 16) {
       __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r));
       const unsigned char* end = p + (n & ~15);
-      while (p + 32 <= end) {
-        __m128i chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        chunk1 = _mm_and_si128(chunk1, mask_case);
-        __m128i lo1_64 = _mm_unpacklo_epi32(chunk1, zero);
-        __m128i hi1_64 = _mm_unpackhi_epi32(chunk1, zero);
-        __m128i hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
-        __m128i hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
-        chunk1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 16));
-        chunk1 = _mm_and_si128(chunk1, mask_case);
-        lo1_64 = _mm_unpacklo_epi32(chunk1, zero);
-        hi1_64 = _mm_unpackhi_epi32(chunk1, zero);
-        hash_lo1 = _mm_mul_epu32(hash_vec, mul_factor);
-        hash_hi1 = _mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor);
-        hash_vec = _mm_add_epi32(_mm_add_epi32(hash_lo1, lo1_64), _mm_add_epi32(hash_hi1, hi1_64));
-        p += 32;
-      }
-      while (p + 16 <= end) {
+      while (p < end) {
         __m128i chunk = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
         chunk = _mm_and_si128(chunk, mask_case);
         __m128i lo_64 = _mm_unpacklo_epi32(chunk, zero);

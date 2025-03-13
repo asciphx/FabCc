@@ -52,6 +52,16 @@ namespace fc {
   _FORCE_INLINE size_t fc_hash<std::string_view>(const std::string_view& key, size_t mod) noexcept {
     size_t n = key.size(); size_t r = 0;
     unsigned char const* p = reinterpret_cast<unsigned char const*>(key.data());
+    if (n >= 16) {
+      __m128i hash_vec = _mm_set1_epi32(static_cast<int>(r)); const unsigned char* end = p + (n & ~15);
+      while (p < end) {
+        __m128i chunk = _mm_and_si128(_mm_loadu_si128(reinterpret_cast<const __m128i*>(p)), mask_case);
+        hash_vec = _mm_add_epi32(_mm_add_epi32(_mm_mul_epu32(hash_vec, mul_factor), _mm_unpacklo_epi32(chunk, zero)),
+          _mm_add_epi32(_mm_mul_epu32(_mm_srli_si128(hash_vec, 8), mul_factor), _mm_unpackhi_epi32(chunk, zero)));
+        p += 16;
+      }
+      r = _mm_cvtsi128_si32(hash_vec); n &= 15;
+    }
     while (n >= 8) {
       r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
         (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
@@ -79,9 +89,9 @@ namespace fc {
   // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
   template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
-    static int const constexpr size_dummy = sizeof(K) + sizeof(V);
+    static int const constexpr size_dummy = sizeof(K) >= sizeof(V) * 2 ? sizeof(V) : sizeof(K) > sizeof(V) ? sizeof(K) : sizeof(V);
     struct Nod {
-      K key; V value; alignas(sizeof(K) > sizeof(V) ? sizeof(V) : size_dummy <= 32 ? 32 : 64) bool occupied;
+      K key; alignas(size_dummy) V value; alignas(size_dummy) bool occupied;
       Nod() noexcept: key(), value(), occupied(false) {}
       Nod(const K& k, const V& v) noexcept: key(k), value(v), occupied(true) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}

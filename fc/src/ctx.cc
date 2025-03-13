@@ -3,6 +3,15 @@
 #ifdef _WIN32
 #include <MSWSock.h>
 #include <handleapi.h>
+namespace fc {
+  struct _EventRAII {
+    HANDLE hEvent;
+    _EventRAII(): hEvent(CreateEventW(NULL, TRUE, FALSE, NULL)) {
+      if (!hEvent) throw std::runtime_error("Failed to create event");
+    }
+    ~_EventRAII() { if (hEvent) CloseHandle(hEvent); }
+  };
+}
 #endif
 namespace fc {
   void Ctx::respond(size_t s, str_map& map) {
@@ -55,17 +64,17 @@ namespace fc {
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
     co_await __->read_chunk([this, size, &p](_Fhandle fd)_ctx{
 #ifdef _WIN32
-      OVERLAPPED ov { 0 }; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF);
-      ov.OffsetHigh = static_cast<DWORD>(p >> 32); ov.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+      OVERLAPPED ov { 0 }; _EventRAII event; ov.hEvent = event.hEvent; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF);
+      ov.OffsetHigh = static_cast<DWORD>(p >> 32);
       if (!ov.hEvent) throw err::internal_server_error("Failed."); ret = static_cast<int>(ot.size());
       if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
         p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
         if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
       } else {
         if (GetLastError() != ERROR_IO_PENDING) {
-          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
+          nwritten = 0; throw err::not_found();
         }
-        WaitForSingleObject(ov.hEvent, 1000); //INFINITE
+        WaitForSingleObject(ov.hEvent, 3000); //INFINITE
         if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
           p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
           if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
@@ -79,17 +88,17 @@ namespace fc {
           }
         } else {
           if (GetLastError() == ERROR_IO_PENDING) {
-            WaitForSingleObject(ov.hEvent, 1000);
+            WaitForSingleObject(ov.hEvent, INFINITE);
             if (GetOverlappedResult(fd, &ov, &nwritten, FALSE)) {
               if (co_await this->fiber.write(ot.buffer_, nwritten)) {
                 p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
               }
             }
           }
-          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
+          nwritten = 0; throw err::not_found();
         }
         break;
-      } while (ov.Offset < size); if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0;
+      } while (ov.Offset < size); nwritten = 0;
 #else
 #if _OPENSSL
       off_t ov = ot.size(); lseek(fd, p, SEEK_SET);
@@ -134,7 +143,7 @@ namespace fc {
 #endif
     if (__.use_count() == 1) const_cast<std::shared_ptr<fc::file_sptr>&>(__) = std::make_shared<file_sptr>();
     content_length_ = 0; time(&fiber.rpg->hrt); co_return;
-  }
+        }
   // Send a file.
   _CTX_TASK(void) Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, bool is_download) {
     content_length_ = static_cast<long long>(__->size_);
@@ -180,14 +189,14 @@ namespace fc {
       } while (ov < content_length_);
 #else // Windows impl with basic read write.
       // if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
-      OVERLAPPED ov { 0 }; ret = static_cast<int>(ot.size()); long long p{ 0 };
-      ov.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL); if (!ov.hEvent) throw err::internal_server_error("Failed.");
+      OVERLAPPED ov { 0 }; _EventRAII event; ov.hEvent = event.hEvent; ret = static_cast<int>(ot.size()); long long p{ 0 };
+      if (!ov.hEvent) throw err::internal_server_error("Failed.");
       if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
         p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
         if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
       } else {
         if (GetLastError() != ERROR_IO_PENDING) {
-          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
+          nwritten = 0; throw err::not_found();
         }
         WaitForSingleObject(ov.hEvent, 1000); //INFINITE
         if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
@@ -212,10 +221,10 @@ namespace fc {
               }
             }
           }
-          if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0; throw err::not_found();
+          nwritten = 0; throw err::not_found();
         }
         break;
-      } while (ov.Offset < content_length_); if (ov.hEvent) CloseHandle(ov.hEvent); nwritten = 0;
+      } while (ov.Offset < content_length_); nwritten = 0;
 #endif
       co_return;
     });

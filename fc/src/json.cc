@@ -1,5 +1,6 @@
 #include "json.hh"
 #include <algorithm>
+#include <limits.h>
 #ifdef _MSC_VER
 #include <intrin.h>
 static _FORCE_INLINE int __builtin_ctzZ(unsigned long _) {
@@ -131,6 +132,23 @@ namespace json {
   }
   _FORCE_INLINE bool is_white_space(const char c) { return (c == ' ' || c == '\n' || c == '\r' || c == '\t'); }
   //while (++b < e && is_white_space(*b));
+  static _FORCE_INLINE const char* skip_white(const char* b, const char* e) {
+    while (e - b >= 16) {
+      __m128i chars = _mm_loadu_si128(reinterpret_cast<const __m128i*>(b));
+      __m128i spaces = _mm_or_si128(_mm_cmpeq_epi8(chars, _mm_set1_epi8(' ')),
+        _mm_cmpeq_epi8(chars, _mm_set1_epi8('\n')));
+      spaces = _mm_or_si128(spaces, _mm_cmpeq_epi8(chars, _mm_set1_epi8('\r')));
+      spaces = _mm_or_si128(spaces, _mm_cmpeq_epi8(chars, _mm_set1_epi8('\t')));
+      int mask = _mm_movemask_epi8(spaces);
+      if (mask != 0xFFFF) {
+        b += __builtin_ctzZ(~mask);
+        return b;
+      }
+      b += 16;
+    }
+    while (b < e && is_white_space(*b)) ++b;
+    return b;
+  };
 #define skip_white_space(b, e) \
     if (is_white_space(*++b)) { \
         for (++b;;) { \
@@ -159,6 +177,11 @@ namespace json {
             } \
         } \
     }
+#if 1
+#define skip_white_ b = skip_white(++b, e);
+#else
+#define skip_white_ skip_white_space(b, e)
+#endif
   // This is a non-recursive implement of json parser.
   // stack: |prev size|prev state|val|....
   bool Parser::parse(const char* b, const char* e, void*& val) {
@@ -179,7 +202,7 @@ namespace json {
     size = s.size(); // current size
     state = '{';
   obj_val_beg:
-    skip_white_space(b, e); if (b == e) goto err; if (*b == '}') goto val_end; if (*b++ != '"') goto err;
+    skip_white_; if (b == e) goto err; if (*b == '}') goto val_end; if (*b++ != '"') goto err;
     p = static_cast<const char*>(memchr(b, '"', e - b)); $: l += p - b - l;
     if (b[l - 1] == '\\') { ++l; p = static_cast<const char*>(memchr(b + l, '"', e - b - l)); goto $; }
     if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key);// b = parse_key(b, e, key); if (b == 0) goto err;
@@ -192,7 +215,7 @@ namespace json {
     }
     if (b == 0) goto err; s.push_back(val);
   obj_val_end:
-    skip_white_space(b, e);
+    skip_white_;
     if (b == e) goto err;
     if (*b == ',') goto obj_val_beg;
     if (*b == '}') goto val_end;
@@ -204,7 +227,7 @@ namespace json {
     size = s.size(); // current size
     state = '[';
   arr_val_beg:
-    skip_white_space(b, e);
+    skip_white_;
     if (b == e) goto err; if (*b == ']') goto val_end;
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
@@ -213,7 +236,7 @@ namespace json {
     }
     if (b == 0) goto err; s.push_back(val);
   arr_val_end:
-    skip_white_space(b, e); //if (b == e) goto err;
+    skip_white_; //if (b == e) goto err;
     if (*b == ',') goto arr_val_beg; if (*b == ']') goto val_end; goto err;
   val_end:
     if (s.size() > size) {
@@ -475,7 +498,7 @@ namespace json {
   obj_txt:
     switch (*b) {
     case '/': ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; break; } } while (b < e && is_white_space(*b)) ++b; goto obj_txt; }
-            if (*b == 0x2A) { while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) { skip_white_space(b, e); goto obj_txt; } } } } break;
+            if (*b == 0x2A) { while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) { skip_white_; goto obj_txt; } } } } break;
     case '{': goto obj_beg; case '[': goto arr_beg; case '"': b = parse_string(++b, e, val); break;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
     case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
@@ -484,7 +507,7 @@ namespace json {
   obj_beg:
     u.push_back(psize); u.push_back(pstate); s.push_back(make_object(_a)); size = s.size(); state = '{';
   obj_val_beg:
-    skip_white_space(b, e); if (b == e) goto err; if (*b == '}') goto val_end;
+    skip_white_; if (b == e) goto err; if (*b == '}') goto val_end;
     if (*b == '/') {
       ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; goto obj_val_beg; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_beg; } } goto err;
@@ -501,7 +524,7 @@ namespace json {
     }
     if (b == 0) goto err; s.push_back(val);
   obj_val_end:
-    skip_white_space(b, e); if (b == e) goto err; m = *b; if (m == ',') goto obj_val_beg; if (m == '}' || m == ']') goto val_end;
+    skip_white_; if (b == e) goto err; m = *b; if (m == ',') goto obj_val_beg; if (m == '}' || m == ']') goto val_end;
     if (*b == '/') {
       ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } }
@@ -515,7 +538,7 @@ namespace json {
     size = s.size(); // current size
     state = '[';
   arr_val_beg:
-    skip_white_space(b, e); if (b == e) goto err; if (*b == ']') goto val_end;
+    skip_white_; if (b == e) goto err; if (*b == ']') goto val_end;
     if (*b == '/') {
       ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; goto arr_val_beg; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto arr_val_beg; } } goto err;
@@ -528,7 +551,7 @@ namespace json {
     }
     if (b == 0) goto err; s.push_back(val);
   arr_val_end:
-    skip_white_space(b, e); m = *b; if (m == ',') goto arr_val_beg; if (m == ']') goto val_end;
+    skip_white_; m = *b; if (m == ',') goto arr_val_beg; if (m == ']') goto val_end;
     if (*b == '/') {
       ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } }
