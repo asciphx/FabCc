@@ -131,26 +131,9 @@ namespace json {
     if (e - b >= 4 && b[1] == 'u' && b[2] == 'l' && b[3] == 'l') { v = 0; return b + 3; } return 0;
   }
   _FORCE_INLINE bool is_white_space(const char c) { return (c == ' ' || c == '\n' || c == '\r' || c == '\t'); }
-  //while (++b < e && is_white_space(*b));
-  static _FORCE_INLINE const char* skip_white(const char* b, const char* e) {
-    while (e - b >= 16) {
-      __m128i chars = _mm_loadu_si128(reinterpret_cast<const __m128i*>(b));
-      __m128i spaces = _mm_or_si128(_mm_cmpeq_epi8(chars, _mm_set1_epi8(' ')),
-        _mm_cmpeq_epi8(chars, _mm_set1_epi8('\n')));
-      spaces = _mm_or_si128(spaces, _mm_cmpeq_epi8(chars, _mm_set1_epi8('\r')));
-      spaces = _mm_or_si128(spaces, _mm_cmpeq_epi8(chars, _mm_set1_epi8('\t')));
-      int mask = _mm_movemask_epi8(spaces);
-      if (mask != 0xFFFF) {
-        b += __builtin_ctzZ(~mask);
-        return b;
-      }
-      b += 16;
-    }
-    while (b < e && is_white_space(*b)) ++b;
-    return b;
-  };
+  //while (b < e && is_white_space(*b));
 #define skip_white_space(b, e) \
-    if (is_white_space(*++b)) { \
+    if (is_white_space(*b)) { \
         for (++b;;) { \
             if (b + 8 <= e) { \
                 if (!is_white_space(b[0])) break; \
@@ -177,10 +160,27 @@ namespace json {
             } \
         } \
     }
+  static _FORCE_INLINE const char* skip_white(const char* b, const char* e) {
+    while (e - b >= 16) {
+      __m128i chars = _mm_loadu_si128(reinterpret_cast<const __m128i*>(b));
+      __m128i spaces = _mm_or_si128(_mm_cmpeq_epi8(chars, _mm_set1_epi8(' ')),
+        _mm_cmpeq_epi8(chars, _mm_set1_epi8('\n')));
+      spaces = _mm_or_si128(spaces, _mm_cmpeq_epi8(chars, _mm_set1_epi8('\r')));
+      spaces = _mm_or_si128(spaces, _mm_cmpeq_epi8(chars, _mm_set1_epi8('\t')));
+      int mask = _mm_movemask_epi8(spaces);
+      if (mask != 0xFFFF) {
+        b += __builtin_ctzZ(~mask);
+        return b;
+      }
+      b += 16;
+    }
+    skip_white_space(b, e);
+    return b;
+  };
 #if 1
 #define skip_white_ b = skip_white(++b, e);
 #else
-#define skip_white_ skip_white_space(b, e)
+#define skip_white_ ++b; skip_white_space(b, e)
 #endif
   // This is a non-recursive implement of json parser.
   // stack: |prev size|prev state|val|....
@@ -188,7 +188,7 @@ namespace json {
     //u32 state; u32 size;
     union { u32 state; void* pstate; }; union { u32 size;  void* psize; }; void* key; const char* p; size_t l = 0;
     xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0;
-    while (b < e && is_white_space(*b)) ++b; if (_unlikely(b == e)) return false;
+    skip_white_space(b, e); if (_unlikely(b == e)) return false;
     switch (*b) {
     case '{': goto obj_beg; case '[': goto arr_beg; case '"': b = parse_string(++b, e, val); break;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
@@ -206,8 +206,8 @@ namespace json {
     p = static_cast<const char*>(memchr(b, '"', e - b)); $: l += p - b - l;
     if (b[l - 1] == '\\') { ++l; p = static_cast<const char*>(memchr(b + l, '"', e - b - l)); goto $; }
     if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key);// b = parse_key(b, e, key); if (b == 0) goto err;
-    while (++b < e && is_white_space(*b)) {}; if (b == e || *b != ':') goto err;
-    while (++b < e && is_white_space(*b)) {}; if (b == e) goto err;
+    skip_white_; if (b == e || *b != ':') goto err;
+    skip_white_; if (b == e) goto err;
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
@@ -245,8 +245,8 @@ namespace json {
     pstate = u.pop_back(); // prev state
     if (state == '{') { psize = u.pop_back(); goto obj_val_end; } if (state == '[') { psize = u.pop_back(); goto arr_val_end; }
     u.pop_back(); val = s.pop_back();
-  end:
-    assert(s.size() == 0); while (++b < e && is_white_space(*b)) {}; return b == e;
+  end://
+    assert(s.size() == 0); skip_white_; return b == e;
   err:
     while (s.size() > 0) {
       if (s.size() > size) {
@@ -494,10 +494,10 @@ namespace json {
   }
   bool Parser::parse_comments(const char* b, const char* e, void*& val) {
     union { u32 state; void* pstate; }; union { u32 size;  void* psize; }; void* key; const char* p; size_t l = 0; char m;
-    xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0; while (b < e && is_white_space(*b)) ++b; if (b == e) return false;
+    xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0; skip_white_space(b, e); if (b == e) return false;
   obj_txt:
     switch (*b) {
-    case '/': ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; break; } } while (b < e && is_white_space(*b)) ++b; goto obj_txt; }
+    case '/': ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; break; } } skip_white_space(b, e); goto obj_txt; }
             if (*b == 0x2A) { while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) { skip_white_; goto obj_txt; } } } } break;
     case '{': goto obj_beg; case '[': goto arr_beg; case '"': b = parse_string(++b, e, val); break;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
@@ -515,8 +515,8 @@ namespace json {
     }
     if (*b++ != '"') goto err; p = static_cast<const char*>(memchr(b, '"', e - b)); $: l += p - b - l;
     if (b[l - 1] == '\\') { ++l; p = static_cast<const char*>(memchr(b + l, '"', e - b - l)); goto $; }
-    if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key); while (++b < e && is_white_space(*b));
-    if (b == e || *b != ':') goto err; while (++b < e && is_white_space(*b)) {}; if (b == e) goto err;
+    if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key); skip_white_;
+    if (b == e || *b != ':') goto err; skip_white_; if (b == e) goto err;
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
@@ -565,7 +565,7 @@ namespace json {
     pstate = u.pop_back();
     if (state == '{') { psize = u.pop_back(); goto obj_val_end; } if (state == '[') { psize = u.pop_back(); goto arr_val_end; }
     u.pop_back(); val = s.pop_back();
-  end:while (++b < e && is_white_space(*b)); return b == e;
+  end:skip_white_; return b == e;
   err:
     while (s.size() > 0) {
       if (s.size() > size) {
