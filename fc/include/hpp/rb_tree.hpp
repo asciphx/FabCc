@@ -23,7 +23,7 @@ namespace fc {
       Nod* left;
       Nod* right;
       Nod* parent;
-      bool b;
+      alignas(_PTR_LEN) bool b;
       Nod(const K& k, const V& v) noexcept: key(k), value(v), b(false),
         left(NULL), right(NULL), parent(NULL) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), b(false),

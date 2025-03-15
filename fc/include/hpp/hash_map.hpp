@@ -369,13 +369,5 @@ namespace fc {
   using sv_hash_map = HashMap<std::string_view, std::string_view, T, sv_key_eq>;
   template<typename T = uint16_t>
   using str_hash_map = HashMap<std::string, std::string, T, str_key_eq, 80>;
-  // template<typename T = uint8_t>
-  // struct sv_hash_map: fc::HashMap<std::string_view, std::string_view, T, sv_key_eq> {
-  //   sv_hash_map(int i = 16) noexcept: HashMap<std::string_view, std::string_view, T, sv_key_eq>(i) {}
-  // };
-  // template<typename T = uint16_t>
-  // struct str_hash_map: fc::HashMap<std::string, std::string, T, str_key_eq, 80> {
-  //   str_hash_map(int i = 1024) noexcept: HashMap<std::string, std::string, T, str_key_eq, 80>(i) {}
-  // };
 }
 #endif
