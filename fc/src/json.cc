@@ -453,43 +453,19 @@ namespace json {
     const char* p = b; char c;
     if (_unlikely(*b == '-')) {
       ++p; i64 u = '0' - *p; if (u > 0 || u < -9) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }
-      if (*p == '.') {
-        if (++p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; };
-        if (p == e) { c = static_cast<char>(p - b); goto $; }
-        if (*p == 'e' || *p == 'E') {
-          if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
-          while (++p < e) { c = *p; if (0X2f < c && c < 0X3a)continue; break; };
-        } c = static_cast<char>(p - b); goto $;
-      }
-      if (*p == 'e' || *p == 'E') {
-        if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
-        while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }; c = static_cast<char>(p - b); goto $;
-      }
-      c = static_cast<char>(p - ++b); if (c > 19) goto $;// { double d; if (str2double(b, d)) { v = new(_a.alloc()) Json::_H(d); return p - 1; } return 0; }
+      if (*p == '.' || *p == 'e' || *p == 'E') goto $; c = static_cast<char>(p - ++b); if (c > 19) goto $;
       if (c == 19) { if (memcmp(b, "9223372036854775808", 20) > 0) goto $; }
       while (++b < p) { u = u * 10 + '0' - *b; } v = new(_a.alloc()) Json::_H(u); return --p;
     } else {
       u64 u = *p - '0'; if (u > 9) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }
-      if (*p == '.') {
-        if (++p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; };
-        if (p == e) { c = static_cast<char>(p - b); goto $; }
-        if (*p == 'e' || *p == 'E') {
-          if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
-          while (++p < e) { c = *p; if (0X2f < c && c < 0X3a)continue; break; };
-        } c = static_cast<char>(p - b); goto $;
-      }
-      if (*p == 'e' || *p == 'E') {
-        if (++p == e) return 0; if (*p == '-' || *p == '+') ++p; if (p == e) return 0; c = *p; if (0X30 > c && c > 0X39) return 0;
-        while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }; c = static_cast<char>(p - b); goto $;
-      }
-      c = static_cast<char>(p - b); if (c > 20) goto $;
+      if (*p == '.' || *p == 'e' || *p == 'E') goto $; c = static_cast<char>(p - b); if (c > 20) goto $;
       if (c == 20) { if (memcmp(b, "18446744073709551615", 20) > 0) goto $; } while (++b < p) { u = u * 10 + *b - '0'; }
       v = u > INT64_MAX ? new(_a.alloc()) Json::_H(u) : new(_a.alloc()) Json::_H(static_cast<i64>(u)); return --p;
     }
-  $:
+  $:// { double d; if (str2double(b, d)) { v = new(_a.alloc()) Json::_H(d); return p - 1; } return 0; }
     {
-      char* s = static_cast<char*>(malloc(c + 1)); memcpy(s, b, c); e = 0; s[c] = 0; double _ = ::strtod(s, const_cast<char**>(&e));
-      if (*e == 0 || *s == 0) { free(s); v = new(_a.alloc()) Json::_H(_); return p - 1; } free(s);
+      errno = 0; double _ = strtod(b, const_cast<char**>(&e)); if (errno != ERANGE) { v = new(_a.alloc()) Json::_H(_); return --e; }
+      if (_ != HUGE_VAL && _ != -HUGE_VAL) { v = new(_a.alloc()) Json::_H(_); return --e; }
     }
     return 0;
   }

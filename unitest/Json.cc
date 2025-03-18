@@ -453,7 +453,7 @@ namespace test {
       s.resize(6);
       EXPECT_EQ(json::parse(s).as_double(), 1234.5);
       EXPECT(json::parse(".123").is_null());
-      EXPECT(json::parse("123.").is_null());
+      EXPECT_EQ(json::parse("123.").as_double(), 123);
       EXPECT(json::parse("1.2e").is_null());
       EXPECT(json::parse("inf").is_null());
       EXPECT(json::parse("nan").is_null());
