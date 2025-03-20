@@ -122,13 +122,13 @@ namespace json {
     if (b[l - 1] == '\\') { ++l; p = static_cast<const char*>(memchr(b + l, '"', e - b - l)); goto $; } if (p)key = make_key(_a, b, l); return p;
   }
   _FORCE_INLINE const char* Parser::parse_false(const char* b, const char* e, void*& v) {
-    if (e - b >= 5 && b[1] == 'a' && b[2] == 'l' && b[3] == 's' && b[4] == 'e') { v = new(_a.alloc()) Json::_H(false); return b + 4; } return 0;
+    if (e - b < 5) return 0; if (memcmp(++b, "alse", 4) == 0) { v = new(_a.alloc()) Json::_H(false); return b + 3; } return 0;
   }
   _FORCE_INLINE const char* Parser::parse_true(const char* b, const char* e, void*& v) {
-    if (e - b >= 4 && b[1] == 'r' && b[2] == 'u' && b[3] == 'e') { v = new(_a.alloc()) Json::_H(true); return b + 3; } return 0;
+    if (e - b < 4) return 0; if (memcmp(++b, "rue", 3) == 0) { v = new(_a.alloc()) Json::_H(true); return b + 2; } return 0;
   }
   _FORCE_INLINE const char* Parser::parse_null(const char* b, const char* e, void*& v) {
-    if (e - b >= 4 && b[1] == 'u' && b[2] == 'l' && b[3] == 'l') { v = 0; return b + 3; } return 0;
+    if (e - b < 4) return 0; if (memcmp(++b, "ull", 3) == 0) { v = 0; return b + 2; } return 0;
   }
   _FORCE_INLINE bool is_white_space(const char c) { return (c == ' ' || c == '\n' || c == '\r' || c == '\t'); }
   //while (b < e && is_white_space(*b));

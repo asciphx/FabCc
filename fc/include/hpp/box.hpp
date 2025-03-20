@@ -57,7 +57,7 @@ public:
   explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}
   explicit box(const box<T>& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; }
   explicit box(T* _) noexcept: p(_), b(true) {}
-  template<typename... X> box(X&&... _) noexcept(std::is_nothrow_constructible<T, X...>::value): p(new T{ std::forward<X>(_)... }), b(true) {
+  template<typename... X> box(X&&... _) : p(new T{ std::forward<X>(_)... }), b(true) {
     static_assert(std::is_constructible<T, X...>::value, "T must be constructible with X...");
   }
   ~box() noexcept { if (this->b) { delete this->p; this->p = null; } }
@@ -81,10 +81,10 @@ public:
   _FORCE_INLINE void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
-  const T* operator->() const { if (p)return p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
-  T* operator->() { if (this->p)return this->p; throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); }
-  _FORCE_INLINE T& operator*() & { if (!this->p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *this->p; }
-  _FORCE_INLINE const T& operator*() const& { if (!p) throw std::range_error(std::string(typeid(T).name()).append(" is null!", 9)); return *p; }
+  const T* operator->() const { if (p)return p; throw std::logic_error(std::string(typeid(T).name()).append(" is null!", 9)); }
+  T* operator->() { if (this->p)return this->p; throw std::logic_error(std::string(typeid(T).name()).append(" is null!", 9)); }
+  _FORCE_INLINE T& operator*() & { if (!this->p) throw std::logic_error("box: null pointer dereference"); return *this->p; }
+  _FORCE_INLINE const T& operator*() const& { if (!p) throw std::logic_error("box: null pointer dereference"); return *p; }
   T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }
   _FORCE_INLINE void reset() noexcept { if (this->p) { delete this->p; } this->b = false; }
 };
