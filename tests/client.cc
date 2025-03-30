@@ -3,7 +3,7 @@
 //#include <sys/types.h>
 #include <thread>
 #include <hh/client.hh>
-int main() {
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
   SetConsoleOutputCP(65001); setlocale(LC_CTYPE, ".UTF8"); WSADATA w; int l = WSAStartup(MAKEWORD(2, 2), &w);
   if (l != 0) { printf("WSAStartup failed with error: %d\n", l); return 1; }
@@ -13,10 +13,12 @@ int main() {
 #else
   fc::client c("127.0.0.1", 8080);
 #endif
-  std::string s = c.get("/");
+  std::string url("/", 1);
+  url += argc < 2 ? std::string("", 0) : argv[1];
+  std::string& s = c.get(url);
   for (auto& m : c.headers) {
-    std::cout << m.first << ':' << m.second << ',' << '\n';
+    std::cout << m.first << ':' << m.second << '\n';
   }
-  std::cout << s << '\n';
+  std::cout << s << '@';
   return 0;
 }

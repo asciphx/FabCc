@@ -157,7 +157,7 @@ namespace fc {
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 // #endif
-                ROG* fib = new ROG{ socket_fd }; fib->_.box = std::unique_ptr<fc::ROG>(fib);// Dark magic
+                ROG* fib; fib->_.box = std::unique_ptr<fc::ROG>(fib = new ROG{ socket_fd });// Dark magic
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
