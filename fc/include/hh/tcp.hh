@@ -128,7 +128,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              loop_timer.cancel(ro->t_id); ro->hrt = 0; fc::Task<ROG> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
+              loop_timer.cancel(ro->t_id); fc::Task<ROG> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
@@ -157,7 +157,7 @@ namespace fc {
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 // #endif
-                ROG* fib; fib->_.box = std::unique_ptr<fc::ROG>(fib = new ROG{ socket_fd });// Dark magic
+                ROG* fib; fib->_.box = std::unique_ptr<fc::ROG>(fib = new ROG{ socket_fd, RES_TIME_T });// Dark magic
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32
@@ -167,7 +167,7 @@ namespace fc {
 #endif
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
 #if __cplusplus < _cpp20_date
-                fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_.operator()(); } });
+                fib->t_id = this->loop_timer.add_s(5, [fib] { if (fib->_) { fib->_.operator()(); } });
                 fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
                   fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
                   try {
@@ -186,7 +186,7 @@ namespace fc {
                   return std::move(fib->_);
                   });
 #else
-                fib->t_id = this->loop_timer.add_s(k_a - 2, [fib] { if (fib->_) { fib->_(); } });
+                fib->t_id = this->loop_timer.add_s(5, [fib] { if (fib->_) { fib->_(); } });
                 fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
 #endif
               } while (1);
@@ -206,7 +206,7 @@ namespace fc {
   static void start_server(std::thread& date_thread, socket_type sfd, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = k_a[0] + k_a[1] * k_a[2]; if (k_A < 4)k_A = 4;
-    RESmaxEVENTS = n > 32 ? n + 32 : n > 7 ? (n << 1) - (n >> 1) : (((n + 1) * (n + 1)) >> 1) + 0x16;
+    RESmaxEVENTS = n > 32 ? n + 32 : n > 7 ? (n << 1) - (n >> 1) : (((n + 1) * (n + 1)) >> 1) + 0x16; if (k_A % 2 == 0)k_A += 1;
     for (int i = 0; i < n; ++i) {
       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {
         Reactor reactor;

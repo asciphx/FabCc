@@ -465,7 +465,7 @@ namespace json {
   $:// { double d; if (str2double(b, d)) { v = new(_a.alloc()) Json::_H(d); return p - 1; } return 0; }
     {
       c = errno; double _ = strtod(b, const_cast<char**>(&e));
-      if (errno != ERANGE) { v = new(_a.alloc()) Json::_H(_); errno = c; return --e; } errno = c;
+      if (errno != ERANGE) { v = new(_a.alloc()) Json::_H(_); return --e; } errno = c;
       if (_ != HUGE_VAL && _ != -HUGE_VAL) { v = new(_a.alloc()) Json::_H(_); return --e; }
     }
     return 0;

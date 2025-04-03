@@ -194,12 +194,12 @@ namespace fc {
               ctx->format_top_headers(); ctx->ot.append("Cache-Control: max-age=604800,immutable\r\n", 41);
               p = file_cache_.find(_);
               if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr); _CTX_return
+                std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr);
               } else {
-                co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime)); _CTX_return
+                co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime));
               }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(1, [fib] { if (fib->_)fib->_.operator()(); });
+            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(req.fiber.k_a + 2, [fib] { if (fib->_)fib->_.operator()(); });
             _CTX_return
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
@@ -246,11 +246,11 @@ namespace fc {
   fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd), re->hrt = 0; _CTX_return }
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd); _CTX_return }
 #endif
 #endif
-    cc::query_string up; std::string_view ru; char* rb = new char[static_cast<App*>(ap)->rbNum], * wb = new char[static_cast<App*>(ap)->wbNum];
-    std::unique_ptr<char[]> ur(rb); std::unique_ptr<char[]> uw(wb); fc::sv_map hd; std::string url; Ctx ctx(f, wb, static_cast<App*>(ap)->wbNum);
+    fc::sv_map hd; std::string_view ru; std::string url; char* rb, * wb; std::unique_ptr<char[]> ur(rb = new char[static_cast<App*>(ap)->rbNum]);
+    std::unique_ptr<char[]> uw(wb = new char[static_cast<App*>(ap)->wbNum]); cc::query_string up; Ctx ctx(f, wb, static_cast<App*>(ap)->wbNum);
 #if _LLHTTP
     llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r, last_len, pret;
 #else
@@ -327,7 +327,7 @@ namespace fc {
         }
         ctx.prepare_next_request(); end = 0; hd.clear(); up.clear();
         co_await ctx.ot.flush(std::move(*res_body)); time(&f.rpg->hrt);
-        ROG* fib = f.rpg; f.rpg->t_id = f.timer.add_s(f.k_a - 1, [fib] { if (fib->_) { fib->_.operator()(); } });
+        ROG* fib = f.rpg; f.rpg->t_id = f.timer.add_s(f.k_a + 2, [fib] { if (fib->_) { fib->_.operator()(); } });
         continue;
       }
       try {

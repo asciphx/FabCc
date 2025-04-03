@@ -1,5 +1,5 @@
 #include "hh/conn.hh"
-namespace fc {//If it exceeds 6(k_a) seconds by default, the established connection will be closed but writing has not yet started
+namespace fc {//If it exceeds 5 seconds by frist request, the established connection will be closed but writing has not yet started
   _CTX_TASK(int) Conn::read(char* buf, int max_size) {
     int count = read_impl(buf, max_size); int64_t t = 0;
     while (count < 0) {
@@ -21,7 +21,6 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #endif
           _CTX_back(0)
         }
-        timer.cancel(rpg->t_id); ROG* fib = rpg; rpg->t_id = timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
       }
       count = read_impl(buf, max_size);
     }
@@ -42,6 +41,25 @@ namespace fc {//If it exceeds 6(k_a) seconds by default, the established connect
 #endif
       if ((count = write_impl(buf, size)) > 0) { buf += count, size -= count; }
     } time(&rpg->hrt);
+    timer.cancel(rpg->t_id); ROG* fib = rpg; rpg->t_id = timer.add_s(k_a + 2, [fib] { if (fib->_) { fib->_.operator()(); } });
+    _CTX_back(is_idle = true)
+  };
+  //It is also possible to add flow control to limit the transmission speed
+  _CTX_TASK(bool) Conn::send(const char* buf, int size) {
+    is_idle = false; int count = write_impl(buf, size); if (count > 0) buf += count, size -= count;
+    while (size != 0) {
+#ifndef _WIN32
+      if (count == 0 || count < 0 && errno != EAGAIN) { _CTX_back(false) }
+#else
+      if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { _CTX_back(false) }
+#endif // !_WIN32
+#if __cplusplus < _cpp20_date
+      rpg->_.operator()();
+#else
+      co_await std::suspend_always{};
+#endif
+      if ((count = write_impl(buf, size)) > 0) { buf += count, size -= count; }
+    }
     _CTX_back(is_idle = true)
   };
   int Conn::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }

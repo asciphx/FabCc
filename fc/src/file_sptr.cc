@@ -27,7 +27,7 @@ namespace fc {
     int path_len = ::MultiByteToWideChar(CP_UTF8, 0, psz, -1, NULL, 0);
     WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, psz, -1, pwsz, path_len);
     fd_ = ::CreateFileW(pwsz, FILE_GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
-      OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, NULL); delete[] pwsz; pwsz = nullptr;
+      OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_RANDOM_ACCESS, NULL); delete[] pwsz; pwsz = nullptr;
     if (fd_ != INVALID_HANDLE_VALUE) {
       if (length == 0) {
         LARGE_INTEGER fileSize; ::GetFileSizeEx(fd_, &fileSize); size_ = fileSize.QuadPart;

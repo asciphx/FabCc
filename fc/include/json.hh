@@ -468,7 +468,7 @@ namespace json {
     struct stat t; if (-1 == stat(p, &t)) throw std::runtime_error("File not exist.");
     if (t.st_size > 10485760) throw std::runtime_error("Can't be greater than 10M.");
     std::ifstream f(p, std::ios::in | std::ios::binary); if (!f.is_open() || f.fail()) throw std::runtime_error("Failed to open!");
-    char* s = new char[t.st_size]; f.read(s, t.st_size); Json r; r.parse(s, t.st_size); delete[] s; return r;
+    char* s; std::unique_ptr<char[]> us(s = new char[t.st_size]); f.read(s, t.st_size); Json r; r.parse(s, t.st_size); return r;
   }
   static const json::Json empty_str("", 1), nullContext;
 } // json

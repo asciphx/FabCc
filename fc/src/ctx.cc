@@ -69,7 +69,7 @@ namespace fc {
       if (!ov.hEvent) throw err::internal_server_error("Failed."); ret = static_cast<int>(ot.size());
       if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
         p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
-        if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+        if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
       } else {
         if (GetLastError() != ERROR_IO_PENDING) {
           nwritten = 0; throw err::not_found();
@@ -77,20 +77,20 @@ namespace fc {
         WaitForSingleObject(ov.hEvent, 3000); //INFINITE
         if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
           p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
-          if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+          if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
         }
       }
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
-          if (co_await this->fiber.write(ot.buffer_, nwritten)) {
+          if (co_await this->fiber.send(ot.buffer_, nwritten)) {
             p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
           }
         } else {
           if (GetLastError() == ERROR_IO_PENDING) {
             WaitForSingleObject(ov.hEvent, INFINITE);
             if (GetOverlappedResult(fd, &ov, &nwritten, FALSE)) {
-              if (co_await this->fiber.write(ot.buffer_, nwritten)) {
+              if (co_await this->fiber.send(ot.buffer_, nwritten)) {
                 p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
               }
             }
@@ -103,11 +103,11 @@ namespace fc {
 #if _OPENSSL
       off_t ov = ot.size(); lseek(fd, p, SEEK_SET);
       if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) co_return;
-      if (!co_await this->fiber.write(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
+      if (!co_await this->fiber.send(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
       ov = p + ret;
       do {
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
-        if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
+        if (co_await this->fiber.send(ot.buffer_, ret)) { ov += ret; continue; }
         if (errno == EPIPE) break; throw err::not_found();
 #else
       co_await ot.flush(); off_t ov = p; lseek(fd, p, SEEK_SET);
@@ -157,11 +157,11 @@ namespace fc {
       // if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
 #if _OPENSSL
       off_t ov = ot.size(); if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) co_return;
-      if (!co_await this->fiber.write(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
+      if (!co_await this->fiber.send(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
       ov = ret;
       do {
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
-        if (co_await this->fiber.write(ot.buffer_, ret)) { ov += ret; continue; }
+        if (co_await this->fiber.send(ot.buffer_, ret)) { ov += ret; continue; }
         if (errno == EPIPE) break; throw err::not_found();
 #else
       co_await ot.flush(); off_t ov = 0;
@@ -193,7 +193,7 @@ namespace fc {
       if (!ov.hEvent) throw err::internal_server_error("Failed.");
       if (ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
         p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
-        if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+        if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
       } else {
         if (GetLastError() != ERROR_IO_PENDING) {
           nwritten = 0; throw err::not_found();
@@ -201,13 +201,13 @@ namespace fc {
         WaitForSingleObject(ov.hEvent, 1000); //INFINITE
         if (GetOverlappedResult(fd, &ov, &nwritten, TRUE)) {
           p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
-          if (!co_await this->fiber.write(ot.buffer_, ret + nwritten)) co_return;
+          if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
         }
       }
       do {
         nwritten = 0;
         if (ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
-          if (co_await this->fiber.write(ot.buffer_, nwritten)) {
+          if (co_await this->fiber.send(ot.buffer_, nwritten)) {
             p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF);
             ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
           }
@@ -215,7 +215,7 @@ namespace fc {
           if (GetLastError() == ERROR_IO_PENDING) {
             WaitForSingleObject(ov.hEvent, 1000); // 或者使用INFINITE
             if (GetOverlappedResult(fd, &ov, &nwritten, FALSE)) {
-              if (co_await this->fiber.write(ot.buffer_, nwritten)) {
+              if (co_await this->fiber.send(ot.buffer_, nwritten)) {
                 p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF);
                 ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
               }
