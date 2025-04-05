@@ -128,7 +128,7 @@ namespace fc {
 #if __cplusplus < _cpp20_date
               if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
 #else
-              loop_timer.cancel(ro->t_id); fc::Task<ROG> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
+              loop_timer.cancel(ro->t_id); ro->hrt = 0; fc::Task<ROG> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
 #endif
               //} else {
               //  std::cout << "FATAL ERROR: Error on server socket " << this->event_fd << std::endl; RESquit_signal_catched = false;
