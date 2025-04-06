@@ -109,7 +109,7 @@ namespace fc {
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
   };
   template<typename Z>
-  static constexpr const uint64_t fc_HashMax(size_t _) { return static_cast<uint64_t>(static_cast<Z>(-1)); };
+  static constexpr const uint64_t fc_HashMax(size_t _) { return (static_cast<uint64_t>(static_cast<Z>(-1)) >> 1) * _; };
   template<> constexpr const uint64_t fc_HashMax<uint64_t>(size_t _) { return 9223372036854775808ULL; };
   template<> constexpr const uint64_t fc_HashMax<uint32_t>(size_t _) { return 2147483648ULL * _; };
   template<> constexpr const uint64_t fc_HashMax<uint16_t>(size_t _) { return 32768ULL * _; };
@@ -126,6 +126,7 @@ namespace fc {
     };
     E equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
     static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 0x20 : sizeof(V) < 8 ? 16 : sizeof(K) < 16 ? 0x20 : 16;
+    static const constexpr size_t SUBARRAY_DIV = SUBARRAY_SIZE == 0x10 ? 0x4 : 0x5;
     static V dummy;
     static const constexpr uint64_t MaxSize = fc_HashMax<T>(SUBARRAY_SIZE);
     // Optimization: Reduced exception path overhead by using noexcept and manual cleanup
@@ -134,7 +135,7 @@ namespace fc {
       if (newTotalSize > MaxSize || newTotalSize <= totalSize) {
         if (totalSize == MaxSize) return false; newTotalSize = MaxSize;
       }
-      size_t newNumSubarrays = newTotalSize / SUBARRAY_SIZE;
+      size_t newNumSubarrays = newTotalSize >> SUBARRAY_DIV;
       Nod* newTable = nullptr;
       T* newSuperPointers = nullptr;
       try {
@@ -147,7 +148,7 @@ namespace fc {
       }
       for (size_t i = 0; i < numSubarrays; ++i) {
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          const Nod& entry = table[i * SUBARRAY_SIZE + j];
+          const Nod& entry = table[(i << SUBARRAY_DIV) + j];
           if (entry.occupied) {
             reinsert(newTable, newSuperPointers, newTotalSize, newNumSubarrays, entry.key, entry.value);
           }
@@ -164,14 +165,14 @@ namespace fc {
     void reinsert(Nod* targetTable, T* targetPointers, size_t targetSize, size_t targetNumSubarrays,
       const K& key, const V& value) noexcept {
       size_t baseIndex = fc_hash(key, targetSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
-      size_t offset = baseIndex % SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
+      size_t offset = baseIndex & (SUBARRAY_SIZE - 1);
       for (size_t i = 0; i < targetNumSubarrays; ++i) {
-        size_t currentSubarray = (subarrayIdx + i) % targetNumSubarrays;
+        size_t currentSubarray = (subarrayIdx + i) & (targetNumSubarrays - 1);
         size_t startOffset = (i == 0) ? offset : 0;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          size_t idx = (startOffset + j) % SUBARRAY_SIZE;
-          Nod& entry = targetTable[currentSubarray * SUBARRAY_SIZE + idx];
+          size_t idx = (startOffset + j) & (SUBARRAY_SIZE - 1);
+          Nod& entry = targetTable[(currentSubarray << SUBARRAY_DIV) + idx];
           if (!entry.occupied) {
             entry = Nod(key, std::move(value)); targetPointers[baseIndex] = static_cast<T>(currentSubarray);
             return;
@@ -180,14 +181,14 @@ namespace fc {
       }
     }
     bool insertImpl(const K& key, const V& value, size_t baseIndex) noexcept {
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
-      size_t offset = baseIndex % SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
+      size_t offset = baseIndex & (SUBARRAY_SIZE - 1);
       for (size_t i = 0; i < numSubarrays; ++i) {
-        size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
+        size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
         size_t startOffset = (i == 0) ? offset : 0;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          size_t idx = (startOffset + j) % SUBARRAY_SIZE;
-          Nod& entry = table[currentSubarray * SUBARRAY_SIZE + idx];
+          size_t idx = (startOffset + j) & (SUBARRAY_SIZE - 1);
+          Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + idx];
           bool wasUnoccupied = !entry.occupied;
           if (wasUnoccupied || equal(entry.key, key)) {
             entry.key = key;
@@ -204,7 +205,7 @@ namespace fc {
   public:
     HashMap(uint8_t init = sizeof(T) + 3) noexcept
       : totalSize(fc_2x[init]), numEntries(0) {
-      if (totalSize > MaxSize)totalSize = MaxSize; numSubarrays = totalSize / SUBARRAY_SIZE;
+      if (totalSize > MaxSize)totalSize = MaxSize; numSubarrays = totalSize >> SUBARRAY_DIV;
       table = new Nod[totalSize](); static_assert(std::is_unsigned<T>::value, "Super pointer must be unsigned!");
       superPointers = new T[totalSize]();
     }
@@ -231,7 +232,7 @@ namespace fc {
       size_t baseIndex = fc_hash(key, totalSize);
       size_t subarrayIdx = superPointers[baseIndex];
       for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
-        Nod& entry = table[subarrayIdx * SUBARRAY_SIZE + i];
+        Nod& entry = table[(subarrayIdx << SUBARRAY_DIV) + i];
         if (entry.occupied && equal(entry.key, key)) {
           return entry.value;
         }
@@ -246,14 +247,14 @@ namespace fc {
           }
           baseIndex = fc_hash(key, totalSize);
         }
-        subarrayIdx = baseIndex / SUBARRAY_SIZE;
-        size_t offset = baseIndex % SUBARRAY_SIZE;
+        subarrayIdx = baseIndex >> SUBARRAY_DIV;
+        size_t offset = baseIndex & (SUBARRAY_SIZE - 1);
         for (size_t i = 0; i < numSubarrays; ++i) {
-          size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
+          size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
           size_t startOffset = (i == 0) ? offset : 0;
           for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-            size_t idx = (startOffset + j) % SUBARRAY_SIZE;
-            Nod& entry = table[currentSubarray * SUBARRAY_SIZE + idx];
+            size_t idx = (startOffset + j) & (SUBARRAY_SIZE - 1);
+            Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + idx];
             if (!entry.occupied) {
               entry.key = key;
               entry.occupied = true;
@@ -269,11 +270,11 @@ namespace fc {
     //Cover up mistakes
     V& at(const K& key) {
       size_t baseIndex = fc_hash(key, totalSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
-        size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
+        size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
+          Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + j];
           if (entry.occupied && equal(entry.key, key)) {
             return entry.value;
           }
@@ -284,11 +285,11 @@ namespace fc {
     //Can throw exceptions
     const V& at(const K& key) const {
       size_t baseIndex = fc_hash(key, totalSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
-        size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
+        size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          const Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
+          const Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + j];
           if (entry.occupied && equal(entry.key, key)) {
             return entry.value;
           }
@@ -298,11 +299,11 @@ namespace fc {
     }
     inline void remove(const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
-        size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
+        size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
+          Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + j];
           if (entry.occupied && equal(entry.key, key)) {
             entry.occupied = false;
             --numEntries;
@@ -318,7 +319,7 @@ namespace fc {
       friend HashMap; mutable Nod* curr; Nod* end;
       _FORCE_INLINE void moveToNextOccupied() { while (curr != end) { if (curr->occupied) return; ++curr; } }
     public:
-      iterator(HashMap* m, size_t subIdx, size_t slot) noexcept: curr(m->table + subIdx * SUBARRAY_SIZE + slot),
+      iterator(HashMap* m, size_t subIdx, size_t slot) noexcept: curr(m->table + (subIdx << SUBARRAY_DIV) + slot),
         end(m->table + m->totalSize) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept { return reinterpret_cast<std::pair<const K, V>*>(curr); }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept { return reinterpret_cast<std::pair<const K, V>&>(*curr); }
@@ -330,10 +331,10 @@ namespace fc {
     _FORCE_INLINE iterator begin() noexcept { iterator i(this, 0, 0); i.moveToNextOccupied(); return i; }
     _FORCE_INLINE iterator end() noexcept { return iterator(this, numSubarrays, 0); }
     _FORCE_INLINE iterator find(const K& key) noexcept {
-      size_t baseIndex = fc_hash(key, totalSize); size_t subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t i = 0;
+      size_t baseIndex = fc_hash(key, totalSize); size_t subarrayIdx = baseIndex >> SUBARRAY_DIV; size_t i = 0;
       do {
-        size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
-        Nod* subarray = table + currentSubarray * SUBARRAY_SIZE;
+        size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
+        Nod* subarray = table + (currentSubarray << SUBARRAY_DIV);
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           Nod& entry = subarray[j];
           if (entry.occupied && equal(entry.key, key)) return iterator(this, currentSubarray, j);
@@ -346,7 +347,7 @@ namespace fc {
       _FORCE_INLINE void moveToNextOccupied() { while (curr != end) { if (curr->occupied) return; ++curr; } }
     public:
       const_iterator(const HashMap* m, size_t subIdx, size_t slot) noexcept:
-        curr(m->table + subIdx * SUBARRAY_SIZE + slot), end(m->table + m->totalSize) {}
+        curr(m->table + (subIdx << SUBARRAY_DIV) + slot), end(m->table + m->totalSize) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept { return reinterpret_cast<std::pair<const K, V>*>(curr); }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept { return reinterpret_cast<std::pair<const K, V>&>(*curr); }
       _FORCE_INLINE const_iterator& operator++() noexcept {
@@ -450,6 +451,7 @@ namespace fc {
     };
     E equal; Nod* table; T* superPointers; size_t totalSize; size_t numEntries; size_t numSubarrays;
     static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 0x20 : sizeof(V) < 8 ? 16 : sizeof(K) < 16 ? 0x20 : 16;
+    static const constexpr size_t SUBARRAY_DIV = SUBARRAY_SIZE == 0x10 ? 0x4 : 0x5;
     static V dummy;
     static const constexpr uint64_t MaxSize = fc_HashMax<T>(SUBARRAY_SIZE);
     // Optimization: Reduced exception path overhead by using noexcept and manual cleanup
@@ -458,7 +460,7 @@ namespace fc {
       if (newTotalSize > MaxSize || newTotalSize <= totalSize) {
         if (totalSize == MaxSize) return false; newTotalSize = MaxSize;
       }
-      size_t newNumSubarrays = newTotalSize / SUBARRAY_SIZE;
+      size_t newNumSubarrays = newTotalSize >> SUBARRAY_DIV;
       Nod* newTable = nullptr;
       T* newSuperPointers = nullptr;
       try {
@@ -471,7 +473,7 @@ namespace fc {
       }
       for (size_t i = 0; i < numSubarrays; ++i) {
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          const Nod& entry = table[i * SUBARRAY_SIZE + j];
+          const Nod& entry = table[(i << SUBARRAY_DIV) + j];
           if (entry.occupied) {
             reinsert(newTable, newSuperPointers, newTotalSize, newNumSubarrays, entry.key, entry.value);
           }
@@ -488,14 +490,14 @@ namespace fc {
     void reinsert(Nod* targetTable, T* targetPointers, size_t targetSize, size_t targetNumSubarrays,
       const K& key, const V& value) noexcept {
       size_t baseIndex = fc_hash(key, targetSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       size_t offset = baseIndex % SUBARRAY_SIZE;
       for (size_t i = 0; i < targetNumSubarrays; ++i) {
         size_t currentSubarray = (subarrayIdx + i) % targetNumSubarrays;
         size_t startOffset = (i == 0) ? offset : 0;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           size_t idx = (startOffset + j) % SUBARRAY_SIZE;
-          Nod& entry = targetTable[currentSubarray * SUBARRAY_SIZE + idx];
+          Nod& entry = targetTable[(currentSubarray << SUBARRAY_DIV) + idx];
           if (!entry.occupied) {
             entry = Nod(key, std::move(value)); targetPointers[baseIndex] = static_cast<T>(currentSubarray);
             return;
@@ -504,14 +506,14 @@ namespace fc {
       }
     }
     bool insertImpl(const K& key, const V& value, size_t baseIndex) noexcept {
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       size_t offset = baseIndex % SUBARRAY_SIZE;
       for (size_t i = 0; i < numSubarrays; ++i) {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         size_t startOffset = (i == 0) ? offset : 0;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           size_t idx = (startOffset + j) % SUBARRAY_SIZE;
-          Nod& entry = table[currentSubarray * SUBARRAY_SIZE + idx];
+          Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + idx];
           bool wasUnoccupied = !entry.occupied;
           if (wasUnoccupied || equal(entry.key, key)) {
             entry.key = key;
@@ -527,7 +529,7 @@ namespace fc {
     }
   public:
     HashMap(size_t initialSize = sizeof(T) * sizeof(V) * 16) noexcept
-      : totalSize(initialSize > MaxSize ? MaxSize : initialSize), numEntries(0), numSubarrays(totalSize / SUBARRAY_SIZE) {
+      : totalSize(initialSize > MaxSize ? MaxSize : initialSize), numEntries(0), numSubarrays(totalSize >> SUBARRAY_DIV) {
       table = new Nod[totalSize](); static_assert(std::is_integral<T>::value, "Super pointer must be integral!");
       superPointers = new T[totalSize]();
     }
@@ -554,7 +556,7 @@ namespace fc {
       size_t baseIndex = fc_hash(key, totalSize);
       size_t subarrayIdx = superPointers[baseIndex];
       for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
-        Nod& entry = table[subarrayIdx * SUBARRAY_SIZE + i];
+        Nod& entry = table[(subarrayIdx << SUBARRAY_DIV) + i];
         if (entry.occupied && equal(entry.key, key)) {
           return entry.value;
         }
@@ -569,14 +571,14 @@ namespace fc {
           }
           baseIndex = fc_hash(key, totalSize);
         }
-        subarrayIdx = baseIndex / SUBARRAY_SIZE;
+        subarrayIdx = baseIndex >> SUBARRAY_DIV;
         size_t offset = baseIndex % SUBARRAY_SIZE;
         for (size_t i = 0; i < numSubarrays; ++i) {
           size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
           size_t startOffset = (i == 0) ? offset : 0;
           for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
             size_t idx = (startOffset + j) % SUBARRAY_SIZE;
-            Nod& entry = table[currentSubarray * SUBARRAY_SIZE + idx];
+            Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + idx];
             if (!entry.occupied) {
               entry.key = key;
               entry.occupied = true;
@@ -592,11 +594,11 @@ namespace fc {
     //Cover up mistakes
     V& at(const K& key) {
       size_t baseIndex = fc_hash(key, totalSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
+          Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + j];
           if (entry.occupied && equal(entry.key, key)) {
             return entry.value;
           }
@@ -607,11 +609,11 @@ namespace fc {
     //Can throw exceptions
     const V& at(const K& key) const {
       size_t baseIndex = fc_hash(key, totalSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          const Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
+          const Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + j];
           if (entry.occupied && equal(entry.key, key)) {
             return entry.value;
           }
@@ -621,11 +623,11 @@ namespace fc {
     }
     inline void remove(const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
-      size_t subarrayIdx = baseIndex / SUBARRAY_SIZE;
+      size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
-          Nod& entry = table[currentSubarray * SUBARRAY_SIZE + j];
+          Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + j];
           if (entry.occupied && equal(entry.key, key)) {
             entry.occupied = false;
             --numEntries;
@@ -641,7 +643,7 @@ namespace fc {
       friend HashMap; mutable Nod* curr; Nod* end;
       _FORCE_INLINE void moveToNextOccupied() { while (curr != end) { if (curr->occupied) return; ++curr; } }
     public:
-      iterator(HashMap* m, size_t subIdx, size_t slot) noexcept: curr(m->table + subIdx * SUBARRAY_SIZE + slot),
+      iterator(HashMap* m, size_t subIdx, size_t slot) noexcept: curr(m->table + (subIdx << SUBARRAY_DIV) + slot),
         end(m->table + m->totalSize) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept { return reinterpret_cast<std::pair<const K, V>*>(curr); }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept { return reinterpret_cast<std::pair<const K, V>&>(*curr); }
@@ -653,10 +655,10 @@ namespace fc {
     _FORCE_INLINE iterator begin() noexcept { iterator i(this, 0, 0); i.moveToNextOccupied(); return i; }
     _FORCE_INLINE iterator end() noexcept { return iterator(this, numSubarrays, 0); }
     _FORCE_INLINE iterator find(const K& key) noexcept {
-      size_t baseIndex = fc_hash(key, totalSize); size_t subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t i = 0;
+      size_t subarrayIdx = fc_hash(key, totalSize) >> SUBARRAY_DIV; size_t i = 0;
       do {
         size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
-        Nod* subarray = table + currentSubarray * SUBARRAY_SIZE;
+        Nod* subarray = table + (currentSubarray << SUBARRAY_DIV);
         for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
           Nod& entry = subarray[j];
           if (entry.occupied && equal(entry.key, key)) return iterator(this, currentSubarray, j);
@@ -669,7 +671,7 @@ namespace fc {
       _FORCE_INLINE void moveToNextOccupied() { while (curr != end) { if (curr->occupied) return; ++curr; } }
     public:
       const_iterator(const HashMap* m, size_t subIdx, size_t slot) noexcept:
-        curr(m->table + subIdx * SUBARRAY_SIZE + slot), end(m->table + m->totalSize) {}
+        curr(m->table + (subIdx << SUBARRAY_DIV) + slot), end(m->table + m->totalSize) {}
       _FORCE_INLINE std::pair<const K, V>* operator->() const noexcept { return reinterpret_cast<std::pair<const K, V>*>(curr); }
       _FORCE_INLINE std::pair<const K, V>& operator*() const noexcept { return reinterpret_cast<std::pair<const K, V>&>(*curr); }
       _FORCE_INLINE const_iterator& operator++() noexcept {
@@ -695,10 +697,10 @@ namespace fc {
   template<typename K, typename V, typename T, typename E, char LOAD_FACTOR_THRESHOLD>
   _FORCE_INLINE const typename HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::const_iterator
     HashMap<K, V, T, E, LOAD_FACTOR_THRESHOLD>::find(const K& key) const noexcept {
-    size_t baseIndex = fc_hash(key, totalSize); size_t subarrayIdx = baseIndex / SUBARRAY_SIZE; size_t i = 0;
+    size_t subarrayIdx = fc_hash(key, totalSize) >> SUBARRAY_DIV; size_t i = 0;
     do {
-      size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
-      const Nod* subarray = table + currentSubarray * SUBARRAY_SIZE;
+      size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
+      const Nod* subarray = table + (currentSubarray << SUBARRAY_DIV);
       for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
         const Nod& entry = subarray[j];
         if (entry.occupied && equal(entry.key, key)) return const_iterator(this, currentSubarray, j);
