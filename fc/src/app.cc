@@ -296,7 +296,7 @@ namespace fc {
 #endif
       } while (RESon);
 #ifdef _WIN32
-      f.epoll_mod(EPOLLOUT | EPOLLRDHUP);
+      f.epoll_fix(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
       Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };

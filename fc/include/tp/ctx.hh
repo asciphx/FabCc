@@ -268,7 +268,7 @@ namespace fc {
     Task(Task&& t) noexcept: $(t.$) { t.$ = nullptr; }
     ~Task() { if ($) $.destroy(); }
     struct promise_type {
-      std::coroutine_handle<> l, r; std::exception_ptr e; void return_void() {}
+      void* l, * r; std::exception_ptr e; void return_void() {}
       _FORCE_INLINE void unhandled_exception() { e = std::current_exception(); }
       std::suspend_never initial_suspend() noexcept { return {}; }
       std::suspend_always final_suspend() noexcept { return {}; }
@@ -276,14 +276,14 @@ namespace fc {
     };
     _FORCE_INLINE bool await_ready() const noexcept { return $.done(); }
     _FORCE_INLINE void await_resume() { if ($.promise().e) std::rethrow_exception($.promise().e); }
-    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $; $.promise().r = _; }
+    _FORCE_INLINE void await_suspend(Handle _) noexcept { _.promise().l = $.address(); $.promise().r = _.address(); }
     template<typename T> void await_suspend(std::coroutine_handle<T> _) noexcept { _.promise().l = $; $.promise().r = _; }
     explicit operator bool() const noexcept { return $ && !$.done(); }
     void operator()() noexcept {
-      while ($.promise().l) { if (($ = Handle::from_address($.promise().l.address()))) continue; break; };
+      while ($.promise().l) { if (($ = Handle::from_address($.promise().l))) continue; break; };
       do {
         $.resume(); if (!$.done())return;
-        if ($.promise().r) $ = Handle::from_address($.promise().r.address()), $.promise().l = nullptr;
+        if ($.promise().r) $ = Handle::from_address($.promise().r), $.promise().l = nullptr;
       } while (!$.done());
     }
   };

@@ -75,7 +75,7 @@ namespace fc {
     }
     while (n--) r = r * 5 + (*p++ & 0xDF); return r & (mod - 1);
   }
-  static const unsigned long long fc_2x[0xFF] = {
+  static const unsigned long long fc_2x[0x100] = {
       16ULL,
       32ULL,                 64ULL,                 128ULL,                256ULL,
       512ULL,                1024ULL,               2048ULL,               4096ULL,
@@ -91,7 +91,7 @@ namespace fc {
       562949953421312ULL,    1125899906842624ULL,   2251799813685248ULL,   4503599627370496ULL,
       9007199254740992ULL,   18014398509481984ULL,  36028797018963968ULL,  72057594037927936ULL,
       144115188075855872ULL, 288230376151711744ULL, 576460752303423488ULL, 1152921504606846976ULL,
-      2305843009213693952ULL,4611686018427387904ULL,9223372036854775808ULL,
+      2305843009213693952ULL,4611686018427387904ULL,9223372036854775808ULL,256ULL,
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
@@ -106,14 +106,14 @@ namespace fc {
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
       256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
-      256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,
+      256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL,256ULL
   };
   template<typename Z>
-  static constexpr const uint64_t fc_HashMax(size_t _) { return (static_cast<uint64_t>(static_cast<Z>(-1)) >> 1) * _; };
+  static constexpr const uint64_t fc_HashMax(size_t _) { return (static_cast<uint64_t>(static_cast<Z>(-1)) >> 1) << _; };
   template<> constexpr const uint64_t fc_HashMax<uint64_t>(size_t _) { return 9223372036854775808ULL; };
-  template<> constexpr const uint64_t fc_HashMax<uint32_t>(size_t _) { return 2147483648ULL * _; };
-  template<> constexpr const uint64_t fc_HashMax<uint16_t>(size_t _) { return 32768ULL * _; };
-  template<> constexpr const uint64_t fc_HashMax<uint8_t>(size_t _) { return 128ULL * _; };
+  template<> constexpr const uint64_t fc_HashMax<uint32_t>(size_t _) { return 2147483648ULL << _; };
+  template<> constexpr const uint64_t fc_HashMax<uint16_t>(size_t _) { return 32768ULL << _; };
+  template<> constexpr const uint64_t fc_HashMax<uint8_t>(size_t _) { return 128ULL << _; };
   // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
   template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
@@ -128,7 +128,7 @@ namespace fc {
     static const constexpr size_t SUBARRAY_SIZE = sizeof(K) - sizeof(T) > 16 ? 0x20 : sizeof(V) < 8 ? 16 : sizeof(K) < 16 ? 0x20 : 16;
     static const constexpr size_t SUBARRAY_DIV = SUBARRAY_SIZE == 0x10 ? 0x4 : 0x5;
     static V dummy;
-    static const constexpr uint64_t MaxSize = fc_HashMax<T>(SUBARRAY_SIZE);
+    static const constexpr uint64_t MaxSize = fc_HashMax<T>(SUBARRAY_DIV);
     // Optimization: Reduced exception path overhead by using noexcept and manual cleanup
     bool resize() noexcept {
       size_t newTotalSize = totalSize << 1;

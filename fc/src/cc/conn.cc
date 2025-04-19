@@ -32,7 +32,7 @@ namespace fc {//If it exceeds 5 seconds by frist request, the established connec
 #ifndef _WIN32
       if (count == 0 || count < 0 && errno != EAGAIN) { _CTX_back(false) }
 #else
-      if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { _CTX_back(false) }
+      if (count == 0 || count < 0 && (errno != EINPROGRESS && errno != EINVAL)) { _CTX_back(false) }
 #endif // !_WIN32
 #if __cplusplus < _cpp20_date
       rpg->_.operator()();
@@ -51,7 +51,7 @@ namespace fc {//If it exceeds 5 seconds by frist request, the established connec
 #ifndef _WIN32
       if (count == 0 || count < 0 && errno != EAGAIN) { _CTX_back(false) }
 #else
-      if (count == 0 || count < 0 && (errno != EINVAL && errno != EINPROGRESS)) { _CTX_back(false) }
+      if (count == 0 || count < 0 && (errno != EINPROGRESS && errno != EINVAL)) { _CTX_back(false) }
 #endif // !_WIN32
 #if __cplusplus < _cpp20_date
       rpg->_.operator()();
@@ -64,12 +64,12 @@ namespace fc {//If it exceeds 5 seconds by frist request, the established connec
   };
   int Conn::shut(socket_type fd, sd_type type) { return ::shutdown(fd, type); }
   int Conn::shut(sd_type type) { return ::shutdown(this->socket_fd, type); }
-  void Conn::epoll_mod(socket_type flags) {
+  void Conn::epoll_fix(socket_type flags, int action) {
 #if __linux__ || _WIN32
     epoll_event e{ static_cast<uint32_t>(flags) }; e.data.ptr = rpg;
-    if (-1 == ::epoll_ctl(epoll_fd, EPOLL_CTL_MOD, socket_fd, &e) && errno != EEXIST) std::cout << "epoll_ctl err: " << strerror(errno) << std::endl;
+    if (-1 == ::epoll_ctl(epoll_fd, action, socket_fd, &e) && errno != EEXIST) std::cout << "epoll_ctl err: " << strerror(errno) << std::endl;
 #elif __APPLE__
-    struct kevent e; e.udata = rpg; EV_SET(&e, socket_fd, flags, 2, 0, 0, NULL); kevent(epoll_fd, &e, 1, NULL, 0, NULL);
+    struct kevent e; e.udata = rpg; EV_SET(&e, socket_fd, flags, action, 0, 0, NULL); kevent(epoll_fd, &e, 1, NULL, 0, NULL);
 #endif
   }
 }

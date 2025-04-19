@@ -14,6 +14,9 @@
 #include <sys/epoll.h>
 #elif __APPLE__
 #include <sys/event.h>
+#define EPOLL_CTL_ADD 1
+#define EPOLL_CTL_MOD 2
+#define EPOLL_CTL_DEL 3
 #endif
 #if defined __linux__ || defined __APPLE__
 #include <sys/socket.h>
@@ -30,6 +33,7 @@
 #include <WinSock2.h>
 #include "h/wepoll.h"
 #include <mstcpip.h>
+#undef min
 #endif
 #include <chrono>
 #include <atomic>
@@ -169,7 +173,7 @@ namespace fc {
     _CTX_TASK(bool) send(const char* buf, int size);
     int shut(socket_type fd, sd_type type);
     int shut(sd_type type);
-    void epoll_mod(socket_type flags);
+    void epoll_fix(socket_type flags, int action = EPOLL_CTL_MOD);
   };
 }
 namespace std {
