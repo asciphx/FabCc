@@ -18,7 +18,6 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 ## Be Original
 - Comprehensive and deep integration of RBTree and Time Wheel (5% performance improvement) to encapsulate cancelable timers, at the same time, modify the underlying coroutine to use black magic to manage the release of its memory, thereby saving memory
 - Supports c++20 stack free coroutines, currently compatible with the original project's stack based asymmetric coroutines, and is perfectly integrated, requiring almost minimal macro modifications. Performance is about 5% stronger than stack based protocols.
-- Added a new player with subtitles [The subtitles have the same name as the file, but the file format is different, that is, the suffix is different (supports srt, vtt, ass formats)] func.
 - Enhanced field reflection, for example`std::string_view sv = k(&O::id);` will return "`O`.`id`"(can be modified by constexpr in C++14 and higher versions).
 - The tcp client based on openssl has preliminary support and limited functions, so most tests can pass.
 - Support jsonc format for compatible annotations. However, this is only called when reading the json file.

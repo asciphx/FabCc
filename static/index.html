@@ -11,35 +11,26 @@
       font-size: 10pt;
     }
   </style>
-  <script type="text/javascript" src="s/pm/js/jquery.min.js"></script><script src="./index.min.js"></script>
-  <link rel="stylesheet" href="./index.min.css" /><link rel="stylesheet" href="./css/Pagination.css"><script src="./js/Pagination.js"></script>
+  <script type="text/javascript" src="s/pm/js/jquery.min.js"></script>
+  <link rel="stylesheet" href="./css/Pagination.css"><script src="./js/Pagination.js"></script>
+  <!-- 由于之前的西瓜播放器有bug, 初始的视频会重复发出一次请求导致在windows下当第一个视频超过4GB的时候的206请求会失效.换成原生播放器则无此bug -->
 </head>
 <body onload="ajax('/get_upload', true)">
   <h1>Welcome to FabCc!</h1>
   <p>On December 8, the ultra-high-definition 8k Remastered version will arrive. To unlock playback of videos over 4GB in size (highlight)</p>
   <img style="opacity: 0.3;position: absolute;z-index: -1;width: inherit" src="./1.png" alt="Alternate Text">
   <button onclick="ajax('/get_upload', true)" style="">get_upload_files[refresh]</button>&nbsp;<a
-    href="/test.html">Test[[Postman]]</a>.<br> <div id="vid" style="margin-left: -34%;"></div>
+    href="/test.html">Test[[Postman]]</a>.<br>
+    <video id="vid" controls src="" preload="auto" autoplay loop
+      onloadeddata="if(this.videoWidth/this.videoHeight > 1.8)this.style.marginLeft='-277px'"
+      style="width: auto;margin: auto -34%;max-width: 1024px;min-width: 768px;max-height: 450px;"></video>
   <div class="page" ondragstart="return false"></div>
   <script>
-    var player = new Player({
-      id: 'vid', url: '', autoplay: true, loop: true, pip: true, fullscreen: { useCssFullscreen: false },// autoplayMuted: false,
-      playbackRate: [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.5, 2], plugin: [TextTrack], playsinline: true,
-      texttrack: {
-        list: [{
-          id: 'srt1',
-          url: './test.srt',
-          text: 'subtitle',
-          default: true
-        }]
-      }
-    }), once = true, pageNum = 10, pageArr = [];
-    function tv_play(src, text = true) {
-      var vi = document.getElementById("vid"); url = src.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
-      vi.firstChild.src = url; if(text){
-        url = url.substr(0,/\.[0-9a-zA-Z]+$/.exec(url).index) + '.srt';
-        player.plugins.texttrack.updateSubtitles([{ id: 'vtt1', url: url, text: 'subtitle', default: false }]);
-      } player.play();
+    var pageNum = 10, pageArr = [];
+    function tv_play(src) {
+      var vi = document.getElementById("vid"); vi.style.marginLeft='-34%';
+      vi.src = src.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
+      vi.style["max-width"]=screen.availWidth*0.6 + "px";
     }
     var Page = new Pagination({
         // 页码偏移(为1的时,适合移动端)
@@ -53,7 +44,7 @@
               pageArr[i].name.slice(7) + "</a> [ "+ext_(pageArr[i].size)+" ]<br/>";
           }
           document.getElementById("list").innerHTML = s;
-          if(once) once=false, tv_play(pageArr[start].name, false);
+          tv_play(pageArr[start].name);
         }
     });
     function ext_(size) {
