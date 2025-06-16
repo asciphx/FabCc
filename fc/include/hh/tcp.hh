@@ -103,7 +103,7 @@ namespace fc {
 #endif
         if (this->n_events == 0) {
 #if !_WIN32
-          usleep(10000);
+          if(nthreads != 1) usleep(10000);
 #endif
         } else {
           for (i = 0; i < this->n_events; ++i) {

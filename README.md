@@ -28,22 +28,17 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - The whole platform supports range requests in video or audio format, and you can jump to any playback point on demand. For example wav, mp3, mp4, webm. And you can set whether to allow downloading, and then also support pausing or continuing downloading.
 - box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)],   
   so there is no need to use raw pointers, and C++can also be written in OOP mode.
-- Derived from box and solved the problem of circular dependency from 0-1 perfectly, and super smart pointer box can replace optional, compatible with std:: optional.
-- The current box can also replace the original pointer, automatically managing memory from 0 to 1 without considering memory release, equivalent to automatic GC, aimed at scripting c++.
 - body_parser for handling multi_ Part file upload not only supports single file support for custom size, but also supports multiple file uploads and zero copy storage mapping combined with mmap.
 - lexical_cast is used to convert strings, character views, and basic types to each other. From 0 to 1, it achieves the separation of header only to header file source files and accelerates compilation speed.
 - Router adopts dynamic routing technology, which can be added, deleted, modified, and checked. Currently, it also supports the use of regular expressions, which is precisely not available in other frameworks.
-- string_view is used to supplement the inability to use string in C++14 and older versions_ The pain points of view and the maximum expansion of features in the new version.
 - text is used to store strings from 0 to 1 for utf8, and the capacity can be set independently. Each capacity is specific to utf8 and can handle varchar types in the database.
 - timer is used from 0 to 1 to solve the problem of C++without JavaScript timers, and only uses header file source file separation to accelerate compilation speed.
 - The above original components are a demonstration of personal technical strength. Of course, there are also some components, which are not entirely from 0 to 1, but those are not the most important components.
 
 ## Features
-- The front-end player only uses Xigua player, and has a new subtitle func. Xigua comes from [[xgplayer](https://github.com/bytedance/xgplayer)]
 - Full platform support based on epoll architecture [implemented by wepoll under windows]
 - Now the minimum compiler supports the c++11 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
 - The fewest third-party libraries, are stored in the project in the form of source files
-- Fastest API, such as lexical_cast, EncodeURL, DecodeURL, itoa
 - Incredible compilation speed and development speed are also improved
 - Support the web version of Postman, the address is 127.0.0.1:8080/test.html
 - Can add, delete, modify and query the route. Dynamic Route Reference[[lithium](https://github.com/matt-42/lithium)]Iterative
@@ -70,7 +65,7 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 ## Description
 - Principle of Coroutines
 - ![yield](./yield.gif)
-- [Demo site](http://8.129.58.72:8080/)🚀
+- [Demo site](http://165.154.225.219:8080/)🚀
 - ![test](./test.jpg)
 
 ## example

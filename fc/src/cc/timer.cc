@@ -12,6 +12,7 @@
  * the modified version must be made available.
  */
 namespace fc {
+  static const std::chrono::steady_clock::time_point TP_null = std::chrono::steady_clock::time_point();
   bool Timer::Node::operator<(const Timer::Node& other) const {
     return time < other.time || (time == other.time && id < other.id);
   }
@@ -41,7 +42,7 @@ namespace fc {
   }
   void Timer::cancel(Node& id) {//Prevent duplicate deletion
     if(id.time.time_since_epoch().count()) {
-      ______* node = timers.find(id); id.time = std::chrono::steady_clock::time_point();
+      ______* node = timers.find(id); id.time = TP_null;
       if (node != nullptr) {
         timers.remove(node->key);
       }

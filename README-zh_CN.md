@@ -27,22 +27,17 @@
 - 支持Gzip压缩功能，默认缓存了6秒，在CACHE_HTML_TIME_SECOND宏配置修改既可。之所以设置压缩比率为6，是因为个人认为这是效率与压缩比的最优解。
 - 全平台支持video或者是audio格式的range请求，可以随意点播跳转到任意的播放点, 例如wav,mp3,mp4,webm。并且可以设置是否允许下载，然后还支持暂停或者继续下载。
 - 从0-1设计具备借鉴于rust语言风格的box【[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)】，C++也可以用OOP方式编写。
-- 由box引申出并从0-1完美解决了循环依赖的问题，而且超级智能指针box可以替代optional，兼容了std::optional。
-- 目前的box也可以替代原始指针，从0-1自动管理内存，无需考虑内存释放，相当于自动GC，旨在将c++脚本化。
 - body_parser用于处理multi_part文件上传，不单支持单文件支持自定义大小，甚至还可以支持多文件上传并结合了mmap的零拷贝的存储映射。
 - lexical_cast用于从字符串，字符视图到基本类型之间的互相转换，从0-1实现的是将header-only变为头文件源文件分离，并加速了编译速度。
 - router采用了动态路由技术，可以增删改查，目前还支持使用正则表达式，这是其他框架恰恰不具备的。
-- string_view用于补足在c++14以及更旧的版本中无法使用string_view的痛点，并且最大程度的扩展了新版中的功能。
 - text是从0-1用于解决utf8的字符串存储，并且可以自行设定容量，每个容量都是针对utf8的，可以应对数据库中的varchar类型。
 - timer是从0-1用于解决c++没有javascript计时器的问题的，并且才用了头文件源文件分离，加速了编译速度。
 - 以上部件是个人技术实力的展示。当然，也有一些部件，其中并不完全是从0到1，但那些不是最重要的部件。
 
 ## 特征
-- 前端播放器采用西瓜播放器，并且新增字幕功能，西瓜来自【[xgplayer](https://github.com/bytedance/xgplayer)】
 - 基于epoll架构的全平台支持[windows下由wepoll实现]
 - 现在最低编译器版本支持到了c++11, 目前兼容了c++17的许多特性包括any, optional, string_view, 以及部分的扩展
 - 最少的第三方库，均以源文件形式存放项目中
-- 最快的api例如lexical_cast, 以及EncodeURL, DecodeURL, itoa
 - 难以置信的编译速度，开发速度同时也得到提升
 - 支持网页版Postman，地址是127.0.0.1:8080/test.html
 - 可以对路由进行增删改查，动态路由参考【[lithium](https://github.com/matt-42/lithium)】迭代而成
@@ -69,7 +64,7 @@
 ## 说明
 - 协程的原理图
 - ![yield](./yield.gif)
-- [示例](http://8.129.58.72:8080/)🚀
+- [示例](http://165.154.225.219:8080/)🚀
 - ![测试](./test.jpg)
 
 ## 例子

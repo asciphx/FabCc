@@ -69,7 +69,7 @@
           Page.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data; Page.gotoPage(1);
         },
         error: function (data) {
-          document.getElementById("list").innerHTML = data.responseText;console.log(data.responseText); Page.state.pageCount = 0;
+          console.log(data.responseText); Page.state.pageCount = 0;
           // document.getElementById("text").innerHTML = data.responseText; console.log(data);
         }
       });
