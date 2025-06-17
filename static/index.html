@@ -56,7 +56,7 @@
       $.ajax({
         url: url,
         type: "get",
-        timeout: 5000,
+        timeout: 4000,
         processData: false,
         // dataType:'JSON',
         // contentType:"application/json",
@@ -65,14 +65,14 @@
         //headers: {
         //  a: document.getElementById("token").value
         //},
-        async: false,
+        async: true,
         success: function (data) {
           Page.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data;
           if(bool) Page.gotoPage(Page.state.current);else Page.gotoPage(1+Math.floor(Math.random()*Page.state.pageCount));
         },
         error: function (data) {
-          console.log(data); Page.state.pageCount = 0;
           document.getElementById("text").innerHTML = data.responseText;
+          console.log(data); Page.state.pageCount = 0;
         }
       });
     }
