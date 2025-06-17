@@ -13,38 +13,38 @@
   </style>
   <script type="text/javascript" src="s/pm/js/jquery.min.js"></script>
   <link rel="stylesheet" href="./css/Pagination.css"><script src="./js/Pagination.js"></script>
-  <!-- 由于之前的西瓜播放器有bug, 初始的视频会重复发出一次请求导致在windows下当第一个视频超过4GB的时候的206请求会失效.换成原生播放器则无此bug -->
+  <!-- 由于之前的西瓜播放器有bug, 初始的视频会重复发出一次请求.换成原生播放器则无此bug -->
 </head>
-<body onload="ajax('/get_upload', true)">
+<body onload="ajax('/get_upload', false)">
   <h1>Welcome to FabCc!</h1>
   <p>On December 8, the ultra-high-definition 8k Remastered version will arrive. To unlock playback of videos over 4GB in size (highlight)</p>
   <img style="opacity: 0.3;position: absolute;z-index: -1;width: inherit" src="./1.png" alt="Alternate Text">
   <button onclick="ajax('/get_upload', true)" style="">get_upload_files[refresh]</button>&nbsp;<a
     href="/test.html">Test[[Postman]]</a>.<br>
-    <video id="vid" controls src="" preload="auto" autoplay loop
-      onloadeddata="if(this.videoWidth/this.videoHeight > 1.8)this.style.marginLeft='-277px'"
+    <video id="vid" controls src="" preload="auto" muted autoplay loop onloadeddata=
+      "if(this.videoWidth/this.videoHeight > 1.8){this.style.marginLeft='-277px',this.style.minWidth='1024px'}else this.style.minWidth='768px'"
       style="width: auto;margin: auto -34%;max-width: 1024px;min-width: 768px;max-height: 450px;"></video>
   <div class="page" ondragstart="return false"></div>
   <script>
-    var pageNum = 10, pageArr = [];
-    function tv_play(src) {
-      var vi = document.getElementById("vid"); vi.style.marginLeft='-34%';
-      vi.src = src.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
-      vi.style["max-width"]=screen.availWidth*0.6 + "px";
+    var pageNum = 10, pageArr = [], start = 0, ends = 1, played = true, p_i;
+    function tv_play(i) {
+      var vi = document.getElementById("vid"); vi.style.marginLeft='-34%'; document.getElementById("t"+i).style.color="coral";
+      vi.src = pageArr[i].name.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
+      vi.style["max-width"]=screen.availWidth*0.6 + "px"; if(p_i >= start&&p_i < ends)document.getElementById("t"+p_i).style.color="black"; p_i = i;
     }
     var Page = new Pagination({
         // 页码偏移(为1的时,适合移动端)
         maxShow:3,
         pageCount:0,
         onPageChange:function(p){
-          var start = (p - 1)*pageNum, end = p * pageNum; var ends = end>pageArr.length?pageArr.length:end
-          var s = "";
+          start = (p - 1)*pageNum; var end = p * pageNum; ends = end>pageArr.length?pageArr.length:end; var s = "";
           for (var i = start; i < ends; ++i) {
-            s += i + 1 + ":<a href=\"" + pageArr[i].name + "\" onclick=\"tv_play(this.href);return false;\">" +
+            s += "<i id=t"+i+">"+(i + 1)+"</i>"+ ":<a href=\"" + pageArr[i].name + "\" onclick=\"tv_play("+i+");return false;\">" +
               pageArr[i].name.slice(7) + "</a> [ "+ext_(pageArr[i].size)+" ]<br/>";
           }
           document.getElementById("list").innerHTML = s;
-          tv_play(pageArr[start].name);
+          if(played){ p_i = Math.floor(Math.random()*(ends-start)+start); tv_play(p_i); document.getElementById("t"+p_i).style.color="coral"; } else {
+              if(p_i >= start&&p_i < ends)document.getElementById("t"+p_i).style.color="coral"; }; played = false;
         }
     });
     function ext_(size) {
@@ -52,10 +52,11 @@
       if(size<1000)return size.toFixed(2)+U;U=u.shift(),size/=1024;return size.toFixed(3)+U;
     }
     function ajax(url, bool) {
+      played = true;
       $.ajax({
         url: url,
-        type: bool ? "get" : "post",
-        timeout: 300,
+        type: "get",
+        timeout: 5000,
         processData: false,
         // dataType:'JSON',
         // contentType:"application/json",
@@ -64,13 +65,14 @@
         //headers: {
         //  a: document.getElementById("token").value
         //},
-        async: true,
+        async: false,
         success: function (data) {
-          Page.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data; Page.gotoPage(1);
+          Page.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data;
+          if(bool) Page.gotoPage(Page.state.current);else Page.gotoPage(1+Math.floor(Math.random()*Page.state.pageCount));
         },
         error: function (data) {
-          console.log(data.responseText); Page.state.pageCount = 0;
-          // document.getElementById("text").innerHTML = data.responseText; console.log(data);
+          console.log(data); Page.state.pageCount = 0;
+          document.getElementById("text").innerHTML = data.responseText;
         }
       });
     }
