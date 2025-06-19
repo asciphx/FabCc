@@ -30,7 +30,7 @@
     function tv_play(i) {
       var vi = document.getElementById("vid"); vi.style.marginLeft='-34%'; document.getElementById("t"+i).style.color="coral";
       vi.src = pageArr[i].name.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
-      vi.style["max-width"]=screen.availWidth*0.6 + "px"; if(p_i >= start&&p_i < ends)document.getElementById("t"+p_i).style.color="black"; p_i = i;
+      vi.style["max-width"]=screen.availWidth*0.6 + "px"; if(i!= p_i&& p_i >= start&&p_i < ends)document.getElementById("t"+p_i).style.color="black"; p_i = i;
     }
     var Page = new Pagination({
         // 页码偏移(为1的时,适合移动端)

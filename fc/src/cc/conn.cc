@@ -21,6 +21,7 @@ namespace fc {//If it exceeds 5 seconds by frist request, the established connec
 #endif
           _CTX_back(0)
         }
+        timer.cancel(rpg->t_id); ROG* fib = rpg; rpg->t_id = timer.add_s(k_a + 2, [fib] { if (fib->_) { fib->_.operator()(); } });
       }
       count = read_impl(buf, max_size);
     }
@@ -41,7 +42,6 @@ namespace fc {//If it exceeds 5 seconds by frist request, the established connec
 #endif
       if ((count = write_impl(buf, size)) > 0) { buf += count, size -= count; }
     } time(&rpg->hrt);
-    timer.cancel(rpg->t_id); ROG* fib = rpg; rpg->t_id = timer.add_s(k_a + 2, [fib] { if (fib->_) { fib->_.operator()(); } });
     _CTX_back(is_idle = true)
   };
   //It is also possible to add flow control to limit the transmission speed
