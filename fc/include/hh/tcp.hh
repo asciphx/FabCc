@@ -93,7 +93,7 @@ namespace fc {
       epoll_event* kevents; ROG* ro;
       do {
         if (RES_TP > t) {
-          loop_timer.tick(); t = RES_TP + std::chrono::milliseconds(3);
+          loop_timer.tick(); t = RES_TP + std::chrono::milliseconds(16);
         }
 #if __linux__ || _WIN32
         this->n_events = epoll_wait(this->epoll_fd, this->kevents, RESmaxEVENTS, 1);
@@ -141,12 +141,10 @@ namespace fc {
                 socket_type socket_fd = accept(listen_fd, this->in_addr, &this->in_len);
                 // Subscribe epoll to the socket file descriptor. 将epoll订阅到套接字文件描述符。
 #ifndef _WIN32
-                if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) {
+                if (socket_fd == -1) { break; } if (-1 == ::fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK)) continue;
 #else
-                if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) {
+                if (socket_fd == INVALID_SOCKET) { break; } if (ioctlsocket(socket_fd, FIONBIO, &RESiMode) != NO_ERROR) continue;
 #endif
-                  close_socket(socket_fd); continue;
-                }
 // #ifdef WIN32
 //                 RESin_kavars.onoff = k_A[0]; RESin_kavars.keepalivetime = k_A[1] * 1000; RESin_kavars.keepaliveinterval = k_A[2] * 1000;
 //                 if (WSAIoctl(socket_fd, SIO_KEEPALIVE_VALS, (LPVOID)&RESin_kavars, RESl_k, (LPVOID)&RESout_kavars, RESl_k, &RESuBR, NULL, NULL) == SOCKET_ERROR) {
@@ -157,7 +155,7 @@ namespace fc {
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, (void*)&k_A[0], sizeof(int)); setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, (void*)&k_A[1], sizeof(int));
 //                 setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, (void*)&k_A[2], sizeof(int));
 // #endif
-                ROG* fib; fib->_.box = std::unique_ptr<fc::ROG>(fib = new ROG{ socket_fd, RES_TIME_T });// Dark magic
+                ROG* fib; fib->_.box = std::unique_ptr<fc::ROG>(fib = new ROG{ socket_fd });// Dark magic
 #if __linux__
                 epoll_ctl(this->epoll_fd, socket_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET, fib);
 #elif _WIN32

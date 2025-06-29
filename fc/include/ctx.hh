@@ -33,9 +33,7 @@ namespace fc {
     std::unique_ptr<fc::cache_file> cache_file;
     Conn& fiber;
     _Fsize_t content_length_;
-#ifdef _WIN32
-    DWORD nwritten;
-#elif __APPLE__
+#ifdef __APPLE__
     off_t nwritten;
 #endif
     int ret, http_minor{ 0 };

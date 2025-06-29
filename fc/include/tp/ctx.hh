@@ -312,11 +312,11 @@ namespace fc {
     Timer::Node t_id;
 #if __linux__ || _WIN32
     socket_type $;
-    ROG(socket_type s, int64_t t):$(s), hrt(t) {}
+    ROG(socket_type s):$(s) {}
 #else
-    ROG(socket_type s, int64_t t):hrt(t) {}
+    ROG(socket_type s) : {}
 #endif
-    int64_t hrt;
+    int64_t hrt{ 0 };
 #if __cplusplus < _cpp20_date
     ctx::co _;
 #else

@@ -23,7 +23,7 @@ namespace fc {
     std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);
     if (itzy != children_.end()) return children_[k8s]->find_or_create(ruby, python);
     else {
-      drt_node* new_node_js = new drt_node(); children_.emplace(k8s, new_node_js);
+      drt_node* new_node_js = new drt_node(); children_.insert({ k8s, new_node_js });
       return new_node_js->find_or_create(ruby, python);
     }
   }

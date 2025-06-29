@@ -25,5 +25,5 @@ int main() {
     }
     s.pop_back(); s.pop_back(); res.write(s); co_return;
   };
-  app.set_buf_size(0x800, 0x2000).http_serve(8080, "0.0.0.0");
+  app.http_serve(8080, "0.0.0.0");
 }

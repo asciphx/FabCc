@@ -64,8 +64,8 @@ namespace fc {
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
     co_await __->read_chunk([this, size, &p](_Fhandle fd)_ctx{
 #ifdef _WIN32
-      OVERLAPPED ov { 0 }; _EventRAII event; ov.hEvent = event.hEvent; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF);
-      ov.OffsetHigh = static_cast<DWORD>(p >> 32);
+      OVERLAPPED ov { 0 }; DWORD nwritten; _EventRAII event; ov.hEvent = event.hEvent;
+      ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
       if (!ov.hEvent) throw err::internal_server_error("Failed."); ret = static_cast<int>(ot.size());
       if (!ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
         if (GetLastError() != ERROR_IO_PENDING) { nwritten = 0; throw err::not_found(); }
@@ -174,7 +174,7 @@ namespace fc {
       } while (ov < content_length_);
 #else // Windows impl with basic read write.
       // if (fd == nullptr) { content_type = RES_NIL; throw err::not_found(); }
-      OVERLAPPED ov { 0 }; _EventRAII event; ov.hEvent = event.hEvent; ret = static_cast<int>(ot.size()); long long p{ 0 };
+      OVERLAPPED ov { 0 }; _EventRAII event; ov.hEvent = event.hEvent; ret = static_cast<int>(ot.size()); long long p{ 0 }; DWORD nwritten;
       if (!ov.hEvent) throw err::internal_server_error("Failed.");
       if (!ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
         if (GetLastError() != ERROR_IO_PENDING) { nwritten = 0; throw err::not_found(); }

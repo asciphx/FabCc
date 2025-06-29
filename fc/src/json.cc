@@ -43,7 +43,7 @@ namespace json {
     class Alloc {
       Array _a[4], _stack, _ustack; friend Parser; std::string _fs;
     public:
-      static const u32 N = 8192; Alloc(): _stack(), _ustack(0x20), _fs(0x800, '\0') {}
+      static const u32 N = 8192; Alloc(): _stack(), _ustack(0x20), _fs(0x400, '\0') {}
       _FORCE_INLINE void* alloc() { if (_a[0].empty()) { return ::malloc(16); } return _a[0].pop_back(); }
       _FORCE_INLINE void free(void* p) { _a[0].size() < ((N - Array::R) << 3) ? _a[0].push_back(p) : ::free(p); }
       _FORCE_INLINE void* alloc(u32 n) {

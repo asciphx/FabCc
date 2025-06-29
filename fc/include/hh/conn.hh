@@ -145,10 +145,12 @@ namespace fc {
     int k_a;
     bool is_idle = true;
     _FORCE_INLINE Conn(socket_type fd, sockaddr a, int k, fc::timer& t, ROG* r, epoll_handle_t e):
-      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e) {}
+      timer(t), k_a(k), socket_fd(fd), in_addr(a), rpg(r), epoll_fd(e) {
+      r->hrt = RES_TIME_T;
+    }
     _FORCE_INLINE ~Conn() {
 #if __cplusplus >= _cpp20_date
-     if (rpg->hrt) timer.cancel(rpg->t_id), epoll_del_cpp20(epoll_fd, socket_fd);
+     if (rpg->hrt) timer.cancel(rpg->t_id), rpg->hrt = 0, epoll_del_cpp20(epoll_fd, socket_fd);
 #endif
 #if _OPENSSL
       if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }

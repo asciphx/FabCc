@@ -71,8 +71,7 @@
           if(bool) Page.gotoPage(Page.state.current);else Page.gotoPage(1+Math.floor(Math.random()*Page.state.pageCount));
         },
         error: function (data) {
-          document.getElementById("text").innerHTML = data.responseText;
-          console.log(data); Page.state.pageCount = 0;
+          if(data) document.getElementById("text").innerHTML = data.responseText; console.log(data); Page.state.pageCount = 0;
         }
       });
     }

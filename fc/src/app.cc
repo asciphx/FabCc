@@ -74,7 +74,6 @@ namespace fc {
   //for example, 2G memory can be set to 512MB, because the idle memory is about 600+MB
   App& App::set_use_max_mem(const float& v) { USE_MAX_MEM_SIZE_MB = v <= 0x1ff ? 0x200 : v; return *this; }// < 600
 
-  App& App::set_buf_size(int rbN, int wbN) { rbNum = rbN; wbNum = wbN; return *this; }
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it
@@ -199,7 +198,7 @@ namespace fc {
                 co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime));
               }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(req.fiber.k_a + 2, [fib] { if (fib->_)fib->_.operator()(); });
+            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(3, [fib] { if (fib->_)fib->_.operator()(); });
             _CTX_return
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
@@ -218,7 +217,7 @@ namespace fc {
     }
     return app;
   }
-  App& App::set_keep_alive(unsigned char idle, unsigned char intvl, unsigned char probes) { k_A[0] = idle; k_A[1] = intvl; k_A[2] = probes; return *this; }
+  App& App::set_keep_alive(unsigned char i, unsigned char v, unsigned char p) { k_A[0] = i, k_A[1] = v, k_A[2] = p; return *this; }
   struct llParser: public llhttp__internal_s {
     std::string& url; std::string_view& raw_url, header_field, body; fc::sv_map& headers; cc::query_string& url_params;
     llParser(std::string& u, std::string_view& a, fc::sv_map& h, cc::query_string& q): url(u), raw_url(a), headers(h), url_params(q) {}
@@ -246,11 +245,10 @@ namespace fc {
   fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd); _CTX_return }
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd), re->hrt = 0; _CTX_return }
 #endif
 #endif
-    fc::sv_map hd; std::string_view ru; std::string url; char* rb, * wb; std::unique_ptr<char[]> ur(rb = new char[static_cast<App*>(ap)->rbNum]);
-    std::unique_ptr<char[]> uw(wb = new char[static_cast<App*>(ap)->wbNum]); cc::query_string up; Ctx ctx(f, wb, static_cast<App*>(ap)->wbNum);
+    fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x2000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP
     llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r, last_len, pret;
 #else
@@ -262,17 +260,17 @@ namespace fc {
 //     char sid[11]; sid[i2a(sid, f.socket_fd) - sid] = 0;
 // #endif // _WIN32
     do {
-      if (!(r = co_await f.read(rb, static_cast<App*>(ap)->rbNum))) { _CTX_return } last_len = end; end += r;
+      if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
       do {
 #if _LLHTTP
-        if (end == static_cast<App*>(ap)->rbNum) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+        if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
         if (pret == llhttp_errno::HPE_OK) {
           break;
         } else if (pret > 20) {
-          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(static_cast<App*>(ap)->rbNum - end))); if (0 == r) { _CTX_return }
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
         } else { _CTX_return }
 #else
-        if (end == static_cast<App*>(ap)->rbNum) { _CTX_return }
+        if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
         pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
         if (pret > 0) {
           break;
@@ -291,7 +289,7 @@ namespace fc {
         } else if (pret == -1) {
           _CTX_return;
         } else if (pret == -2) {
-          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(static_cast<App*>(ap)->rbNum - end))); if (0 == r) { _CTX_return }
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
         }
 #endif
       } while (RESon);

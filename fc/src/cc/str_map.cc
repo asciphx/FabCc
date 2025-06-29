@@ -81,9 +81,12 @@ namespace fc {
       n &= 15;
     }
     for (; n >= 8; x += 8, y += 8, n -= 8) {
-      __m128i chunk_x = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
-      __m128i chunk_y = _mm_loadu_si128(reinterpret_cast<const __m128i*>(y));
-      if (_mm_cvtsi128_si64(_mm_xor_si128(chunk_x, chunk_y)) & _m) return false;
+      if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24) |
+        (static_cast<size_t>(x[4]) << 32) | (static_cast<size_t>(x[5]) << 40) |
+        (static_cast<size_t>(x[6]) << 48) | (static_cast<size_t>(x[7]) << 56)) ^
+        (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24) |
+          (static_cast<size_t>(y[4]) << 32) | (static_cast<size_t>(y[5]) << 40) |
+          (static_cast<size_t>(y[6]) << 48) | (static_cast<size_t>(y[7]) << 56))) & _m) return false;
     }
     for (; n >= 4; x += 4, y += 4, n -= 4) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
@@ -140,9 +143,12 @@ namespace fc {
       n &= 15;
     }
     for (; n >= 8; x += 8, y += 8, n -= 8) {
-      __m128i chunk_x = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
-      __m128i chunk_y = _mm_loadu_si128(reinterpret_cast<const __m128i*>(y));
-      if (_mm_cvtsi128_si64(_mm_xor_si128(chunk_x, chunk_y)) & _m) return false;
+      if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24) |
+        (static_cast<size_t>(x[4]) << 32) | (static_cast<size_t>(x[5]) << 40) |
+        (static_cast<size_t>(x[6]) << 48) | (static_cast<size_t>(x[7]) << 56)) ^
+        (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24) |
+          (static_cast<size_t>(y[4]) << 32) | (static_cast<size_t>(y[5]) << 40) |
+          (static_cast<size_t>(y[6]) << 48) | (static_cast<size_t>(y[7]) << 56))) & _m) return false;
     }
     for (; n >= 4; x += 4, y += 4, n -= 4) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
