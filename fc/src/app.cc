@@ -198,7 +198,7 @@ namespace fc {
                 co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime));
               }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
-            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(3, [fib] { if (fib->_)fib->_.operator()(); });
+            ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(req.fiber.k_a + 2, [fib] { if (fib->_)fib->_.operator()(); });
             _CTX_return
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
@@ -259,6 +259,27 @@ namespace fc {
 // #else
 //     char sid[11]; sid[i2a(sid, f.socket_fd) - sid] = 0;
 // #endif // _WIN32
+    if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
+    do {
+#if _LLHTTP
+      if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+      if (pret == llhttp_errno::HPE_OK) {
+        break;
+      } else if (pret > 20) {
+        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+      } else { _CTX_return }
+#else
+      if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
+      pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
+      if (pret > 0) {
+        break;
+      } else if (pret == -1) {
+        _CTX_return;
+      } else if (pret == -2) {
+        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+      }
+#endif
+    } while (RESon); f.k_a <<= 1; goto _;
     do {
       if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
       do {
@@ -292,7 +313,7 @@ namespace fc {
           last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
         }
 #endif
-      } while (RESon);
+      } while (RESon); _:
 #ifdef _WIN32
       f.epoll_fix(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32

@@ -311,18 +311,19 @@ namespace fc {
   struct ROG {
     Timer::Node t_id;
 #if __linux__ || _WIN32
-    socket_type $;
+    alignas(16) int64_t hrt;
+    alignas(16) socket_type ${ 0 };
     ROG(socket_type s):$(s) {}
-#else
-    ROG(socket_type s) : {}
 #endif
-    int64_t hrt{ 0 };
 #if __cplusplus < _cpp20_date
     ctx::co _;
 #else
     fc::Task<ROG> _;
 #endif
-    ROG():$(0) {}
+#if __APPLE__
+    int64_t hrt;
+#endif
+    ROG():hrt(0) {}
   };
 }
 #undef CTX_MIN_SIZE
