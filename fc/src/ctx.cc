@@ -68,7 +68,7 @@ namespace fc {
       ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32);
       if (!ov.hEvent) throw err::internal_server_error("Failed."); ret = static_cast<int>(ot.size());
       if (!ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
-        if (GetLastError() != ERROR_IO_PENDING) { nwritten = 0; throw err::not_found(); }
+        if (GetLastError() != ERROR_IO_PENDING) { throw err::not_found(); }
         WaitForSingleObject(ov.hEvent, 3000); if (!GetOverlappedResult(fd, &ov, &nwritten, TRUE)){ co_await ot.flush(); goto _; }
       }
       if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
@@ -76,14 +76,14 @@ namespace fc {
       do {
         nwritten = 0;
         if (!ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
-          if (GetLastError() != ERROR_IO_PENDING) { nwritten = 0; throw err::not_found(); }
-          WaitForSingleObject(ov.hEvent, INFINITE); if (!GetOverlappedResult(fd, &ov, &nwritten, FALSE)){ nwritten = 0; throw err::not_found(); }
+          if (GetLastError() != ERROR_IO_PENDING) { throw err::not_found(); }
+          WaitForSingleObject(ov.hEvent, INFINITE); if (!GetOverlappedResult(fd, &ov, &nwritten, FALSE)){ throw err::not_found(); }
         }
         if (co_await this->fiber.send(ot.buffer_, nwritten)) {
           p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
         }
         break;
-      } while (ov.Offset < size); nwritten = 0;
+      } while (ov.Offset < size);
 #else
 #if _OPENSSL
       off_t ov = ot.size(); lseek(fd, p, SEEK_SET);
@@ -177,7 +177,7 @@ namespace fc {
       OVERLAPPED ov { 0 }; _EventRAII event; ov.hEvent = event.hEvent; ret = static_cast<int>(ot.size()); long long p{ 0 }; DWORD nwritten;
       if (!ov.hEvent) throw err::internal_server_error("Failed.");
       if (!ReadFile(fd, ot.cursor_, static_cast<DWORD>(ot.cap_ - ret), &nwritten, &ov)) {
-        if (GetLastError() != ERROR_IO_PENDING) { nwritten = 0; throw err::not_found(); }
+        if (GetLastError() != ERROR_IO_PENDING) { throw err::not_found(); }
         WaitForSingleObject(ov.hEvent, 1000); if (!GetOverlappedResult(fd, &ov, &nwritten, TRUE)){ co_await ot.flush(); goto _; }
       }
       if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
@@ -185,15 +185,15 @@ namespace fc {
       do {
         nwritten = 0;
         if (!ReadFile(fd, ot.buffer_, static_cast<DWORD>(ot.cap_), &nwritten, &ov)) {
-          if (GetLastError() != ERROR_IO_PENDING) { nwritten = 0; throw err::not_found(); }
-          WaitForSingleObject(ov.hEvent, 1000); if (!GetOverlappedResult(fd, &ov, &nwritten, FALSE)) { nwritten = 0; throw err::not_found(); }
+          if (GetLastError() != ERROR_IO_PENDING) { throw err::not_found(); }
+          WaitForSingleObject(ov.hEvent, 1000); if (!GetOverlappedResult(fd, &ov, &nwritten, FALSE)) { throw err::not_found(); }
         }
         if (co_await this->fiber.send(ot.buffer_, nwritten)) {
           p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF);
           ov.OffsetHigh = static_cast<DWORD>(p >> 32); continue;
         }
         break;
-      } while (ov.Offset < content_length_); nwritten = 0;
+      } while (ov.Offset < content_length_);
 #endif
       co_return;
     });

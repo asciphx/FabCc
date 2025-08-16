@@ -32,7 +32,7 @@
       vi.src = pageArr[i].name.replace(/&amp;/g,'&').replace(/#/g,'%23').replace(/\+/g,'%2b');
       vi.style["max-width"]=screen.availWidth*0.6 + "px"; if(i!= p_i&& p_i >= start&&p_i < ends)document.getElementById("t"+p_i).style.color="black"; p_i = i;
     }
-    var Page = new Pagination({
+    var P = new Pagination({
         // 页码偏移(为1的时,适合移动端)
         maxShow:3,
         pageCount:0,
@@ -67,11 +67,11 @@
         //},
         async: true,
         success: function (data) {
-          Page.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data;
-          if(bool) Page.gotoPage(Page.state.current);else Page.gotoPage(1+Math.floor(Math.random()*Page.state.pageCount));
+          P.state.pageCount = Math.ceil(data.length / pageNum); pageArr = data;
+          if(bool&&P.state.pageCount>=P.state.current)P.gotoPage(P.state.current);else P.gotoPage(1+Math.floor(Math.random()*P.state.pageCount));
         },
         error: function (data) {
-          if(data) document.getElementById("text").innerHTML = data.responseText; console.log(data); Page.state.pageCount = 0;
+          if(data) document.getElementById("text").innerHTML = data.responseText; console.log(data); P.state.pageCount = 0;
         }
       });
     }

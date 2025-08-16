@@ -62,9 +62,10 @@ namespace fc {
     void write_async(std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
     //Generally used to read configuration files, or slow io operations, return string
     void write_async_s(std::function<std::string()>&& f, short i = CACHE_HTML_TIME_SECOND);
-    _FORCE_INLINE void write(const json::Json& j) { ctx.set_content_type("application/json", 16); body = j.str(); };
-    _FORCE_INLINE void write(const std::string& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body = std::move(b); };
-    _FORCE_INLINE void write(const char* b) { body = b; };
+    _FORCE_INLINE void write(const json::Json& j) { ctx.set_content_type("application/json", 16); body.append(j.str()); };
+    _FORCE_INLINE void write(const std::string& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body.append(b.c_str(), b.length()); };
+    _FORCE_INLINE void write(const std::string_view& b) { ctx.set_content_type("text/plain;charset=UTF-8", 24); body.append(b.data(), b.size()); };
+    _FORCE_INLINE void write(const char* b) { body.append(b); };
     inline void set_status(int s) { ctx.set_status(s); }
     std::string& compress_str(char* const str, unsigned int len);
     std::string& decompress_str(char* const str, unsigned int len);
