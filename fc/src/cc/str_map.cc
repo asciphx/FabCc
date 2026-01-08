@@ -50,13 +50,13 @@ namespace fc {
       }
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
-    while (n >= 8) {
+    if (n >= 8) {
       r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
         (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
         (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
-    while (n >= 4) {
+    if (n >= 4) {
       uint32_t chunk = (case_table[p[0]] | (case_table[p[1]] << 8) |
         (case_table[p[2]] << 16) | (case_table[p[3]] << 24));
       r = r * 5 + chunk; p += 4; n -= 4;
@@ -80,17 +80,19 @@ namespace fc {
       }
       n &= 15;
     }
-    for (; n >= 8; x += 8, y += 8, n -= 8) {
+    if (n >= 8) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24) |
         (static_cast<size_t>(x[4]) << 32) | (static_cast<size_t>(x[5]) << 40) |
         (static_cast<size_t>(x[6]) << 48) | (static_cast<size_t>(x[7]) << 56)) ^
         (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24) |
           (static_cast<size_t>(y[4]) << 32) | (static_cast<size_t>(y[5]) << 40) |
           (static_cast<size_t>(y[6]) << 48) | (static_cast<size_t>(y[7]) << 56))) & _m) return false;
+      x += 8, y += 8, n -= 8;
     }
-    for (; n >= 4; x += 4, y += 4, n -= 4) {
+    if (n >= 4) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
         (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24))) & _um) return false;
+      x += 4, y += 4, n -= 4;
     }
     for (; n; ++x, ++y, --n) if ((*x ^ *y) & 0xDF) return false; return true;
   }
@@ -112,13 +114,13 @@ namespace fc {
       }
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
-    while (n >= 8) {
+    if (n >= 8) {
       r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
         (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
         (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
-    while (n >= 4) {
+    if (n >= 4) {
       uint32_t chunk = (case_table[p[0]] | (case_table[p[1]] << 8) |
         (case_table[p[2]] << 16) | (case_table[p[3]] << 24));
       r = r * 5 + chunk; p += 4; n -= 4;
@@ -142,17 +144,19 @@ namespace fc {
       }
       n &= 15;
     }
-    for (; n >= 8; x += 8, y += 8, n -= 8) {
+    if (n >= 8) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24) |
         (static_cast<size_t>(x[4]) << 32) | (static_cast<size_t>(x[5]) << 40) |
         (static_cast<size_t>(x[6]) << 48) | (static_cast<size_t>(x[7]) << 56)) ^
         (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24) |
           (static_cast<size_t>(y[4]) << 32) | (static_cast<size_t>(y[5]) << 40) |
           (static_cast<size_t>(y[6]) << 48) | (static_cast<size_t>(y[7]) << 56))) & _m) return false;
+      x += 8, y += 8, n -= 8;
     }
-    for (; n >= 4; x += 4, y += 4, n -= 4) {
+    if (n >= 4) {
       if (((x[0] | (x[1] << 8) | (x[2] << 16) | (x[3] << 24)) ^
         (y[0] | (y[1] << 8) | (y[2] << 16) | (y[3] << 24))) & _um) return false;
+      x += 4, y += 4, n -= 4;
     }
     for (; n; ++x, ++y, --n) if ((*x ^ *y) & 0xDF) return false; return true;
   }

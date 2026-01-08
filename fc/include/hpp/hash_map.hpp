@@ -44,7 +44,7 @@ namespace fc {
         (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
-    while (n >= 4) {
+    if (n >= 4) {
       uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um; r = r * 5 + chunk; p += 4; n -= 4;
     }
     while (n--) r = r * 5 + (*p++ & 0xDF); return (r - key.length()) & (mod - 1);
@@ -63,13 +63,13 @@ namespace fc {
       }
       r = _mm_cvtsi128_si32(hash_vec); n &= 15;
     }
-    while (n >= 8) {
+    if (n >= 8) {
       r = (r * 5 + ((p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24) |
         (static_cast<size_t>(p[4]) << 32) | (static_cast<size_t>(p[5]) << 40) |
         (static_cast<size_t>(p[6]) << 48) | (static_cast<size_t>(p[7]) << 56)) & ~0x2020202020202020));
       p += 8; n -= 8;
     }
-    while (n >= 4) {
+    if (n >= 4) {
       uint32_t chunk = (p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24)) & _um;
       r = r * 5 + chunk; p += 4; n -= 4;
     }
