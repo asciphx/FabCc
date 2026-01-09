@@ -168,12 +168,11 @@ namespace fc {
               }
 #endif
               if (sv[2] == 'd' && sv[4] == 'o' && (sv[3] == 'i' || sv[1] == 'i')) {
-                std::string range{ req.headers.operator[]("range") };
+                std::string_view& range = req.headers.operator[]("range");
                 if (!range.empty()) {
-                  res.set_status(206); ctx->format_top_headers();
-                  i64 l = range.find('=') + 1, r = range.rfind('-'); _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l));
-                  ctx->ot.append("Accept-Ranges: bytes\r\n", 22); range = range.substr(++r);
-                  l = std::lexical_cast<long long>(range); r = l > 0 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
+                  res.set_status(206); ctx->format_top_headers(); i64 l = range.find('=') + 1, r = range.rfind('-');
+                  _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l)); ctx->ot.append("Accept-Ranges: bytes\r\n", 22);
+                  l = std::lexical_cast<long long>(range.substr(++r)); r = l > 0 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
                   (ctx->ot.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
                   p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
