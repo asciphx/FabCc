@@ -19,9 +19,6 @@ namespace fc {
     if (content_type[0]) ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);
     (ot << RES_content_length_tag << s).append("\r\n\r\n", 4);
   }
-  void Ctx::add_header(const std::string_view& k, const std::string_view& v) { ot.append(k).append(": ", 2).append(v).append("\r\n", 2); }
-  void Ctx::add_header(const std::string_view& k, const char* v) { ot.append(k).append(": ", 2) << v; ot.append("\r\n", 2); }
-  void Ctx::add_header(const std::string_view& k, std::string&& v) { ot.append(k).append(": ", 2).append(std::move(v)).append("\r\n", 2); }
   void Ctx::set_cookie(std::string_view k, std::string_view v) {
     (ot.append("Set-Cookie: ", 12).append(k) << '=').append(v).append("\r\n", 2);
   }//(\"\d+[ A-Za-z-]+\\r\\n\")
@@ -200,7 +197,7 @@ namespace fc {
     content_length_ = 0; if (__.use_count() == 1) const_cast<std::shared_ptr<fc::file_sptr>&>(__) = std::make_shared<file_sptr>(); co_return;
   }
   void Ctx::prepare_next_request() {
-    status_ = std::string_view("200 OK\r\n", 8); content_type = RES_NIL;
+    status_ = std::string_view("200 OK\r\n", 8);
 #ifdef _WIN32
     fiber.epoll_fix(EPOLLIN | EPOLLRDHUP);
 #endif // _WIN32

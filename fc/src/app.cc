@@ -133,7 +133,7 @@ namespace fc {
       std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
       app.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
-        std::string _($); reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
+        std::string _($); reinterpret_cast<Ctx*&>(res)->content_type = std::string_view("text/html;charset=UTF-8", 23);
         *reinterpret_cast<int*>(&req) = 1; _.append("index.html", 10);
         *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
       };
@@ -206,7 +206,7 @@ namespace fc {
       };
 #ifdef __linux__
       app.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
-        std::string _($); reinterpret_cast<Ctx*&>(res)->set_content_type("text/html;charset=UTF-8", 23);
+        std::string _($); reinterpret_cast<Ctx*&>(res)->content_type = std::string_view("text/html;charset=UTF-8", 23);
         *reinterpret_cast<int*>(&req) = 1; _.append("index.html", 10);
         *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
       };

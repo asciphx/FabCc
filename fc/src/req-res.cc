@@ -58,8 +58,8 @@ namespace fc {
     ctx.ot.reset(); ctx.set_status(always ? 301 : 302); headers.erase({ "Location", 8 }); headers.emplace(RES_Loc, std::move(location));
   }
   void Res::write_async(std::function<json::Json()>&& f, short i) {
-    std::string b = app.get_cache(mask_url); if (!b.empty()) { ctx.set_content_type("application/json", 16); body = std::move(b); return; }
-    b = f().str(); ctx.set_content_type("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
+    std::string b = app.get_cache(mask_url); if (!b.empty()) { ctx.content_type = std::string_view("application/json", 16); body = std::move(b); return; }
+    b = f().str(); ctx.content_type = std::string_view("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };
   void Res::write_async_s(std::function<std::string()>&& f, short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { body = std::move(b); return; }

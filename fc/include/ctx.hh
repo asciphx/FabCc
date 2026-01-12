@@ -15,7 +15,6 @@
 #include <sys/sendfile.h>
 #endif
 #include <unordered_map>
-#include "hh/lexical_cast.hh"
 #include "hh/http_error.hh"
 #include "hpp/output_buffer.hpp"
 #include "hh/tcp.hh"
@@ -50,11 +49,6 @@ namespace fc {
     //1 =  HTTP/1.1, 0 = HTTP/1.0
     int get_http_version();
     void respond(size_t s, str_map& map);
-    _FORCE_INLINE void set_content_type(const std::string_view& sv) { if (!content_type[0])content_type = sv; };
-    _FORCE_INLINE void set_content_type(const char* v, size_t&& l) { if (!content_type[0])content_type = std::string_view(v, l); };
-    void add_header(const std::string_view& k, const std::string_view& v);
-    void add_header(const std::string_view& k, const char* v);
-    void add_header(const std::string_view& k, std::string&& v);
     void set_cookie(std::string_view k, std::string_view v);
     void set_status(int status);
     // Send a file_sptr with pos
