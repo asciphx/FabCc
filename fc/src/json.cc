@@ -188,11 +188,11 @@ namespace json {
     //u32 state; u32 size;
     union { u32 state; void* pstate; }; union { u32 size;  void* psize; }; void* key; const char* p; size_t l = 0;
     xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0;
-    skip_white_space(b, e); if (_unlikely(b == e)) return false;
+    skip_white_space(b, e);
     switch (*b) {
     case '{': goto obj_beg; case '[': goto arr_beg; case '"': b = parse_string(++b, e, val); break;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
-    case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
+    case 'n': b = parse_null(b, e, val); break; case '\0': return false; default: b = parse_number(b, e, val);
     }
     if (b == 0) goto err; goto end;
   obj_beg:
@@ -202,21 +202,20 @@ namespace json {
     size = s.size(); // current size
     state = '{';
   obj_val_beg:
-    skip_white_; if (b == e) goto err; if (*b == '}') goto val_end; if (*b++ != '"') goto err;
+    skip_white_; if (*b == '}') goto val_end; if (*b != '"') goto err; ++b;
     p = static_cast<const char*>(memchr(b, '"', e - b)); $: l += p - b - l;
     if (b[l - 1] == '\\') { ++l; p = static_cast<const char*>(memchr(b + l, '"', e - b - l)); goto $; }
-    if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key);// b = parse_key(b, e, key); if (b == 0) goto err;
-    skip_white_; if (b == e || *b != ':') goto err;
-    skip_white_; if (b == e) goto err;
+    if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key);
+    skip_white_; if (*b != ':') goto err;
+    skip_white_;
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
-    case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
+    case 'n': b = parse_null(b, e, val); break; case '\0': goto err; default: b = parse_number(b, e, val);
     }
     if (b == 0) goto err; s.push_back(val);
   obj_val_end:
     skip_white_;
-    if (b == e) goto err;
     if (*b == ',') goto obj_val_beg;
     if (*b == '}') goto val_end;
     goto err;
@@ -228,15 +227,15 @@ namespace json {
     state = '[';
   arr_val_beg:
     skip_white_;
-    if (b == e) goto err; if (*b == ']') goto val_end;
+    if (*b == ']') goto val_end;
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
-    case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
+    case 'n': b = parse_null(b, e, val); break; case '\0': goto err; default: b = parse_number(b, e, val);
     }
     if (b == 0) goto err; s.push_back(val);
   arr_val_end:
-    skip_white_; //if (b == e) goto err;
+    skip_white_;
     if (*b == ',') goto arr_val_beg; if (*b == ']') goto val_end; goto err;
   val_end:
     if (s.size() > size) {
@@ -460,7 +459,7 @@ namespace json {
       u64 u = *p - '0'; if (u > 9) return 0; while (++p < e) { c = *p; if (0X2f < c && c < 0X3a) {} else break; }
       if (*p == '.' || *p == 'e' || *p == 'E') goto $; c = static_cast<char>(p - b); if (c > 20) goto $;
       if (c == 20) { if (memcmp(b, "18446744073709551615", 20) > 0) goto $; } while (++b < p) { u = u * 10 + *b - '0'; }
-      v = u > INT64_MAX ? new(_a.alloc()) Json::_H(u) : new(_a.alloc()) Json::_H(static_cast<i64>(u)); return --p;
+      v = u <= INT64_MAX ? new(_a.alloc()) Json::_H(static_cast<i64>(u)) : new(_a.alloc()) Json::_H(u); return --p;
     }
   $:// { double d; if (str2double(b, d)) { v = new(_a.alloc()) Json::_H(d); return p - 1; } return 0; }
     {
@@ -472,39 +471,39 @@ namespace json {
   }
   bool Parser::parse_comments(const char* b, const char* e, void*& val) {
     union { u32 state; void* pstate; }; union { u32 size;  void* psize; }; void* key; const char* p; size_t l = 0; char m;
-    xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0; skip_white_space(b, e); if (b == e) return false;
+    xx::Array& s = _a._stack; xx::Array& u = _a._ustack; state = size = 0; skip_white_space(b, e);
   obj_txt:
     switch (*b) {
     case '/': ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; break; } } skip_white_space(b, e); goto obj_txt; }
             if (*b == 0x2A) { while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) { skip_white_; goto obj_txt; } } } } break;
     case '{': goto obj_beg; case '[': goto arr_beg; case '"': b = parse_string(++b, e, val); break;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
-    case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
+    case 'n': b = parse_null(b, e, val); break; case '\0': return false; default: b = parse_number(b, e, val);
     }
     if (b == 0) goto err; goto end;
   obj_beg:
     u.push_back(psize); u.push_back(pstate); s.push_back(make_object(_a)); size = s.size(); state = '{';
   obj_val_beg:
-    skip_white_; if (b == e) goto err; if (*b == '}') goto val_end;
-    if (*b == '/') {
-      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; goto obj_val_beg; } } goto err; } if (*b == 0x2A) {
+    skip_white_; m = *b; if (m == '}') goto val_end;
+    if (m == '/') {
+      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; --b; goto obj_val_beg; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_beg; } } goto err;
       }
     }
-    if (*b++ != '"') goto err; p = static_cast<const char*>(memchr(b, '"', e - b)); $: l += p - b - l;
+    if (*b != '"') goto err; ++b; p = static_cast<const char*>(memchr(b, '"', e - b)); $: l += p - b - l;
     if (b[l - 1] == '\\') { ++l; p = static_cast<const char*>(memchr(b + l, '"', e - b - l)); goto $; }
     if (p) { key = make_key(_a, b, l); } else goto err; b = p; s.push_back(key); skip_white_;
-    if (b == e || *b != ':') goto err; skip_white_; if (b == e) goto err;
+    if (*b != ':') goto err; skip_white_;
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
-    case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
+    case 'n': b = parse_null(b, e, val); break; case '\0': goto err; default: b = parse_number(b, e, val);
     }
     if (b == 0) goto err; s.push_back(val);
   obj_val_end:
-    skip_white_; if (b == e) goto err; m = *b; if (m == ',') goto obj_val_beg; if (m == '}' || m == ']') goto val_end;
-    if (*b == '/') {
-      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
+    skip_white_; m = *b; if (m == ',') goto obj_val_beg; if (m == '}' || m == ']') goto val_end;
+    if (m == '/') {
+      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == '}') goto val_end; --b; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } }
       }
     }
@@ -516,22 +515,22 @@ namespace json {
     size = s.size(); // current size
     state = '[';
   arr_val_beg:
-    skip_white_; if (b == e) goto err; if (*b == ']') goto val_end;
-    if (*b == '/') {
-      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; goto arr_val_beg; } } goto err; } if (*b == 0x2A) {
+    skip_white_; m = *b; if (m == ']') goto val_end;
+    if (m == '/') {
+      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; --b; goto arr_val_beg; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto arr_val_beg; } } goto err;
       }
     }
     switch (*b) {
     case '"': b = parse_string(++b, e, val); break; case '{': goto obj_beg; case '[': goto arr_beg;
     case 'f': b = parse_false(b, e, val); break; case 't': b = parse_true(b, e, val); break;
-    case 'n': b = parse_null(b, e, val); break; default: b = parse_number(b, e, val);
+    case 'n': b = parse_null(b, e, val); break; case '\0': goto err; default: b = parse_number(b, e, val);
     }
     if (b == 0) goto err; s.push_back(val);
   arr_val_end:
     skip_white_; m = *b; if (m == ',') goto arr_val_beg; if (m == ']') goto val_end;
-    if (*b == '/') {
-      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
+    if (m == '/') {
+      ++b; if (*b == '/') { while (*++b) { if (*b == 0xA) { ++b; if (*b == ']') goto val_end; --b; goto obj_val_end; } } goto err; } if (*b == 0x2A) {
         while (*++b) { if (*b == 0x2A) { if (*++b == 0x2F) goto obj_val_end; } }
       }
     }
