@@ -21,24 +21,7 @@
 #include "tp/c++.h"
 template <typename T> class box;
 namespace std {
-  template <class T> struct is_box_impl: std::false_type {}; template <class T> struct is_box_impl<box<T>>: std::true_type {};
-  template<typename T> static auto is_ojbk(int) -> std::integral_constant<bool, std::is_same<typename T::_$_, in_place_t>::value> {};
-  template<typename...> static auto is_ojbk(...) -> std::false_type; template<typename T> struct is_reg: decltype(is_ojbk<T>(0)){};
   template <class T> struct hash<box<T>> { size_t operator()(const box<T>& o) const { if (o) return hash<std::remove_const_t<T>>()(*o); return 0; } };
-  template<typename T> struct box_pack {}; template<typename T> struct box_pack<box<T>> { using type = T; };
-  template<typename T> using box_pack_t = typename box_pack<T>::type; template <class T> struct is_arr: std::false_type {};
-  template <class T> struct is_arr<std::list<T>>: std::true_type {}; template <class T> struct is_arr<std::forward_list<T>>: std::true_type {};
-  template <class T> struct is_arr<std::deque<T>>: std::true_type {}; template <class T> struct is_arr<std::vector<T>>: std::true_type {};
-  template<typename C> struct arr_pack {}; template<typename C> struct set_pack {}; template <class T> struct is_set: std::false_type {};
-  template <class T> struct is_set<std::set<T>>: std::true_type {}; template <class T> struct is_set<std::unordered_multiset<T>>: std::true_type {};
-  template <class T> struct is_set<std::multiset<T>>: std::true_type {}; template <class T> struct is_set<std::unordered_set<T>>: std::true_type {};
-  template<class C> struct is_mmp: std::false_type {}; template<class T, typename V> struct is_mmp<std::map<T, V>>: std::true_type {};
-  template<class T, typename V> struct is_mmp<std::multimap<T, V>>: std::true_type {}; template <class T> using is_box = is_box_impl<std::decay_t<T>>;
-  template<class T, typename V> struct is_mmp<std::unordered_map<T, V>>: std::true_type {};
-  template<class T, typename V> struct is_mmp<std::unordered_multimap<T, V>>: std::true_type {};
-  template<template<typename, typename> class C, typename A, typename B> struct arr_pack<C<A, B>> { using type = A; };
-  template<template<typename, typename, typename> class D, typename A, typename B, typename C> struct set_pack<D<A, B, C>> { using type = A; };
-  template<typename T> using arr_pack_t = typename arr_pack<T>::type; template<typename T> using set_pack_t = typename set_pack<T>::type;
 }
 template<typename T> using vec = std::vector<T>; template<typename T> using lis = std::forward_list<T>; template<typename T> using deq = std::deque<T>;
 template <class T, class... K> inline constexpr box<T> make_box(K &&... k) { return box<T>(std::forward<K>(k)...); }
@@ -88,7 +71,26 @@ public:
   T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }
   _FORCE_INLINE void reset() noexcept { if (this->p) { delete this->p; } this->b = false; }
 };
-template<typename T, std::enable_if_t<!std::is_reg<T>::value>* = null>
+namespace fc {
+  template <class T> struct is_box_impl: std::false_type {}; template <class T> struct is_box_impl<box<T>>: std::true_type {};
+  template<typename T> static auto is_ojbk(int) -> std::integral_constant<bool, std::is_same<typename T::_$_, std::in_place_t>::value> {};
+  template<typename...> static auto is_ojbk(...) -> std::false_type; template<typename T> struct is_reg: decltype(is_ojbk<T>(0)){};
+  template<typename T> struct box_pack {}; template<typename T> struct box_pack<box<T>> { using type = T; };
+  template<typename T> using box_pack_t = typename box_pack<T>::type; template <class T> struct is_arr: std::false_type {};
+  template <class T> struct is_arr<std::list<T>>: std::true_type {}; template <class T> struct is_arr<std::forward_list<T>>: std::true_type {};
+  template <class T> struct is_arr<std::deque<T>>: std::true_type {}; template <class T> struct is_arr<std::vector<T>>: std::true_type {};
+  template<typename C> struct arr_pack {}; template<typename C> struct set_pack {}; template <class T> struct is_set: std::false_type {};
+  template <class T> struct is_set<std::set<T>>: std::true_type {}; template <class T> struct is_set<std::unordered_multiset<T>>: std::true_type {};
+  template <class T> struct is_set<std::multiset<T>>: std::true_type {}; template <class T> struct is_set<std::unordered_set<T>>: std::true_type {};
+  template<class C> struct is_mmp: std::false_type {}; template<class T, typename V> struct is_mmp<std::map<T, V>>: std::true_type {};
+  template<class T, typename V> struct is_mmp<std::multimap<T, V>>: std::true_type {}; template <class T> using is_box = is_box_impl<std::decay_t<T>>;
+  template<class T, typename V> struct is_mmp<std::unordered_map<T, V>>: std::true_type {};
+  template<class T, typename V> struct is_mmp<std::unordered_multimap<T, V>>: std::true_type {};
+  template<template<typename, typename> class C, typename A, typename B> struct arr_pack<C<A, B>> { using type = A; };
+  template<template<typename, typename, typename> class D, typename A, typename B, typename C> struct set_pack<D<A, B, C>> { using type = A; };
+  template<typename T> using arr_pack_t = typename arr_pack<T>::type; template<typename T> using set_pack_t = typename set_pack<T>::type;
+}
+template<typename T, std::enable_if_t<!fc::is_reg<T>::value>* = null>
 std::string& operator<<(std::string& b, const box<T>& v) { if (v) return b << *v; return b.append("null", 4); };
 template <typename T>
 std::ostream& operator<<(std::ostream& s, const box<T>& b) { if (b) return s << *b; return s << "null"; }

@@ -4669,7 +4669,8 @@ SQLITE_PRIVATE void sqlite3MemoryBarrier(void){
 #if SQLITE_OS_WIN
 #ifndef SQLITE_OS_WIN_H
 #define SQLITE_OS_WIN_H
-#include "h/windows.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #ifdef __CYGWIN__
 # include <sys/cygwin.h>
 # include <errno.h>

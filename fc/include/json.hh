@@ -105,11 +105,11 @@ namespace json {
     Json(const std::array<T, N>& v): _h(new(xx::alloc()) _H(_arr_t())) { this->push_back(v[0]); for (u32 i = 1; i < N; ++i) this->push_back(v[i]); }
     template<typename T>
     Json(const std::stack<T>& v) : _h(new(xx::alloc()) _H(_arr_t())) { std::stack<T> $ = v; while (!$.empty())this->push_back($.top()), $.pop(); }
-    template<typename T, std::enable_if_t<std::is_arr<T>::value || std::is_set<T>::value>* = null>
+    template<typename T, std::enable_if_t<fc::is_arr<T>::value || fc::is_set<T>::value>* = null>
     Json(const T & v) : _h(new(xx::alloc()) _H(_arr_t())) {
       auto t = v.begin(); if (t != v.end()) { this->push_back(*t); while (++t != v.end()) this->push_back(*t); }
     }
-    template<typename T, std::enable_if_t<std::is_mmp<std::remove_const_t<T>>::value>* = null>
+    template<typename T, std::enable_if_t<fc::is_mmp<std::remove_const_t<T>>::value>* = null>
     Json(std::remove_const_t<T>& v): _h(new(xx::alloc()) _H(_obj_t())) {
       Json j; std::string b; b.reserve(0x100); b << '{'; auto t = v.begin(); if (t != v.end()) {
         j = &t->second; b << '"' << t->first << '"' << ':' << j.str();
@@ -232,7 +232,7 @@ namespace json {
     template <typename T> _FORCE_INLINE void get_to(box<T>& $) {
       if (this->str() == RES_NULL) return; if (!$) $ = new T{}, * ((bool*)(&$)) = true; this->get_to(static_cast<T&>(*$));
     }
-    template <typename T, std::enable_if_t<std::is_mmp<std::remove_const_t<T>>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_mmp<std::remove_const_t<T>>::value>* = null>
     _FORCE_INLINE void get_to(std::remove_const_t<T>& v) {
       if (!v.empty()) v.clear(); typename T::key_type _; typename T::mapped_type $;
       auto t = this->begin(); if (t != iterator::end()) {
@@ -252,16 +252,16 @@ namespace json {
     _FORCE_INLINE void get_to(std::stack<T>& $) {
       while (!$.empty())$.pop(); for (u32 i = this->array_size(); --i != UINT32_MAX;) { T _{}; this->get(i).get_to(_); $.emplace(_); }
     }
-    template <typename T, std::enable_if_t<std::is_set<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_set<T>::value>* = null>
     _FORCE_INLINE void get_to(T& $) {
-      if (!$.empty()) $.clear(); for (u32 i = 0; i < this->array_size(); ++i) { std::set_pack_t<T> _{}; this->get(i).get_to(_); $.emplace(_); }
+      if (!$.empty()) $.clear(); for (u32 i = 0; i < this->array_size(); ++i) { fc::set_pack_t<T> _{}; this->get(i).get_to(_); $.emplace(_); }
     }
-    template <typename T, std::enable_if_t<std::is_arr<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_arr<T>::value>* = null>
     _FORCE_INLINE void get_to(T& $) {
-      if (!$.empty()) $.clear(); for (u32 i = 0; i < this->array_size(); ++i) { std::arr_pack_t<T> _{}; this->get(i).get_to(_); $.emplace_back(_); }
+      if (!$.empty()) $.clear(); for (u32 i = 0; i < this->array_size(); ++i) { fc::arr_pack_t<T> _{}; this->get(i).get_to(_); $.emplace_back(_); }
     }
     //i8 i = -1; fc::ForEachField(fc::Tuple<T>(), &$, [&i, this](auto& t) { this->operator[](T::$[++i]).get_to(t); });
-    template <typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_reg<T>::value>* = null>
     _FORCE_INLINE void get_to(T& $) {
       if (!_h) { _h = new(xx::alloc()) _H(_obj_t()); return; } if (_h->type == t_object) {
         std::Tuple<T>::from_json(*this, &$);
@@ -301,7 +301,7 @@ namespace json {
     template <typename T>
     _FORCE_INLINE void operator=(const box<T>& v) { if (v) *this = *v; }
     //i8 i = -1; fc::ForEachField(fc::Tuple<T>(), &v, [&i, this](auto& t) { this->operator[](T::$[++i]) = t; });
-    template <typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_reg<T>::value>* = null>
     _FORCE_INLINE void operator=(const T& v) {
       std::Tuple<T>::to_json(*this, const_cast<T*>(&v));
       //i8 i = -1; std::Tuple<T>::For(const_cast<T*>(&v), [&i, this](auto& t) { this->operator[](std::Tuple<T>::$[++i]) = t; });
@@ -316,15 +316,15 @@ namespace json {
         std::stack<T> t = v; Json j; this->push_back(t.top()); t.pop(); while (!t.empty()) { this->push_back(t.top()); t.pop(); }
       }
     }
-    template <typename T, std::enable_if_t<std::is_set<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_set<T>::value>* = null>
     _FORCE_INLINE void operator=(const T& v) {
-      *this = Json(Json::_arr_t()); if (!v.empty()) { Json j; for (const std::set_pack_t<T>& t : v) { j = t; this->push_back(j); } }
+      *this = Json(Json::_arr_t()); if (!v.empty()) { Json j; for (const fc::set_pack_t<T>& t : v) { j = t; this->push_back(j); } }
     }
-    template <typename T, std::enable_if_t<std::is_arr<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_arr<T>::value>* = null>
     _FORCE_INLINE void operator=(const T& v) {
-      *this = Json(Json::_arr_t()); if (!v.empty()) { Json j; for (const std::arr_pack_t<T>& t : v) { j = t; this->push_back(j); } }
+      *this = Json(Json::_arr_t()); if (!v.empty()) { Json j; for (const fc::arr_pack_t<T>& t : v) { j = t; this->push_back(j); } }
     }
-    template <typename T, std::enable_if_t<std::is_mmp<T>::value>* = null>
+    template <typename T, std::enable_if_t<fc::is_mmp<T>::value>* = null>
     _FORCE_INLINE void operator=(const T& v) {
       *this = Json(Json::_obj_t()); if (!v.empty()) {
         std::string b(0x100, 0); for (auto& t : v) { b.clear(); b << t.first; this->add_member(b.c_str(), t.second); }
@@ -473,24 +473,24 @@ namespace json {
   static const json::Json empty_str("", 1), nullContext;
 } // json
 _FORCE_INLINE std::string& operator<<(std::string& fs, const json::Json& x) { return x.str(fs); }
-template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
+template<typename T, std::enable_if_t<fc::is_reg<T>::value>* = null>
 _FORCE_INLINE std::string& operator<<(std::string& b, const box<T>& _v) {
   if (_v) { json::Json j; std::Tuple<T>::to_json(j, const_cast<T*>(_v.operator->())); return b << j.str(); } return b.append("null", 4);
 };
-template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
+template<typename T, std::enable_if_t<fc::is_reg<T>::value>* = null>
 _FORCE_INLINE std::string& operator<<(std::string& b, const T& _v) { json::Json j; std::Tuple<T>::to_json(j, const_cast<T*>(&_v)); return b << j.str(); };
-template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
+template<typename T, std::enable_if_t<fc::is_reg<T>::value>* = null>
 _FORCE_INLINE std::ostream& operator<<(std::ostream& os, T& v) { std::string b; b << v; return os.write(b.data(), b.size()); }
 namespace fc {
   typedef json::Json Json;
   template<typename T> static void to_json(json::Json& c, const box<T>* v) { if (c.size())c.reset(); if (*v) c = **v; else c = null; }
-  template<typename T, std::enable_if_t<std::is_arr<T>::value>* = null>
+  template<typename T, std::enable_if_t<fc::is_arr<T>::value>* = null>
   static void to_json(json::Json& c, T* v) {
-    using K = std::arr_pack_t<T>; if (c.size()) c = Json(Json::_arr_t()); json::Json j; auto t = v->begin(); if (t != v->end()) {
+    using K = fc::arr_pack_t<T>; if (c.size()) c = Json(Json::_arr_t()); json::Json j; auto t = v->begin(); if (t != v->end()) {
       j = static_cast<K>(*t); c.push_back(j); while (++t != v->end())j = static_cast<K>(*t), c.push_back(j);
     }
   }
-  template<typename T, std::enable_if_t<std::is_mmp<T>::value && !std::is_reg<typename T::key_type>::value>* = null>
+  template<typename T, std::enable_if_t<fc::is_mmp<T>::value && !fc::is_reg<typename T::key_type>::value>* = null>
   static void to_json(json::Json& c, T* v) {
     std::string b; b.reserve(0x100); if (c.size()) c = Json(Json::_obj_t()); auto t = v->begin(); if (t != v->end()) {
       b << t->first; c.add_member(b.c_str(), t->second); while (++t != v->end()) { b.clear(); b << t->first; c.add_member(b.c_str(), t->second); }
@@ -500,7 +500,7 @@ namespace fc {
   static void to_json(json::Json& c, std::array<T, N>* v) {
     if (c.size()) c = Json(Json::_arr_t()); auto t = v->begin(); if (t != v->end()) { c.push_back(*t); while (++t != v->end())c.push_back(*t); }
   }
-  template<typename T, std::enable_if_t<!std::is_arr<T>::value && !std::is_mmp<T>::value>* = null>
+  template<typename T, std::enable_if_t<!fc::is_arr<T>::value && !fc::is_mmp<T>::value>* = null>
   static void to_json(json::Json& c, T* v) { if (c.size())c.reset(); if (v) c = *v; else c = null; }
   template<typename T, size_t N>
   static void from_json(const json::Json& c, std::array<T, N>* v) {
@@ -510,7 +510,7 @@ namespace fc {
   static void from_json(const json::Json& c, std::forward_list<T>* v) {
     T t; if (!v->empty())v->clear(); for (u32 i = c.array_size(); --i != UINT32_MAX;) { c.get(i).get_to(t); v->emplace_front(t); }
   }
-  template<typename T, std::enable_if_t<std::is_mmp<std::remove_reference_t<T>>::value>* = null>
+  template<typename T, std::enable_if_t<fc::is_mmp<std::remove_reference_t<T>>::value>* = null>
   static void from_json(const json::Json& c, T* v) {
     typename T::key_type _; typename T::mapped_type $; if (!v->empty())v->clear();
     auto t = c.begin(); if (t != Json::iterator::end()) {
@@ -522,20 +522,21 @@ namespace fc {
   static void from_json(const json::Json& c, std::stack<T>* v) {
     T t; while (!v->empty())v->pop(); for (u32 i = c.array_size(); --i != UINT32_MAX;) { c.get(i).get_to(t); v->emplace(t); }
   }
-  template<typename T, std::enable_if_t<std::is_set<std::remove_reference_t<T>>::value>* = null>
+  template<typename T, std::enable_if_t<fc::is_set<std::remove_reference_t<T>>::value>* = null>
   static void from_json(const json::Json& c, T* v) {
-    std::set_pack_t<T> t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->emplace(t); }
+    fc::set_pack_t<T> t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->emplace(t); }
   }
-  template<typename T, std::enable_if_t<std::is_arr<std::remove_reference_t<T>>::value>* = null>
+  template<typename T, std::enable_if_t<fc::is_arr<std::remove_reference_t<T>>::value>* = null>
   static void from_json(const json::Json& c, T* v) {
-    std::arr_pack_t<T> t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->emplace_back(t); }
+    fc::arr_pack_t<T> t; if (!v->empty())v->clear(); for (u32 i = 0; i < c.array_size(); ++i) { c.get(i).get_to(t); v->emplace_back(t); }
   }
   //Can use modern json instead of from_json method, use: ... = c.get<T>();
-  template<typename T, std::enable_if_t<std::is_reg<T>::value>* = null>
+  template<typename T, std::enable_if_t<fc::is_reg<T>::value>* = null>
   static void from_json(const json::Json& c, T* _) { if (_)const_cast<json::Json&>(c).get_to(*_); }
 }
 
 #if !defined(__cplusplus) || (__cplusplus <= 201103L)
+#define _CONSTEXPR
 #define _FC_F_T_ _FORCE_INLINE const std::string_view
 #define _FC_F_T const char*
 #define _FC_NAME(_VA_ARGS__) _VA_ARGS__
@@ -544,6 +545,7 @@ namespace fc {
 #define _FC_END_HOLDER ""
 template <typename F, typename K> _FC_F_T_ k(K F::* c) { return F::$[F::_idex(c)]; };
 #elif (__cplusplus == 201402L)
+#define _CONSTEXPR constexpr
 #define _FC_F_T_ constexpr const std::string_view
 #define _FC_F_T const char*
 #define _FC_NAME(_VA_ARGS__) _VA_ARGS__
@@ -554,6 +556,7 @@ template <typename F, typename K> _FC_F_T_ k(K F::* c) { return F::$[F::_idex(c)
 template <typename F> _FC_F_T_ RESk(int T) { return std::string_view(F::$[T], F::L[T]); };
 template <typename F, typename K> _FC_F_T_ k(K F::* c) { return RESk<F>(F::_idex(c)); };
 #else
+#define _CONSTEXPR constexpr
 #define _FC_F_T_ constexpr const std::string_view&
 #define _FC_F_T const std::string_view
 #define _FC_NAME(_VA_ARGS__) std::string_view(_VA_ARGS__,sizeof(_VA_ARGS__)-1)

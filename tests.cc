@@ -51,10 +51,7 @@ int main() {
   std::tuple<int, int> nums(10, 20); std::apply(print_sum, nums);
   std::tuple<std::string, int> person_data{"test", 59}; Person person = std::make_from_tuple<Person>(person_data);
   std::cout << " Name: " << person.name << ", Age: " << person.age << "\n";
-#if __cplusplus >=201402L
-  constexpr
-#endif//Enhanced field reflection
-  std::string_view sv = k(&O::id);
+  _CONSTEXPR std::string_view sv = k(&O::id);
   //Book cannot be counted as a database field, so it will not be marked in field reflection.
   std::cout << __cplusplus << ' ' << sv << k(&O::book) << ';'; O o{};
   fc::ForRange<0, 3>(Fn2<O>(o), 1, 2);
@@ -65,7 +62,7 @@ int main() {
 #endif
   std::map<int, int> mp{ {1, 2}, { 2,3 }, { 3,4 } };
   fc::Json j; Person p{ "rust",14,Book{"b", Person{}} }, v{}; fc::to_json(j, &mp); std::cout << j.str(); fc::to_json(j, &p);
-  constexpr bool bb = std::is_reg<Book>::value;
+  constexpr bool bb = fc::is_reg<Book>::value;
   v = j.get<Person>();//like fc::from_json(j, &v);
   std::string str = j["name"].get<std::string>(); std::cout << str << "; " << bb;
   std::cout << '{' << v.age << ':' << v.name << '}' << std::endl;
