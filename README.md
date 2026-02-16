@@ -15,26 +15,6 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 > On April 12th, the ultra high definition 8k remastered version arrived. Support Gzip compression of web pages to reduce traffic consumption. Fixed various bugs, compatible with modern JSON and C++11, fixed keep alive mechanism, and launched best C++20 stack less coroutine. The following is a comparison chart.
 > ![coroutine](./co%20vs%20Task.jpg)
 
-## Be Original
-- Comprehensive and deep integration of RBTree and Time Wheel (5% performance improvement) to encapsulate cancelable timers, at the same time, modify the underlying coroutine to use black magic to manage the release of its memory, thereby saving memory
-- Supports c++20 stack free coroutines, currently compatible with the original project's stack based asymmetric coroutines, and is perfectly integrated, requiring almost minimal macro modifications. Performance is about 5% stronger than stack based protocols.
-- Enhanced field reflection, for example`std::string_view sv = k(&O::id);` will return "`O`.`id`"(can be modified by constexpr in C++14 and higher versions).
-- The tcp client based on openssl has preliminary support and limited functions, so most tests can pass.
-- Support jsonc format for compatible annotations. However, this is only called when reading the json file.
-- The syntax of modern json, its full compatibility with Almost all stl containers, and its full range of macros are used to serialize and deserialize at Compile time.
-- Support multi-core compilation options on MSVC, use `cmake --build ./build --config Release -j` to compile in parallel.
-- Supports 8K ultra-high-definition video playback, no freeze, no delay, and unlocks the playback of videos larger than 4GB (highlight).
-- Support Gzip compression function, the default cache is 6 seconds, you can modify it in the CACHE_HTML_TIME_SECOND macro configuration. When the compression ratio is 6, so I personally think it is the optimal solution for efficiency and compression ratio.
-- The whole platform supports range requests in video or audio format, and you can jump to any playback point on demand. For example wav, mp3, mp4, webm. And you can set whether to allow downloading, and then also support pausing or continuing downloading.
-- box with design style from the Rust language[[std::boxed::Box](https://doc.rust-lang.org/std/boxed/struct.Box.html)],   
-  so there is no need to use raw pointers, and C++can also be written in OOP mode.
-- body_parser for handling multi_ Part file upload not only supports single file support for custom size, but also supports multiple file uploads and zero copy storage mapping combined with mmap.
-- lexical_cast is used to convert strings, character views, and basic types to each other. From 0 to 1, it achieves the separation of header only to header file source files and accelerates compilation speed.
-- Router adopts dynamic routing technology, which can be added, deleted, modified, and checked. Currently, it also supports the use of regular expressions, which is precisely not available in other frameworks.
-- text is used to store strings from 0 to 1 for utf8, and the capacity can be set independently. Each capacity is specific to utf8 and can handle varchar types in the database.
-- timer is used from 0 to 1 to solve the problem of C++without JavaScript timers, and only uses header file source file separation to accelerate compilation speed.
-- The above original components are a demonstration of personal technical strength. Of course, there are also some components, which are not entirely from 0 to 1, but those are not the most important components.
-
 ## Features
 - Full platform support based on epoll architecture [implemented by wepoll under windows]
 - Now the minimum compiler supports the c++11 version, and is currently compatible with many features of C++17 including any, optional, string_view, and some extensions
@@ -67,61 +47,6 @@ Inspired by other well-known C++ web frameworks, FabCc's positioning is a networ
 - ![yield](./yield.gif)
 - [Demo site](http://165.154.225.219:8080/)🚀
 - ![test](./test.jpg)
-
-## example
-```c++
-using namespace fc;
-int main() {
-  App app; app fc_app(web) fc_app(user);
-  app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","aac" })
-    .sub_api("/", app.serve_file("static")).set_keep_alive(4, 3, 2).set_use_max_mem(600.0).set_file_download(true);
-  app.default_route() = [](Req& req, Res& res)_ctx {
-    res.set_content_type("text/html;charset=UTF-8", 23); res.set_status(404);
-    res.write_async_s([] {
-      char name[64]; gethostname(name, 64); Json x{ {"header", name} }; return mustache::load("404NotFound.html").render(x);
-      }); co_return;//Set default route
-  };
-  app["/redirect"] = [](Req& req, Res& res)_ctx {
-    res.redirect("https://www.github.com"); co_return;
-  };
-  app["/get_upload"] = [](Req& req, Res& res)_ctx {
-    res.write_async([] {
-      auto f = fc::directory_iterator(fc::directory_ + fc::upload_path_); Json x;
-      std::set<std::string_view> extentions = { "mp4", "mp3", "webm", "wav", "mkv" };
-      for (auto v : f) {
-        if (std::find(extentions.begin(), extentions.end(), fc::toLowerCase(v.ext)) != extentions.end()) {
-          x.push_back({ {"name",v.name.substr(fc::directory_.size())}, {"size",v.size} });
-        }
-      } return x;
-      }); co_return;//Get the list of uploaded files
-  };
-  app["/read_file"] = [](Req& req, Res& res)_ctx { res.write_async([] { Json x = json::read_file("test.json"); return x; }); co_return; };
-  app["/json"] = [](Req& req, Res& res)_ctx {
-    Json x; Book b{ "ts", Person{"js",6, Book{"plus" }, vec<Book>{ {"1", Person {"sb" }}, {"2", Person {"sb" }} }} };
-    b.person->book = Book{ "rs", null, vec<Person>{ {"?"}, {"!"} } }; x = b; res.write(x); co_return;//Return json
-  };
-  app["/serialization"] = [](Req& req, Res& res)_ctx {
-    Json x = json::parse(R"(
-    {"name":"ts","person":{"name":"js","age":33,"book":{"name":"ojbk","person":{"name":"fucker","age":0},
-    "persons":[{"name":"stupid","age":1},{"name":"idoit","age":2},{"name":"bonkers","age":3,"book":{"name":"sb"}}]}}}
-    )"); Book b = x.get<Book>(); b.person->book->persons[2].name = "wwzzgg"; x = b; res.write(x.dump()); co_return;//Deserialization and serialization
-  };
-  app["/api"] = [](Req& req, Res& res)_ctx { res.write(res.app._print_routes()); co_return; };//Return to routing list
-  app.post("/api") = [](Req& req, Res& res)_ctx {
-    BP bp(req, 1000); co_await bp.run(); std::string s;//Support for uploading files with a total size of 1000MB
-    for (auto p : bp.params) {
-      s << (p.key + ": ") << p.value << ", ";
-    }
-    s.pop_back(); s.pop_back(); res.write(s); co_return;
-  };
-  app["/del"] = [](Req&, Res& res)_ctx { res.app["/"] = nullptr; res.write("The routing of the home page is delete！！"); co_return; };
-  app["/timer"] = [](Req& req, Res& res)_ctx {
-    req.setTimeout([] { raise(SIGINT); }, 6000); res.write("Turn off the server timer and start the countdown！"); co_return;
-  };
-  //Start the server, also supports ipv6
-  app.http_serve(8080);
-}
-```
 
 ### Building (Tests, Examples)
 Out-of-source build with CMake is recommended.

@@ -125,11 +125,9 @@ namespace fc {
       char real_root[CROSSPLATFORM_MAX_PATH]{ 0 };
       if (r[0] == 0)r = "."; if (r[0] == '/' || r[0] == '\\')++r;
       if (!fc::crossplatform_realpath(r, real_root)) {
-        std::string es("serve_file error: Directory ", 28); throw err::not_found(es << r << " does not exists.");
+        std::string es("serve_file : ", 15); std::cerr << es << real_root << " is created!\n";
       }
-      if (!fc::is_directory(real_root)) {
-        std::string es("serve_file error: ", 18); throw err::internal_server_error(es << real_root << " is not a directory.");
-      }
+      if (!fc::is_directory(real_root)) fc::create_directory(r);
       std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
       app.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{

@@ -1,0 +1,75 @@
+BasedOnStyle: WebKit
+IndentPPDirectives: AfterHash
+IndentWidth: 2
+Standard: Latest
+TabWidth: 2
+ObjCBlockIndentWidth: 2
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 0
+ObjCSpaceAfterProperty: false
+ObjCSpaceBeforeProtocolList: true
+AccessModifierOffset: -2
+MaxEmptyLinesToKeep: 2
+AlignConsecutiveAssignments:  false
+AlignConsecutiveDeclarations: false 
+SortIncludes: false
+SortUsingDeclarations: false
+BreakInheritanceList: AfterComma
+AlwaysBreakBeforeMultilineStrings: false
+AlignEscapedNewlines: DontAlign
+AlignAfterOpenBracket: DontAlign
+AlignEscapedNewlinesLeft: true
+AlignTrailingComments: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowAllParametersOfDeclarationOnNextLine:	false
+AllowShortBlocksOnASingleLine:	true
+BreakConstructorInitializersBeforeComma:	false
+BreakConstructorInitializers: AfterColon
+SpacesInParentheses:	false
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+Cpp11BracedListStyle:	true
+DerivePointerAlignment:	false
+PointerAlignment: Left
+AllowShortIfStatementsOnASingleLine: WithoutElse
+SpacesInSquareBrackets: false
+SpaceBeforeAssignmentOperators: true
+SpacesInContainerLiterals: false
+IndentWrappedFunctionNames: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+SpaceAfterCStyleCast: false
+IndentCaseLabels: true 
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: false
+ColumnLimit: 150
+BreakBeforeBraces: Custom
+BraceWrapping : 
+  AfterClass:	false
+  AfterControlStatement:	false
+  AfterEnum:	false
+  AfterFunction:	false
+  AfterNamespace:	false
+  AfterObjCDeclaration:	false
+  AfterStruct:	false
+  AfterUnion:	false
+  BeforeCatch:	false
+  BeforeElse:	false
+  IndentBraces:	false
+
+# Cpp, Java, JavaScript, ObjC, Proto
+Language: Cpp
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: After
+SpaceBeforeCaseColon: false
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+SpaceBeforeParens:	ControlStatements
+SpaceBeforeRangeBasedForLoopColon: false
+SpacesInAngles:	false
+BinPackArguments : false
+BinPackParameters : false
+BreakStringLiterals : false
+# Never, ForIndentation, ForContinuationAndIndentation, Always
+UseTab:	Never
