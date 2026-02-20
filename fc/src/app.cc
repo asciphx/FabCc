@@ -170,7 +170,10 @@ namespace fc {
                 if (!range.empty()) {
                   res.set_status(206); ctx->format_top_headers(); i64 l = range.find('=') + 1, r = range.rfind('-');
                   _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l)); ctx->ot.append("Accept-Ranges: bytes\r\n", 22);
-                  l = std::lexical_cast<long long>(range.substr(++r)); r = l > 0 && l < statbuf_.st_size ? l : statbuf_.st_size - 1;
+                  range = range.substr(++r); r = statbuf_.st_size - 1;
+                  if(range.size()){
+                    l = std::lexical_cast<long long>(range); if(l > 0 && l < statbuf_.st_size)r = l;
+                  }
                   (ctx->ot.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
                   p = file_cache_.find(_);
                   if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {

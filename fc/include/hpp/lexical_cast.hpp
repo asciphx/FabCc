@@ -1203,7 +1203,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     short lexical_cast<short>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 6) {
         short r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1226,7 +1226,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned short lexical_cast<unsigned short>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 4) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 4) {
       unsigned short r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_PO[l--] * (*c++ - 0x30);
@@ -1245,7 +1245,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     int lexical_cast<int>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 11) {
         int r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1268,7 +1268,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned int lexical_cast<unsigned int>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned int r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1288,7 +1288,7 @@ namespace std {
 #ifdef _WIN32
   template <> _NODISCARD _INLINE
     long lexical_cast<long>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 11) {
         long r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1311,7 +1311,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned long lexical_cast<unsigned long>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1331,7 +1331,7 @@ namespace std {
 #else
   template <> _NODISCARD _INLINE
     long lexical_cast<long>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 20) {
         long r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1354,7 +1354,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned long lexical_cast<unsigned long>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
       unsigned long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POWS[l--] * (*c++ - 0x30);
@@ -1374,7 +1374,7 @@ namespace std {
 #endif // _WIN32
   template <> _NODISCARD _INLINE
     long long lexical_cast<long long>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 20) {
         long long r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1397,7 +1397,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned long long lexical_cast<unsigned long long>(string_view& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
       unsigned long long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POWS[l--] * (*c++ - 0x30);
@@ -1490,7 +1490,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     short lexical_cast<short>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 6) {
         short r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1513,7 +1513,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned short lexical_cast<unsigned short>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 4) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 4) {
       unsigned short r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_PO[l--] * (*c++ - 0x30);
@@ -1532,7 +1532,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     int lexical_cast<int>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 11) {
         int r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1555,7 +1555,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned int lexical_cast<unsigned int>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned int r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1575,7 +1575,7 @@ namespace std {
 #ifdef _WIN32
   template <> _NODISCARD _INLINE
     long lexical_cast<long>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 11) {
         long r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1598,7 +1598,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned long lexical_cast<unsigned long>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 9) {
       unsigned long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POW[l--] * (*c++ - 0x30);
@@ -1618,7 +1618,7 @@ namespace std {
 #else
   template <> _NODISCARD _INLINE
     long lexical_cast<long>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 20) {
         long r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1641,7 +1641,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned long lexical_cast<unsigned long>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
       unsigned long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POWS[l--] * (*c++ - 0x30);
@@ -1661,7 +1661,7 @@ namespace std {
 #endif // _WIN32
   template <> _NODISCARD _INLINE
     long long lexical_cast<long long>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
+    const char* c = s.data(); size_t l = s.size(); if (*c != 0x2D) {
       if (l < 20) {
         long long r = 0; while (--l) {
           if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
@@ -1684,7 +1684,7 @@ namespace std {
   }
   template <> _NODISCARD _INLINE
     unsigned long long lexical_cast<unsigned long long>(string_view&& s) {
-    if (s.size() == 0)return 0; const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
+    const char* c = s.data(); size_t l = s.size(); if (--l < 19) {
       unsigned long long r = 0; while (l) {
         if (*c > 0x39 || 0x30 > *c) { if (*c == 0)return r; throw std::invalid_argument(""); }
         r += STD_POWS[l--] * (*c++ - 0x30);

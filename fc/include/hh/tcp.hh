@@ -101,11 +101,13 @@ namespace fc {
         // kevent is already listening to quit signals.
         this->n_events = kevent(this->epoll_fd, NULL, 0, this->kevents, RESmaxEVENTS, &timeout);
 #endif
+#if  __APPLE__ || _WIN32
+        if (this->n_events) {
+#else
         if (this->n_events == 0) {
-#if !_WIN32
           if(nthreads != 1) usleep(10000);
-#endif
         } else {
+#endif
           for (i = 0; i < this->n_events; ++i) {
             kevents = &this->kevents[i];
 #if __APPLE__
