@@ -68,7 +68,7 @@ namespace fc {
         if (GetLastError() != ERROR_IO_PENDING) { throw err::not_found(); }
         WaitForSingleObject(ov.hEvent, 3000); if (!GetOverlappedResult(fd, &ov, &nwritten, TRUE)){ co_await ot.flush(); goto _; }
       }
-      if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
+      if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) _CTX_return
       p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32); _:
       do {
         nwritten = 0;
@@ -84,8 +84,8 @@ namespace fc {
 #else
 #if _OPENSSL
       off_t ov = ot.size(); lseek(fd, p, SEEK_SET);
-      if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) co_return;
-      if (!co_await this->fiber.send(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
+      if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) _CTX_return
+      if (!co_await this->fiber.send(ot.buffer_, ov + ret)) { if (errno == EPIPE) _CTX_return throw err::not_found(); }
       ov = p + ret;
       do {
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
@@ -138,8 +138,8 @@ namespace fc {
 #ifndef _WIN32 // Linux / Macos version with sendfile
       // if (fd == -1) { content_type = RES_NIL; throw err::not_found(); }
 #if _OPENSSL
-      off_t ov = ot.size(); if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) co_return;
-      if (!co_await this->fiber.send(ot.buffer_, ov + ret)) { if (errno == EPIPE) co_return; throw err::not_found(); }
+      off_t ov = ot.size(); if ((ret = read(fd, ot.cursor_, static_cast<int>(ot.cap_ - ov))) < 1) _CTX_return
+      if (!co_await this->fiber.send(ot.buffer_, ov + ret)) { if (errno == EPIPE) _CTX_return throw err::not_found(); }
       ov = ret;
       do {
         if ((ret = read(fd, ot.buffer_, static_cast<int>(ot.cap_))) < 1) break;
@@ -177,7 +177,7 @@ namespace fc {
         if (GetLastError() != ERROR_IO_PENDING) { throw err::not_found(); }
         WaitForSingleObject(ov.hEvent, 1000); if (!GetOverlappedResult(fd, &ov, &nwritten, TRUE)){ co_await ot.flush(); goto _; }
       }
-      if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) co_return;
+      if (!co_await this->fiber.send(ot.buffer_, ret + nwritten)) _CTX_return
       p += nwritten; ov.Offset = static_cast<DWORD>(p & 0xFFFFFFFF); ov.OffsetHigh = static_cast<DWORD>(p >> 32); _:
       do {
         nwritten = 0;

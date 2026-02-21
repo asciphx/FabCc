@@ -137,6 +137,7 @@ namespace fc {
       };
 #endif // !__linux__
       app.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
+        if(req.url[1] == 0x2e) { co_await this->_.operator()(req, res); _CTX_return };
         std::string _($); _.append(req.url.data() + 1, req.url.size() - 1);
         std::string::iterator i = _.end() - 1; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
