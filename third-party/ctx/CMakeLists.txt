@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(ctx LANGUAGES CXX)
+project(ctx LANGUAGES C)
 # Build features
 ## Binary format
 if(WIN32)
@@ -100,5 +100,5 @@ message(STATUS "Boost.Context: "
   "assembler:: ${CONTEXT_ASSEMBLER}, "
   "suffix:: ${CONTEXT_ASM_SUFFIX}")
 
-add_library(ctx fixedsize_stack.cc fcontext.hpp fixedsize_stack.hh ${ASM_SOURCES})
+add_library(ctx fcontext.c fcontext.h ${ASM_SOURCES})
 target_compile_definitions(ctx PUBLIC BOOST_CONTEXT_EXPORT)

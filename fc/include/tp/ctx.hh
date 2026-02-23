@@ -14,7 +14,9 @@
  */
 #include "c++.h"
 #include "fcontext.hpp"
-#include "fixedsize_stack.hh"
+#include <cstdlib>
+#include <new>
+#include <assert.h>
 #include <ostream>
 #include <exception>
 #include <functional>
@@ -31,7 +33,7 @@
 #  pragma pack(push,8)
 #endif
 # pragma warning(push)
-//# pragma warning(disable: 4702)
+ //# pragma warning(disable: 4702)
 #elif defined __CODEGEARC__
 #pragma nopushoptwarn
 #  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
@@ -42,7 +44,7 @@
 #endif
 #endif
 #if _OPENSSL
-#define CTX_MIN_SIZE stack_traits::default_size()
+#define CTX_MIN_SIZE 131072
 #else
 #define CTX_MIN_SIZE 65536
 #endif
@@ -53,26 +55,22 @@ namespace ctx {
   class co; using FN = std::function<co(co&&)>;
   static constexpr uintptr_t stack_align_mask = (_PTR_LEN == 8) ? 0X7f : 0X3f;
   static constexpr uintptr_t stack_gap = (_PTR_LEN == 8) ? 0X40 : 0X20;
+  static const constexpr size_t fixedsize = CTX_MIN_SIZE;
   struct forced_unwind {
-    fcontext_t fctx{ nullptr }; forced_unwind() = default; forced_unwind(fcontext_t fctx_) : fctx(fctx_) {}
+    fcontext_t fctx{ nullptr }; forced_unwind() = default; forced_unwind(fcontext_t fctx_): fctx(fctx_) {}
   };
   _FORCE_INLINE transfer_t ctx_unwind(transfer_t t) { throw forced_unwind(t.fctx); return { nullptr, nullptr }; }
   class record {
   private:
-    stack_context   sctx_;
-    fixedsize_stack salloc_;
-    FN              fn_;
+    void* sctx_;
+    FN fn_;
     static void destroy(record* p) noexcept {
-      fixedsize_stack salloc = std::move(p->salloc_);
-      stack_context sctx = p->sctx_; p->~record();// deallocate record
-      salloc.deallocate(sctx);// destroy stack with stack allocator
+      void* sctx = p->sctx_; p->~record(); std::free(static_cast<char*>(sctx) - fixedsize);// destroy stack with stack allocator
     }
   public:
-    record(stack_context sctx, fixedsize_stack&& salloc, FN&& fn) noexcept :
-      sctx_(sctx), salloc_(std::forward<fixedsize_stack>(salloc)), fn_(std::move(fn)) {}
+    record(void* sctx, FN&& fn) noexcept: sctx_(sctx), fn_(std::move(fn)) {}
     record(record const&) = delete; record& operator=(record const&) = delete;
-    void deallocate() noexcept { destroy(this); }
-    fcontext_t run(fcontext_t fctx);
+    void deallocate() noexcept { destroy(this); } fcontext_t run(fcontext_t fctx);
   };
   _FORCE_INLINE transfer_t ctx_exit(transfer_t t) noexcept {
     record* rec = static_cast<record*>(t.data); rec->deallocate(); return { nullptr, nullptr }; // destroy context stack
@@ -82,49 +80,43 @@ namespace ctx {
     record* rec = static_cast<record*>(t.data);// assert(nullptr != t.fctx); assert(nullptr != rec);
     try {// jump back to `add_ctx()`
       t = jump_fcontext(t.fctx, nullptr); t.fctx = rec->run(t.fctx);// start executing
-    }
-    catch (forced_unwind const& ex) { t = { ex.fctx, nullptr }; }
+    } catch (forced_unwind const& ex) { t = { ex.fctx, nullptr }; }
     assert(nullptr != t.fctx); // destroy context-stack of `this`context on next context
     ontop_fcontext(t.fctx, rec, ctx_exit);
   }
   transfer_t ctx_ontop(transfer_t t);
-  inline fcontext_t add_ctx(fixedsize_stack&& salloc, FN&& fn) {
-    auto sctx = salloc.allocate();
-    // reserve space for control structure控制结构预留空间
-    void* storage = reinterpret_cast<void*>(
-      (reinterpret_cast<uintptr_t>(sctx.sp) - static_cast<uintptr_t>(sizeof(record)))& ~static_cast<uintptr_t>(stack_align_mask));
-    // placment new for control structure on context stack在上下文堆栈上放置新的控件结构
-    record* rec = new(storage)record{ sctx, std::forward<fixedsize_stack>(salloc), std::move(fn) };
-    // 64byte gab between control structure and stack top控制结构和栈顶之间的64字节gab
-    void* stack_top = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(storage) - static_cast<uintptr_t>(stack_gap));
-    // should be 16byte aligned应该16字节对齐
-    void* stack_bottom = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(sctx.sp) - static_cast<uintptr_t>(sctx.size));
-    // create fast-context创建快速上下文
-    const size_t size = reinterpret_cast<uintptr_t>(stack_top) - reinterpret_cast<uintptr_t>(stack_bottom);
-    const fcontext_t fctx = make_fcontext(stack_top, size, &ctx_entry);
-    assert(nullptr != fctx); // transfer control structure to context-stack将控制结构传输到上下文堆栈
-    return jump_fcontext(fctx, rec).fctx;
-  }
   class co {
   private:
     friend class record;
     friend transfer_t ctx_ontop(transfer_t);
-    fcontext_t  fctx_{ nullptr };
+    fcontext_t fctx_{ nullptr };
     friend co callcc(FN&&);
     co resume()&& { assert(nullptr != fctx_); return { jump_fcontext(std::exchange(fctx_, nullptr), nullptr).fctx }; }
   public:
-    co(fcontext_t fctx) noexcept : fctx_{ fctx } {}
+    co(fcontext_t fctx) noexcept: fctx_{ fctx } {}
     co() noexcept = default;
     //Black magic, using box to automatically manage the release of objects
     std::unique_ptr<fc::ROG> box;
     // template<typename = std::disable_overload<co, FN>>
-    co(FN&& fn) : co{ fixedsize_stack(CTX_MIN_SIZE), std::move(fn) } {}
-    co(fixedsize_stack&& salloc, FN&& fn) :
-      fctx_{ add_ctx(std::forward<fixedsize_stack>(salloc), std::move(fn)) } {}
+    co(FN&& fn) {
+      void* sctx = static_cast<char*>(std::malloc(fixedsize)) + fixedsize;
+      // reserve space for control structure控制结构预留空间
+      void* storage = reinterpret_cast<void*>(
+        (reinterpret_cast<uintptr_t>(sctx) - static_cast<uintptr_t>(sizeof(record))) & ~static_cast<uintptr_t>(stack_align_mask));
+      // 64byte gab between control structure and stack top控制结构和栈顶之间的64字节gab
+      void* stack_top = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(storage) - static_cast<uintptr_t>(stack_gap));
+      // should be 16byte aligned应该16字节对齐
+      void* stack_bottom = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(sctx) - static_cast<uintptr_t>(fixedsize));
+      // placment new for control structure on context stack在上下文堆栈上放置新的控件结构
+      record* rec = new(storage)record{ sctx, std::move(fn) };
+      // create fast-context创建快速上下文
+      const size_t size = reinterpret_cast<uintptr_t>(stack_top) - reinterpret_cast<uintptr_t>(stack_bottom);
+      const fcontext_t fctx = make_fcontext(stack_top, size, &ctx_entry); assert(nullptr != fctx);
+      // transfer control structure to context-stack将控制结构传输到上下文堆栈
+      fctx_ = jump_fcontext(fctx, rec).fctx;
+    }
     ~co() {
-      if (_unlikely(nullptr != fctx_)) {
-        ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, ctx_unwind);
-      }
+      if (_unlikely(nullptr != fctx_)) ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, ctx_unwind);
     }
     co(co&& other) noexcept { std::swap(fctx_, other.fctx_); }
     co& operator=(co&& other) noexcept {
@@ -146,16 +138,14 @@ namespace ctx {
       if (nullptr != other.fctx_) return os << other.fctx_; else return os << "{not-a-context}";
     }
   };
-  _FORCE_INLINE co callcc(FN&& f) { return co{ add_ctx(fixedsize_stack(CTX_MIN_SIZE), std::move(f)) }.resume(); };
+  _FORCE_INLINE co callcc(FN&& f) { return co{ std::move(f) }.resume(); };
   _FORCE_INLINE transfer_t ctx_ontop(transfer_t t) {
     assert(nullptr != t.data); co c{ t.fctx }; c = std::move(*static_cast<FN*>(t.data))(std::move(c));
-    // assert(nullptr != p);// execute function, pass continuation via reference
-    t.data = nullptr; return { std::exchange(c.fctx_, nullptr), nullptr };
+    t.data = nullptr; return { std::exchange(c.fctx_, nullptr), nullptr };// execute function, pass continuation via reference
   }
   _FORCE_INLINE fcontext_t record::run(fcontext_t fctx) {
     co c{ fctx }; c = std::invoke(fn_, std::move(c)); return std::exchange(c.fctx_, nullptr);
   }
-
   typedef co fiber;
 }
 #if __cplusplus >= _cpp20_date

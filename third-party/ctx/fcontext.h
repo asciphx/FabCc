@@ -36,14 +36,14 @@ namespace ctx {
 	fcontext_t  fctx;
 	void* data;
   } transfer_t;
-  extern "C" transfer_t _CONTEXT_CALLDECL jump_fcontext(fcontext_t const to, void* vp);
-  extern "C" fcontext_t _CONTEXT_CALLDECL make_fcontext(void* sp, size_t size, void (*fn)(transfer_t));
+  transfer_t _CONTEXT_CALLDECL jump_fcontext(fcontext_t const to, void* vp);
+  fcontext_t _CONTEXT_CALLDECL make_fcontext(void* sp, size_t size, void (*fn)(transfer_t));
   // based on an idea of Giovanni Derreta
-  extern "C" transfer_t _CONTEXT_CALLDECL ontop_fcontext(fcontext_t const to, void* vp, transfer_t(*fn)(transfer_t));
+  transfer_t _CONTEXT_CALLDECL ontop_fcontext(fcontext_t const to, void* vp, transfer_t(*fn)(transfer_t));
   // This C++ tail of ontop_fcontext() allocates transfer_t{ from, vp }
   // on the stack.  If fn() throws a C++ exception, then the C++ runtime
   // must remove this tail's stack frame.
-  extern "C" inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
+  inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
       return fn( transfer_t{ from, vp });
   }
 }
@@ -58,5 +58,4 @@ namespace ctx {
 #pragma nopushoptwarn
 #endif
 #endif
-
 #endif
