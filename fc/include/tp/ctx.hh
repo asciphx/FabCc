@@ -13,7 +13,7 @@
  * the modified version must be made available.
  */
 #include "c++.h"
-#include "fcontext.hpp"
+#include "fcontext.h"
 #include <cstdlib>
 #include <new>
 #include <assert.h>

@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
-#ifndef FCONTEXT_HH
-#define FCONTEXT_HH
+#ifndef FCONTEXT_H
+#define FCONTEXT_H
 #if defined _MSC_VER
 #if defined(_M_X64)
 #  pragma pack(push,16)
@@ -19,7 +19,6 @@
 #  pragma option push -a8 -Vx- -Ve- -b- -pc -Vmv -VC- -Vl- -w-8027 -w-8026
 #endif
 #endif
-namespace ctx {
 #undef _CONTEXT_CALLDECL
 #if defined(i386) || defined(__i386__) || defined(__i386) \
      || defined(__i486__) || defined(__i586__) || defined(__i686__) \
@@ -31,22 +30,25 @@ namespace ctx {
 # define _CONTEXT_CALLDECL
 #endif
 #include <stddef.h>
-  typedef void* fcontext_t;
-  typedef struct {
-	fcontext_t  fctx;
-	void* data;
-  } transfer_t;
-  transfer_t _CONTEXT_CALLDECL jump_fcontext(fcontext_t const to, void* vp);
-  fcontext_t _CONTEXT_CALLDECL make_fcontext(void* sp, size_t size, void (*fn)(transfer_t));
-  // based on an idea of Giovanni Derreta
-  transfer_t _CONTEXT_CALLDECL ontop_fcontext(fcontext_t const to, void* vp, transfer_t(*fn)(transfer_t));
-  // This C++ tail of ontop_fcontext() allocates transfer_t{ from, vp }
-  // on the stack.  If fn() throws a C++ exception, then the C++ runtime
-  // must remove this tail's stack frame.
-  inline transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void * vp, transfer_t (* fn)(transfer_t), fcontext_t const from) {
-      return fn( transfer_t{ from, vp });
-  }
-}
+typedef void* fcontext_t;
+typedef struct {
+    fcontext_t  fctx;
+    void* data;
+} transfer_t;
+#ifdef __cplusplus
+extern "C" {
+#endif
+transfer_t _CONTEXT_CALLDECL jump_fcontext(fcontext_t const to, void* vp);
+fcontext_t _CONTEXT_CALLDECL make_fcontext(void* sp, size_t size, void (*fn)(transfer_t));
+// based on an idea of Giovanni Derreta
+transfer_t _CONTEXT_CALLDECL ontop_fcontext(fcontext_t const to, void* vp, transfer_t(*fn)(transfer_t));
+// This C++ tail of ontop_fcontext() allocates transfer_t{ from, vp }
+// on the stack.  If fn() throws a C++ exception, then the C++ runtime
+// must remove this tail's stack frame.
+transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void* vp, transfer_t(*fn)(transfer_t), fcontext_t const from);
+#ifdef __cplusplus
+}  /* extern "C" */
+#endif
 #if defined _MSC_VER
 #pragma pack(pop)
 #elif defined __CODEGEARC__

@@ -17,6 +17,10 @@
 #endif
 #endif
 #endif
+#include "fcontext.h"
+transfer_t _CONTEXT_CALLDECL ontop_fcontext_tail(void* vp, transfer_t(*fn)(transfer_t), fcontext_t const from) {
+  transfer_t t; t.fctx = from; t.data = vp; return fn(t);// return fn((transfer_t){ from, vp });
+}
 #if defined _MSC_VER
 #pragma pack(pop)
 #elif defined __CODEGEARC__
