@@ -43,11 +43,7 @@
 #ifndef _OPENSSL
 #define _OPENSSL 0
 #endif
-#if __cplusplus < _cpp20_date
-#define _CTX_FUNC void(Conn&,void*,Reactor*)
-#else
-#define _CTX_FUNC fc::Task<void>(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*)
-#endif
+#define _CTX_FUNC _CTX_TASK(void)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*)
 #if _OPENSSL
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -91,7 +87,7 @@ namespace fc {
     return close(sock);
 #endif
   }
-  static void epoll_del_cpp20(epoll_handle_t ef, socket_type fd) {
+  static void epoll_del_conn(epoll_handle_t ef, socket_type fd) {
 #if __linux__ || _WIN32
     epoll_event e{ 0 }; ::epoll_ctl(ef, EPOLL_CTL_DEL, fd, &e);
 #elif __APPLE__
@@ -109,6 +105,9 @@ namespace fc {
     std::string what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
     fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
   };
+  _FORCE_INLINE static co throw_func(void*, co&& sink) {
+    throw fiber_exception(std::move(sink), ""); return std::move(sink);
+  }
 #endif
   class Conn {
     Conn& operator=(const Conn&) = delete; Conn(const Conn&) = delete;
@@ -149,9 +148,7 @@ namespace fc {
       r->hrt = RES_TIME_T;
     }
     _FORCE_INLINE ~Conn() {
-#if __cplusplus >= _cpp20_date
-     if (rpg->hrt) timer.cancel(rpg->t_id), rpg->hrt = 0, epoll_del_cpp20(epoll_fd, socket_fd);
-#endif
+     if (rpg->hrt) timer.cancel(rpg->t_id), rpg->hrt = 0, epoll_del_conn(epoll_fd, socket_fd);
 #if _OPENSSL
       if (ssl) { SSL_shutdown(ssl); SSL_free(ssl); ssl = nullptr; }
 #endif

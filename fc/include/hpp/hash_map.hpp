@@ -117,14 +117,12 @@ namespace fc {
   // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
   template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
-#ifdef _WIN32
-    static int const constexpr size_dummy = sizeof(K) + sizeof(V) < 0x20 ? 0x20 : 0x40;
-#else
+#ifndef _MSC_VER
     static int const constexpr size_dummy = sizeof(K) >= sizeof(V) * 2 ? sizeof(V) : sizeof(K) > sizeof(V) ? sizeof(K) : sizeof(V);
 #endif
     struct Nod {
-#ifdef _WIN32
-      K key; V value; alignas(size_dummy) bool occupied;
+#ifdef _MSC_VER
+      K key; V value; bool occupied;
 #else
       K key; alignas(size_dummy) V value; alignas(size_dummy) bool occupied;
 #endif

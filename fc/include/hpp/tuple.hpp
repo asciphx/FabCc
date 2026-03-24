@@ -26,7 +26,7 @@ namespace fc {
   template <size_t S, size_t N> struct __5_B { using type = typename __5<S, N - S>::type; };
   template <> struct __G<0x0> { using type = __I<>; }; template <size_t N, size_t E> using make_range_sequence = typename __5_B<N, E>::type;
   template <size_t... V> using index_sequence = __I<V...>; template <size_t I> using make_index_sequence = typename __G<I>::type;
-  template <class... T> using index_sequence_for = make_index_sequence<sizeof...(T)>;
+  template <class... T> using index_sequence_for = typename __G<sizeof...(T)>::type;
 }
 namespace std {
 #if defined(__cplusplus) && (__cplusplus < 201402L)

@@ -240,14 +240,10 @@ namespace fc {
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value, nullptr, on_body };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
-#if __cplusplus < _cpp20_date
-  static void make_http_processor(Conn& f, void* ap, Reactor * rc) {
-#else
-  fc::Task<void> make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
+  static _CTX_TASK(void) make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_cpp20(eh, fd), re->hrt = 0; _CTX_return }
-#endif
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_conn(eh, fd), re->hrt = 0; _CTX_return }
 #endif
     fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x2000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP

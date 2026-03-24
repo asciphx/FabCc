@@ -42,6 +42,15 @@ namespace fc {
 #else
   http_top_header_builder REStop_h [[gnu::weak]];
 #endif
+CTX_LAMBDA(my, {
+    Reactor* r;
+    socket_type socket_fd;
+    int k_a;
+    std::function<_CTX_FUNC>* handler;
+    ROG* fib;
+    void* ap;
+  });
+  static co my_func(void* ctx, co&& sink);
   struct Reactor {
     sockaddr_storage in_addr_storage;
     fc::timer loop_timer;
@@ -128,7 +137,11 @@ namespace fc {
 #endif
               //if (this->event_fd != listen_fd) {
 #if __cplusplus < _cpp20_date
-              if (ro->_) ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
+              loop_timer.cancel(ro->t_id); ro->hrt = 0; epoll_del(event_fd);
+              if (ro->_) {
+                ro->_ = ro->_.resume_with(std::move(ctx::FN{ throw_func, nullptr, [](void*){} }));
+                // ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
+              }
 #else
               loop_timer.cancel(ro->t_id); ro->hrt = 0; fc::Task<ROG> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();
 #endif
@@ -174,23 +187,7 @@ namespace fc {
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
 #if __cplusplus < _cpp20_date
                 fib->t_id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
-                fib->_ = ctx::callcc([this, socket_fd, k_a, &handler, fib, ap](co&& sink) {
-                  fib->_ = std::move(sink); Conn c(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd);
-                  try {
-#if _OPENSSL
-                    if (this->ssl_ctx && !c.ssl_handshake(this->ssl_ctx)) {
-                      loop_timer.cancel(fib->t_id); epoll_del(socket_fd); /*std::cerr << "Error!";*/ return std::move(fib->_);
-                    }
-#endif
-                    handler(c, ap, this); loop_timer.cancel(fib->t_id); epoll_del(socket_fd);
-                  } catch (fiber_exception& ex) {
-                    loop_timer.cancel(fib->t_id); epoll_del(socket_fd); return std::move(ex.c);
-                  } catch (const std::exception&) {
-                    loop_timer.cancel(fib->t_id); epoll_del(socket_fd);// std::cerr << "Err: " << e.what() << '\n';
-                    return std::move(fib->_);
-                  }
-                  return std::move(fib->_);
-                  });
+                fib->_ = ctx::callcc(ctx::FN{ CTX_CALLCC(my, this, socket_fd, k_a, &handler, fib, ap) });
 #else
                 fib->t_id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_(); } });
                 fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
@@ -208,6 +205,20 @@ namespace fc {
       free(this->kevents); std::cout << "@";
     }
   };
+#if __cplusplus < _cpp20_date
+CTX_LAMBDA_IMPL(my) {
+  my_lambda* p = static_cast<my_lambda*>(ctx); p->fib->_ = std::move(sink);
+  try {
+    (*(p->handler))(p->socket_fd, *p->r->in_addr, p->k_a, p->r->loop_timer, p->fib, p->r->epoll_fd, p->ap, p->r);
+  } catch (fiber_exception& ex) {
+    return std::move(ex.c);
+  } catch (const std::exception&) {
+   // std::cerr << "Err: " << e.what() << '\n';
+    return std::move(p->fib->_);
+  }
+  return std::move(p->fib->_);
+  };
+#endif
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
   static void start_server(std::thread& date_thread, socket_type sfd, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL

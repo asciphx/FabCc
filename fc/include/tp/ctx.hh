@@ -52,7 +52,7 @@ namespace fc {
   struct ROG;
 }
 namespace ctx {
-  class co; using FN = std::function<co(co&&)>;
+  class co; struct FN { co (*func)(void*, co&&); void* ctx; void (*destroy)(void*); };
   static constexpr uintptr_t stack_align_mask = (_PTR_LEN == 8) ? 0X7f : 0X3f;
   static constexpr uintptr_t stack_gap = (_PTR_LEN == 8) ? 0X40 : 0X20;
   static const constexpr size_t fixedsize = CTX_MIN_SIZE;
@@ -119,7 +119,7 @@ namespace ctx {
       if (_unlikely(nullptr != fctx_)) ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, ctx_unwind);
     }
     co(co&& other) noexcept { std::swap(fctx_, other.fctx_); }
-    co& operator=(co&& other) noexcept {
+    _FORCE_INLINE co& operator=(co&& other) noexcept {
       if (_likely(this != &other)) { std::swap(fctx_, other.fctx_); } return *this;
     }
     co(co const& other) noexcept = delete;
@@ -128,26 +128,25 @@ namespace ctx {
     _FORCE_INLINE void operator()() { *this = std::move(*this).resume(); }
     co resume_with(FN&& fn)& { return std::move(*this).resume_with(std::move(fn)); }
     co resume_with(FN fn)&& {
-      assert(nullptr != fctx_); return { ontop_fcontext(std::exchange(fctx_, nullptr), &fn, ctx_ontop).fctx };
+      assert(nullptr != fctx_);
+      return { ontop_fcontext(std::exchange(fctx_, nullptr), &fn, ctx_ontop).fctx };
     }
     explicit operator bool() const noexcept { return nullptr != fctx_; }
     bool operator!() const noexcept { return nullptr == fctx_; }
     bool operator<(co const& other) const noexcept { return fctx_ < other.fctx_; }
-    template<typename charT, class traitsT>
-    friend std::basic_ostream<charT, traitsT>&operator<<(std::basic_ostream<charT, traitsT>& os, co const& other) {
-      if (nullptr != other.fctx_) return os << other.fctx_; else return os << "{not-a-context}";
-    }
   };
   _FORCE_INLINE co callcc(FN&& f) { return co{ std::move(f) }.resume(); };
   _FORCE_INLINE transfer_t ctx_ontop(transfer_t t) {
-    assert(nullptr != t.data); co c{ t.fctx }; c = std::move(*static_cast<FN*>(t.data))(std::move(c));
-    t.data = nullptr; return { std::exchange(c.fctx_, nullptr), nullptr };// execute function, pass continuation via reference
+    assert(nullptr != t.data); FN* fn = static_cast<FN*>(t.data); t.data = nullptr;
+    co c{ t.fctx };// execute function, pass continuation via reference
+    c = fn->func(fn->ctx, std::move(c)); fn->destroy(fn->ctx); return { std::exchange(c.fctx_, nullptr), nullptr };
   }
-  _FORCE_INLINE fcontext_t record::run(fcontext_t fctx) {
-    co c{ fctx }; c = std::invoke(fn_, std::move(c)); return std::exchange(c.fctx_, nullptr);
+  _FORCE_INLINE fcontext_t record::run(fcontext_t fctx) {//c = std::invoke(fn_.func, fn_.ctx, std::move(c));
+    co c{ fctx }; c = fn_.func(fn_.ctx, std::move(c)); return std::exchange(c.fctx_, nullptr);
   }
   typedef co fiber;
 }
+  
 #if __cplusplus >= _cpp20_date
 /*
 * This software is licensed under the AGPL-3.0 License.
@@ -259,7 +258,13 @@ namespace fc {
 #define _CTX_back(_) co_return _;
 #define _CTX_return co_return;
 #define _ctx -> fc::Task<>
+#define CTX_LAMBDA(...)
 #else
+#define CTX_LAMBDA(name, CAPTURE_DEF)         \
+  struct name##_lambda CAPTURE_DEF; static ctx::co name##_func(void* ctx, ctx::co&& sink)
+#define CTX_LAMBDA_IMPL(name)                 \
+  static ctx::co name##_func(void* ctx, ctx::co&& sink)
+#define CTX_CALLCC(name, ...) name##_func, new name##_lambda{__VA_ARGS__} , [](void* x){ delete static_cast<name##_lambda*>(x); }
 #define _CTX_TASK(_) _
 #define _CTX_back(_) return _;
 #define _CTX_return return;

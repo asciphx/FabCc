@@ -34,7 +34,7 @@ class box {
 public:
   box() noexcept: p(NULL), b(false) {}
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
-  explicit box(box<T>&& _) noexcept: p(_.p), b(true) { _.p = nullptr; }
+  explicit box(box<T>&& _) noexcept: p(_.p), b(_.p ? true : false) { _.p = nullptr; }
   explicit box(box<T>& _) noexcept: p(_.p), b(_.b) { _.b = false; }
   explicit box(T&& _) noexcept: p(new T{ std::move(_) }), b(true) {}
   explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}

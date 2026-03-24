@@ -69,20 +69,6 @@ int main() {
   Book b{ null, Person{"ts",23, Book{"js", Person{"fucker"}, std::set<Person>{ {"mdzz"}}}, std::set<Book>{ {null,Person{"joker", 9, Book{"wtf"}}},{"",Person{"ojbk"}} }} };
   fc::to_json(j, &b); std::string js = j.dump();
   std::cout << std::boolalpha << js << std::endl;//compare json, true
-  int data = 1;
-  fc::co f{ [&data](fc::co&& f) {
-    std::cout << "entered first time: " << data << std::endl;
-    data += 2;
-    f = f.yield();
-    std::cout << "entered second time: " << data << std::endl;
-    return std::move(f);
-  } };
-  f = f.yield();
-  std::cout << "returned first time: " << data << std::endl;
-  data += 2;
-  f = f.yield();
-  if (!f) std::cout << "returned second time: " << data << std::endl;
-  std::cout << "execution context terminated" << std::endl;
   std::array<int, 6> vi{ 1, 2, 3, 4, 5, 6 }; fc::to_json(j, &vi); std::cout << j.str() << std::endl;
   fc::from_json(json::array({ 6,5,4,3,2,1 }), &vi); fc::to_json(j, &vi); std::cout << j.str();
   j = json::array({ "sdg","gdg","ds" }); std::stack<std::string> vs = j.get<std::stack<std::string>>();
