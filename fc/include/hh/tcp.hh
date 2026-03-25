@@ -13,6 +13,7 @@
 #include <set>
 #include <mutex>
 #include "hh/conn.hh"
+#include "h/pthread.h"
 namespace fc {
   /**
   * Open a socket on port \port && call \conn_handler(int client_fd, auto read, auto write)
@@ -34,7 +35,6 @@ namespace fc {
   socket_type create_and_bind(const char* ip, int port, int socktype);
   static int RESmaxEVENTS = 16; static std::once_flag RESonce_flag;
   static volatile int RESquit_signal_catched = 1;
-  static std::stack<std::future<void>> RESfus;
   static void create_init(int n) {};
 #if _WIN32
   __declspec(selectany) http_top_header_builder REStop_h;
@@ -46,7 +46,7 @@ CTX_LAMBDA(my, {
     Reactor* r;
     socket_type socket_fd;
     int k_a;
-    std::function<_CTX_FUNC>* handler;
+    _CTX_TASK(void)(***handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*);
     ROG* fib;
     void* ap;
   });
@@ -84,7 +84,8 @@ CTX_LAMBDA(my, {
       ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
     }
-    void event_loop(socket_type listen_fd, std::function<_CTX_FUNC> handler, int nthreads, int k_a, int* k_A, int ids, void* ap) {
+    void event_loop(socket_type listen_fd, _CTX_TASK(void)(**handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*),
+      int nthreads, int k_a, int* k_A, int ids, void* ap) {
       std::call_once(RESonce_flag, create_init, k_a); ROG rpg;
 #if __linux__
       this->epoll_fd = epoll_create1(EPOLL_CLOEXEC); epoll_ctl(this->epoll_fd, listen_fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLET, &rpg);
@@ -190,7 +191,7 @@ CTX_LAMBDA(my, {
                 fib->_ = ctx::callcc(ctx::FN{ CTX_CALLCC(my, this, socket_fd, k_a, &handler, fib, ap) });
 #else
                 fib->t_id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_(); } });
-                fib->_ = handler(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
+                fib->_ = (*handler)(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
 #endif
               } while (1);
             } else if (ro->_)ro->_.operator()();// Data available on existing sockets. Wake up the fiber associated with event_fd.
@@ -209,7 +210,7 @@ CTX_LAMBDA(my, {
 CTX_LAMBDA_IMPL(my) {
   my_lambda* p = static_cast<my_lambda*>(ctx); p->fib->_ = std::move(sink);
   try {
-    (*(p->handler))(p->socket_fd, *p->r->in_addr, p->k_a, p->r->loop_timer, p->fib, p->r->epoll_fd, p->ap, p->r);
+    (*(*p->handler))(p->socket_fd, *p->r->in_addr, p->k_a, p->r->loop_timer, p->fib, p->r->epoll_fd, p->ap, p->r);
   } catch (fiber_exception& ex) {
     return std::move(ex.c);
   } catch (const std::exception&) {
@@ -220,20 +221,38 @@ CTX_LAMBDA_IMPL(my) {
   };
 #endif
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
-  static void start_server(std::thread& date_thread, socket_type sfd, int n, std::function<_CTX_FUNC> conn_handler, int* k_a, void* ap,
+  // static std::stack<std::future<void>> RESfus;
+  typedef struct {
+    int i; socket_type sfd; int k_A; _CTX_TASK(void)(*conn_handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*);
+    int n; std::string* ssl_key_path; std::string* ssl_cert_path; std::string* ssl_ciphers; void* ap; int* k_a;
+  } TaskArg;
+  static void* task_func(void* arg) {
+    TaskArg* t = (TaskArg*)arg; Reactor reactor;
+#if _OPENSSL
+    if (t->ssl_cert_path->size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ *t->ssl_key_path, *t->ssl_cert_path, *t->ssl_ciphers });
+#endif
+    reactor.event_loop(t->sfd, &t->conn_handler, t->n, t->k_A, t->k_a, t->i, t->ap); free(t); return NULL;
+  }
+  static void start_server(std::thread& date_thread, socket_type sfd, int n,
+    _CTX_TASK(void)(*conn_handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*), int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = (k_a[0] + k_a[1] * k_a[2] + 1) >> 1; if (k_A < 4)k_A = 4;
     RESmaxEVENTS = n > 32 ? n + 32 : n > 7 ? (n << 1) - (n >> 1) : (((n + 1) * (n + 1)) >> 1) + 0x16; if (k_A % 2 == 0)k_A += 1;
+    pthread_t *threads = (pthread_t*)malloc(sizeof(pthread_t) * n);
     for (int i = 0; i < n; ++i) {
-      RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {
-        Reactor reactor;
-#if _OPENSSL
-        if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ ssl_key_path, ssl_cert_path, ssl_ciphers });// Initialize the SSL/TLS context.
-#endif
-        reactor.event_loop(sfd, conn_handler, n, k_A, k_a, i, ap);
-        }));
+      TaskArg* t = (TaskArg*)malloc(sizeof(TaskArg)); t->i = i; t->sfd = sfd; t->conn_handler = conn_handler;
+      t->n = n; t->k_A = k_A; t->k_a = k_a; t->i = i, t->ap = ap; t->ssl_key_path = &ssl_key_path;
+      t->ssl_cert_path = &ssl_cert_path; t->ssl_ciphers = &ssl_ciphers; thread_create(&threads[i], task_func, t);
+//       RESfus.emplace(std::async(std::launch::async, [i, sfd, &k_a, &k_A, &conn_handler, &n, &ssl_key_path, &ssl_cert_path, &ssl_ciphers, ap] {
+//         Reactor reactor;
+// #if _OPENSSL
+//         if (ssl_cert_path.size()) reactor.ssl_ctx = std::unique_ptr<ssl_context>(new ssl_context{ ssl_key_path, ssl_cert_path, ssl_ciphers });// Initialize the SSL/TLS context.
+// #endif
+//         reactor.event_loop(sfd, &conn_handler, n, k_A, k_a, i, ap);
+//         }));
     }
-    date_thread.join(); close_socket(sfd);
+    for (int i = 0; i < n; ++i) thread_join(threads[i]);
+    date_thread.join(); close_socket(sfd); free(threads);
 #if _WIN32
     WSACleanup();
 #endif
