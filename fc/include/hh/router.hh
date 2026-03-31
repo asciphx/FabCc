@@ -10,7 +10,7 @@
 #include "hpp/hash_map.hpp"
 #include "req-res.hh"
 namespace fc {
-  using VH = _CTX_TASK(void)(*)(Req&, Res&); //class lambda [](std::string s, VH d)->void
+  // using VH = _CTX_TASK(void)(*)(Req&, Res&);
   struct drt_node {
     drt_node();
     struct iterator {
@@ -19,16 +19,16 @@ namespace fc {
       bool operator==(const iterator& b) const;
       bool operator!=(const iterator& b) const;
     };
-    VH& find_or_create(std::string& r, unsigned short c);
-    void for_all_routes(std::function<void(std::string, const VH)>& f, std::string prefix = "") const;
+    _CTX_TASK(void) (*&find_or_create(std::string& r, unsigned short c))(Req&, Res&);
+    void for_all_routes(void(*& f)(void*, std::string, _CTX_TASK(void)(*)(Req&, Res&)), void* a, std::string prefix = "") const;
     iterator find(const std::string& r, unsigned short c) const;
     _CTX_TASK(void)(*v_)(Req&, Res&); std::unordered_map<std::string, drt_node*, str_hash, str_key_eq> children_;
   };
-  static const drt_node::iterator DRT_END = drt_node::iterator{ nullptr, std::string(), nullptr };
+  static const drt_node::iterator DRT_END = drt_node::iterator{ nullptr, std::string(), (_CTX_TASK(void)(*)(Req&, Res&))nullptr };
   struct DRT {
     // Find a route && return reference to a procedure.
-    VH& add(const char* r, char m);
-    void for_all_routes(std::function<void(std::string, const VH)>&& f) const;
+    _CTX_TASK(void) (*&add(const char* r, char m))(Req&, Res&);
+    void for_all_routes(void(*&& f)(void*, std::string, _CTX_TASK(void)(*)(Req&, Res&)), void* arg) const;
     drt_node root;
   };
 } // namespace li

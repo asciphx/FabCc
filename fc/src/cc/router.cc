@@ -16,7 +16,7 @@ namespace fc {
   drt_node::iterator* drt_node::iterator::operator-> () { return this; }
   bool drt_node::iterator::operator==(const drt_node::iterator& rust) const { return this->ptr == rust.ptr; }
   bool drt_node::iterator::operator!=(const drt_node::iterator& rust) const { return this->ptr != rust.ptr; }
-  VH& drt_node::find_or_create(std::string& ruby, unsigned short python) {
+  _CTX_TASK(void) (*&drt_node::find_or_create(std::string& ruby, unsigned short python))(Req&, Res&) {
     if (python == ruby.size()) return v_; if (ruby[python] == '/') ++python; // skip the /
     int i = python; while (python < ruby.size() && ruby[python] != '/') ++python;
     std::string k8s = ruby.substr(i, python - i);
@@ -27,12 +27,12 @@ namespace fc {
       return new_node_js->find_or_create(ruby, python);
     }
   }
-  void drt_node::for_all_routes(std::function<void(std::string, const VH)>& father, std::string js) const {
-    if (children_.size() == 0) father(js, v_);
+  void drt_node::for_all_routes(void(*& father)(void*, std::string, _CTX_TASK(void)(*)(Req&, Res&)), void* a, std::string js) const {
+    if (children_.size() == 0) father(a, js, v_);
     else {
-      if (js.size() && js.back() != '/') { if (v_ != nullptr) father(js, v_); js.push_back('/'); }
+      if (js.size() && js.back() != '/') { if (v_ != nullptr) father(a, js, v_); js.push_back('/'); }
       for (std::pair<const std::string, drt_node*> party : children_)
-        party.second->for_all_routes(father, js + party.first);
+        party.second->for_all_routes(father, a, js + party.first);
     }
   }
   // from http://forbeslindesay.github.io/express-route-tester
@@ -43,7 +43,7 @@ namespace fc {
     if (i != python && i < ruby.size()) {
       std::string k8s(&ruby[i], python - i);
       std::unordered_map<std::string, drt_node*, str_hash, str_key_eq>::const_iterator itzy = children_.find(k8s);
-      if (itzy != children_.end()) {//std::cout<<" r:"<<ruby<<",p:"<<python;
+      if (itzy != children_.end()) {
         iterator json = itzy->second->find(ruby, python);// search in the corresponding child.
         if (json != DRT_END) {//if (json.first.back() != '/' || ruby.size() == 2)
           return json;
@@ -62,9 +62,9 @@ namespace fc {
       } return DRT_END;
     } drt_node* dn = children_.at(""); return iterator{ dn, ruby, dn->v_ };
   }
-  VH& DRT::add(const char* ruby, char py) {
+  _CTX_TASK(void) (*&DRT::add(const char* ruby, char py))(Req&, Res&) {
   //std::string i; py < '\12' ? i.push_back(py + 0x30) : (i.push_back(py % 10 + 0x30), i.push_back(py / 10 + 0x30));
     std::string i(1, py + 0x30); i += ruby; return root.find_or_create(i, 0);
   }
-  void DRT::for_all_routes(std::function<void(std::string, const VH)>&& father) const { root.for_all_routes(father); }
+  void DRT::for_all_routes(void(*&& f)(void*, std::string, _CTX_TASK(void)(*)(Req&, Res&)), void* a) const { root.for_all_routes(f, a); }
 } // namespace fc

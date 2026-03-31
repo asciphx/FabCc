@@ -17,12 +17,12 @@ namespace fc {
   // static std::unordered_map<std::string, int64_t, str_hash, str_key_eq> RES_CACHE_TIME = {};
   struct App {
     App();
-    VH& operator[](const char* r);
-    VH& del(const char* r);
-    VH& get(const char* r = "/");//"\0"//with skip the last / of the url.
-    VH& post(const char* r);
-    VH& put(const char* r);
-    VH& patch(const char* r);
+    _CTX_TASK(void) (*&operator[](const char* r))(Req&, Res&);
+    _CTX_TASK(void) (*&del(const char* r))(Req&, Res&);
+    _CTX_TASK(void) (*&get(const char* r = "/"))(Req&, Res&);//"\0"//with skip the last / of the url.
+    _CTX_TASK(void) (*&post(const char* r))(Req&, Res&);
+    _CTX_TASK(void) (*&put(const char* r))(Req&, Res&);
+    _CTX_TASK(void) (*&patch(const char* r))(Req&, Res&);
     //template <typename Adaptor> //websocket
     //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
     ///Process the Req and generate a Res for it
@@ -33,7 +33,7 @@ namespace fc {
     //Whether to open file download, set to true will allow
     App& set_file_download(bool&& b);
     //Set not_found route;
-    _FORCE_INLINE VH& default_route() { return _; }
+    _FORCE_INLINE _CTX_TASK(void) (*&default_route())(Req&, Res&) { return _; }
     App& sub_api(const char* prefix, const App& subapi);
     //Serve static directory
     App serve_file(const char* r);
@@ -57,7 +57,7 @@ namespace fc {
     std::unordered_map<std::string, std::shared_ptr<file_sptr>, str_hash, str_key_eq> file_cache_;
     double USE_MAX_MEM_SIZE_MB = 400.0;
   private:
-    VH _ = [](Req&, Res&)_ctx{ throw err::not_found(); };
+    _CTX_TASK(void) (*_)(Req&, Res&) = [](Req&, Res&)_ctx{ throw err::not_found(); };
     std::string ssl_key = "", ssl_cert = "", ssl_ciphers = "";
     int k_A[3]{ 4,3,2 }; bool file_download = true;
   };

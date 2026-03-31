@@ -56,20 +56,20 @@ namespace fc {
   std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
-  VH& App::operator[](const char* r) {
+  _CTX_TASK(void) (*&App::operator[](const char* r))(Req&, Res&) {
     size_t l = strlen(r); if(!l) r = "/";
     if (fc::upload_path_.size() == l && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
-      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h;
+      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::GET)); return h;
   }
-  VH& App::del(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
-  VH& App::get(const char* r) {
+  _CTX_TASK(void) (*&App::del(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
+  _CTX_TASK(void) (*&App::get(const char* r))(Req&, Res&) {
     size_t l = strlen(r); if(!l) r = "/";
     if (fc::upload_path_.size() == l && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
-      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); VH& h = map_.add(r, static_cast<char>(HTTP::GET)); return h;
+      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::GET)); return h;
   }
-  VH& App::post(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
-  VH& App::put(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
-  VH& App::patch(const char* r) { VH& h = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
+  _CTX_TASK(void) (*&App::post(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
+  _CTX_TASK(void) (*&App::put(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
+  _CTX_TASK(void) (*&App::patch(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
   //Set the file size allowed for POST according to the host memory
   //for example, 2G memory can be set to 512MB, because the idle memory is about 600+MB
   App& App::set_use_max_mem(const float& v) { USE_MAX_MEM_SIZE_MB = v <= 0x1ff ? 0x200 : v; return *this; }// < 600
@@ -77,23 +77,30 @@ namespace fc {
   //template <typename Adaptor> //websocket
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it
+  typedef struct { void* i; std::string& b; } MapArg;
+  
   std::string App::_print_routes() {
-    std::string b(0xe0, '\0'); int i = 0; char m; b.clear();
+    std::string b(0xe0, '\0'); int i = 0; b.clear();
 #ifdef __linux__
-    std::list<std::pair<std::string, VH>> aws;
-    map_.for_all_routes([&aws](std::string r, VH h) { aws.push_front(std::make_pair(r, h)); });
-    for (std::pair<std::string, VH>& p : aws) {
-      std::string& r = p.first; VH& h = p.second; ++i;
-      m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
+    std::list<std::pair<std::string, _CTX_TASK(void)(*)(Req&, Res&)>> aws; MapArg arg{&aws, b};
+    map_.for_all_routes([](void* a, std::string r, _CTX_TASK(void)(*h)(Req&, Res&)) {
+      MapArg* t = reinterpret_cast<MapArg*>(a);
+      reinterpret_cast<std::list<std::pair<std::string, _CTX_TASK(void)(*)(Req&, Res&)>>*>(t->i)->push_front(std::make_pair(r, h));
+    }, &arg);
+    for (std::pair<std::string, _CTX_TASK(void)(*)(Req&, Res&)>& p : aws) {
+      std::string& r = p.first; _CTX_TASK(void)(*&h)(Req&, Res&) = p.second; ++i;
+      char m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
       b << '(' << i << ')' << '[' << m2c((HTTP)m) << ']' <<
         '/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
     }
 #else
-    map_.for_all_routes([&b, &i, &m](std::string r, VH h) {
-      m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210; ++i;
-      b << '(' << i << ')' << '[' << m2c((HTTP)m) << ']' <<
+    MapArg arg{&i, b};
+    map_.for_all_routes([](void* a, std::string r, _CTX_TASK(void)(*h)(Req&, Res&)) {
+      MapArg* t = reinterpret_cast<MapArg*>(a); int i = ++*reinterpret_cast<int*>(t->i);
+      char m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
+      t->b << '(' << i << ')' << '[' << m2c((HTTP)m) << ']' <<
         '/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
-      });
+      }, &arg);
 #endif // __linux__
     b.pop_back(); return b;
   }
@@ -113,11 +120,12 @@ namespace fc {
     } else { res.mask_url = std::string("@", 1); co_await this->_(req, res); } co_return;
   }
   App& App::sub_api(const char* prefix, const App& app) {
-    char m; if (prefix[0] == '/' || prefix[0] == '\\')++prefix;
-    app.map_.for_all_routes([this, &prefix, &m](std::string r, VH h) {
-      std::string $(1,'/'); if(*prefix)$ += prefix, $.push_back('/'); m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
-      $ += r[1] == 0x2f ? r.substr(2) : r.substr(3); map_.add($.c_str(), m) = h;
-      }); return *this;
+    if (prefix[0] == '/' || prefix[0] == '\\')++prefix; std::string b{prefix}; MapArg a{&map_, b};
+    app.map_.for_all_routes([](void* a, std::string r, _CTX_TASK(void)(*h)(Req&, Res&)) {
+      std::string $(1,'/'); MapArg* t = reinterpret_cast<MapArg*>(a); if(t->b[0])$ += t->b, $.push_back('/');
+      char m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
+      $ += r[1] == 0x2f ? r.substr(2) : r.substr(3); (reinterpret_cast<DRT*>(t->i))->add($.c_str(), m) = h;
+      }, &a); return *this;
   }
   App App::serve_file(const char* r = STATIC_DIRECTORY) {
     App app;
