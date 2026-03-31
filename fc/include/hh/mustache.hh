@@ -3,7 +3,6 @@
 #include <string>
 #include <list>
 #include <vector>
-#include <functional>
 #include <fstream>
 #include <iterator>
 #include "json.hh"

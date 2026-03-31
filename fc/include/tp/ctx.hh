@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <ostream>
 #include <exception>
-#include <functional>
 #include <memory>
 #include <utility>
 #include <tuple>
@@ -62,8 +61,7 @@ namespace ctx {
   _FORCE_INLINE transfer_t ctx_unwind(transfer_t t) { throw forced_unwind(t.fctx); return { nullptr, nullptr }; }
   class record {
   private:
-    void* sctx_;
-    FN fn_;
+    void* sctx_; FN fn_;
     static void destroy(record* p) noexcept {
       void* sctx = p->sctx_; p->~record(); std::free(static_cast<char*>(sctx) - fixedsize);// destroy stack with stack allocator
     }
@@ -87,10 +85,8 @@ namespace ctx {
   transfer_t ctx_ontop(transfer_t t);
   class co {
   private:
-    friend class record;
-    friend transfer_t ctx_ontop(transfer_t);
+    friend class record;  friend transfer_t ctx_ontop(transfer_t); friend co callcc(FN&&);
     fcontext_t fctx_{ nullptr };
-    friend co callcc(FN&&);
     co resume()&& { assert(nullptr != fctx_); return { jump_fcontext(std::exchange(fctx_, nullptr), nullptr).fctx }; }
   public:
     co(fcontext_t fctx) noexcept: fctx_{ fctx } {}
@@ -128,8 +124,7 @@ namespace ctx {
     _FORCE_INLINE void operator()() { *this = std::move(*this).resume(); }
     co resume_with(FN&& fn)& { return std::move(*this).resume_with(std::move(fn)); }
     co resume_with(FN fn)&& {
-      assert(nullptr != fctx_);
-      return { ontop_fcontext(std::exchange(fctx_, nullptr), &fn, ctx_ontop).fctx };
+      assert(nullptr != fctx_); return { ontop_fcontext(std::exchange(fctx_, nullptr), &fn, ctx_ontop).fctx };
     }
     explicit operator bool() const noexcept { return nullptr != fctx_; }
     bool operator!() const noexcept { return nullptr == fctx_; }
@@ -256,7 +251,7 @@ namespace fc {
 }
 #define _CTX_TASK(_) fc::Task<_>
 #define _CTX_back(_) co_return _;
-#define _CTX_return co_return;
+#define _CTX_return co_return
 #define _ctx -> fc::Task<>
 #define CTX_LAMBDA(...)
 #else
@@ -267,7 +262,7 @@ namespace fc {
 #define CTX_CALLCC(name, ...) name##_func, new name##_lambda{__VA_ARGS__} , [](void* x){ delete static_cast<name##_lambda*>(x); }
 #define _CTX_TASK(_) _
 #define _CTX_back(_) return _;
-#define _CTX_return return;
+#define _CTX_return return
 #define _ctx -> void
 #define co_return
 #define co_await

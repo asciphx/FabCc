@@ -27,7 +27,7 @@ namespace fc {
       return new_node_js->find_or_create(ruby, python);
     }
   }
-  void drt_node::for_all_routes(std::function<void(std::string, const fc::VH)>& father, std::string js) const {
+  void drt_node::for_all_routes(std::function<void(std::string, const VH)>& father, std::string js) const {
     if (children_.size() == 0) father(js, v_);
     else {
       if (js.size() && js.back() != '/') { if (v_ != nullptr) father(js, v_); js.push_back('/'); }
@@ -66,5 +66,5 @@ namespace fc {
   //std::string i; py < '\12' ? i.push_back(py + 0x30) : (i.push_back(py % 10 + 0x30), i.push_back(py / 10 + 0x30));
     std::string i(1, py + 0x30); i += ruby; return root.find_or_create(i, 0);
   }
-  void DRT::for_all_routes(std::function<void(std::string, const fc::VH)>&& father) const { root.for_all_routes(father); }
+  void DRT::for_all_routes(std::function<void(std::string, const VH)>&& father) const { root.for_all_routes(father); }
 } // namespace fc

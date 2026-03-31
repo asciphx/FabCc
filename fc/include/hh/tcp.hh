@@ -140,8 +140,8 @@ CTX_LAMBDA(my, {
 #if __cplusplus < _cpp20_date
               loop_timer.cancel(ro->t_id); ro->hrt = 0; epoll_del(event_fd);
               if (ro->_) {
-                ro->_ = ro->_.resume_with(std::move(ctx::FN{ throw_func, nullptr, [](void*){} }));
-                // ro->_ = ro->_.resume_with(std::move([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); }));
+                ro->_ = std::move(ro->_).resume_with(ctx::FN{ throw_func, nullptr, [](void*){} });
+                // ro->_ = std::move(ro->_).resume_with([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); });
               }
 #else
               loop_timer.cancel(ro->t_id); ro->hrt = 0; fc::Task<ROG> v = std::move(ro->_); epoll_del(event_fd); if (v) v.operator()();

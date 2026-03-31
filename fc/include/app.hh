@@ -1,6 +1,5 @@
 #ifndef APP_HH
 #define APP_HH
-#include <functional>
 #include <iostream>
 #include <thread>
 #include <atomic>
@@ -12,9 +11,9 @@
 namespace fc {
   HTTP c2m(const char* m, size_t l);
   const std::string_view m2c(HTTP m);
-  static fc::HashMap<std::string, std::string, uint16_t, str_key_eq> RES_CACHE_MENU = {};
+  static fc::HashMap<std::string, std::string, uint32_t, str_key_eq> RES_CACHE_MENU = {};
   // static fc::str_map RES_CACHE_MENU = {};
-  static fc::HashMap<std::string, int64_t, uint16_t, str_key_eq> RES_CACHE_TIME = {};
+  static fc::HashMap<std::string, int64_t, uint32_t, str_key_eq> RES_CACHE_TIME = {};
   // static std::unordered_map<std::string, int64_t, str_hash, str_key_eq> RES_CACHE_TIME = {};
   struct App {
     App();

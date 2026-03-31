@@ -21,7 +21,7 @@ namespace fc {
     _Fsize_t size_;
     long long modified_time_;
     _Fhandle fd_;
-    _CTX_TASK(void) read_chunk(std::function<_CTX_TASK(void)(_Fhandle fd)> sink);
+    _CTX_TASK(void) read_chunk(std::function<_CTX_TASK(void)(_Fhandle fd)> sink);//_CTX_TASK(void)(*sink)(_Fhandle fd)
   };
 } // namespace fc
 #endif // FILE_S_PTR_HH

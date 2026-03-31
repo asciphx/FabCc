@@ -81,7 +81,7 @@ namespace fc {
     std::string b(0xe0, '\0'); int i = 0; char m; b.clear();
 #ifdef __linux__
     std::list<std::pair<std::string, VH>> aws;
-    map_.for_all_routes([this, &aws](std::string r, VH h) { aws.push_front(std::make_pair(r, h)); });
+    map_.for_all_routes([&aws](std::string r, VH h) { aws.push_front(std::make_pair(r, h)); });
     for (std::pair<std::string, VH>& p : aws) {
       std::string& r = p.first; VH& h = p.second; ++i;
       m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
@@ -89,7 +89,7 @@ namespace fc {
         '/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
     }
 #else
-    map_.for_all_routes([this, &b, &i, &m](std::string r, VH h) {
+    map_.for_all_routes([&b, &i, &m](std::string r, VH h) {
       m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210; ++i;
       b << '(' << i << ')' << '[' << m2c((HTTP)m) << ']' <<
         '/' << (r[2] == 0x2f ? r.substr(3) : r.substr(2)) << (i % 6 == 0 ? '\n' : ' ') << ',';
@@ -110,13 +110,13 @@ namespace fc {
     std::string g(1, m + 0x30); g.append(r.data(), r.size());// std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
     fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
       res.mask_url = std::move(g); co_await it->second(req, res);
-    } else { res.mask_url = std::string("@", 1); co_await this->_.operator()(req, res); } co_return;
+    } else { res.mask_url = std::string("@", 1); co_await this->_(req, res); } co_return;
   }
   App& App::sub_api(const char* prefix, const App& app) {
     char m; if (prefix[0] == '/' || prefix[0] == '\\')++prefix;
     app.map_.for_all_routes([this, &prefix, &m](std::string r, VH h) {
       std::string $(1,'/'); if(*prefix)$ += prefix, $.push_back('/'); m = r[1] == 0x2f ? r[0] - 0x30 : r[0] * 10 + r[1] - 0x210;
-      $ += r[1] == 0x2f ? r.substr(2) : r.substr(3); this->map_.add($.c_str(), m) = h;
+      $ += r[1] == 0x2f ? r.substr(2) : r.substr(3); map_.add($.c_str(), m) = h;
       }); return *this;
   }
   App App::serve_file(const char* r = STATIC_DIRECTORY) {
@@ -130,24 +130,24 @@ namespace fc {
       if (!fc::is_directory(real_root)) fc::create_directory(r);
       std::string $(r); if ($.back() != '\\' && $.back() != '/') $.push_back('/'); fc::directory_ = $;
 #ifndef __linux__
-      app.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
-        std::string _($); reinterpret_cast<Ctx*&>(res)->content_type = std::string_view("text/html;charset=UTF-8", 23);
+      app.map_.add("/", static_cast<char>(HTTP::GET)) = [](Req& req, Res& res)_ctx{
+        std::string _(fc::directory_); reinterpret_cast<Ctx*&>(res)->content_type = std::string_view("text/html;charset=UTF-8", 23);
         *reinterpret_cast<int*>(&req) = 1; _.append("index.html", 10);
         *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
       };
 #endif // !__linux__
-      app.map_.add("/*", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
-        if(req.url[1] == 0x2e) { co_await this->_.operator()(req, res); _CTX_return };
-        std::string _($); _.append(req.url.data() + 1, req.url.size() - 1);
+      app.map_.add("/*", static_cast<char>(HTTP::GET)) = [](Req& req, Res& res)_ctx{
+        if(req.url[1] == 0x2e) { co_await res.app._(req, res); _CTX_return; }; App& a = res.app;
+        std::string _(fc::directory_); _.append(req.url.data() + 1, req.url.size() - 1);
         std::string::iterator i = _.end() - 1; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-        res.mask_url = std::string("?", 1); co_await this->_.operator()(req, res); _CTX_return
+        res.mask_url = std::string("?", 1); co_await a._(req, res); _CTX_return;
       _ : std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
         if (last_dot) {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
-          if (content_types.find(extension) != content_types.end()) {
-            Ctx*& ctx = reinterpret_cast<Ctx*&>(res); std::string_view& sv{ content_types.at(extension) }; ctx->content_type = sv;
+          if (a.content_types.find(extension) != a.content_types.end()) {
+            Ctx*& ctx = reinterpret_cast<Ctx*&>(res); std::string_view& sv{ a.content_types.at(extension) }; ctx->content_type = sv;
             req.fiber.timer.cancel(req.fiber.rpg->t_id);
             if (extension[0] == 'h' && extension[1] == 't') {
               *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);//maybe with zlib
@@ -162,7 +162,7 @@ namespace fc {
               } delete[] pwsz; pwsz = null;
 #else
               struct stat64 statbuf_; if (stat64(_.c_str(), &statbuf_) != 0) {
-                p = file_cache_.find(_); if(p != file_cache_.cend())p->second = std::make_shared<file_sptr>();
+                p = a.file_cache_.find(_); if(p != a.file_cache_.cend())p->second = std::make_shared<file_sptr>();
                 ctx->content_type = RES_NIL; throw err::not_found();
               }
 #endif
@@ -176,39 +176,39 @@ namespace fc {
                     l = std::lexical_cast<long long>(range); if(l > 0 && l < statbuf_.st_size)r = l;
                   }
                   (ctx->ot.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
-                  p = file_cache_.find(_);
-                  if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                    std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, pos, ++r); _CTX_return
+                  p = a.file_cache_.find(_);
+                  if (p != a.file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+                    std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, pos, ++r); _CTX_return;
                   } else {
-                    co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return
+                    co_await ctx->send_file(a.file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return;
                   }
                 }
-                ctx->format_top_headers(); p = file_cache_.find(_);
-                if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
-                  std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, this->file_download); _CTX_return
+                ctx->format_top_headers(); p = a.file_cache_.find(_);
+                if (p != a.file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+                  std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, a.file_download); _CTX_return;
                 } else {
-                  co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), this->file_download); _CTX_return
+                  co_await ctx->send_file(a.file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), a.file_download); _CTX_return;
                 }
-                _CTX_return
+                _CTX_return;
               } //Non-media formats will only use the strategy of caching for one week
               ctx->format_top_headers(); ctx->ot.append("Cache-Control: max-age=604800,immutable\r\n", 41);
-              p = file_cache_.find(_);
-              if (p != file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
+              p = a.file_cache_.find(_);
+              if (p != a.file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
                 std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr);
               } else {
-                co_await ctx->send_file(file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime));
+                co_await ctx->send_file(a.file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime));
               }
             }//0.77 day ctx->ot.append("Cache-Control: " FILE_TIME"\r\n", 40);
             ROG* fib = req.fiber.rpg; req.fiber.rpg->t_id = req.fiber.timer.add_s(req.fiber.k_a + 2, [fib] { if (fib->_)fib->_.operator()(); });
-            _CTX_return
+            _CTX_return;
           }
           std::string es("Content-type of [", 17); throw err::not_found(es << extension << "] is not allowed!");
         }
         throw err::not_found();
       };
 #ifdef __linux__
-      app.map_.add("/", static_cast<char>(HTTP::GET)) = [$, this](Req& req, Res& res)_ctx{
-        std::string _($); reinterpret_cast<Ctx*&>(res)->content_type = std::string_view("text/html;charset=UTF-8", 23);
+      app.map_.add("/", static_cast<char>(HTTP::GET)) = [](Req& req, Res& res)_ctx{
+        std::string _(fc::directory_); reinterpret_cast<Ctx*&>(res)->content_type = std::string_view("text/html;charset=UTF-8", 23);
         *reinterpret_cast<int*>(&req) = 1; _.append("index.html", 10);
         *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_); co_return;
       };
@@ -243,7 +243,7 @@ namespace fc {
   static _CTX_TASK(void) make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_conn(eh, fd), re->hrt = 0; _CTX_return }
+    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_conn(eh, fd), re->hrt = 0; _CTX_return; }
 #endif
     fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x2000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP
@@ -256,39 +256,39 @@ namespace fc {
 // #else
 //     char sid[11]; sid[i2a(sid, f.socket_fd) - sid] = 0;
 // #endif // _WIN32
-    if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
+    if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return; } last_len = end; end += r;
     do {
 #if _LLHTTP
-      if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+      if (end == static_cast<int>(sizeof(rb))) { _CTX_return; } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
       if (pret == llhttp_errno::HPE_OK) {
         break;
       } else if (pret > 20) {
-        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
-      } else { _CTX_return }
+        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return; }
+      } else { _CTX_return; }
 #else
-      if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
+      if (end == static_cast<int>(sizeof(rb))) { _CTX_return; }
       pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
       if (pret > 0) {
         break;
       } else if (pret == -1) {
         _CTX_return;
       } else if (pret == -2) {
-        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+        last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return; }
       }
 #endif
     } while (RESon); f.k_a <<= 1; goto _;
     do {
-      if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return } last_len = end; end += r;
+      if (!(r = co_await f.read(rb, static_cast<int>(sizeof(rb))))) { _CTX_return; } last_len = end; end += r;
       do {
 #if _LLHTTP
-        if (end == static_cast<int>(sizeof(rb))) { _CTX_return } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
+        if (end == static_cast<int>(sizeof(rb))) { _CTX_return; } pret = llhttp__internal_execute(&ll, rb + last_len, rb + r);
         if (pret == llhttp_errno::HPE_OK) {
           break;
         } else if (pret > 20) {
-          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
-        } else { _CTX_return }
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return; }
+        } else { _CTX_return; }
 #else
-        if (end == static_cast<int>(sizeof(rb))) { _CTX_return }
+        if (end == static_cast<int>(sizeof(rb))) { _CTX_return; }
         pret = phr_parse_request(rb, end, &method, &method_len, &path, &path_len, &ctx.http_minor, &hd, &ctx.content_length_, last_len);
         if (pret > 0) {
           break;
@@ -307,7 +307,7 @@ namespace fc {
         } else if (pret == -1) {
           _CTX_return;
         } else if (pret == -2) {
-          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return }
+          last_len = end; end += (r = co_await f.read(rb + end, static_cast<int>(sizeof(rb) - end))); if (0 == r) { _CTX_return; }
         }
 #endif
       } while (RESon); _:

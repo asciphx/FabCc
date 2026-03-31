@@ -1,7 +1,6 @@
 #ifndef CTX_H
 #define CTX_H
 #include <cstring>
-#include <functional>
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>

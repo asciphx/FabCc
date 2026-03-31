@@ -17,7 +17,6 @@ struct Person {
 };
 REGIS(Person, name, age, book, books)
 using namespace fc;
-void funk(Req& req, Res& res) { res.write("Homepage route is replicated by std::bind！"); };
 int main() {
   App app; app fc_app(web) fc_app(user);
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","mkv","srt","vtt" })
@@ -64,7 +63,7 @@ int main() {
   app["/del"] = [](Req&, Res& res) { res.app["/"] = nullptr; res.write("The routing of the home page is delete！！"); };
   app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000); res.write("Turn off the server timer and start the countdown！");
-    res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    res.app.get() = [](Req& req, Res& res) { res.write("Homepage route is replicated by std::bind！"); };
   };
   //Start the server
   app.http_serve(8080, "0.0.0.0");

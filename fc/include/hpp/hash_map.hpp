@@ -15,7 +15,6 @@
 #include "hpp/string_view.hpp"
 #include <stdexcept>
 #include <immintrin.h>
-#include <functional>
 namespace fc {
 #if 1
   // （2³² × (√5 - 1) / 2）

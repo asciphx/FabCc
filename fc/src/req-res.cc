@@ -7,10 +7,10 @@ namespace fc {
     fc::sv_map& cookie_map, std::unique_ptr<fc::cache_file>& cache): fiber(fib), length(0),
     method(m), url(u), raw_url(p), headers(h), params(q), cookie_map(cookie_map), cache_file(cache), USE_MAX_MEM_SIZE_MB(max) {}
   std::string_view Req::cookie(const char* k) { if (!cookie_map.size())index_cookies(); return cookie_map[k]; }
-  void Req::setTimeoutSec(std::function<void()>&& func, uint32_t seconds) {
+  void Req::setTimeoutSec(void(*func)(), uint32_t seconds) {
     fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_s(seconds, std::move(func));
   }
-  void Req::setTimeout(std::function<void()>&& func, uint32_t milliseconds) {
+  void Req::setTimeout(void(*func)(), uint32_t milliseconds) {
     fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_ms(milliseconds, std::move(func));
   }
   std::string Req::ip_address() const {
@@ -57,11 +57,11 @@ namespace fc {
   void Res::redirect(const std::string& location, bool always) {
     ctx.ot.reset(); ctx.set_status(always ? 301 : 302); headers.erase({ "Location", 8 }); headers.emplace(RES_Loc, std::move(location));
   }
-  void Res::write_async(std::function<json::Json()>&& f, short i) {
+  void Res::write_async(json::Json(*f)(), short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { ctx.content_type = std::string_view("application/json", 16); body = std::move(b); return; }
     b = f().str(); ctx.content_type = std::string_view("application/json", 16); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };
-  void Res::write_async_s(std::function<std::string()>&& f, short i) {
+  void Res::write_async_s(std::string(*f)(), short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { body = std::move(b); return; }
     b = std::move(f()); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };

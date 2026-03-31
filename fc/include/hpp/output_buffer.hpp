@@ -1,6 +1,5 @@
 #ifndef OUT_BUF_HPP
 #define OUT_BUF_HPP
-#include <functional>
 #include "tp/c++.h"
 #include "hpp/string_view.hpp"
 #include "hh/lexical_cast.hh"
@@ -31,7 +30,7 @@ namespace fc {
           memcpy(this->cursor_, s.data() + G, this->cap_);
           this->cursor_ += this->cap_;G += this->cap_; co_await this->flush(); S -= this->cap_; b = this->cap_ < S; goto _;
         }
-        memcpy(this->cursor_, s.data() + G, S);this->cursor_ += S; co_await this->flush(); _CTX_return
+        memcpy(this->cursor_, s.data() + G, S);this->cursor_ += S; co_await this->flush(); _CTX_return;
       }
       memcpy(this->cursor_, s.data(), S); this->cursor_ += S; co_return co_await this->flush();
     }

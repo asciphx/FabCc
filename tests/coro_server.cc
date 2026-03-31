@@ -14,7 +14,6 @@ struct Person {
 };
 REGIS(Person, name, age, book, books)
 using namespace fc;
-Task<> funk(Req& req, Res& res) { res.write("Homepage route is replicated by std::bind！"); co_return; };
 int main() {
   App app;
   app.file_type({ "html","htm","ico","css","js","json","svg","png","jpg","gif","txt","wasm","mp4","webm","mp3","wav","mkv","srt","vtt" })
@@ -99,10 +98,10 @@ int main() {
     }
     s.pop_back(); s.pop_back(); res.write(s); co_return;
   };
-  app["/del"] = [&app](Req&, Res& res) -> Task<> { app["/"] = nullptr; res.write("The routing of the home page is delete!!"); co_return; };
+  app["/del"] = [](Req&, Res& res) -> Task<> { res.app["/"] = nullptr; res.write("The routing of the home page is delete!!"); co_return; };
   app["/timer"] = [](Req& req, Res& res) -> Task<> {
     req.setTimeout([] { raise(SIGINT); }, 6000);
-    res.app.get() = std::bind(funk, std::placeholders::_1, std::placeholders::_2);
+    res.app.get() = [](Req& req, Res& res) -> Task<> { res.write("Homepage route is replicated by std::bind！"); co_return; };
     res.write("Turn off the server timer and start the countdown!"); co_return;
   };
   //Start the server, also supports ipv6

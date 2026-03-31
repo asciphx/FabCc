@@ -13,7 +13,6 @@
  * the modified version must be made available.
  */
 #include "tp/c++.h"
-#include <functional>
 //Red-Black Tree
 namespace fc {
   template<typename K, typename V>

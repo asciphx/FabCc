@@ -102,11 +102,13 @@ namespace fc {
   // Orchestrates a set of fiber (ctx::co).
 #if __cplusplus < _cpp20_date
   struct fiber_exception {
-    std::string what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
-    fiber_exception(ctx::co&& c_, std::string const& what): what{ what }, c{ std::move(c_) } {}
+    const char* what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
+    fiber_exception& operator=(const fiber_exception&) = delete;
+    fiber_exception(const char* w, ctx::co&& sink): what(w), c(std::move(sink)) {}
+    fiber_exception(const fiber_exception& o) noexcept: what(o.what), c(std::move(const_cast<fiber_exception&>(o)).c) {}
   };
   _FORCE_INLINE static co throw_func(void*, co&& sink) {
-    throw fiber_exception(std::move(sink), ""); return std::move(sink);
+    throw fiber_exception{"", std::move(sink)}; return std::move(sink);
   }
 #endif
   class Conn {

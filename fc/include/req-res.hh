@@ -1,6 +1,5 @@
 #ifndef REQRES_HH
 #define REQRES_HH
-#include <functional>
 #include <string>
 #include <iostream>
 #include "tp/ctx.hh"
@@ -38,8 +37,8 @@ namespace fc {
     std::unique_ptr<fc::cache_file>& cache_file;
     fc::sv_map& cookie_map;
     std::string_view body;
-    void setTimeoutSec(std::function<void()>&& func, uint32_t seconds = 1);
-    void setTimeout(std::function<void()>&& func, uint32_t milliseconds = 100);
+    void setTimeoutSec(void(*func)(), uint32_t seconds = 1);
+    void setTimeout(void(*func)(), uint32_t milliseconds = 100);
   };// request
   enum algorithm { // 15 is the default value for deflate
     DEFLATE = 15, // windowBits can also be greater than 15 for optional gzip encoding.
@@ -57,9 +56,9 @@ namespace fc {
     _FORCE_INLINE void set_cookie(std::string_view k, std::string_view v) { ctx.set_cookie(k, v); }
     _FORCE_INLINE Res(fc::Ctx& ctx, App* ap): ctx(ctx), app(*ap) {}
     //Generally used to read configuration files, or slow io operations, return Json
-    void write_async(std::function<json::Json()>&& f, short i = CACHE_HTML_TIME_SECOND);
+    void write_async(json::Json(*f)(), short i = CACHE_HTML_TIME_SECOND);
     //Generally used to read configuration files, or slow io operations, return string
-    void write_async_s(std::function<std::string()>&& f, short i = CACHE_HTML_TIME_SECOND);
+    void write_async_s(std::string(*f)(), short i = CACHE_HTML_TIME_SECOND);
     _FORCE_INLINE void write(const json::Json& j) { ctx.content_type = std::string_view("application/json", 16); body.append(j.str()); };
     _FORCE_INLINE void write(const std::string& b) { ctx.content_type = std::string_view("text/plain;charset=UTF-8", 24); body.append(b.c_str(), b.length()); };
     _FORCE_INLINE void write(const std::string_view& b) { ctx.content_type = std::string_view("text/plain;charset=UTF-8", 24); body.append(b.data(), b.size()); };
