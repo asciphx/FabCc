@@ -47,5 +47,5 @@ namespace fc {
     if (fd_ != -1)::close(fd_);
 #endif
   }
-  _CTX_TASK(void) file_sptr::read_chunk(std::function<_CTX_TASK(void)(_Fhandle fd)> sink) { co_await sink(fd_); co_return; }
+  _CTX_TASK(void)file_sptr::read_chunk(std::function<_CTX_TASK(void)(_Fhandle fd)> sink) { co_await sink(fd_); co_return; }
 } // namespace fc

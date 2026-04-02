@@ -55,7 +55,7 @@ namespace fc {
     default: status_ = std::string_view("510 Not Extended\r\n", 18);
     }
   }
-  _CTX_TASK(void) Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
+  _CTX_TASK(void)Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, _Fsize_t p, long long size) {
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2); content_length_ = size - p;
     // if (content_length_ > 16777216) content_length_ = 16777216, size = p + 16777216;
     (ot << RES_content_length_tag << content_length_).append("\r\n\r\n", 4);
@@ -127,7 +127,7 @@ namespace fc {
     content_length_ = 0; time(&fiber.rpg->hrt); co_return;
   }
   // Send a file.
-  _CTX_TASK(void) Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, bool is_download) {
+  _CTX_TASK(void)Ctx::send_file(const std::shared_ptr<fc::file_sptr>& __, bool is_download) {
     content_length_ = static_cast<long long>(__->size_);
     // Writing the http headers.
     ot.append("Content-Type: ", 14).append(content_type).append("\r\n", 2);

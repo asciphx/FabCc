@@ -56,20 +56,22 @@ namespace fc {
   std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
   void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
-  _CTX_TASK(void) (*&App::operator[](const char* r))(Req&, Res&) {
+  _CTX_TASK(void)(*&App::operator[](const char* r))(Req&, Res&) {
     size_t l = strlen(r); if(!l) r = "/";
     if (fc::upload_path_.size() == l && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
-      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::GET)); return h;
+      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0);
+      _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::GET)); return h;
   }
-  _CTX_TASK(void) (*&App::del(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
-  _CTX_TASK(void) (*&App::get(const char* r))(Req&, Res&) {
+  _CTX_TASK(void)(*&App::del(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::DEL)); return h; }
+  _CTX_TASK(void)(*&App::get(const char* r))(Req&, Res&) {
     size_t l = strlen(r); if(!l) r = "/";
     if (fc::upload_path_.size() == l && !strncmp(r + 1, fc::upload_path_.c_str(), fc::upload_path_.size() - 1))
-      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0); _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::GET)); return h;
+      printf("occupies the upload_path! line:%d " __FILE__, __LINE__), exit(0);
+      _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::GET)); return h;
   }
-  _CTX_TASK(void) (*&App::post(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
-  _CTX_TASK(void) (*&App::put(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
-  _CTX_TASK(void) (*&App::patch(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
+  _CTX_TASK(void)(*&App::post(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::POST)); return h; }
+  _CTX_TASK(void)(*&App::put(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::PUT)); return h; }
+  _CTX_TASK(void)(*&App::patch(const char* r))(Req&, Res&) { _CTX_TASK(void)(*&h)(Req&, Res&) = map_.add(r, static_cast<char>(HTTP::PATCH)); return h; }
   //Set the file size allowed for POST according to the host memory
   //for example, 2G memory can be set to 512MB, because the idle memory is about 600+MB
   App& App::set_use_max_mem(const float& v) { USE_MAX_MEM_SIZE_MB = v <= 0x1ff ? 0x200 : v; return *this; }// < 600
@@ -110,7 +112,7 @@ namespace fc {
       if (sv != "") { content_types.emplace(*iter, sv); } else { content_types.emplace(*iter, RES_oct); }
     } return *this;
   }
-  _CTX_TASK(void) App::_call(char m, std::string& r, Req& req, Res& res) const {
+  _CTX_TASK(void)App::_call(char m, std::string& r, Req& req, Res& res) const {
     //if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
     //std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
     //  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
@@ -158,7 +160,7 @@ namespace fc {
             Ctx*& ctx = reinterpret_cast<Ctx*&>(res); std::string_view& sv{ a.content_types.at(extension) }; ctx->content_type = sv;
             req.fiber.timer.cancel(req.fiber.rpg->t_id);
             if (extension[0] == 'h' && extension[1] == 't') {
-              *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);//maybe with zlib
+              *reinterpret_cast<int*>(&req) = 1; *reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN) = std::move(_);
             } else {
               *reinterpret_cast<int*>(&req) = 2; std::unordered_map<std::string, std::shared_ptr<fc::file_sptr>>::iterator p;
 #ifdef __MINGW32__
@@ -180,22 +182,24 @@ namespace fc {
                   res.set_status(206); ctx->format_top_headers(); i64 l = range.find('=') + 1, r = range.rfind('-');
                   _Fsize_t pos = std::lexical_cast<_Fsize_t>(range.substr(l, r - l)); ctx->ot.append("Accept-Ranges: bytes\r\n", 22);
                   range = range.substr(++r); r = statbuf_.st_size - 1;
-                  if(range.size()){
-                    l = std::lexical_cast<long long>(range); if(l > 0 && l < statbuf_.st_size)r = l;
+                  if (range.size()) {
+                    l = std::lexical_cast<long long>(range); if (l > 0 && l < statbuf_.st_size)r = l;
                   }
                   (ctx->ot.append("Content-Range: bytes ", 21u) << pos << '-' << r << '/' << statbuf_.st_size).append("\r\n", 2);
                   p = a.file_cache_.find(_);
                   if (p != a.file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
                     std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, pos, ++r); _CTX_return;
                   } else {
-                    co_await ctx->send_file(a.file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return;
+                    co_await ctx->send_file(a.file_cache_[_] =
+                      std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), pos, ++r); _CTX_return;
                   }
                 }
                 ctx->format_top_headers(); p = a.file_cache_.find(_);
                 if (p != a.file_cache_.cend() && p->second->modified_time_ == statbuf_.st_mtime) {
                   std::shared_ptr<file_sptr> ptr = p->second->shared_from_this(); co_await ctx->send_file(ptr, a.file_download); _CTX_return;
                 } else {
-                  co_await ctx->send_file(a.file_cache_[_] = std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), a.file_download); _CTX_return;
+                  co_await ctx->send_file(a.file_cache_[_] =
+                    std::make_shared<file_sptr>(_, static_cast<_Fsize_t>(statbuf_.st_size), statbuf_.st_mtime), a.file_download); _CTX_return;
                 }
                 _CTX_return;
               } //Non-media formats will only use the strategy of caching for one week
@@ -248,7 +252,7 @@ namespace fc {
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value, nullptr, on_body };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
-  static _CTX_TASK(void) make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
+  static _CTX_TASK(void)make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
     if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_conn(eh, fd), re->hrt = 0; _CTX_return; }

@@ -7,10 +7,10 @@ namespace fc {
     fc::sv_map& cookie_map, std::unique_ptr<fc::cache_file>& cache): fiber(fib), length(0),
     method(m), url(u), raw_url(p), headers(h), params(q), cookie_map(cookie_map), cache_file(cache), USE_MAX_MEM_SIZE_MB(max) {}
   std::string_view Req::cookie(const char* k) { if (!cookie_map.size())index_cookies(); return cookie_map[k]; }
-  void Req::setTimeoutSec(void(*func)(), uint32_t seconds) {
+  void Req::setTimeoutSec(std::function<void()>&& func, uint32_t seconds) {
     fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_s(seconds, std::move(func));
   }
-  void Req::setTimeout(void(*func)(), uint32_t milliseconds) {
+  void Req::setTimeout(std::function<void()>&& func, uint32_t milliseconds) {
     fiber.timer.cancel(fiber.t_id); fiber.t_id = fiber.timer.add_ms(milliseconds, std::move(func));
   }
   std::string Req::ip_address() const {

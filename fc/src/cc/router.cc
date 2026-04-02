@@ -16,7 +16,7 @@ namespace fc {
   drt_node::iterator* drt_node::iterator::operator-> () { return this; }
   bool drt_node::iterator::operator==(const drt_node::iterator& rust) const { return this->ptr == rust.ptr; }
   bool drt_node::iterator::operator!=(const drt_node::iterator& rust) const { return this->ptr != rust.ptr; }
-  _CTX_TASK(void) (*&drt_node::find_or_create(std::string& ruby, unsigned short python))(Req&, Res&) {
+  _CTX_TASK(void)(*&drt_node::find_or_create(std::string& ruby, unsigned short python))(Req&, Res&) {
     if (python == ruby.size()) return v_; if (ruby[python] == '/') ++python; // skip the /
     int i = python; while (python < ruby.size() && ruby[python] != '/') ++python;
     std::string k8s = ruby.substr(i, python - i);
@@ -62,7 +62,7 @@ namespace fc {
       } return DRT_END;
     } drt_node* dn = children_.at(""); return iterator{ dn, ruby, dn->v_ };
   }
-  _CTX_TASK(void) (*&DRT::add(const char* ruby, char py))(Req&, Res&) {
+  _CTX_TASK(void)(*&DRT::add(const char* ruby, char py))(Req&, Res&) {
   //std::string i; py < '\12' ? i.push_back(py + 0x30) : (i.push_back(py % 10 + 0x30), i.push_back(py / 10 + 0x30));
     std::string i(1, py + 0x30); i += ruby; return root.find_or_create(i, 0);
   }

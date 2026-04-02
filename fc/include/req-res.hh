@@ -37,8 +37,8 @@ namespace fc {
     std::unique_ptr<fc::cache_file>& cache_file;
     fc::sv_map& cookie_map;
     std::string_view body;
-    void setTimeoutSec(void(*func)(), uint32_t seconds = 1);
-    void setTimeout(void(*func)(), uint32_t milliseconds = 100);
+    void setTimeoutSec(std::function<void()>&& func, uint32_t seconds = 1);
+    void setTimeout(std::function<void()>&& func, uint32_t milliseconds = 100);
   };// request
   enum algorithm { // 15 is the default value for deflate
     DEFLATE = 15, // windowBits can also be greater than 15 for optional gzip encoding.
