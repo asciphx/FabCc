@@ -17,7 +17,6 @@
 #include <stdexcept>
 #include <memory>
 #include <type_traits>
-#include <new>
 #include "tp/c++.h"
 template <typename T> class box;
 namespace std {
@@ -32,19 +31,40 @@ template <typename T>
 class box {
   bool b; T* p;
 public:
+  //default constructor
   box() noexcept: p(NULL), b(false) {}
+  //std::nullptr_t constructor
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
+  //pointer constructor (*) [box<> _]
+  template <typename U, std::enable_if_t<std::is_same<box<T>*, std::decay_t<U>>::value>* = null>
+  box(U _) noexcept: p(_->p), b(false) {}
+  //copy constructor (rvalue reference) [box<> _]
+  template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
+  box(U&& _) noexcept: p(_.p), b(_.b) { if(_.b) p = new T{*_.p}, const_cast<box<T>&>(_).p = null, const_cast<box<T>&>(_).b = false; }
+  //copy constructor (lvalue reference) [box<> _]
+  template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
+  box(U& _) noexcept: p(_.b ? new T{*_.p} : null), b(_.b) {}
+  //move constructor
   explicit box(box<T>&& _) noexcept: p(_.p), b(_.p ? true : false) { _.p = nullptr; }
+  //reference constructor
   explicit box(box<T>& _) noexcept: p(_.p), b(_.b) { _.b = false; }
+  //value copy constructor
   explicit box(T&& _) noexcept: p(new T{ std::move(_) }), b(true) {}
+  //value reference constructor
   explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}
+  //const reference constructor
   explicit box(const box<T>& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; }
-  explicit box(T* _) noexcept: p(_), b(true) {}
+  //const move constructor
+  explicit box(const box<T>&& _) noexcept: p(_.p), b(_.p ? true : false) { const_cast<box<T>&>(_).p = nullptr; }
+  //value pointer constructor
+  explicit box(T* _) noexcept: p(_), b(_ ? true : false) {}
+  //delegate constructor
   template<typename... X> box(X&&... _) : p(new T{ std::forward<X>(_)... }), b(true) {
     static_assert(std::is_constructible<T, X...>::value, "T must be constructible with X...");
   }
   ~box() noexcept { if (this->b) { delete this->p; this->p = null; } }
   _FORCE_INLINE void operator = (T* _) noexcept { if (this->b) delete this->p; this->p = _; this->b = _ ? true : false; }
+  _FORCE_INLINE void operator = (std::nullptr_t) noexcept { if (this->b) delete this->p, this->b = false; this->p = null; }
   _FORCE_INLINE void operator = (box<T>& _) noexcept {
     if (this->b) { if (_.p)*this->p = *_.p; else { delete this->p; this->p = null; this->b = false; } } else if (_.p) { this->p = new T(*_.p); this->b = true; }
   }
@@ -64,12 +84,11 @@ public:
   _FORCE_INLINE void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
-  const T* operator->() const { if (p)return p; throw std::logic_error(std::string(typeid(T).name()).append(" is null!", 9)); }
-  T* operator->() { if (this->p)return this->p; throw std::logic_error(std::string(typeid(T).name()).append(" is null!", 9)); }
+  const T* operator->() const { if (p)return p; return nullptr; } T* operator->() { if (this->p)return this->p; return nullptr; }
   _FORCE_INLINE T& operator*() & { if (!this->p) throw std::logic_error("box: null pointer dereference"); return *this->p; }
   _FORCE_INLINE const T& operator*() const& { if (!p) throw std::logic_error("box: null pointer dereference"); return *p; }
   T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }
-  _FORCE_INLINE void reset() noexcept { if (this->p) { delete this->p; } this->b = false; }
+  _FORCE_INLINE void reset() noexcept { if (this->p) { if(this->b) delete this->p; this->p = null; } this->b = false; }
 };
 namespace fc {
   template <class T> struct is_box_impl: std::false_type {}; template <class T> struct is_box_impl<box<T>>: std::true_type {};
@@ -97,7 +116,7 @@ std::ostream& operator<<(std::ostream& s, const box<T>& b) { if (b) return s << 
 template <class T, class U>
 inline const bool operator==(const box<T>& l, const box<U>& r) { return (l && r && *l == *r) || (!l && !r); }
 template <class T, class U>
-inline const bool operator!=(const box<T>& l, const box<U>& r) { bool b = l, d = r; return !l && d || b && !r || (d && b && *l != *r); }
+inline const bool operator!=(const box<T>& l, const box<U>& r) { bool b = l, d = r; return !b && d || b && !d || (d && b && *l != *r); }
 template <class T, class U>
 inline const bool operator<(const box<T>& l, const box<U>& r) { return r && (!l || *l < *r); }
 template <class T, class U>

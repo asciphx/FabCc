@@ -21,14 +21,14 @@
 #pragma warning(disable:4244)
 namespace fc {
 #ifdef WIN32
-  float GetMemUsage(int pid) {
-    uint64_t m = 0; PROCESS_MEMORY_COUNTERS pmc; HANDLE h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-    if (GetProcessMemoryInfo(h, &pmc, sizeof(pmc))) m = pmc.PagefileUsage; CloseHandle(h); return m / 1048576.0;
+  float GetMemUsage(int id) {
+    HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, id); if (h == NULL) return 0.0f; PROCESS_MEMORY_COUNTERS pmc;
+    if (!GetProcessMemoryInfo(h, &pmc, sizeof(pmc))){ CloseHandle(h); return 0.0f; } CloseHandle(h); return pmc.WorkingSetSize / 1048576.0f;
 #else
-  float GetMemUsage(int pid) {
-    char file_name[64] = { 0 }, line_buff[512] = { 0 }; sprintf(file_name, "/proc/%d/status", pid); FILE* fd = fopen(file_name, "r");
-    if (nullptr == fd) return 0; int v = 0; for (int i = 0; i < 22; ++i) char* cha = fgets(line_buff, sizeof(line_buff), fd);
-    sscanf(line_buff, "%s %d", file_name, &v); fclose(fd); return v / 1024.0;
+  float GetMemUsage(int id) {
+    char file_name[64]; snprintf(file_name, sizeof(file_name), "/proc/%d/status", id); FILE* fd = fopen(file_name, "r"); if (fd == NULL) return 0;
+    char line[512]; int p = 0; while (fgets(line, sizeof(line), fd)) if (strncmp(line, "VmRSS:", 6) == 0) { sscanf(line, "%*s %d", &p); break; }
+    fclose(fd); return p / 1024.0f;
 #endif
   }
   BP::BP(Req & req, const char* m, unsigned short mb): menu(fc::upload_path_), L(mb), req(req), ban_file(false),
@@ -50,12 +50,9 @@ namespace fc {
       if (content_length_ > L * 1048576ll) {
         req.fiber.shut(_READ); std::string es; throw err::too_large(es << "Body size can't be biger than : " << L << "MB");
       }
-      float mem{ GetMemUsage() };//not finish read
-      if (mem > req.USE_MAX_MEM_SIZE_MB) {
-        req.fiber.shut(_READ); std::string es; throw err::internal_server_error(es << "insufficient memory!" << mem);
-      }//More possibility to use memory. If the conditions are met in memory, there is no need to use disk.
+      float mem{ GetMemUsage() };//More possibility to use memory. If the conditions are met in memory, there is no need to use disk.
       long long o = req.body.size();
-      if (content_length_ < 65536 || (content_length_ >> 18) < req.USE_MAX_MEM_SIZE_MB - mem) {
+      if (mem <= req.USE_MAX_MEM_SIZE_MB && (content_length_ < 65536 || (content_length_ >> 18) < req.USE_MAX_MEM_SIZE_MB - mem)) {
         value.resize(content_length_);
         int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), content_length_ - o); o += N > 0 ? N : 0;
         while (content_length_ > o) {
@@ -65,9 +62,9 @@ namespace fc {
         }
         value.end() += content_length_; content_length_ = 0;
       } else {
-        std::random_device rd; std::string mask("_/", 2); std::ostringstream os; os << std::hex << std::setw(4) << rd();
+        std::random_device rd; std::string mask("_/", 2); std::ostringstream os; os << std::hex << std::setw(6) << rd();
         std::string ss{ os.str() }; mask.append({ ss[3], ss[2], '/', ss[1] }) << (std::chrono::duration_cast<std::chrono::microseconds>(
-          std::chrono::high_resolution_clock::now() - RES_START_TIME).count() - ss[2] * ss[3] - ss[1]) << ss[0];
+          std::chrono::high_resolution_clock::now() - RES_START_TIME).count() - ss[4] * ss[5]) << ss[0];
         req.cache_file = std::unique_ptr<cache_file>(new cache_file{ mask.data(), mask.size() });
         value.resize(65536); int N = co_await req.fiber.read(const_cast<char*>(value.data() + o), 65536 - o); N += o;
 #ifdef __GNUC__

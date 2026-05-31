@@ -233,6 +233,46 @@ namespace fc {
       for (size_t i = 0; i < totalSize; ++i) table[i].occupied = false;
       numEntries = 0;
     }
+    template <std::enable_if_t<std::is_same<std::string, std::decay_t<K>>::value||std::is_same<std::string_view, std::decay_t<K>>::value>* = nullptr>
+    V& operator[](const std::string_view& key) noexcept {
+      size_t baseIndex = fc_hash(key, totalSize);
+      size_t subarrayIdx = superPointers[baseIndex];
+      for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
+        Nod& entry = table[(subarrayIdx << SUBARRAY_DIV) + i];
+        if (entry.occupied && equal(entry.key, key)) {
+          return entry.value;
+        }
+      }
+      bool resized = false;
+      do {
+        if (numEntries * 100 > LOAD_FACTOR_THRESHOLD * totalSize) {
+          resized = resize();
+          if (!resized) {
+            return insertImpl(std::string(key), dummy, fc_hash(key, totalSize)) ?
+              table[fc_hash(key, totalSize)].value : dummy;
+          }
+          baseIndex = fc_hash(key, totalSize);
+        }
+        subarrayIdx = baseIndex >> SUBARRAY_DIV;
+        size_t offset = baseIndex & (SUBARRAY_SIZE - 1);
+        for (size_t i = 0; i < numSubarrays; ++i) {
+          size_t currentSubarray = (subarrayIdx + i) & (numSubarrays - 1);
+          size_t startOffset = (i == 0) ? offset : 0;
+          for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
+            size_t idx = (startOffset + j) & (SUBARRAY_SIZE - 1);
+            Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + idx];
+            if (!entry.occupied) {
+              entry.key = key;
+              entry.occupied = true;
+              superPointers[baseIndex] = static_cast<T>(currentSubarray);
+              ++numEntries;
+              return entry.value;
+            }
+          }
+        }
+      } while (resized);
+      return dummy;
+    }
     V& operator[](const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
       size_t subarrayIdx = superPointers[baseIndex];
@@ -302,7 +342,7 @@ namespace fc {
       }
       throw std::out_of_range("Not found in HashMap");
     }
-    inline void remove(const K& key) noexcept {
+    inline void erase(const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
       size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
@@ -367,8 +407,8 @@ namespace fc {
     _FORCE_INLINE const_iterator end() const noexcept;
   };
   template<typename T>
-  class HashMap<std::string, std::string, T, str_key_eq, 80>: public HashMap<std::string, std::string, T, str_key_eq> {
-  public: HashMap(uint8_t i = 6) noexcept: HashMap<std::string, std::string, T, str_key_eq>(i) {}
+  class HashMap<std::string, std::string, T, sv_key_eq, 80>: public HashMap<std::string, std::string, T, sv_key_eq> {
+  public: HashMap(uint8_t i = sizeof(T)) noexcept: HashMap<std::string, std::string, T, sv_key_eq>(i) {}
   };
   template<typename T>
   class HashMap<std::string_view, std::string_view, T, sv_key_eq, 75>: public HashMap<std::string_view, std::string_view, T, sv_key_eq, 80> {
@@ -447,9 +487,15 @@ namespace fc {
   // Query-friendly hash table similar to std::unordered_map, T = superPointers, E = std::equal_to<K>
   template<typename K, typename V, typename T = uint16_t, typename E = std::equal_to<K>, char LOAD_FACTOR_THRESHOLD = 75>
   class HashMap {
+#ifndef _MSC_VER
     static int const constexpr size_dummy = sizeof(K) >= sizeof(V) * 2 ? sizeof(V) : sizeof(K) > sizeof(V) ? sizeof(K) : sizeof(V);
+#endif
     struct Nod {
+#ifdef _MSC_VER
+      K key; V value; bool occupied;
+#else
       K key; alignas(size_dummy) V value; alignas(size_dummy) bool occupied;
+#endif
       Nod() noexcept: key(), value(), occupied(false) {}
       Nod(const K& k, const V& v) noexcept: key(k), value(v), occupied(true) {}
       Nod(const K& k, V&& v) noexcept: key(k), value(std::move(v)), occupied(true) {}
@@ -557,6 +603,46 @@ namespace fc {
       for (size_t i = 0; i < totalSize; ++i) table[i].occupied = false;
       numEntries = 0;
     }
+    template <std::enable_if_t<std::is_same<std::string, std::decay_t<K>>::value||std::is_same<std::string_view, std::decay_t<K>>::value>* = nullptr>
+    V& operator[](const std::string_view& key) noexcept {
+      size_t baseIndex = fc_hash(key, totalSize);
+      size_t subarrayIdx = superPointers[baseIndex];
+      for (size_t i = 0; i < SUBARRAY_SIZE; ++i) {
+        Nod& entry = table[(subarrayIdx << SUBARRAY_DIV) + i];
+        if (entry.occupied && equal(entry.key, key)) {
+          return entry.value;
+        }
+      }
+      bool resized = false;
+      do {
+        if (numEntries * 100 > LOAD_FACTOR_THRESHOLD * totalSize) {
+          resized = resize();
+          if (!resized) {
+            return insertImpl(std::string(key), dummy, fc_hash(key, totalSize)) ?
+              table[fc_hash(key, totalSize)].value : dummy;
+          }
+          baseIndex = fc_hash(key, totalSize);
+        }
+        subarrayIdx = baseIndex >> SUBARRAY_DIV;
+        size_t offset = baseIndex % SUBARRAY_SIZE;
+        for (size_t i = 0; i < numSubarrays; ++i) {
+          size_t currentSubarray = (subarrayIdx + i) % numSubarrays;
+          size_t startOffset = (i == 0) ? offset : 0;
+          for (size_t j = 0; j < SUBARRAY_SIZE; ++j) {
+            size_t idx = (startOffset + j) % SUBARRAY_SIZE;
+            Nod& entry = table[(currentSubarray << SUBARRAY_DIV) + idx];
+            if (!entry.occupied) {
+              entry.key = key;
+              entry.occupied = true;
+              superPointers[baseIndex] = static_cast<T>(currentSubarray);
+              ++numEntries;
+              return entry.value;
+            }
+          }
+        }
+      } while (resized);
+      return dummy;
+    }
     V& operator[](const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
       size_t subarrayIdx = superPointers[baseIndex];
@@ -626,7 +712,7 @@ namespace fc {
       }
       throw std::out_of_range("Not found in HashMap");
     }
-    inline void remove(const K& key) noexcept {
+    inline void erase(const K& key) noexcept {
       size_t baseIndex = fc_hash(key, totalSize);
       size_t subarrayIdx = baseIndex >> SUBARRAY_DIV;
       for (size_t i = 0; i < numSubarrays; ++i) {
@@ -691,8 +777,8 @@ namespace fc {
     _FORCE_INLINE const_iterator end() const noexcept;
   };
   template<typename T>
-  class HashMap<std::string, std::string, T, str_key_eq, 80>: public HashMap<std::string, std::string, T, str_key_eq> {
-  public: HashMap(int i = 1024) noexcept: HashMap<std::string, std::string, T, str_key_eq>(i) {}
+  class HashMap<std::string, std::string, T, sv_key_eq, 80>: public HashMap<std::string, std::string, T, sv_key_eq> {
+  public: HashMap(int i = sizeof(T)) noexcept: HashMap<std::string, std::string, T, sv_key_eq>(i) {}
   };
   template<typename T>
   class HashMap<std::string_view, std::string_view, T, sv_key_eq, 75>: public HashMap<std::string_view, std::string_view, T, sv_key_eq, 80> {
@@ -728,6 +814,6 @@ namespace fc {
   template<typename T = uint8_t>
   using sv_hash_map = HashMap<std::string_view, std::string_view, T, sv_key_eq>;
   template<typename T = uint16_t>
-  using str_hash_map = HashMap<std::string, std::string, T, str_key_eq, 80>;
+  using str_hash_map = HashMap<std::string, std::string, T, sv_key_eq, 80>;
 }
 #endif

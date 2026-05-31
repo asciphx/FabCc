@@ -18,7 +18,12 @@ namespace fc {
   struct str_hash {
     size_t operator()(const std::string& z) const;
   };
-  using str_map = std::unordered_map<std::string, std::string, str_hash, str_key_eq>;
+  struct str_map : std::unordered_map<std::string, std::string, str_hash, str_key_eq>{
+    _FORCE_INLINE std::string& operator[](const std::string_view& k) {
+      std::string s(k); auto _ = this->find(s); if (_ != this->end()) return _->second;
+      return this->insert({s,  std::string{"", 0}}).first->second;
+    }
+  };
 
   struct sv_hash {
     size_t operator()(const std::string_view& z) const;

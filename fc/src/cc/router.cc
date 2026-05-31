@@ -11,6 +11,7 @@
 * the modified version must be made available.
 */
 #include <hh/router.hh>
+#include <regex>
 namespace fc {
   drt_node::drt_node(): v_{ nullptr } {};
   drt_node::iterator* drt_node::iterator::operator-> () { return this; }
@@ -31,8 +32,7 @@ namespace fc {
     if (children_.size() == 0) father(a, js, v_);
     else {
       if (js.size() && js.back() != '/') { if (v_ != nullptr) father(a, js, v_); js.push_back('/'); }
-      for (std::pair<const std::string, drt_node*> party : children_)
-        party.second->for_all_routes(father, a, js + party.first);
+      for (std::pair<const std::string, drt_node*> party : children_) party.second->for_all_routes(father, a, js + party.first);
     }
   }
   // from http://forbeslindesay.github.io/express-route-tester

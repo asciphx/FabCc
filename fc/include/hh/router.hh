@@ -2,9 +2,6 @@
 #define ROUTER_HH
 #include <unordered_map>
 #include <string>
-#include <memory>
-#include <string>
-#include <regex>
 #include "h/common.h"
 #include "hpp/hash_map.hpp"
 #include "req-res.hh"

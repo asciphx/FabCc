@@ -4,31 +4,21 @@ namespace cc {
   // isxdigit _is_ available in <ctype.h>, but let's avoid another header instead
 #define QS_ISHEX(x)                                        \
   ((((x) >= '0' && (x) <= '9') || ((x) >= 'A' && (x) <= 'F') || \
-    ((x) >= 'a' && (x) <= 'f'))                                 \
-       ? 1                                                      \
-       : 0)
+    ((x) >= 'a' && (x) <= 'f')) ? 1 : 0)
 #define QS_HEX2DEC(x)               \
   (((x) >= '0' && (x) <= '9')   ? (x)-48 \
    : ((x) >= 'A' && (x) <= 'F') ? (x)-55 \
-   : ((x) >= 'a' && (x) <= 'f') ? (x)-87 \
-                                : 0)
+   : ((x) >= 'a' && (x) <= 'f') ? (x)-87 : 0)
 #define QS_ISQSCHR(x) \
-  ((((x) == '=') || ((x) == '#') || ((x) == '&') || ((x) == '\0')) ? 0 : 1)
+  ((((x) == '=') || ((x) == '#') || ((x) == '&')) ? 0 : 1)
   int qs_strncmp(const char* s, const char* qs, size_t n) {
-    int i = 0;
     unsigned char u1, u2, unyb, lnyb;
     while (n-- > 0) {
       u1 = static_cast<unsigned char>(*s++);
       u2 = static_cast<unsigned char>(*qs++);
-      if (!QS_ISQSCHR(u1)) {
-        u1 = '\0';
-      }
-      if (!QS_ISQSCHR(u2)) {
-        u2 = '\0';
-      }
-      if (u1 == '+') {
-        u1 = ' ';
-      }
+      if (!QS_ISQSCHR(u1)) u1 = '\0';
+      if (!QS_ISQSCHR(u2)) u2 = '\0';
+      if (u1 == '+') u1 = ' ';
       if (u1 == '%')  // easier/safer than scanf
       {
         unyb = static_cast<unsigned char>(*s++);
@@ -38,9 +28,7 @@ namespace cc {
         else
           u1 = '\0';
       }
-      if (u2 == '+') {
-        u2 = ' ';
-      }
+      if (u2 == '+') u2 = ' ';
       if (u2 == '%')  // easier/safer than scanf
       {
         unyb = static_cast<unsigned char>(*qs++);
@@ -52,44 +40,26 @@ namespace cc {
       }
       if (u1 != u2) return u1 - u2;
       if (u1 == '\0') return 0;
-      ++i;
     }
-    if (QS_ISQSCHR(*qs))
-      return -1;
-    else
-      return 0;
-  }//int qs_parse(char* qs, char* qs_kv[], int qs_kv_size) {
-  int qs_parse(char* substr_ptr, char* qs_kv[], int qs_kv_size) {
-    int i, j;
-    //char* substr_ptr;
-    //for (i = 0; i < qs_kv_size; ++i) qs_kv[i] = NULL;
-    //// find the beginning of the k/v substrings or the fragment
-    //substr_ptr = qs + strcspn(qs, "?#");
-    //if (substr_ptr[0] != '\0')
-    //  ++substr_ptr;
-    //else
-    //  return 0;  // no query or fragment
-    i = 0;
+    return QS_ISQSCHR(*qs) ? -1 : 0;
+  }
+  _FORCE_INLINE size_t safe_strcspn(const char* s, const char* reject, size_t& max_len) {
+    size_t i = 0; while (++i < max_len) { if (strchr(reject, s[i])) break; } max_len -= i; return i;
+  }
+  int qs_parse(std::string_view& sv, char* qs_kv[], int qs_kv_size) {
+    int i = 0; size_t j, p = sv.size();
+    char* substr_ptr = const_cast<char*>(&sv[0]);
     while (i < qs_kv_size) {
-      qs_kv[i] = substr_ptr;
-      j = static_cast<int>(strcspn(substr_ptr, "&"));
-      if (substr_ptr[j] == '\0') {
-        break;
-      }
-      substr_ptr += j + 1;
-      ++i;
+      qs_kv[i] = substr_ptr; j = sv.find('&');
+      if (j == std::string_view::npos) break;
+      substr_ptr += j + 1; ++i; sv.remove_prefix(j + 1);
     }
-    ++i;  // x &'s -> means x iterations of this loop -> means *x+1* k/v pairs
-
-    // we only decode the values in place, the keys could have '='s in them
-    // which will hose our ability to distinguish keys from values later
+    ++i;
     for (j = 0; j < i; ++j) {
-      substr_ptr = qs_kv[j] + strcspn(qs_kv[j], "=&#");
-      if (substr_ptr[0] == '&' ||
-        substr_ptr[0] == '\0')  // blank value: skip decoding
-        substr_ptr[0] = '\0';
-      else
-        qs_decode(++substr_ptr);
+      substr_ptr = qs_kv[j] + safe_strcspn(qs_kv[j], "=&#", p);
+      // if (substr_ptr[0] == '&') substr_ptr[0] = '\0'; else
+      if(p != sv.size() + i) qs_decode(++substr_ptr);
+      else { substr_ptr[sv.size() - i - i] = '\0'; return i; }
     }
     return i;
   }
@@ -101,16 +71,12 @@ namespace cc {
       } else if (qs[j] == '%')  // easier/safer than scanf
       {
         if (!QS_ISHEX(qs[j + 1]) || !QS_ISHEX(qs[j + 2])) {
-          qs[i] = '\0';
-          return i;
+          qs[i] = '\0'; return i;
         }
         qs[i] = (QS_HEX2DEC(qs[j + 1]) * 16) + QS_HEX2DEC(qs[j + 2]);
         j += 2;
-      } else {
-        qs[i] = qs[j];
-      }
-      ++i;
-      ++j;
+      } else qs[i] = qs[j];
+      ++i; ++j;
     }
     qs[i] = '\0';
     return i;
@@ -258,11 +224,11 @@ namespace cc {
   query_string& query_string::operator=(query_string&& qs) {
     key_value_pairs_ = std::move(qs.key_value_pairs_); return *this;
   }
-  query_string::query_string(std::string_view& url, size_t l) {
-    if (url.empty()) return;
+  query_string::query_string(std::string_view url, size_t l) {
+    if (url.empty()) return; url.remove_prefix(++l);
     key_value_pairs_.resize(MAX_KEY_VALUE_PAIRS_COUNT);
-    int count = qs_parse(const_cast<char*>(&url[++l]), &key_value_pairs_[0], MAX_KEY_VALUE_PAIRS_COUNT);
-    key_value_pairs_.resize(count);
+    key_value_pairs_.resize(qs_parse(url, &key_value_pairs_[0], MAX_KEY_VALUE_PAIRS_COUNT));
+    // key_value_pairs_.resize(qs_parse(const_cast<char*>(&url[0]), &key_value_pairs_[0], MAX_KEY_VALUE_PAIRS_COUNT));
   }
   std::string& operator<<(std::string& s, const query_string& qs) {
     s.append({ '[', ' ' });

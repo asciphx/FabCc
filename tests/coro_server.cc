@@ -54,7 +54,7 @@ int main() {
       char name[64]; gethostname(name, 64);
       Json x{
         {"header", name},
-        {"items", 
+        {"items",
             {{{"name", "red"}, {"first", true}, {"url", "#Red"}},
             {{"name", "green"}, {"link", true}, {"url", "#Green"}},
             {{"name", "blue"}, {"link", true}, {"url", "#Blue"}}}

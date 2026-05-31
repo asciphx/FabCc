@@ -15,7 +15,6 @@
 #include <type_traits>
 #include <string>
 #include <stdexcept>
-#include <string.h>
 #include "hpp/string_view.hpp"
 #include "h/dtoa_milo.h"
 #include "hpp/i2a.hpp"

@@ -15,16 +15,11 @@
 #include "c++.h"
 #include "fcontext.h"
 #include <cstdlib>
-#include <new>
 #include <assert.h>
-#include <ostream>
-#include <exception>
 #include <memory>
 #include <utility>
-#include <tuple>
 #include <type_traits>
-#include <iostream>
-#include "hh/timer.hh"
+#include "hpp/http_top_header_builder.hpp"
 #if defined _MSC_VER
 #if defined(_M_X64)
 #  pragma pack(push,16)
@@ -47,11 +42,38 @@
 #else
 #define CTX_MIN_SIZE 65536
 #endif
+#if defined _WIN32
+#include <WinSock2.h>
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#endif
+#if __cplusplus >= _cpp20_date
+#define _CTX_TASK(_) fc::Task<_>
+#else
+#define _CTX_TASK(_) _
+#endif
 namespace fc {
   struct ROG;
+  #if defined _WIN32
+    typedef HANDLE epoll_handle_t;
+    typedef unsigned long long socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
+  #else
+    typedef int epoll_handle_t;
+    typedef int socket_type;
+  #endif
 }
 namespace ctx {
-  class co; struct FN { co (*func)(void*, co&&); void* ctx; void (*destroy)(void*); };
+  class co;
+  struct my_lambda {
+      void* r;
+      fc::socket_type socket_fd;
+      int k_a;
+      void(***handler)(fc::socket_type,sockaddr,int,fc::timer&,fc::ROG*,fc::epoll_handle_t,void*,void*);
+      fc::ROG* fib;
+      void* ap;
+    };
+  typedef union { my_lambda ctx; void* nil; } my_lambda_t; struct FN { my_lambda_t ctx; co (*func)(void*, co&&); };
   static constexpr uintptr_t stack_align_mask = (_PTR_LEN == 8) ? 0X7f : 0X3f;
   static constexpr uintptr_t stack_gap = (_PTR_LEN == 8) ? 0X40 : 0X20;
   static const constexpr size_t fixedsize = CTX_MIN_SIZE;
@@ -71,7 +93,7 @@ namespace ctx {
     void deallocate() noexcept { destroy(this); } fcontext_t run(fcontext_t fctx);
   };
   _FORCE_INLINE transfer_t ctx_exit(transfer_t t) noexcept {
-    record* rec = static_cast<record*>(t.data); rec->deallocate(); return { nullptr, nullptr }; // destroy context stack
+    static_cast<record*>(t.data)->deallocate(); return { nullptr, nullptr }; // destroy context stack
   }
   _FORCE_INLINE void ctx_entry(transfer_t t) noexcept {
     // transfer control structure to the context-stack
@@ -103,13 +125,12 @@ namespace ctx {
       void* stack_top = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(storage) - static_cast<uintptr_t>(stack_gap));
       // should be 16byte aligned应该16字节对齐
       void* stack_bottom = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(sctx) - static_cast<uintptr_t>(fixedsize));
-      // placment new for control structure on context stack在上下文堆栈上放置新的控件结构
-      record* rec = new(storage)record{ sctx, std::move(fn) };
       // create fast-context创建快速上下文
       const size_t size = reinterpret_cast<uintptr_t>(stack_top) - reinterpret_cast<uintptr_t>(stack_bottom);
-      const fcontext_t fctx = make_fcontext(stack_top, size, &ctx_entry); assert(nullptr != fctx);
       // transfer control structure to context-stack将控制结构传输到上下文堆栈
-      fctx_ = jump_fcontext(fctx, rec).fctx;
+      const fcontext_t fctx = make_fcontext(stack_top, size, &ctx_entry); assert(nullptr != fctx);
+      // placment new for control structure on context stack在上下文堆栈上放置新的控件结构
+      fctx_ = jump_fcontext(fctx, new(storage)record{ sctx, std::move(fn) }).fctx;
     }
     ~co() {
       if (_unlikely(nullptr != fctx_)) ontop_fcontext(std::exchange(fctx_, nullptr), nullptr, ctx_unwind);
@@ -134,14 +155,14 @@ namespace ctx {
   _FORCE_INLINE transfer_t ctx_ontop(transfer_t t) {
     assert(nullptr != t.data); FN* fn = static_cast<FN*>(t.data); t.data = nullptr;
     co c{ t.fctx };// execute function, pass continuation via reference
-    c = fn->func(fn->ctx, std::move(c)); fn->destroy(fn->ctx); return { std::exchange(c.fctx_, nullptr), nullptr };
+    c = fn->func((my_lambda*)fn, std::move(c)); return { std::exchange(c.fctx_, nullptr), nullptr };
   }
   _FORCE_INLINE fcontext_t record::run(fcontext_t fctx) {//c = std::invoke(fn_.func, fn_.ctx, std::move(c));
-    co c{ fctx }; c = fn_.func(fn_.ctx, std::move(c)); return std::exchange(c.fctx_, nullptr);
+    co c{ fctx }; c = fn_.func((my_lambda*)&fn_, std::move(c)); return std::exchange(c.fctx_, nullptr);
   }
   typedef co fiber;
 }
-  
+
 #if __cplusplus >= _cpp20_date
 /*
 * This software is licensed under the AGPL-3.0 License.
@@ -249,18 +270,12 @@ namespace fc {
     }
   };
 }
-#define _CTX_TASK(_) fc::Task<_>
 #define _CTX_back(_) co_return _;
 #define _CTX_return co_return
 #define _ctx -> fc::Task<>
-#define CTX_LAMBDA(...)
 #else
-#define CTX_LAMBDA(name, CAPTURE_DEF)         \
-  struct name##_lambda CAPTURE_DEF; static ctx::co name##_func(void* ctx, ctx::co&& sink)
 #define CTX_LAMBDA_IMPL(name)                 \
   static ctx::co name##_func(void* ctx, ctx::co&& sink)
-#define CTX_CALLCC(name, ...) name##_func, new name##_lambda{__VA_ARGS__} , [](void* x){ delete static_cast<name##_lambda*>(x); }
-#define _CTX_TASK(_) _
 #define _CTX_back(_) return _;
 #define _CTX_return return
 #define _ctx -> void
@@ -269,11 +284,6 @@ namespace fc {
 #endif
 namespace fc {
   typedef ctx::co co;
-#if defined _WIN32
-  typedef unsigned long long socket_type;//SD_RECEIVE，SD_SEND，SD_BOTH
-#else
-  typedef int socket_type;
-#endif
   //This is a cross platform coroutine wrapper, designed for convenience and practicality
   struct ROG {
     Timer::Node t_id;
@@ -292,6 +302,7 @@ namespace fc {
 #endif
     ROG():hrt(0) {}
   };
+  static ctx::co my_func(void* ctx, ctx ::co&& sink);
 }
 #undef CTX_MIN_SIZE
 #if defined _MSC_VER

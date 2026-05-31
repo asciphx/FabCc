@@ -1,7 +1,6 @@
 #ifndef CTX_H
 #define CTX_H
 #include <cstring>
-#include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #if !defined(_WIN32)
@@ -13,12 +12,11 @@
 #if __linux__ // the sendfile header does not exists on macos.
 #include <sys/sendfile.h>
 #endif
-#include <unordered_map>
 #include "hh/http_error.hh"
 #include "hpp/output_buffer.hpp"
 #include "hh/tcp.hh"
 #include "h/any_types.h"
-#include "hpp/string_view.hpp"
+#include "h/common.h"
 #include "hh/picohttpparser.hh"
 #include "hh/cache_file.hh"
 #include "hh/query_string.hh"

@@ -1,6 +1,6 @@
 #ifndef PTHREAD_H
 #define PTHREAD_H
-#ifdef _WIN32
+#if defined(_MSC_VER)
 #include "windows.h"
 typedef HANDLE pthread_t;
 static void thread_create(pthread_t* t, void* (*func)(void*), void* arg) {

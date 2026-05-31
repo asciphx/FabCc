@@ -1,11 +1,9 @@
 #include <list>
 #include <utility>
 #include <memory>
-#include <algorithm>
 #include <fstream>
-#include <mutex>
 #include "app.hh"
-#include "hpp/i2a.hpp"
+#include "hh/tcp.hh"
 #include "hh/lexical_cast.hh"
 #include "hpp/string_view.hpp"
 #include "h/common.h"
@@ -52,9 +50,13 @@ namespace fc {
     }
     return std::string_view("NULL", 4);
   }
-  App::App(){}
-  std::string App::get_cache(std::string& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
-  void App::set_cache(std::string& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
+  App::App(){
+  #if __cplusplus < _cpp20_date
+    this->USE_MAX_MEM_SIZE_MB *= 1.6;
+  #endif
+  }
+  std::string App::get_cache(const std::string_view& u) { if (RES_CACHE_TIME[u] > nowStamp()) return RES_CACHE_MENU[u]; return std::string(); };
+  void App::set_cache(const std::string_view& u, std::string& v, short i) { RES_CACHE_TIME[u] = nowStamp(i); RES_CACHE_MENU[u] = std::move(v); };
   App& App::set_file_download(bool&& b) { this->file_download = std::move(b); return *this; }
   _CTX_TASK(void)(*&App::operator[](const char* r))(Req&, Res&) {
     size_t l = strlen(r); if(!l) r = "/";
@@ -80,7 +82,7 @@ namespace fc {
   //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
   ///Process the Req and generate a Res for it
   typedef struct { void* i; std::string& b; } MapArg;
-  
+
   std::string App::_print_routes() {
     std::string b(0xe0, '\0'); int i = 0; b.clear();
 #ifdef __linux__
@@ -112,14 +114,10 @@ namespace fc {
       if (sv != "") { content_types.emplace(*iter, sv); } else { content_types.emplace(*iter, RES_oct); }
     } return *this;
   }
-  _CTX_TASK(void)App::_call(char m, std::string& r, Req& req, Res& res) const {
-    //if (r[r.size() - 1] == '/') r = r.substr(0, r.size() - 1);// skip the last / of the url.
-    //std::string g; static_cast<char>(m) < '\12' ? g.push_back(static_cast<char>(m) + 0x30) :
-    //  (g.push_back(static_cast<char>(m) % 10 + 0x30), g.push_back(static_cast<char>(m) / 10 + 0x30)); g += r;
-    std::string g(1, m + 0x30); g.append(r.data(), r.size());// std::cout << m2c(static_cast<HTTP>(m)) << ":" << r << "\n";
-    fc::drt_node::iterator it = map_.root.find(g, 0); if (it.second != nullptr) {
-      res.mask_url = std::move(g); co_await it->second(req, res);
-    } else { res.mask_url = std::string("@", 1); co_await this->_(req, res); } co_return;
+  _CTX_TASK(void)App::_call(std::string& r, Req& req, Res& res) const {
+    fc::drt_node::iterator it = map_.root.find(r, 0); if (it.second != nullptr) {
+      res.mask_url = r; co_await it->second(req, res);
+    } else { res.mask_url = std::string_view("@", 1); co_await this->_(req, res); } co_return;
   }
   App& App::sub_api(const char* prefix, const App& app) {
     if (prefix[0] == '/' || prefix[0] == '\\')++prefix; std::string b{prefix}; MapArg a{&map_, b};
@@ -152,7 +150,7 @@ namespace fc {
         std::string::iterator i = _.end() - 1; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
         if (*--i == '.')goto _; if (*--i == '.')goto _; if (*--i == '.')goto _;
-        res.mask_url = std::string("?", 1); co_await a._(req, res); _CTX_return;
+        res.mask_url = std::string_view("?", 1); co_await a._(req, res); _CTX_return;
       _ : std::size_t last_dot = $_(i) - $_(_.begin()) + 1;
         if (last_dot) {
           std::string ss{ toLowerCase(_.substr(last_dot)) }; std::string_view extension(ss.data(), ss.size());
@@ -167,8 +165,8 @@ namespace fc {
               int path_len = ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, NULL, 0);
               WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, _.c_str(), -1, pwsz, path_len);
               struct stat64 statbuf_; if (_wstat64(pwsz, &statbuf_) != 0) {
-                delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; p = file_cache_.find(_);
-                if(p != file_cache_.cend())p->second = std::make_shared<file_sptr>(); throw err::not_found();
+                delete[] pwsz; ctx->content_type = RES_NIL; pwsz = null; p = a.file_cache_.find(_);
+                if(p != a.file_cache_.cend())p->second = std::make_shared<file_sptr>(); throw err::not_found();
               } delete[] pwsz; pwsz = null;
 #else
               struct stat64 statbuf_; if (stat64(_.c_str(), &statbuf_) != 0) {
@@ -232,13 +230,13 @@ namespace fc {
   }
   App& App::set_keep_alive(unsigned char i, unsigned char v, unsigned char p) { k_A[0] = i, k_A[1] = v, k_A[2] = p; return *this; }
   struct llParser: public llhttp__internal_s {
-    std::string& url; std::string_view& raw_url, header_field, body; fc::sv_map& headers; cc::query_string& url_params;
-    llParser(std::string& u, std::string_view& a, fc::sv_map& h, cc::query_string& q): url(u), raw_url(a), headers(h), url_params(q) {}
+    std::string& url, &ur; std::string_view& raw_url, header_field, body; fc::sv_map& headers; cc::query_string& url_params;
+    llParser(std::string& u, std::string& r, std::string_view& a, fc::sv_map& h, cc::query_string& q): url(u), ur(r), raw_url(a), headers(h), url_params(q) {}
   };
   static int on_url(llhttp__internal_s* _, const char* c, size_t s) {
-    llParser* $ = static_cast<llParser*>(_); $->raw_url = DecodeURL(c, s);
-    size_t l = $->raw_url.find('?'); if (l == -1) { $->url = std::string($->raw_url.data(), $->raw_url.size()); return 0; }
-    $->url.clear(); $->url << $->raw_url.substr(0, l); $->url_params = cc::query_string($->raw_url, l); return 0;
+    llParser* $ = static_cast<llParser*>(_); $->raw_url = DecodeURL(c, s); $->url = static_cast<char>($->method) + 0x30;
+    s = $->raw_url.find('?'); if (s == -1) { $->url.append($->raw_url.data(), $->raw_url.size()); $->ur = $->raw_url; return 0; }
+    $->ur = $->raw_url.substr(0, s); $->url += $->ur; $->url_params = cc::query_string($->raw_url, s); return 0;
   }
   static int on_header_field(llhttp__internal_s* _, const char* c, size_t l) {
     llParser* $ = static_cast<llParser*>(_); $->header_field = std::string_view(c, l); return 0;
@@ -252,14 +250,14 @@ namespace fc {
   const static llhttp_settings_s RES_ll_ = { nullptr, on_url, nullptr, on_header_field, on_header_value, nullptr, on_body };
 
   App& App::set_ssl(std::string ciphers, std::string key, std::string cert) { ssl_key = key; ssl_cert = cert; ssl_ciphers = ciphers; return *this; }
-  static _CTX_TASK(void)make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, Reactor * rc) {
+  static _CTX_TASK(void)make_http_processor(socket_type fd, sockaddr sa, int k, fc::timer & ft, ROG * re, epoll_handle_t eh, void* ap, void * rc) {
     Conn f(fd, sa, k, ft, re, eh);
 #if _OPENSSL
-    if (rc->ssl_ctx && !f.ssl_handshake(rc->ssl_ctx)) { if (re->hrt) epoll_del_conn(eh, fd), re->hrt = 0; _CTX_return; }
+    if (static_cast<Reactor*>(rc)->ssl_ctx && !f.ssl_handshake(static_cast<Reactor*>(rc)->ssl_ctx)) { if (re->hrt) epoll_del_conn(eh, fd), re->hrt = 0; _CTX_return; }
 #endif
-    fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url; char rb[0x800], wb[0x2000]; Ctx ctx(f, wb, sizeof(wb));
+    fc::sv_map hd; cc::query_string up; std::string_view ru; std::string url, ur; url.reserve(15); char rb[0x800], wb[0x2000]; Ctx ctx(f, wb, sizeof(wb));
 #if _LLHTTP
-    llParser ll{ url, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r, last_len, pret;
+    llParser ll{ url, ur, ru, hd, up }; llhttp__internal_init(&ll); ll.type = HTTP_REQUEST; ll.settings = (void*)&RES_ll_; int end = 0, r, last_len, pret;
 #else
     const char* method, * path; size_t method_len, path_len; int end = 0, r, last_len, pret;
 #endif
@@ -327,23 +325,23 @@ namespace fc {
       f.epoll_fix(EPOLLOUT | EPOLLRDHUP);
 #endif // _WIN32
 #if _LLHTTP
-      Req req{ static_cast<HTTP>(ll.method), url, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };
+      Req req{ static_cast<HTTP>(ll.method), ur, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };
       ctx.content_length_ = ll.content_length; req.body = ll.body; ctx.http_minor = ll.http_minor; Res res(ctx, static_cast<App*>(ap));
       std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
       if (ll.finish) {
 #else
-      ru = DecodeURL(path, path_len); path_len = ru.find('?');
-      if (path_len == -1) { url = std::string(ru.data(), ru.size()); } else {
-        url.clear(); url << ru.substr(0, path_len); up = cc::query_string(ru, path_len);
+      ru = DecodeURL(path, path_len); path_len = ru.find('?'); url = static_cast<char>(c2m(method, method_len)) + 0x30;
+      if (path_len == -1) { url.append(ru.data(), ru.size()); ur = ru; } else {
+        ur = ru.substr(0, path_len); url += ur; up = cc::query_string(ru, path_len);
       }
-      Req req{ c2m(method, method_len), url, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };
+      Req req{ c2m(method, method_len), ur, ru, hd, up, f, static_cast<App*>(ap)->USE_MAX_MEM_SIZE_MB, ctx.cookie_map, ctx.cache_file };
       req.body = std::string_view(rb + pret, end - pret); Res res(ctx, static_cast<App*>(ap));
       std::string* res_body = reinterpret_cast<std::string*>(reinterpret_cast<char*>(&res) + _PTR_LEN);
       if (end == pret && ctx.content_length_) {
 #endif
         f.timer.cancel(f.rpg->t_id); f.is_idle = false;
         try {
-          req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
+          req.length = std::move(ctx.content_length_); co_await static_cast<App*>(ap)->_call(url, req, res);
           ctx.format_top_headers(); ctx.respond(res_body->size(), res.headers); f.is_idle = true;
 #if _LLHTTP
           llhttp_reset(&ll);
@@ -359,7 +357,7 @@ namespace fc {
         continue;
       }
       try {
-        co_await static_cast<App*>(ap)->_call(static_cast<char>(req.method), url, req, res);
+        co_await static_cast<App*>(ap)->_call(url, req, res);
         switch (*reinterpret_cast<int*>(&req)) {
         case 1:
         {
@@ -381,11 +379,11 @@ namespace fc {
   #ifdef __MINGW32__
             int path_len = ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, NULL, 0);
             WCHAR* pwsz = new WCHAR[path_len]; ::MultiByteToWideChar(CP_UTF8, 0, res_body->c_str(), -1, pwsz, path_len);
-            if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &rc->statbuf_)) != 0) {
+            if ((*reinterpret_cast<int*>(&req) = _wstat64(pwsz, &static_cast<Reactor*>(rc)->statbuf_)) != 0) {
               delete[] pwsz; ctx.content_type = RES_NIL; pwsz = null; throw err::not_found(*res_body << " -> Not Found!");
             } delete[] pwsz; pwsz = null;
   #else
-            if ((*reinterpret_cast<int*>(&req) = stat(res_body->c_str(), &rc->statbuf_)) != 0) {
+            if ((*reinterpret_cast<int*>(&req) = stat(res_body->c_str(), &static_cast<Reactor*>(rc)->statbuf_)) != 0) {
               ctx.content_type = RES_NIL; throw err::not_found(*res_body << " -> Not Found!");
             }
   #endif

@@ -13,7 +13,6 @@
 * the modified version must be made available.
 */
 #include <type_traits>
-#include <stdexcept>
 #include <string>
 #include "hpp/string_view.hpp"
 #include "h/dtoa_milo.h"

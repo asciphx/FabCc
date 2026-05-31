@@ -2,7 +2,6 @@
 #define APP_HH
 #include <iostream>
 #include <thread>
-#include <atomic>
 #include <memory>
 #include "hh/router.hh"
 //For Secondary Routing
@@ -11,10 +10,16 @@
 namespace fc {
   HTTP c2m(const char* m, size_t l);
   const std::string_view m2c(HTTP m);
-  static fc::HashMap<std::string, std::string, uint32_t, str_key_eq> RES_CACHE_MENU = {};
-  // static fc::str_map RES_CACHE_MENU = {};
-  static fc::HashMap<std::string, int64_t, uint32_t, str_key_eq> RES_CACHE_TIME = {};
-  // static std::unordered_map<std::string, int64_t, str_hash, str_key_eq> RES_CACHE_TIME = {};
+  struct str_i_map : std::unordered_map<std::string, int64_t, str_hash, str_key_eq>{
+    _FORCE_INLINE int64_t& operator[](const std::string_view& k) {
+      std::string s(k); auto _ = this->find(s); if (_ != this->end()) return _->second;
+      return this->insert({s, 0}).first->second;
+    }
+  };
+  // static str_map RES_CACHE_MENU = {};
+  // static str_i_map RES_CACHE_TIME = {};
+  static HashMap<std::string, std::string, uint32_t, sv_key_eq> RES_CACHE_MENU = {};
+  static HashMap<std::string, int64_t, uint32_t, sv_key_eq> RES_CACHE_TIME = {};
   struct App {
     App();
     _CTX_TASK(void)(*&operator[](const char* r))(Req&, Res&);
@@ -27,9 +32,9 @@ namespace fc {
     //void handle_upgrade(Req& req, Res& res, Adaptor&& adaptor) { handle_upgrade(req, res, adaptor); }
     ///Process the Req and generate a Res for it
     std::string _print_routes();
-    _CTX_TASK(void)_call(char m, std::string& r, Req& request, Res& response) const;
-    std::string get_cache(std::string& u);
-    void set_cache(std::string& u, std::string& v, short i = CACHE_HTML_TIME_SECOND);
+    _CTX_TASK(void)_call(std::string& r, Req& request, Res& response) const;
+    std::string get_cache(const std::string_view& u);
+    void set_cache(const std::string_view& u, std::string& v, short i = CACHE_HTML_TIME_SECOND);
     //Whether to open file download, set to true will allow
     App& set_file_download(bool&& b);
     //Set not_found route;

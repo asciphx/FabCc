@@ -2,14 +2,14 @@
 #include <hpp/any.hpp>
 #include <hpp/tuple.hpp>
 #include <hh/lexical_cast.hh>
-#include <time.h>
 #include <iostream>
-#include <hh/str_map.hh>
+#include <req-res.hh>
 #include <map>
 #include <json.hh>
 #include <tp/ctx.hh>
 #include <hpp/i2a.hpp>
 #include <hpp/utils.hpp>
+
 struct Person;
 struct Book {
   box<std::string> name = "Hello, world!";
@@ -40,16 +40,45 @@ template <class T>
 struct Fn2 {
   T& t; Fn2(T& t): t(t) {}
   template <typename S, typename A>
-  void operator() (S& s, A&& a, int&& b) { std::cout << '('<< k(s) << ++b << ',' << t.*s << ')' << ','; }
+  void operator() (S& s, A&& a, int&& b) { std::cout << '(' << k(s) << ++b << ',' << t.*s << ')' << ','; }
 };
 struct Fn {
   template <typename S, typename T>
   void operator() (S& s, T& t) { std::cout << '(' << t.*s << ')' << ','; }
 };//C++11 cannot use auto as a parameter, so only functors can be used
 void print_sum(int a, int b) { std::cout << "Sum: " << a + b << ','; }
+void func0(const box<int>* p) {
+  std::cout << "func0\n";
+}
+void func(box<int> p) {
+  std::cout << p << "func\n";
+}
+void func1(box<int>& p) {
+  std::cout << "func1\n";
+}
+void func2(box<int>&& p) {
+  std::cout << "func2\n";
+}
+void func3(const box<int>& p) {
+  std::cout << "func3\n";
+}
+void func4(const box<int>&& p) {
+  std::cout << "func4\n";
+}
 int main() {
+  box<int> a(1);
+  func0(&a);
+  func(&a);
+  func(std::move(a));
+  func(a);
+
+  func1(a);
+  func2(std::move(a));
+  func3(a);
+  func4(std::move(a));
+  std::cout << a;
   std::tuple<int, int> nums(10, 20); std::apply(print_sum, nums);
-  std::tuple<std::string, int> person_data{"test", 59}; Person person = std::make_from_tuple<Person>(person_data);
+  std::tuple<std::string, int> person_data{ "test", 59 }; Person person = std::make_from_tuple<Person>(person_data);
   std::cout << " Name: " << person.name << ", Age: " << person.age << "\n";
   _CONSTEXPR std::string_view sv = k(&O::id);
   //Book cannot be counted as a database field, so it will not be marked in field reflection.

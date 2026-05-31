@@ -47,7 +47,8 @@ namespace fc {
   };
   class Res {
     fc::Ctx& ctx;
-    std::string body, mask_url;
+    std::string body;
+    std::string_view mask_url;
     friend class fc::Conn;
     friend struct fc::App;
   public:
@@ -75,5 +76,4 @@ namespace fc {
     void redirect(const std::string& location, bool always = false);
   };// response
 }
-
 #endif // REQRES_HH

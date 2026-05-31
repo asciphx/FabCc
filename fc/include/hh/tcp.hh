@@ -2,15 +2,17 @@
 #define TCP_HH
 #define DEFAULT_ENABLE_LOGGING 0
 #include <string>
-#include <map>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <thread>
+#include <vector>
 #include <stdio.h>
 #include <future>
 #include <atomic>
 #include <thread>
 #include <stack>
-#include <vector>
-#include <fstream>
-#include <set>
 #include <mutex>
 #include "hh/conn.hh"
 #include "h/pthread.h"
@@ -42,15 +44,6 @@ namespace fc {
 #else
   http_top_header_builder REStop_h [[gnu::weak]];
 #endif
-CTX_LAMBDA(my, {
-    Reactor* r;
-    socket_type socket_fd;
-    int k_a;
-    _CTX_TASK(void)(***handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*);
-    ROG* fib;
-    void* ap;
-  });
-  static co my_func(void* ctx, co&& sink);
   struct Reactor {
     sockaddr_storage in_addr_storage;
     fc::timer loop_timer;
@@ -84,7 +77,7 @@ CTX_LAMBDA(my, {
       ::setsockopt(fd, SOL_SOCKET, SO_LINGER, (const char*)&RESling, sizeof(linger));
 #endif
     }
-    void event_loop(socket_type listen_fd, _CTX_TASK(void)(**handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*),
+    void event_loop(socket_type listen_fd, _CTX_TASK(void)(**handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,void*),
       int nthreads, int k_a, int* k_A, int ids, void* ap) {
       std::call_once(RESonce_flag, create_init, k_a); ROG rpg;
 #if __linux__
@@ -140,7 +133,7 @@ CTX_LAMBDA(my, {
 #if __cplusplus < _cpp20_date
               loop_timer.cancel(ro->t_id); ro->hrt = 0; epoll_del(event_fd);
               if (ro->_) {
-                ro->_ = std::move(ro->_).resume_with(ctx::FN{ throw_func, nullptr, [](void*){} });
+                ro->_ = std::move(ro->_).resume_with(ctx::FN{ ctx::my_lambda_t{{nullptr}}, throw_func });
                 // ro->_ = std::move(ro->_).resume_with([](co&& sink) { throw fiber_exception(std::move(sink), ""); return std::move(sink); });
               }
 #else
@@ -188,7 +181,7 @@ CTX_LAMBDA(my, {
                 // Spawn a new co to handle the connection.继续处理，延续之前未处理的
 #if __cplusplus < _cpp20_date
                 fib->t_id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_.operator()(); } });
-                fib->_ = ctx::callcc(ctx::FN{ CTX_CALLCC(my, this, socket_fd, k_a, &handler, fib, ap) });
+                fib->_ = ctx::callcc(ctx::FN{ ctx::my_lambda_t {{this, socket_fd, k_a, &handler, fib, ap}}, my_func });
 #else
                 fib->t_id = this->loop_timer.add_s(k_a + 1, [fib] { if (fib->_) { fib->_(); } });
                 fib->_ = (*handler)(socket_fd, *this->in_addr, k_a, this->loop_timer, fib, this->epoll_fd, ap, this);
@@ -208,9 +201,9 @@ CTX_LAMBDA(my, {
   };
 #if __cplusplus < _cpp20_date
 CTX_LAMBDA_IMPL(my) {
-  my_lambda* p = static_cast<my_lambda*>(ctx); p->fib->_ = std::move(sink);
+  ctx::my_lambda* p = static_cast<ctx::my_lambda*>(ctx); p->fib->_ = std::move(sink);
   try {
-    (*(*p->handler))(p->socket_fd, *p->r->in_addr, p->k_a, p->r->loop_timer, p->fib, p->r->epoll_fd, p->ap, p->r);
+    (*(*p->handler))(p->socket_fd, *((Reactor*)p->r)->in_addr, p->k_a, ((Reactor*)p->r)->loop_timer, p->fib, ((Reactor*)p->r)->epoll_fd, p->ap, ((Reactor*)p->r));
   } catch (fiber_exception& ex) {
     return std::move(ex.c);
   } catch (const std::exception&) {
@@ -223,7 +216,7 @@ CTX_LAMBDA_IMPL(my) {
   static void shutdown_handler(int sig) { RESquit_signal_catched = 0; }
   // static std::stack<std::future<void>> RESfus;
   typedef struct {
-    int i; socket_type sfd; int k_A; _CTX_TASK(void)(*conn_handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*);
+    int i; socket_type sfd; int k_A; _CTX_TASK(void)(*conn_handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,void*);
     int n; std::string* ssl_key_path; std::string* ssl_cert_path; std::string* ssl_ciphers; void* ap; int* k_a;
   } TaskArg;
   static void* task_func(void* arg) {
@@ -234,7 +227,7 @@ CTX_LAMBDA_IMPL(my) {
     reactor.event_loop(t->sfd, &t->conn_handler, t->n, t->k_A, t->k_a, t->i, t->ap); free(t); return NULL;
   }
   static void start_server(std::thread& date_thread, socket_type sfd, int n,
-    _CTX_TASK(void)(*conn_handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,Reactor*), int* k_a, void* ap,
+    _CTX_TASK(void)(*conn_handler)(socket_type,sockaddr,int,fc::timer&,ROG*,epoll_handle_t,void*,void*), int* k_a, void* ap,
     std::string ssl_key_path = "", std::string ssl_cert_path = "", std::string ssl_ciphers = "") { // Start the winsock DLL
     time(&RES_TIME_T); RES_NOW = localtime(&RES_TIME_T); RES_NOW->tm_isdst = 0; int k_A = (k_a[0] + k_a[1] * k_a[2] + 1) >> 1; if (k_A < 4)k_A = 4;
     RESmaxEVENTS = n > 32 ? n + 32 : n > 7 ? (n << 1) - (n >> 1) : (((n + 1) * (n + 1)) >> 1) + 0x16; if (k_A % 2 == 0)k_A += 1;

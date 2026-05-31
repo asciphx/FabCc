@@ -3,13 +3,10 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include "hh/directory.hh"
-#else
+#ifndef _WIN32
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
-#include <iostream>
 namespace fc {
   file_sptr::file_sptr(){
     modified_time_ = size_ = 0;

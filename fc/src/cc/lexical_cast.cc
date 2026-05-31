@@ -10,11 +10,9 @@
 * version is used to provide a service over a network, the complete source code of
 * the modified version must be made available.
 */
-#include <type_traits>
 #include <string>
 #include "hpp/string_view.hpp"
 #include <stdexcept>
-#include <string.h>
 namespace std {
   static const short STD_PO[] = {
   1,

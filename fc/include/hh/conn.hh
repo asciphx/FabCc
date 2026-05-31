@@ -3,13 +3,6 @@
 #include <iostream>
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <deque>
-#include <thread>
-#include <vector>
 #if __linux__
 #include <sys/epoll.h>
 #elif __APPLE__
@@ -35,11 +28,7 @@
 #include <mstcpip.h>
 #undef min
 #endif
-#include <chrono>
-#include <atomic>
-#include "h/config.h"
 #include "tp/ctx.hh"
-#include "hpp/http_top_header_builder.hpp"
 #ifndef _OPENSSL
 #define _OPENSSL 0
 #endif
@@ -68,7 +57,6 @@ namespace fc {
   enum sd_type { _READ, _WRITE, _BOTH };
   static int RESon = 1; static int RESkeep_AI = 1;//keepalive
 #if defined _WIN32
-  typedef HANDLE epoll_handle_t;
   static unsigned int RESrcv = 5000;
   static unsigned int RESsed = 10000;
   static tcp_keepalive RESin_kavars{ 0, 0, 0 };
@@ -76,7 +64,6 @@ namespace fc {
   static unsigned long RESl_k = sizeof(tcp_keepalive);
   static DWORD RESuBR;
 #else
-  typedef int epoll_handle_t;
   static struct timeval RESrcv { 5, 0 };//max{5,0},read
   static struct timeval RESsed { 10, 0 };//write
 #endif
@@ -105,7 +92,7 @@ namespace fc {
     const char* what; ctx::co c; fiber_exception(fiber_exception&& e) = default;
     fiber_exception& operator=(const fiber_exception&) = delete;
     fiber_exception(const char* w, ctx::co&& sink): what(w), c(std::move(sink)) {}
-    fiber_exception(const fiber_exception& o) noexcept: what(o.what), c(std::move(const_cast<fiber_exception&>(o)).c) {}
+    fiber_exception(const fiber_exception& o) noexcept: what(o.what), c(std::move(const_cast<fiber_exception&>(o).c)) {}
   };
   _FORCE_INLINE static co throw_func(void*, co&& sink) {
     throw fiber_exception{"", std::move(sink)}; return std::move(sink);

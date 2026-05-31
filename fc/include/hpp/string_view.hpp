@@ -22,9 +22,6 @@
 #include <ostream>
 #include <algorithm>
 #include <memory>
-#include <iterator>
-#include <exception>
-#include <istream>
 namespace std {
   class string_view {
     const char* data_; size_t length_;
@@ -42,9 +39,11 @@ namespace std {
     _FORCE_INLINE string_view& operator=(const string_view& view) noexcept {
       data_ = view.data(); length_ = view.size(); return *this;
     }
-    explicit operator basic_string<char, char_traits<char>, allocator<char>>() const {
+    operator basic_string<char, char_traits<char>, allocator<char>>() const {
       return basic_string<char, char_traits<char>, allocator<char>>(data_, length_);
     }
+    _FORCE_INLINE void remove_prefix(size_t n) { if (n > length_) n = length_; data_ += n; length_ -= n; }
+    _FORCE_INLINE void remove_suffix(size_t n) { if (n > length_) n = length_; length_ -= n; }
     _FORCE_INLINE const char* begin() const noexcept { return data_; }
     _FORCE_INLINE const char* end() const noexcept { return data_ + length_; }
     _FORCE_INLINE size_t size() const noexcept { return length_; }

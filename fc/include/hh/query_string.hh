@@ -5,7 +5,6 @@
 #include <vector>
 #include "hpp/string_view.hpp"
 #include <memory>
-#include <iostream>
 namespace cc {
   // ----------------------------------------------------------------------------
   // qs_parse (modified)
@@ -17,7 +16,7 @@ namespace cc {
   *  Also decodes the value portion of the k/v pair *in-place*.  In a future
   *  enhancement it will also have a compile-time option of sorting qs_kv
   *  alphabetically by key.  */
-  int qs_parse(char* qs, char* qs_kv[], int qs_kv_size);
+  int qs_parse(std::string_view& sv, char* qs_kv[], int qs_kv_size);
   /*  Used by qs_parse to decode the value portion of a k/v pair  */
   int qs_decode(char* qs);
   /*  Looks up the value according to the key on a pre-processed query string
@@ -43,7 +42,7 @@ namespace cc {
     query_string(const query_string& qs);
     query_string& operator=(const query_string& qs);
     query_string& operator=(query_string&& qs);
-    query_string(std::string_view& url, size_t l);
+    query_string(std::string_view url, size_t l);
     _FORCE_INLINE void clear() { key_value_pairs_.clear(); }
     friend std::string& operator<<(std::string& s, const query_string& qs);
     /// Get a value from a name, used for `?name=value`.
