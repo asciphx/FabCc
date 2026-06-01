@@ -35,15 +35,15 @@ public:
   box() noexcept: p(NULL), b(false) {}
   //std::nullptr_t constructor
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
-  //pointer constructor (*) [box<> _]
+  //pointer copy constructor (*) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>*, std::decay_t<U>>::value>* = null>
-  box(U _) noexcept: p(_->p), b(false) {}
-  //copy constructor (rvalue reference) [box<> _]
+  box(U _) noexcept: p(_->p ? new T{*_->p} : null), b(_->p != nullptr) {}
+  //move constructor (rvalue reference) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
-  box(U&& _) noexcept: p(_.p), b(_.b) { if(_.b) p = new T{*_.p}, const_cast<box<T>&>(_).p = null, const_cast<box<T>&>(_).b = false; }
+  box(U&& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; const_cast<box<T>&>(_).p = null; }
   //copy constructor (lvalue reference) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
-  box(U& _) noexcept: p(_.b ? new T{*_.p} : null), b(_.b) {}
+  box(U& _) noexcept: p(_.p ? new T{*_.p} : null), b(_.p != nullptr) {}
   //move constructor
   explicit box(box<T>&& _) noexcept: p(_.p), b(_.p ? true : false) { _.p = nullptr; }
   //reference constructor

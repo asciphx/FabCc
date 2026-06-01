@@ -47,36 +47,12 @@ struct Fn {
   void operator() (S& s, T& t) { std::cout << '(' << t.*s << ')' << ','; }
 };//C++11 cannot use auto as a parameter, so only functors can be used
 void print_sum(int a, int b) { std::cout << "Sum: " << a + b << ','; }
-void func0(const box<int>* p) {
-  std::cout << "func0\n";
-}
-void func(box<int> p) {
-  std::cout << p << "func\n";
-}
-void func1(box<int>& p) {
-  std::cout << "func1\n";
-}
-void func2(box<int>&& p) {
-  std::cout << "func2\n";
-}
-void func3(const box<int>& p) {
-  std::cout << "func3\n";
-}
-void func4(const box<int>&& p) {
-  std::cout << "func4\n";
-}
+void func(box<int> p) { std::cout << p << " func\n"; }
 int main() {
   box<int> a(1);
-  func0(&a);
   func(&a);
   func(std::move(a));
-  func(a);
-
-  func1(a);
-  func2(std::move(a));
-  func3(a);
-  func4(std::move(a));
-  std::cout << a;
+  func(a);//a = null
   std::tuple<int, int> nums(10, 20); std::apply(print_sum, nums);
   std::tuple<std::string, int> person_data{ "test", 59 }; Person person = std::make_from_tuple<Person>(person_data);
   std::cout << " Name: " << person.name << ", Age: " << person.age << "\n";
