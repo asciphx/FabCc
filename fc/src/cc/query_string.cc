@@ -12,36 +12,26 @@ namespace cc {
 #define QS_ISQSCHR(x) \
   ((((x) == '=') || ((x) == '#') || ((x) == '&')) ? 0 : 1)
   int qs_strncmp(const char* s, const char* qs, size_t n) {
-    unsigned char u1, u2, unyb, lnyb;
+    unsigned char u1, u2;
     while (n-- > 0) {
       u1 = static_cast<unsigned char>(*s++);
       u2 = static_cast<unsigned char>(*qs++);
       if (!QS_ISQSCHR(u1)) u1 = '\0';
       if (!QS_ISQSCHR(u2)) u2 = '\0';
       if (u1 == '+') u1 = ' ';
-      if (u1 == '%')  // easier/safer than scanf
-      {
-        unyb = static_cast<unsigned char>(*s++);
-        lnyb = static_cast<unsigned char>(*s++);
-        if (QS_ISHEX(unyb) && QS_ISHEX(lnyb))
-          u1 = (QS_HEX2DEC(unyb) * 16) + QS_HEX2DEC(lnyb);
-        else
-          u1 = '\0';
-      }
       if (u2 == '+') u2 = ' ';
-      if (u2 == '%')  // easier/safer than scanf
-      {
-        unyb = static_cast<unsigned char>(*qs++);
-        lnyb = static_cast<unsigned char>(*qs++);
-        if (QS_ISHEX(unyb) && QS_ISHEX(lnyb))
-          u2 = (QS_HEX2DEC(unyb) * 16) + QS_HEX2DEC(lnyb);
-        else
-          u2 = '\0';
-      }
       if (u1 != u2) return u1 - u2;
       if (u1 == '\0') return 0;
     }
     return QS_ISQSCHR(*qs) ? -1 : 0;
+  }
+  _FORCE_INLINE int qs_decode(char* qs) {
+    int i = 0;
+    while (QS_ISQSCHR(qs[i])) {
+      if (qs[i] == '+') qs[i] = ' '; ++i;
+    }
+    qs[i] = '\0';
+    return i;
   }
   _FORCE_INLINE size_t safe_strcspn(const char* s, const char* reject, size_t& max_len) {
     size_t i = 0; while (++i < max_len) { if (strchr(reject, s[i])) break; } max_len -= i; return i;
@@ -56,29 +46,10 @@ namespace cc {
     }
     ++i;
     for (j = 0; j < i; ++j) {
-      substr_ptr = qs_kv[j] + safe_strcspn(qs_kv[j], "=&#", p);
-      // if (substr_ptr[0] == '&') substr_ptr[0] = '\0'; else
-      if(p != sv.size() + i) qs_decode(++substr_ptr);
-      else { substr_ptr[sv.size() - i - i] = '\0'; return i; }
+      substr_ptr = qs_kv[j] + safe_strcspn(qs_kv[j], "=&#", p); qs_decode(++substr_ptr);
     }
-    return i;
-  }
-  int qs_decode(char* qs) {
-    int i = 0, j = 0;
-    while (QS_ISQSCHR(qs[j])) {
-      if (qs[j] == '+') {
-        qs[i] = ' ';
-      } else if (qs[j] == '%')  // easier/safer than scanf
-      {
-        if (!QS_ISHEX(qs[j + 1]) || !QS_ISHEX(qs[j + 2])) {
-          qs[i] = '\0'; return i;
-        }
-        qs[i] = (QS_HEX2DEC(qs[j + 1]) * 16) + QS_HEX2DEC(qs[j + 2]);
-        j += 2;
-      } else qs[i] = qs[j];
-      ++i; ++j;
-    }
-    qs[i] = '\0';
+    if(-1 != (j = sv.find('='))) { qs_kv_size = sv.size() - 1 - j; }// else qs_kv_size = strlen(substr_ptr);
+    substr_ptr[qs_kv_size] = '\0';
     return i;
   }
   char* qs_k2v(const char* key, char* const* qs_kv, size_t qs_kv_size, int nth) {

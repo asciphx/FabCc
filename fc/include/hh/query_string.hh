@@ -17,8 +17,6 @@ namespace cc {
   *  enhancement it will also have a compile-time option of sorting qs_kv
   *  alphabetically by key.  */
   int qs_parse(std::string_view& sv, char* qs_kv[], int qs_kv_size);
-  /*  Used by qs_parse to decode the value portion of a k/v pair  */
-  int qs_decode(char* qs);
   /*  Looks up the value according to the key on a pre-processed query string
   *  A future enhancement will be a compile-time option to look up the key
   *  in a pre-sorted qs_kv array via a binary search.  */
