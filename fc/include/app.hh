@@ -12,8 +12,13 @@ namespace fc {
   const std::string_view m2c(HTTP m);
   struct str_i_map : std::unordered_map<std::string, int64_t, str_hash, str_key_eq>{
     _FORCE_INLINE int64_t& operator[](const std::string_view& k) {
-      std::string s(k); auto _ = this->find(s); if (_ != this->end()) return _->second;
-      return this->insert({s, 0}).first->second;
+#if __cplusplus >= _cpp17_date
+      auto _ = this->find(k.data()); if (_ != this->end()) return _->second;
+      return this->insert({std::string(k), 0}).first->second;
+#else
+      auto _ = this->find(k); if (_ != this->end()) return _->second;
+      return this->insert({k, 0}).first->second;
+#endif
     }
   };
   // static str_map RES_CACHE_MENU = {};

@@ -63,7 +63,7 @@ namespace fc {
   };
   void Res::write_async_s(std::string(*f)(), short i) {
     std::string b = app.get_cache(mask_url); if (!b.empty()) { body = std::move(b); return; }
-    b = std::move(f()); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
+    b = f(); b.shrink_to_fit(); body = b; app.set_cache(mask_url, b, i);
   };
   std::string& Res::compress_str(char* const str, unsigned int len) {
     // Initialize with the default values, level default 8

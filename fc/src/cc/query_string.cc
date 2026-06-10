@@ -26,12 +26,7 @@ namespace cc {
     return QS_ISQSCHR(*qs) ? -1 : 0;
   }
   _FORCE_INLINE int qs_decode(char* qs) {
-    int i = 0;
-    while (QS_ISQSCHR(qs[i])) {
-      if (qs[i] == '+') qs[i] = ' '; ++i;
-    }
-    qs[i] = '\0';
-    return i;
+    int i = 0; while (QS_ISQSCHR(qs[i])) ++i; qs[i] = '\0'; return i;
   }
   _FORCE_INLINE size_t safe_strcspn(const char* s, const char* reject, size_t& max_len) {
     size_t i = 0; while (++i < max_len) { if (strchr(reject, s[i])) break; } max_len -= i; return i;
@@ -48,8 +43,8 @@ namespace cc {
     for (j = 0; j < i; ++j) {
       substr_ptr = qs_kv[j] + safe_strcspn(qs_kv[j], "=&#", p); qs_decode(++substr_ptr);
     }
-    if(-1 != (j = sv.find('='))) { qs_kv_size = sv.size() - 1 - j; }// else qs_kv_size = strlen(substr_ptr);
-    substr_ptr[qs_kv_size] = '\0';
+    if(std::string_view::npos != (j = sv.find('='))) { p = sv.size() - 1 - j; }// else qs_kv_size = strlen(substr_ptr);
+    substr_ptr[p] = '\0';
     return i;
   }
   char* qs_k2v(const char* key, char* const* qs_kv, size_t qs_kv_size, int nth) {
