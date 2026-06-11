@@ -1,6 +1,6 @@
 #ifndef APP_HH
 #define APP_HH
-#include <iostream>
+#include <cstdio>
 #include <thread>
 #include <memory>
 #include "hh/router.hh"

@@ -60,6 +60,16 @@ int main() {
     }
     s.pop_back(); s.pop_back(); res.write(s);
   };
+  app.post("/delete") = [](Req& req, Res& res)_ctx{
+    BP bp(req, 1); co_await bp.run(); std::string s; Json b;
+    for (auto p : bp.params) {
+      if(p.key=="😱") {
+        s = fc::directory_ + p.value;
+        if (std::remove(s.c_str()) == 0) b[p.value] = "✅"; else b[p.value] = "❌";;
+      }
+    }
+    res.write(b); co_return;
+  };
   app["/del"] = [](Req&, Res& res) { res.app["/"] = nullptr; res.write("The routing of the home page is delete！！"); };
   app["/timer"] = [](Req& req, Res& res) {
     req.setTimeout([] { raise(SIGINT); }, 6000); res.write("Turn off the server timer and start the countdown！");

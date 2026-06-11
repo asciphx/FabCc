@@ -37,7 +37,7 @@ public:
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   //pointer copy constructor (*) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>*, std::decay_t<U>>::value>* = null>
-  box(U _) noexcept: p(_->p ? new T{*_->p} : null), b(_->p != nullptr) {}
+  box(U _) noexcept: p(NULL), b(false) { if(_){ p = new T{*_->p}; b = true; } }
   //move constructor (rvalue reference) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
   box(U&& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; const_cast<box<T>&>(_).p = null; }
@@ -84,7 +84,11 @@ public:
   _FORCE_INLINE void swap(box& _) noexcept { std::swap(this->p, _.p); std::swap(this->b, _.b); }
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
-  const T* operator->() const { if (p)return p; return nullptr; } T* operator->() { if (this->p)return this->p; return nullptr; }
+  const T* operator->() const noexcept { return this->p; } T* operator->() noexcept { return this->p; }
+  // Get a reference to a pointer without moving ownership
+  _FORCE_INLINE T*& get() noexcept { return this->p; }
+  // Relinquish ownership and return the pointer
+  _FORCE_INLINE T* release() noexcept { this->b = false; return this->p; }
   _FORCE_INLINE T& operator*() & { if (!this->p) throw std::logic_error("box: null pointer dereference"); return *this->p; }
   _FORCE_INLINE const T& operator*() const& { if (!p) throw std::logic_error("box: null pointer dereference"); return *p; }
   T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }

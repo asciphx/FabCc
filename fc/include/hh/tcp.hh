@@ -3,7 +3,6 @@
 #define DEFAULT_ENABLE_LOGGING 0
 #include <string>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <thread>
