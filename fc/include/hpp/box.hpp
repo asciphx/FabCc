@@ -85,8 +85,8 @@ public:
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
   const T* operator->() const noexcept { return this->p; } T* operator->() noexcept { return this->p; }
-  // Get a reference to a pointer without moving ownership
-  _FORCE_INLINE T*& get() noexcept { return this->p; }
+  // Get a const reference to a pointer without moving ownership
+  [[nodiscard]] _FORCE_INLINE const T*& get() const noexcept { return this->p; }
   // Relinquish ownership and return the pointer
   _FORCE_INLINE T* release() noexcept { this->b = false; return this->p; }
   _FORCE_INLINE T& operator*() & { if (!this->p) throw std::logic_error("box: null pointer dereference"); return *this->p; }

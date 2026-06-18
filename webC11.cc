@@ -65,7 +65,7 @@ int main() {
     for (auto p : bp.params) {
       if(p.key=="😱") {
         s = fc::directory_ + p.value;
-        if (std::remove(s.c_str()) == 0) b[p.value] = "✅"; else b[p.value] = "❌";;
+        if (std::remove(s.c_str()) == 0) b[p.value] = "✅"; else b[p.value] = "❌";
       }
     }
     res.write(b); co_return;

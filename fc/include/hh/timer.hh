@@ -1,10 +1,7 @@
 #ifndef TIMER_HH
 #define TIMER_HH
-#include <queue>
 #include <chrono>
-#include <thread>
 #include <functional>
-#include <unordered_map>
 /*
  * This software is licensed under the AGPL-3.0 License.
  *
