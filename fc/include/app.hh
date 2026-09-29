@@ -8,23 +8,26 @@
 #define fc_api(_) App _$##_()
 #define fc_app(_) .sub_api(#_, fc::_$##_())
 namespace fc {
+#if 0
+struct str_i_map : std::unordered_map<std::string, int64_t, str_hash, str_key_eq>{
+  _FORCE_INLINE int64_t& operator[](const std::string_view& k) {
+#if __cplusplus >= _cpp17_date
+    auto _ = this->find(k.data()); if (_ != this->end()) return _->second;
+    return this->insert({std::string(k), 0}).first->second;
+#else
+    auto _ = this->find(k); if (_ != this->end()) return _->second;
+    return this->insert({k, 0}).first->second;
+#endif
+  }
+};
+static str_map RES_CACHE_MENU = {};
+static str_i_map RES_CACHE_TIME = {};
+#else
+static HashMap<std::string, std::string, uint32_t, sv_key_eq> RES_CACHE_MENU = {};
+static HashMap<std::string, int64_t, uint32_t, sv_key_eq> RES_CACHE_TIME = {};
+#endif
   HTTP c2m(const char* m, size_t l);
   const std::string_view m2c(HTTP m);
-  struct str_i_map : std::unordered_map<std::string, int64_t, str_hash, str_key_eq>{
-    _FORCE_INLINE int64_t& operator[](const std::string_view& k) {
-#if __cplusplus >= _cpp17_date
-      auto _ = this->find(k.data()); if (_ != this->end()) return _->second;
-      return this->insert({std::string(k), 0}).first->second;
-#else
-      auto _ = this->find(k); if (_ != this->end()) return _->second;
-      return this->insert({k, 0}).first->second;
-#endif
-    }
-  };
-  // static str_map RES_CACHE_MENU = {};
-  // static str_i_map RES_CACHE_TIME = {};
-  static HashMap<std::string, std::string, uint32_t, sv_key_eq> RES_CACHE_MENU = {};
-  static HashMap<std::string, int64_t, uint32_t, sv_key_eq> RES_CACHE_TIME = {};
   struct App {
     App();
     _CTX_TASK(void)(*&operator[](const char* r))(Req&, Res&);

@@ -56,7 +56,7 @@ namespace fc {
     std::chrono::steady_clock::time_point t{ RES_TP };
     socklen_t in_len{ sizeof(sockaddr_storage) };
   #ifdef __MINGW32__
-    struct stat64 statbuf_;
+    struct _stat64 statbuf_;
   #else
     struct stat statbuf_;
   #endif

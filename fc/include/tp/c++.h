@@ -81,6 +81,8 @@ namespace std {
   constexpr in_place_type_t<_Ty> in_place_type{};
   /// Used to represent an optional with no data; essentially a bool
   class monostate {};
+  template <class _Ty>
+  constexpr void destroy_at(_Ty* const _) noexcept { _->~_Ty(); }
 #else
 #define __INLINE
 #define __CONSTEXPR
@@ -122,6 +124,8 @@ namespace std {
   using enable_if_t = typename std::enable_if<E, T>::type;
   template <bool B, class T, class F>
   using conditional_t = typename std::conditional<B, T, F>::type;
+  template <class _Ty>
+  static void destroy_at(_Ty* const _) noexcept { _->~_Ty(); }
 #endif
   // http://ericniebler.com/2013/08/07/universal-references-and-the-copy-constructo/
   template< typename X, typename Y >

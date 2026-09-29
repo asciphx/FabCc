@@ -37,19 +37,19 @@ public:
   box(std::nullptr_t) noexcept: p(NULL), b(false) {}
   //pointer copy constructor (*) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>*, std::decay_t<U>>::value>* = null>
-  box(U _) noexcept: p(NULL), b(false) { if(_){ p = new T{*_->p}; b = true; } }
+  box(U _) : p(NULL), b(false) { if(_){ p = new T{*_->p}; b = true; } }
   //move constructor (rvalue reference) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
   box(U&& _) noexcept: p(_.p), b(_.b) { const_cast<box<T>&>(_).b = false; const_cast<box<T>&>(_).p = null; }
   //copy constructor (lvalue reference) [box<> _]
   template <typename U, std::enable_if_t<std::is_same<box<T>, std::decay_t<U>>::value>* = null>
-  box(U& _) noexcept: p(_.p ? new T{*_.p} : null), b(_.p != nullptr) {}
+  box(U& _) : p(_.p ? new T{*_.p} : null), b(_.p != nullptr) {}
   //move constructor
   explicit box(box<T>&& _) noexcept: p(_.p), b(_.p ? true : false) { _.p = nullptr; }
   //reference constructor
   explicit box(box<T>& _) noexcept: p(_.p), b(_.b) { _.b = false; }
   //value copy constructor
-  explicit box(T&& _) noexcept: p(new T{ std::move(_) }), b(true) {}
+  explicit box(T&& _) : p(new T{ std::move(_) }), b(true) {}
   //value reference constructor
   explicit box(T& _) noexcept: p(std::addressof(_)), b(false) {}
   //const reference constructor
@@ -85,13 +85,11 @@ public:
   _FORCE_INLINE explicit operator bool() const noexcept { return this->p != null; }
   _FORCE_INLINE bool operator!() const noexcept { return this->p == null; }
   const T* operator->() const noexcept { return this->p; } T* operator->() noexcept { return this->p; }
-  // Get a const reference to a pointer without moving ownership
-  [[nodiscard]] _FORCE_INLINE const T*& get() const noexcept { return this->p; }
   // Relinquish ownership and return the pointer
-  _FORCE_INLINE T* release() noexcept { this->b = false; return this->p; }
+  [[nodiscard]] _FORCE_INLINE T* release() { if(b){ b = false; return p; } else { return p ? new T{*p} : new T; } }
   _FORCE_INLINE T& operator*() & { if (!this->p) throw std::logic_error("box: null pointer dereference"); return *this->p; }
   _FORCE_INLINE const T& operator*() const& { if (!p) throw std::logic_error("box: null pointer dereference"); return *p; }
-  T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }
+  [[nodiscard]] T value_or(const T& _) const noexcept { return this->p != null ? *this->p : _; }
   _FORCE_INLINE void reset() noexcept { if (this->p) { if(this->b) delete this->p; this->p = null; } this->b = false; }
 };
 namespace fc {

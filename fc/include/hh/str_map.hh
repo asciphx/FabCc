@@ -34,8 +34,9 @@ namespace fc {
     size_t operator()(const std::string_view& z) const;
   };
   struct sv_unordered_map : std::unordered_map<std::string_view, std::string_view, sv_hash, sv_key_eq>{
-    _FORCE_INLINE std::string_view operator[](const std::string_view& k) {
-      auto _ = this->find(k); if (_ != this->end()) return _->second; return std::string_view{"", 0};
+    _FORCE_INLINE std::string_view& operator[](const std::string_view& k) {
+      auto _ = this->find(k); if (_ != this->end()) return _->second;
+      return this->insert({k,  std::string_view{"", 0}}).first->second;
     }
   };
   static const sv_key_eq SV_KEY_EQ;
